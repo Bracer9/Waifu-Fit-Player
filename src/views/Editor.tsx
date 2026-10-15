@@ -25,6 +25,7 @@ import {
   noteColor,
   noteSymbol,
   noteAction,
+  noteTypeLabel,
   isStepMove,
   LANES,
   uid,
@@ -32,6 +33,7 @@ import {
   type Direction,
   type Lane,
   type Note,
+  type NoteType,
   type Snap,
   type SpecialEvent,
   type StepDistance,
@@ -63,7 +65,6 @@ type Props = {
   canRedo: boolean;
   notify: (text: string) => void;
 };
-type NoteType = 'tap' | 'hold' | 'sway';
 type Drag = {
   mode: 'move' | 'start' | 'end' | 'extend' | 'draw' | 'marquee';
   x: number;
@@ -843,13 +844,9 @@ export function Editor({
           value={drawType}
           onChange={(e) => setDrawType(e.target.value as NoteType)}
         >
-          <option value="tap">普通 TAP</option>
-          <option value="hold">
-            {lane === 'step' ? (direction === 'close' ? '慢速合腿' : '单脚支撑 HOLD') : '绘制 HOLD'}
-          </option>
-          <option value="sway">
-            {lane === 'step' && direction !== 'close' ? '重心摇摆 SWAY' : '自由摇摆 SWAY'}
-          </option>
+          <option value="tap">TAP</option>
+          <option value="hold">{noteTypeLabel('hold', lane, direction)}</option>
+          <option value="sway">{noteTypeLabel('sway', lane, direction)}</option>
         </select>
         <span className="record-hint">
           {recording
@@ -1000,21 +997,15 @@ export function Editor({
                       }
                       onChange={(e) => changeKind(e.target.value as NoteType)}
                     >
-                      <option value="tap">{selectedNote ? '普通 TAP' : '瞬间 SPECIAL'}</option>
+                      <option value="tap">{selectedNote ? 'TAP' : 'SPECIAL'}</option>
                       <option value="hold">
-                        {selectedNote?.lane === 'step'
-                          ? selectedNote.direction === 'close'
-                            ? '慢速合腿'
-                            : '单脚支撑 HOLD'
-                          : selectedNote
-                            ? '保持 HOLD'
-                            : '持续 SPECIAL'}
+                        {selectedNote
+                          ? noteTypeLabel('hold', selectedNote.lane, selectedNote.direction)
+                          : 'SPECIAL HOLD'}
                       </option>
                       {selectedNote && (
                         <option value="sway">
-                          {selectedNote.lane === 'step' && selectedNote.direction !== 'close'
-                            ? '重心摇摆 SWAY'
-                            : '自由摇摆 SWAY'}
+                          {noteTypeLabel('sway', selectedNote.lane, selectedNote.direction)}
                         </option>
                       )}
                     </select>
@@ -1050,15 +1041,15 @@ export function Editor({
                             {noteSymbol(selectedNote.lane, d)}{' '}
                             {d === 'close'
                               ? selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
-                                ? '原地'
-                                : '合腿'
+                                ? 'FREE'
+                                : 'CLOSE'
                               : d === 'left'
-                                ? '左'
+                                ? 'LEFT'
                                 : d === 'right'
-                                  ? '右'
+                                  ? 'RIGHT'
                                   : d === 'up'
-                                    ? '上'
-                                    : '下'}
+                                    ? 'UP'
+                                    : 'DOWN'}
                           </option>
                         ))}
                       </select>
@@ -1087,12 +1078,11 @@ export function Editor({
                   )}
                   {selectedNote?.lane === 'step' && (
                     <p className="inspector-tip">
-                      {noteAction(selectedNote)}
                       {selectedNote.direction === 'close'
                         ? selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
-                          ? '：保持当前站位，自由摇摆。'
-                          : '：另一只脚向刚迈出的脚靠拢。'
-                        : '；合腿请另放 C。C 与两格踏步仅用于 STEP 轨。'}
+                          ? '保持当前站位，自由摇摆。'
+                          : '另一只脚向刚迈出的脚靠拢。'
+                        : '长按为单脚支撑；合腿请另放 C。C 与两格踏步仅用于 STEP 轨。'}
                     </p>
                   )}
                   <div className="inspector-actions">
@@ -1207,7 +1197,7 @@ export function Editor({
                       onChange({
                         ...chart,
                         specialMove: e.target.checked
-                          ? { name: '比心', icon: 'heart', previewBeats: 2 }
+                          ? { name: 'HEART POSE', icon: 'heart', previewBeats: 2 }
                           : null,
                         specialEvents: e.target.checked ? chart.specialEvents : [],
                       });
@@ -1240,9 +1230,9 @@ export function Editor({
                             })
                           }
                         >
-                          <option value="heart">♡ 比心</option>
-                          <option value="star">☆ 星星</option>
-                          <option value="sparkles">✦ 闪光</option>
+                          <option value="heart">♡ HEART</option>
+                          <option value="star">☆ STAR</option>
+                          <option value="sparkles">✦ SPARKLES</option>
                         </select>
                       </label>
                       <NumberField

@@ -1,5 +1,5 @@
 import { Heart, Sparkles, Star } from 'lucide-react';
-import { type Chart, LANES, noteColor, noteSymbol, noteAction } from '../model';
+import { type Chart, LANES, noteColor, noteSymbol, noteAction, specialMoveLabel } from '../model';
 import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph } from '../components/Glyph';
@@ -26,11 +26,11 @@ export function Player({
         ? Sparkles
         : Heart;
   return (
-    <section className="player-lanes" aria-label="跟练五轨">
+    <section className="player-lanes" aria-label="Movement tracks">
       <div className="lane-heading" hidden={!showGuide}>
         <span className="eyebrow">FOLLOW THE RHYTHM</span>
         <span className="direction-hint">
-          动作提示 <span>→</span>
+          MOVE <span>→</span>
         </span>
       </div>
       <div className="lanes-stack">
@@ -78,8 +78,7 @@ export function Player({
                 <LaneGlyph lane={lane.id} />
                 <div>
                   <small hidden={!showGuide}>0{i + 1}</small>
-                  <strong hidden={!showGuide}>{lane.english}</strong>
-                  <span>{lane.name}</span>
+                  <strong>{lane.english}</strong>
                 </div>
               </div>
               <div className="note-highway">
@@ -99,7 +98,7 @@ export function Player({
                         }
                         key={note.id}
                         data-direction={note.direction}
-                        aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction, note.distance)}`}
+                        aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)}`}
                       >
                         <NoteGlyph
                           lane={note.lane}
@@ -115,7 +114,7 @@ export function Player({
                       key={note.id}
                       className={`player-hold ${note.modifier === 'sway' ? 'sway' : ''} ${time >= note.timeMs ? 'active' : ''}`}
                       data-direction={note.direction}
-                      aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction, note.distance)} ${noteAction(note)}`}
+                      aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)} ${noteAction(note)}`}
                       style={
                         {
                           left: `${tail}%`,
@@ -126,13 +125,7 @@ export function Player({
                         } as React.CSSProperties
                       }
                     >
-                      <span className="hold-caption">
-                        {note.lane === 'step'
-                          ? noteAction(note)
-                          : note.modifier === 'sway'
-                            ? '∿ SWAY ∿'
-                            : 'HOLD'}
-                      </span>
+                      <span className="hold-caption">{noteAction(note)}</span>
                       <div className="hold-head">
                         <NoteGlyph
                           lane={note.lane}
@@ -168,18 +161,14 @@ export function Player({
                   )}
                 </div>
                 {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
-                {holding && (
-                  <span className="holding-label">
-                    {holding.lane === 'step' ? noteAction(holding) : sway ? 'SWAY' : '保持'}
-                  </span>
-                )}
+                {holding && <span className="holding-label">{noteAction(holding)}</span>}
                 {release && (
                   <span className="release-label" style={{ opacity: flash }}>
                     {release.direction === 'close' &&
                     release.kind === 'hold' &&
                     release.modifier !== 'sway'
-                      ? '并拢'
-                      : '释放'}
+                      ? 'CLOSED'
+                      : 'RELEASE'}
                   </span>
                 )}
                 {chart.specialMove &&
@@ -205,8 +194,8 @@ export function Player({
           <>
             <SpecialIcon size={29} fill={special.active ? 'currentColor' : 'none'} />
             <div>
-              <small>{special.active ? 'SPECIAL! / 就是现在' : 'GET READY / 准备招牌动作'}</small>
-              <strong>{chart.specialMove.name}</strong>
+              <small>{special.active ? 'SPECIAL!' : 'GET READY'}</small>
+              <strong>{specialMoveLabel(chart.specialMove)}</strong>
             </div>
             <span className="special-count">
               {special.active ? '✦' : Math.max(1, Math.ceil((special.event.timeMs - time) / 1000))}
@@ -216,7 +205,7 @@ export function Player({
         ) : showGuide ? (
           <>
             <span className="small-star">✳</span>
-            <span>跟着节奏，自在地动起来。</span>
+            <span>FIND YOUR RHYTHM.</span>
             <span className="tiny-label">YOUR BODY. YOUR BEAT.</span>
           </>
         ) : null}
@@ -224,15 +213,15 @@ export function Player({
       <div className="lane-legend" hidden={!showGuide}>
         <span>
           <i className="legend-tap" />
-          方向提示
+          TAP
         </span>
         <span>
           <i className="legend-hold" />
-          保持 HOLD
+          HOLD
         </span>
         <span>
           <i className="legend-sway" />
-          保持并摇摆 SWAY
+          SWAY
         </span>
       </div>
     </section>

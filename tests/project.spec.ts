@@ -27,7 +27,7 @@ async function exported(page: Page): Promise<Chart> {
 async function ready(page: Page, title: string) {
   await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
 }
 async function selectVideo(page: Page, button: string, path = 'public/demo.mp4') {
   const chooser = page.waitForEvent('filechooser');
@@ -50,11 +50,11 @@ test('保存作品后刷新再打开，自动恢复真实视频；同名但不�
   await open(page, chart);
   await ready(page, 'demo');
   expect(await exported(page)).toEqual(chart);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
     .poll(() => page.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime))
     .toBeGreaterThan(0.3);
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await page.screenshot({ path: 'artifacts/project-reopened.png', fullPage: true });
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await open(page, { ...chart, title: '共用视频的另一份谱面', notes: [] });
@@ -77,11 +77,11 @@ test('保存作品后刷新再打开，自动恢复真实视频；同名但不�
 
 test('旧谱一次定位后保存关联，失败与取消保留当前作品，全屏也能定位', async ({ page }) => {
   await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
-  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const original = await exported(page);
   const legacy = blankChart('旧版作品');
   legacy.videoHint = { fileName: 'demo.mp4', durationMs: original.videoHint.durationMs };
-  await page.getByRole('button', { name: '全屏', exact: true }).click();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await open(page, legacy);
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('dialog')).toContainText('这份旧作品还没有保存视频关联');
@@ -100,7 +100,7 @@ test('旧谱一次定位后保存关联，失败与取消保留当前作品，�
   await ready(page, '旧版作品');
   const linked = await exported(page);
   expect(linked.videoHint.assetId).toBeTruthy();
-  await page.getByRole('button', { name: '全屏', exact: true }).click();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await page.reload();
   await open(page, linked);
   await ready(page, '旧版作品');

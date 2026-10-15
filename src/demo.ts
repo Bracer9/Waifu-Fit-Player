@@ -4,7 +4,7 @@ export function demoChart(fileName: string): Chart {
     schemaVersion: 1,
     title: '爽快奪回 Sunlight',
     videoHint: { fileName, durationMs: 266775 },
-    specialMove: { name: '比心 / HEART POSE', icon: 'heart', previewBeats: 3 },
+    specialMove: { name: 'HEART POSE', icon: 'heart', previewBeats: 3 },
     tempoSegments: [{ id: 'demo-tempo', anchorMs: 2000, bpm: 150, meter: '4/4' }],
     notes: [],
     specialEvents: [],

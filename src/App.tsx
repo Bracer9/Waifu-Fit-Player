@@ -92,6 +92,9 @@ export default function App() {
     albumRef = useRef<HTMLDivElement>(null);
   const videoIntent = useRef<VideoRequest | null>(null);
   const notify = useCallback((text: string) => setNotice(text), []);
+  useEffect(() => {
+    if (mode === 'player') setNotice('');
+  }, [mode]);
   const edit = useCallback((next: Chart) => dispatch({ type: 'edit', chart: next }), []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []),
     redo = useCallback(() => dispatch({ type: 'redo' }), []);
@@ -335,7 +338,7 @@ export default function App() {
         redo();
       } else if (e.code === 'Space' && mode !== 'home') {
         e.preventDefault();
-        if (!e.repeat) media.toggle().catch(() => notify('请点击播放按钮开始。'));
+        if (!e.repeat) media.toggle().catch(() => notify('Press Play to start.'));
       }
     };
     const keyup = (e: KeyboardEvent) => {
@@ -367,9 +370,10 @@ export default function App() {
         }),
     );
   const fullScreen = () => {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => notify('无法退出全屏。'));
+    if (document.fullscreenElement)
+      document.exitFullscreen().catch(() => notify('Unable to exit fullscreen.'));
     else
-      albumRef.current?.requestFullscreen().catch(() => notify('浏览器未允许全屏，请使用 F11。'));
+      albumRef.current?.requestFullscreen().catch(() => notify('Fullscreen unavailable. Try F11.'));
   };
 
   return (
@@ -515,7 +519,7 @@ export default function App() {
                 }}
               >
                 <ArrowLeft size={16} />
-                返回工作台
+                WORKBENCH
               </button>
             )}
           </div>
@@ -525,7 +529,7 @@ export default function App() {
                 <Player chart={chart} media={media} showGuide={mode === 'editor'} />
               )}
             </div>
-            <section className="video-panel" aria-label="舞蹈视频">
+            <section className="video-panel" aria-label="Video">
               <div className="video-topline" hidden={mode === 'player'}>
                 <span>
                   <i />
@@ -556,8 +560,12 @@ export default function App() {
                 )}
                 {status.error && (
                   <div className="video-error">
-                    {status.error}
-                    <button onClick={openVideo}>重新选择视频</button>
+                    {mode === 'player'
+                      ? 'Video unavailable. Select the video again.'
+                      : status.error}
+                    <button onClick={openVideo}>
+                      {mode === 'player' ? 'Select video' : '重新选择视频'}
+                    </button>
                   </div>
                 )}
               </div>

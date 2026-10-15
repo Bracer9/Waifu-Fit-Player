@@ -32,6 +32,7 @@ export const LANES = [
 export type Lane = (typeof LANES)[number]['id'];
 export type Direction = 'up' | 'down' | 'left' | 'right' | 'close';
 export type StepDistance = 1 | 2;
+export type NoteType = 'tap' | 'hold' | 'sway';
 export type Note = {
   id: string;
   lane: Lane;
@@ -74,14 +75,39 @@ export const noteColor = (lane: Lane, direction: Direction) =>
         : 'var(--pink)'
     : LANES.find((item) => item.id === lane)!.color;
 export const isStepMove = (note: Note) => note.lane === 'step' && note.direction !== 'close';
+export function noteTypeLabel(
+  type: NoteType,
+  lane: Lane | 'special',
+  direction: Direction,
+): string {
+  if (type === 'tap') return 'TAP';
+  if (type === 'sway') return lane === 'step' && direction === 'close' ? 'FREE SWAY' : 'SWAY';
+  return lane === 'step' ? (direction === 'close' ? 'SLOW CLOSE' : 'BALANCE HOLD') : 'HOLD';
+}
 export function noteAction(note: Note): string {
-  if (note.lane !== 'step')
-    return note.kind === 'hold' && note.modifier === 'sway' ? 'SWAY' : 'HOLD';
-  if (note.direction === 'close')
-    return note.kind === 'hold' ? (note.modifier === 'sway' ? '自由摇摆' : '慢速合腿') : '合腿';
-  if (note.kind === 'tap')
-    return `向${note.direction === 'left' ? '左' : '右'}迈${note.distance === 2 ? '两' : '一'}格`;
-  return note.modifier === 'sway' ? '重心摇摆' : `${note.direction === 'left' ? '左' : '右'}脚支撑`;
+  if (note.kind === 'tap' && note.lane === 'step')
+    return note.direction === 'close'
+      ? 'CLOSE'
+      : `STEP ${noteSymbol(note.lane, note.direction, note.distance)}`;
+  return noteTypeLabel(
+    note.kind === 'hold' && note.modifier === 'sway' ? 'sway' : note.kind,
+    note.lane,
+    note.direction,
+  );
+}
+export function specialMoveLabel(move: NonNullable<Chart['specialMove']>): string {
+  // Preserve authored names in the chart; older bilingual names use their English part on stage.
+  const english = [move.name, ...move.name.split(/[/／|]/)]
+    .map((part) => part.trim())
+    .find((part) => /^[\x20-\x7E]+$/.test(part) && /[a-z]/i.test(part));
+  return (
+    english?.toUpperCase() ??
+    {
+      heart: 'HEART POSE',
+      star: 'STAR POSE',
+      sparkles: 'SPARKLE POSE',
+    }[move.icon]
+  );
 }
 export function blankChart(title = '我的新作品'): Chart {
   return {

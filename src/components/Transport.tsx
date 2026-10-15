@@ -16,8 +16,8 @@ export function Transport({
     <div className="transport">
       <button
         className="icon-button"
-        title="回到开头"
-        aria-label="回到开头"
+        title="Restart"
+        aria-label="Restart"
         disabled={!status.ready}
         onClick={() => media.seek(0)}
       >
@@ -25,9 +25,11 @@ export function Transport({
       </button>
       <button
         className="play-button"
-        aria-label={status.playing ? '暂停' : '播放'}
+        aria-label={status.playing ? 'Pause' : 'Play'}
         disabled={!status.ready}
-        onClick={() => media.toggle().catch(() => notify('播放未能开始，请重新点击播放。'))}
+        onClick={() =>
+          media.toggle().catch(() => notify('Unable to start. Press Play to try again.'))
+        }
       >
         {status.playing ? (
           <Pause size={22} fill="currentColor" />
@@ -40,7 +42,7 @@ export function Transport({
       </span>
       <input
         className="seek"
-        aria-label="播放进度"
+        aria-label="Playback position"
         type="range"
         min={0}
         max={status.durationMs || 1}
@@ -57,7 +59,7 @@ export function Transport({
       <span className="time-readout total">{formatTime(status.durationMs)}</span>
       <select
         className="rate-select"
-        aria-label="播放速度"
+        aria-label="Playback speed"
         value={status.rate}
         onChange={(e) => media.setRate(Number(e.target.value))}
       >
@@ -69,7 +71,7 @@ export function Transport({
       </select>
       <button
         className="icon-button volume-toggle"
-        aria-label={status.volume ? '静音' : '取消静音'}
+        aria-label={status.volume ? 'Mute' : 'Unmute'}
         onClick={() => media.setVolume(status.volume ? 0 : 0.7)}
       >
         {status.volume ? <Volume2 size={19} /> : <VolumeX size={19} />}
@@ -77,14 +79,19 @@ export function Transport({
       <input
         className="volume"
         type="range"
-        aria-label="音量"
+        aria-label="Volume"
         min={0}
         max={1}
         step={0.01}
         value={status.volume}
         onChange={(e) => media.setVolume(Number(e.target.value))}
       />
-      <button className="icon-button" aria-label="全屏" title="整个工作区全屏" onClick={fullScreen}>
+      <button
+        className="icon-button"
+        aria-label="Fullscreen"
+        title="Fullscreen"
+        onClick={fullScreen}
+      >
         <Maximize size={19} />
       </button>
     </div>

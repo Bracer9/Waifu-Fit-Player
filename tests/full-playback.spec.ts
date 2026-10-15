@@ -6,9 +6,9 @@ test('整首真实视频 1x 播放，五轨状态与媒体时间保持一致', a
   test.setTimeout(310000);
   await page.goto('/');
   await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: '静音', exact: true }).click();
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Mute', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   const chart = demoChart('');
   let samples = 0;
   await expect
@@ -51,5 +51,5 @@ test('整首真实视频 1x 播放，五轨状态与媒体时间保持一致', a
     )
     .toBe(true);
   expect(samples).toBeGreaterThan(60);
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
 });

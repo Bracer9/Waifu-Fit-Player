@@ -18,7 +18,7 @@ test.beforeEach(async ({ page }) => {
 test.afterEach(() => expect(errors).toEqual([]));
 async function demo(page: Page) {
   await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await expect
     .poll(() => page.locator('video').evaluate((v) => (v as HTMLVideoElement).readyState))
     .toBeGreaterThanOrEqual(2);
@@ -39,7 +39,7 @@ async function exportChart(page: Page): Promise<Chart> {
 }
 async function emptyEditor(page: Page) {
   await demo(page);
-  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const current = await exportChart(page);
   const chart = blankChart('浏览器测试作品');
   chart.videoHint = current.videoHint;
@@ -82,20 +82,20 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   await page.screenshot({ path: 'artifacts/demo-player.png', fullPage: true });
   await seek(page, 1);
   await expect(page.getByTestId('target-squat')).toHaveAttribute('data-state', 'idle');
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
     .poll(() => page.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime))
     .toBeGreaterThan(1.4);
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const paused = await page.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime);
   await page.waitForTimeout(350);
   expect(await page.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime)).toBe(
     paused,
   );
-  await page.getByLabel('播放速度').selectOption('0.5');
+  await page.getByLabel('Playback speed').selectOption('0.5');
   await seek(page, 3);
   await expect(page.getByTestId('target-squat')).toHaveAttribute('data-state', 'sway');
-  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   expect(await videoNode.evaluate((v) => v.isConnected)).toBe(true);
   await expect(page.getByRole('button', { name: '打开作品', exact: true })).toBeVisible();
   await page.screenshot({ path: 'artifacts/demo-editor.png', fullPage: true });
@@ -107,18 +107,99 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   );
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
   await seek(page, 23.5);
-  await expect(page.getByTestId('special-cue')).toContainText('准备招牌动作');
+  await expect(page.getByTestId('special-cue')).toContainText('GET READY');
   await seek(page, 24.4);
-  await expect(page.getByTestId('special-cue')).toContainText('就是现在');
+  await expect(page.getByTestId('special-cue')).toContainText('SPECIAL!');
   await seek(page, 26);
-  await expect(page.getByTestId('special-cue')).not.toContainText('就是现在');
-  await page.getByLabel('播放速度').selectOption('1');
+  await expect(page.getByTestId('special-cue')).not.toContainText('SPECIAL!');
+  await page.getByLabel('Playback speed').selectOption('1');
   await seek(page, 266.4);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
     .poll(() => page.locator('video').evaluate((v) => (v as HTMLVideoElement).ended))
     .toBe(true);
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+});
+
+test('音符与跟练统一英文，兼容旧 SPECIAL 名称并保持大小屏布局', async ({ page }) => {
+  const chart = await emptyEditor(page);
+  chart.title = 'ENGLISH LABEL CHECK';
+  chart.specialMove = { name: '比心 / HEART POSE', icon: 'heart', previewBeats: 4 };
+  chart.specialEvents = [{ id: 'legacy-special', timeMs: 5000, endTimeMs: 10000 }];
+  chart.notes = LANES.map((lane) => ({
+    id: lane.id,
+    lane: lane.id,
+    direction: lane.id === 'step' ? 'close' : lane.directions[0],
+    kind: 'hold',
+    timeMs: 3000,
+    endTimeMs: 6000,
+    modifier: lane.id === 'calf_raise' || lane.id === 'side_crunch' ? 'sway' : 'none',
+  }));
+  chart.notes.push(
+    { id: 'open-step', lane: 'step', direction: 'left', timeMs: 2000, kind: 'tap' },
+    {
+      id: 'free-sway',
+      lane: 'step',
+      direction: 'close',
+      timeMs: 7000,
+      endTimeMs: 10000,
+      kind: 'hold',
+      modifier: 'sway',
+    },
+  );
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'english-labels.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  await expect(page.locator('.timeline-event')).toHaveCount(8);
+  expect((await exportChart(page)).specialMove?.name).toBe('比心 / HEART POSE');
+  for (const caption of await page.locator('.event-caption').allTextContents())
+    expect(caption).not.toMatch(/\p{Script=Han}/u);
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await seek(page, 3.5);
+  await expect(page.locator('.hold-caption')).toHaveText([
+    'HOLD',
+    'SWAY',
+    'HOLD',
+    'SLOW CLOSE',
+    'FREE SWAY',
+    'SWAY',
+  ]);
+  await expect(page.locator('.lane-label strong')).toHaveText(LANES.map((lane) => lane.english));
+  await expect(page.getByTestId('special-cue')).toContainText('GET READY');
+  await expect(page.getByTestId('special-cue')).toContainText('HEART POSE');
+  for (const width of [1280, 1920]) {
+    await page.setViewportSize({ width, height: width === 1280 ? 720 : 1080 });
+    expect(await page.locator('.practice').innerText()).not.toMatch(/\p{Script=Han}/u);
+    expect(
+      await page.evaluate(() => ({
+        x: document.documentElement.scrollWidth > innerWidth,
+        y: document.documentElement.scrollHeight > innerHeight,
+      })),
+    ).toEqual({ x: false, y: false });
+    for (const label of await page.locator('.lane-label strong').all()) {
+      expect(await label.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true,
+      );
+    }
+    await page.screenshot({ path: `artifacts/english-player-${width}.png`, fullPage: true });
+  }
+  await seek(page, 7.2);
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('special-cue')).toContainText('SPECIAL!');
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  chart.title = 'LEGACY LABEL CHECK';
+  chart.specialMove.name = '比心';
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'legacy-chinese.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  await expect(page.getByRole('heading', { name: 'LEGACY LABEL CHECK' })).toBeVisible();
+  await seek(page, 7.2);
+  await expect(page.getByTestId('special-cue')).toContainText('HEART POSE');
+  expect((await exportChart(page)).specialMove?.name).toBe('比心');
 });
 
 test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续事件和减弱动态效果', async ({ page }) => {
@@ -189,9 +270,9 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await page.screenshot({ path: 'artifacts/special-burst-1920.png', fullPage: true });
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.screenshot({ path: 'artifacts/special-burst-1280.png', fullPage: true });
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(bursts).toHaveCount(0);
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await seek(page, 9);
   await expect(page.getByTestId('special-holding')).toHaveCount(5);
   await expect(bursts).toHaveCount(0);
@@ -219,7 +300,7 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await seek(page, 2);
   await expect(page.locator('.special-lane-effect')).toHaveCount(0);
   // The same song-level symbol drives all five rows; changing it does not duplicate chart events.
-  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   for (const icon of ['star', 'sparkles']) {
     await page.getByLabel('SPECIAL 图标').selectOption(icon);
@@ -228,8 +309,8 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   }
   expect((await exportChart(page)).specialEvents).toEqual(chart.specialEvents);
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
-  await page.getByRole('button', { name: '全屏', exact: true }).click();
+  await expect(page.getByRole('status')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await expect(flying).toHaveCount(5);
   await page.screenshot({ path: 'artifacts/special-sparkles-fullscreen.png', fullPage: true });
 });
@@ -400,29 +481,29 @@ test('分段节拍、唯一 SPECIAL 重复事件、网格修改不移动音符',
 test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录入取消', async ({ page }) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
-  await page.getByLabel('播放速度').selectOption('0.5');
+  await page.getByLabel('Playback speed').selectOption('0.5');
   await seek(page, 10);
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.press('3');
   await page.keyboard.down('ArrowLeft');
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(60);
   await page.keyboard.up('ArrowLeft');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   let chart = await exportChart(page);
   expect(chart.notes).toHaveLength(1);
   expect(chart.notes[0]).toMatchObject({ lane: 'punch', kind: 'tap', direction: 'left' });
   expect(chart.notes[0].timeMs).toBeGreaterThanOrEqual(10000);
   expect(chart.notes[0].timeMs).toBeLessThan(12000);
   await seek(page, 12);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.press('1');
   await page.keyboard.down('ArrowDown');
   await page.keyboard.press('2');
   await page.waitForTimeout(650);
   await page.keyboard.up('ArrowDown');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(2);
   expect(chart.notes[1]).toMatchObject({ lane: 'squat', kind: 'hold', modifier: 'none' });
@@ -433,7 +514,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
     'true',
   );
   await seek(page, 14);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.down('Control');
   await page.keyboard.down('ArrowUp');
   await page.keyboard.up('Control');
@@ -441,7 +522,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
   await page.keyboard.up('ArrowUp');
   await page.keyboard.press('5');
   await page.keyboard.press('ArrowRight');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(4);
   expect(chart.notes[2]).toMatchObject({
@@ -453,11 +534,11 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
   expect(chart.notes[3]).toMatchObject({ lane: 'side_crunch', kind: 'tap', direction: 'right' });
   await page.getByLabel('吸附', { exact: true }).selectOption('1');
   await seek(page, 18);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(310);
   await page.keyboard.up('ArrowLeft');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(5);
   expect(chart.notes[4]).toMatchObject({
@@ -466,15 +547,15 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
     timeMs: 18000,
     endTimeMs: 18500,
   });
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.down('ArrowLeft');
   await seek(page, 50);
   await page.keyboard.up('ArrowLeft');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   expect((await exportChart(page)).notes).toHaveLength(5);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.down('ArrowLeft');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await page.keyboard.up('ArrowLeft');
   expect((await exportChart(page)).notes).toHaveLength(5);
 });
@@ -533,31 +614,31 @@ test('跟随默认锁定，编辑与空格暂停不取消，解锁后可手动�
   await draw(page, 1000, 0);
   await expect(follow).toBeChecked();
   await seek(page, 30);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
     .poll(() => page.locator('.timeline-scroll').evaluate((el) => el.scrollLeft))
     .toBeGreaterThan(2000);
   await lock.focus();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   await expect(lock).toHaveAttribute('aria-pressed', 'true');
   await expect(follow).toBeChecked();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await lock.click();
   await follow.focus();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   await expect(follow).toBeChecked();
   await follow.uncheck();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await expect(follow).not.toBeChecked();
   await lock.click();
   await expect(follow).toBeChecked();
   await expect(lock).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Space');
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   for (const [key, label] of [
     ['1', '1 蹲起'],
@@ -603,7 +684,7 @@ test('非法谱面不丢编辑、未保存保护、自动草稿、720p 和 1080p
     await page.screenshot({ path: `artifacts/editor-${viewport.width}.png`, fullPage: true });
   }
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await expect(page.getByRole('status')).not.toBeVisible();
   for (const viewport of [
     { width: 1280, height: 720 },
     { width: 1920, height: 1080 },
@@ -638,10 +719,10 @@ test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({
   expect(chart.notes.slice(2).map((n) => n.timeMs)).toEqual([5000, 5500]);
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await page.getByRole('button', { name: '节拍段', exact: true }).click();
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.getByLabel('BPM', { exact: true }).focus();
   await page.keyboard.press('ArrowUp');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(4);
   await page.getByLabel('BPM', { exact: true }).fill('133');
@@ -662,7 +743,7 @@ test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(4);
   expect(chart.tempoSegments[0].bpm).toBe(133);
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
 });
 
 test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失反馈', async ({ page }) => {
@@ -733,7 +814,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: '浏览器测试作品' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   expect(await exportChart(page)).toEqual(chart);
   await expect(
     page.locator('.timeline-event[data-lane="step"][data-direction="right"] .event-glyph'),
@@ -818,9 +899,9 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await seek(page, 0.5);
   await expect(impact).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.getByRole('button', { name: '全屏', exact: true }).click();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await expect(lanes).toHaveCount(5);
-  await expect(page.getByLabel('舞蹈视频')).toBeVisible();
+  await expect(page.getByLabel('Video', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'artifacts/step-fullscreen.png', fullPage: true });
 });
 
@@ -831,11 +912,7 @@ test('类型菜单直接绘制 SWAY，HOLD 与 SWAY 互转保留时长，切到 
   await page.getByLabel('绘制踏步跨度').selectOption('2');
   const drawingType = page.getByLabel('绘制类型');
   const selectedType = page.getByLabel('选中事件类型');
-  await expect(drawingType.locator('option')).toHaveText([
-    '普通 TAP',
-    '单脚支撑 HOLD',
-    '重心摇摆 SWAY',
-  ]);
+  await expect(drawingType.locator('option')).toHaveText(['TAP', 'BALANCE HOLD', 'SWAY']);
   await expect(page.getByRole('checkbox', { name: /SWAY/ })).toHaveCount(0);
   await drawingType.selectOption('sway');
   await draw(page, 1000, 3, 2500);
@@ -881,7 +958,7 @@ test('类型菜单直接绘制 SWAY，HOLD 与 SWAY 互转保留时长，切到 
   });
   await page.getByRole('button', { name: '放置方向C', exact: true }).click();
   await expect(drawingType).toHaveValue('sway');
-  await expect(drawingType.locator('option')).toHaveText(['普通 TAP', '慢速合腿', '自由摇摆 SWAY']);
+  await expect(drawingType.locator('option')).toHaveText(['TAP', 'SLOW CLOSE', 'FREE SWAY']);
   await draw(page, 4000, 3, 5000);
   await expect(selectedType).toHaveValue('sway');
   expect((await exportChart(page)).notes[1]).toMatchObject({
@@ -937,17 +1014,17 @@ test('C 自由 SWAY 原地绘制、HOLD 转换、保存重开和跟练提示', a
   });
   expect(await exportChart(page)).toEqual(chart);
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await expect(page.getByRole('status')).not.toBeVisible();
   await seek(page, 1.5);
   const target = page.getByTestId('target-step');
   await expect(target).toHaveText('C');
   await expect(target).toHaveAttribute('data-state', 'sway');
-  await expect(target).toHaveAttribute('data-action', '自由摇摆');
+  await expect(target).toHaveAttribute('data-action', 'FREE SWAY');
   await expect(target).toHaveCSS('background-color', 'rgb(165, 138, 212)');
-  await expect(page.getByTestId('lane-step').locator('.hold-caption')).toHaveText('自由摇摆');
+  await expect(page.getByTestId('lane-step').locator('.hold-caption')).toHaveText('FREE SWAY');
   await page.screenshot({ path: 'artifacts/step-free-sway.png', fullPage: true });
   await seek(page, 3.1);
-  await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('释放');
+  await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('RELEASE');
 });
 
 test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上方向', async ({ page }) => {
@@ -960,27 +1037,27 @@ test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上方向', async ({ pa
     'true',
   );
   await seek(page, 1);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowLeft');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   expect((await exportChart(page)).notes).toMatchObject([
     { lane: 'step', kind: 'tap', direction: 'left' },
   ]);
   await seek(page, 3);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.down('ArrowRight');
   await page.waitForTimeout(400);
   await page.keyboard.up('ArrowRight');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await seek(page, 5);
-  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await page.keyboard.down('Control');
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(400);
   await page.keyboard.up('ArrowLeft');
   await page.keyboard.up('Control');
-  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const chart = await exportChart(page);
   expect(chart.notes).toHaveLength(3);
   expect(chart.notes[1]).toMatchObject({
@@ -1007,9 +1084,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await draw(page, 1000, 3, 1500);
   await page.getByRole('button', { name: '放置方向C', exact: true }).click();
   await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
-  await expect(page.getByLabel('绘制类型').locator('option[value="sway"]')).toHaveText(
-    '自由摇摆 SWAY',
-  );
+  await expect(page.getByLabel('绘制类型').locator('option[value="sway"]')).toHaveText('FREE SWAY');
   await draw(page, 2000, 3);
   const grip = (await page.getByTestId('extend-note').boundingBox())!;
   const surface = (await page.locator('.timeline-surface').boundingBox())!;
@@ -1018,9 +1093,9 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await page.mouse.move(surface.x + 124 + 250, grip.y + 10, { steps: 6 });
   await page.mouse.up();
   await expect(page.getByLabel('选中事件类型').locator('option[value="sway"]')).toHaveText(
-    '自由摇摆 SWAY',
+    'FREE SWAY',
   );
-  await expect(page.getByLabel('选中事件类型').locator('option:checked')).toHaveText('慢速合腿');
+  await expect(page.getByLabel('选中事件类型').locator('option:checked')).toHaveText('SLOW CLOSE');
   await page.getByRole('button', { name: '放置方向R', exact: true }).click();
   await page.getByLabel('绘制踏步跨度').selectOption('2');
   await draw(page, 3000, 3);
@@ -1086,19 +1161,19 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: '浏览器测试作品' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   expect(await exportChart(page)).toEqual(chart);
   await expect(
     page.locator('.timeline-event[data-direction="close"] .event-glyph').first(),
   ).toHaveCSS('background-color', 'rgb(165, 138, 212)');
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await expect(page.getByRole('status')).not.toBeVisible();
   const target = page.getByTestId('target-step');
   await seek(page, 1.25);
-  await expect(target).toHaveAttribute('data-action', '左脚支撑');
+  await expect(target).toHaveAttribute('data-action', 'BALANCE HOLD');
   await seek(page, 2.25);
   await expect(target).toHaveText('C');
-  await expect(target).toHaveAttribute('data-action', '慢速合腿');
+  await expect(target).toHaveAttribute('data-action', 'SLOW CLOSE');
   await expect(target).toHaveCSS('background-color', 'rgb(165, 138, 212)');
   for (const viewport of [
     { width: 1280, height: 720 },
@@ -1117,11 +1192,11 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
     });
   }
   await seek(page, 2.58);
-  await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('并拢');
+  await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('CLOSED');
   await seek(page, 5.5);
   await expect(target).toHaveText('L2');
   await expect(target).toHaveAttribute('data-state', 'sway');
-  await expect(target).toHaveAttribute('data-action', '重心摇摆');
+  await expect(target).toHaveAttribute('data-action', 'SWAY');
   await page.screenshot({ path: 'artifacts/step-double-sway.png', fullPage: true });
 });
 
@@ -1132,9 +1207,9 @@ test('STEP 录 C、Shift 两格、Ctrl+Shift 摇摆，组合键与切轨不改�
   await page.keyboard.press('4');
   const start = async (seconds: number) => {
     await seek(page, seconds);
-    await page.getByRole('button', { name: '播放', exact: true }).click();
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
   };
-  const stop = () => page.getByRole('button', { name: '暂停', exact: true }).click();
+  const stop = () => page.getByRole('button', { name: 'Pause', exact: true }).click();
   await start(1);
   await page.keyboard.press('ArrowLeft');
   await stop();
@@ -1199,22 +1274,22 @@ test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async 
   await page.getByRole('button', { name: '创建新谱面', exact: true }).click();
   await (await chooser).setFiles('public/demo.mp4');
   await expect(page.getByRole('heading', { name: 'demo', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await draw(page, 2000, 3);
   const chart = await exportChart(page);
   expect(chart.notes).toHaveLength(1);
   expect(chart.videoHint.fileName).toBe('demo.mp4');
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: '全屏', exact: true }).click();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await expect
     .poll(() =>
       page.evaluate(() => document.fullscreenElement?.classList.contains('album-workspace')),
     )
     .toBe(true);
-  await expect(page.getByLabel('跟练五轨')).toBeVisible();
-  await expect(page.getByLabel('舞蹈视频')).toBeVisible();
-  await page.getByRole('button', { name: '全屏', exact: true }).click();
-  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  await expect(page.getByLabel('Movement tracks')).toBeVisible();
+  await expect(page.getByLabel('Video', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const secondChooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: '新建', exact: true }).click();
   await (await secondChooser).setFiles('public/demo.mp4');
