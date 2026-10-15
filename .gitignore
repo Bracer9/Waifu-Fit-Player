@@ -1,0 +1,25 @@
+# JavaScript dependencies and generated output
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Local environment and logs
+.env
+.env.*
+!.env.example
+*.log
+
+# Local song media (chart JSON files remain tracked)
+/maps/**/*.mp4
+/maps/**/*.mp3
+/maps/**/*.wav
+/maps/**/*.m4a
+/maps/**/*.webm
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
