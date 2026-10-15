@@ -1,4 +1,14 @@
-import { type Chart, type Note, type Snap, type SpecialEvent, sortChart, uid } from './model';
+import {
+  LANES,
+  type Chart,
+  type Direction,
+  type Lane,
+  type Note,
+  type Snap,
+  type SpecialEvent,
+  sortChart,
+  uid,
+} from './model';
 import { clamp, snapTime } from './timing';
 export type History = { past: Chart[]; present: Chart; future: Chart[] };
 export type HistoryAction =
@@ -29,6 +39,44 @@ export function deleteEvents(chart: Chart, selected: string[]): Chart {
     ...chart,
     notes: chart.notes.filter((n) => !selected.includes(n.id)),
     specialEvents: chart.specialEvents.filter((n) => !selected.includes(n.id)),
+  };
+}
+export function flipNotes(chart: Chart, selected: string[]): Chart {
+  const opposite: Record<Direction, Direction> = {
+    up: 'down',
+    down: 'up',
+    left: 'right',
+    right: 'left',
+  };
+  return {
+    ...chart,
+    notes: chart.notes.map((n) =>
+      selected.includes(n.id) ? { ...n, direction: opposite[n.direction] } : n,
+    ),
+  };
+}
+/** Preserve a multi-selection's row spacing; reject a row shift if any note leaves its axis pair. */
+export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to: Lane): Chart {
+  const fromIndex = LANES.findIndex((l) => l.id === from);
+  const toIndex = LANES.findIndex((l) => l.id === to);
+  const delta = toIndex - fromIndex;
+  if (!delta || Math.floor(fromIndex / 2) !== Math.floor(toIndex / 2)) return chart;
+  const notes = chart.notes.filter((n) => selected.includes(n.id));
+  if (
+    notes.some((n) => {
+      const index = LANES.findIndex((l) => l.id === n.lane);
+      const next = index + delta;
+      return next < 0 || next >= LANES.length || Math.floor(index / 2) !== Math.floor(next / 2);
+    })
+  )
+    return chart;
+  return {
+    ...chart,
+    notes: chart.notes.map((n) =>
+      selected.includes(n.id)
+        ? { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id }
+        : n,
+    ),
   };
 }
 export function moveEvents(

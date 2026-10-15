@@ -6,10 +6,13 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
+  ArrowLeftRight,
   Circle,
   Copy,
   Crosshair,
   Magnet,
+  LockKeyhole,
+  LockKeyholeOpen,
   MousePointer2,
   Pencil,
   Plus,
@@ -31,7 +34,14 @@ import {
 } from '../model';
 import { MediaController, useMediaStatus, useTime } from '../media';
 import { formatTime, gridLines, nextGrid, segmentAt, snapTime } from '../timing';
-import { deleteEvents, moveEvents, pasteEvents, resnapEvents } from '../editing';
+import {
+  deleteEvents,
+  flipNotes,
+  moveEvents,
+  pasteEvents,
+  resnapEvents,
+  shiftNoteLanes,
+} from '../editing';
 import { isTyping, useRecording } from '../recording';
 import { DirectionGlyph } from '../components/Glyph';
 
@@ -158,6 +168,7 @@ export function Editor({
     [scroll, setScroll] = useState(0),
     [viewport, setViewport] = useState(900);
   const [follow, setFollow] = useState(true),
+    [followLocked, setFollowLocked] = useState(true),
     [tab, setTab] = useState<'note' | 'tempo' | 'song'>('note');
   const [segmentId, setSegmentId] = useState(chart.tempoSegments[0].id);
   const [draft, setDraft] = useState<Chart | null>(null),
@@ -180,8 +191,6 @@ export function Editor({
   useRecording({
     enabled: recording,
     lane,
-    hold,
-    sway,
     snap,
     chart,
     media,
@@ -234,6 +243,7 @@ export function Editor({
     onChange(deleteEvents(chart, selected));
     setSelected([]);
   };
+  const flip = () => onChange(flipNotes(chart, selected));
   const duplicate = () => {
     const notes = chart.notes.filter((n) => selected.includes(n.id)),
       specials = chart.specialEvents.filter((n) => selected.includes(n.id));
@@ -276,6 +286,9 @@ export function Editor({
             duplicate();
             break;
         }
+      } else if (!modifier && !e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        if (!e.repeat) flip();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         remove();
@@ -392,7 +405,7 @@ export function Editor({
     const target = (e.target as HTMLElement).closest<HTMLElement>('[data-event]');
     const id = target?.dataset.event;
     e.currentTarget.setPointerCapture(e.pointerId);
-    setFollow(false);
+    if (!followLocked) setFollow(false);
     if (id) {
       const ids = e.shiftKey
         ? selected.includes(id)
@@ -497,7 +510,11 @@ export function Editor({
     else if (d.mode === 'move') {
       const first = [...d.original.notes, ...d.original.specialEvents].find((n) => n.id === d.id)!;
       const targetTime = snapAt(first.timeMs + (x - d.x) / px);
-      updateDraft(moveEvents(d.original, d.ids, targetTime - first.timeMs, duration));
+      let moved = moveEvents(d.original, d.ids, targetTime - first.timeMs, duration);
+      const targetLane = LANES[Math.floor((y - RULER) / ROW)]?.id;
+      if (d.lane !== 'special' && targetLane)
+        moved = shiftNoteLanes(moved, d.ids, d.lane, targetLane);
+      updateDraft(moved);
     } else if (d.mode === 'start' || d.mode === 'end') {
       const resize = <T extends Note | SpecialEvent>(n: T): T => {
         if (n.id !== d.id || !('endTimeMs' in n) || n.endTimeMs === undefined) return n;
@@ -630,6 +647,16 @@ export function Editor({
             <Trash2 size={16} />
           </button>
         </div>
+        <button
+          className="tool-button flip-button"
+          aria-label="反转方向"
+          title="反转选中音符方向（F）"
+          disabled={!selectedNote}
+          onClick={flip}
+        >
+          <ArrowLeftRight size={16} />
+          反向 <kbd>F</kbd>
+        </button>
         <label className="inline-field">
           <Magnet size={15} />
           <select
@@ -655,10 +682,29 @@ export function Editor({
             onChange={(e) => setZoom(Number(e.target.value))}
           />
         </label>
-        <label className="check-label">
-          <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} />
-          跟随
-        </label>
+        <div className="follow-control">
+          <label className="check-label">
+            <input
+              type="checkbox"
+              checked={follow}
+              disabled={followLocked}
+              onChange={(e) => setFollow(e.target.checked)}
+            />
+            跟随
+          </label>
+          <button
+            className={`tool-button ${followLocked ? 'active' : ''}`}
+            aria-label="锁定跟随"
+            aria-pressed={followLocked}
+            title={followLocked ? '跟随已锁定：暂停和编辑不会关闭跟随' : '锁定后始终保持跟随'}
+            onClick={() => {
+              if (!followLocked) setFollow(true);
+              setFollowLocked(!followLocked);
+            }}
+          >
+            {followLocked ? <LockKeyhole size={15} /> : <LockKeyholeOpen size={15} />}
+          </button>
+        </div>
         <button
           className="tool-button"
           aria-label="定位播放线"
@@ -684,6 +730,7 @@ export function Editor({
             <button
               key={l.id}
               onClick={() => pickLane(l.id)}
+              aria-pressed={lane === l.id}
               className={lane === l.id ? 'active' : ''}
               style={{ '--lane': l.color } as React.CSSProperties}
             >
@@ -692,7 +739,7 @@ export function Editor({
             </button>
           ))}
         </div>
-        <div className="direction-picks">
+        <div className="direction-picks" hidden={recording}>
           {LANES.find((l) => l.id === lane)!.directions.map((d) => (
             <button
               key={d}
@@ -705,14 +752,15 @@ export function Editor({
           ))}
         </div>
         <select
-          aria-label="录入类型"
+          aria-label="绘制类型"
+          hidden={recording}
           value={hold ? 'hold' : 'tap'}
           onChange={(e) => setHold(e.target.value === 'hold')}
         >
           <option value="tap">普通 TAP</option>
-          <option value="hold">长按 HOLD</option>
+          <option value="hold">绘制 HOLD</option>
         </select>
-        <label className="check-label">
+        <label className="check-label" hidden={recording}>
           <input
             type="checkbox"
             checked={sway}
@@ -722,7 +770,9 @@ export function Editor({
           SWAY
         </label>
         <span className="record-hint">
-          {recording ? '播放中按方向键写谱' : '点击放置 · 拖动拉长 · Shift 多选'}
+          {recording
+            ? '1–4 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
+            : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
       </div>
       <div className="editor-body">

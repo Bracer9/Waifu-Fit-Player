@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
+  ArrowLeft,
   ArrowUpRight,
   Check,
   Download,
@@ -260,16 +261,16 @@ export default function App() {
     const key = (e: KeyboardEvent) => {
       if (pending || help) return;
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key.toLowerCase() === 's') {
+      if (mode === 'editor' && mod && e.key.toLowerCase() === 's') {
         e.preventDefault();
         void save(e.shiftKey);
         return;
       }
       if (isTyping(e.target)) return;
-      if (mod && e.key.toLowerCase() === 'z') {
+      if (mode === 'editor' && mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         e.shiftKey ? redo() : undo();
-      } else if (mod && e.key.toLowerCase() === 'y') {
+      } else if (mode === 'editor' && mod && e.key.toLowerCase() === 'y') {
         e.preventDefault();
         redo();
       } else if (e.code === 'Space' && mode !== 'home') {
@@ -277,8 +278,17 @@ export default function App() {
         if (!e.repeat) media.toggle().catch(() => notify('请点击播放按钮开始。'));
       }
     };
+    const keyup = (e: KeyboardEvent) => {
+      // Space is a transport command, including when a checkbox or button has focus.
+      if (!pending && !help && mode !== 'home' && e.code === 'Space' && !isTyping(e.target))
+        e.preventDefault();
+    };
     window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
+    window.addEventListener('keyup', keyup);
+    return () => {
+      window.removeEventListener('keydown', key);
+      window.removeEventListener('keyup', keyup);
+    };
   });
   const recover = () =>
     guard(() => {
@@ -300,11 +310,11 @@ export default function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app ${mode === 'player' ? 'practice-app' : ''}`}>
       <div className="ambient-shape pink" />
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
-      <header className="app-header">
+      <header className="app-header" hidden={mode === 'player'}>
         <button
           className="wordmark"
           onClick={() => {
@@ -365,18 +375,18 @@ export default function App() {
           />
         </div>
         <div
-          className={`album-workspace ${mode === 'editor' ? 'editing' : ''}`}
+          className={`album-workspace ${mode === 'editor' ? 'editing' : 'practice'}`}
           hidden={mode === 'home'}
           ref={albumRef}
         >
-          <div className="album-spine">
+          <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
             <i />
             VOL. 01
           </div>
           <div className="workspace-header">
             <div className="workspace-title">
-              <span className="eyebrow">
+              <span className="eyebrow" hidden={mode === 'player'}>
                 {mode === 'editor' ? 'MAKE YOUR OWN RHYTHM' : 'NOW PLAYING'}
               </span>
               <h1>
@@ -384,16 +394,17 @@ export default function App() {
                 <span
                   className={`save-dot ${dirty ? 'dirty' : ''}`}
                   aria-hidden="true"
+                  hidden={mode === 'player'}
                   title={dirty ? '有未保存的修改' : '已保存'}
                 />
               </h1>
-              <p>
+              <p hidden={mode === 'player'}>
                 {demo
                   ? '功能演示谱 · 150 BPM · 尚未逐拍校准编舞'
                   : `${chart.tempoSegments[0]?.bpm ?? 120} BPM · ${chart.notes.length} 个动作提示 · ${dirty ? '未保存修改' : '谱面已保存'}`}
               </p>
             </div>
-            <div className="workspace-actions">
+            <div className="workspace-actions" hidden={mode !== 'editor'}>
               <button className="button small ghost" onClick={newChart}>
                 <Plus size={15} />
                 新建
@@ -420,13 +431,27 @@ export default function App() {
                 <Download size={17} />
               </button>
             </div>
+            {mode === 'player' && (
+              <button
+                className="button small ghost return-workspace"
+                onClick={() => {
+                  media.pause();
+                  setMode('editor');
+                }}
+              >
+                <ArrowLeft size={16} />
+                返回工作台
+              </button>
+            )}
           </div>
           <div className="stage-grid">
             <div className="stage-left">
-              {mode !== 'home' && <Player chart={chart} media={media} />}
+              {mode !== 'home' && (
+                <Player chart={chart} media={media} showGuide={mode === 'editor'} />
+              )}
             </div>
             <section className="video-panel" aria-label="舞蹈视频">
-              <div className="video-topline">
+              <div className="video-topline" hidden={mode === 'player'}>
                 <span>
                   <i />
                   {mode === 'editor' ? 'VIDEO PREVIEW' : 'YOUR PRIVATE STAGE'}
@@ -462,7 +487,7 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <div className="video-caption">
+              <div className="video-caption" hidden={mode === 'player'}>
                 <span>
                   <Heart size={12} /> MOVE WITH YOUR FAVORITE
                 </span>
@@ -483,14 +508,10 @@ export default function App() {
               notify={notify}
             />
           )}
-          <div className="workspace-bottom">
-            <span>
-              {mode === 'editor'
-                ? 'EDITOR / 空格 播放暂停 · Ctrl+S 保存'
-                : 'JUST FOLLOW ALONG / 无需按键，跟随动作提示'}
-            </span>
-            <button onClick={() => setMode(mode === 'editor' ? 'player' : 'editor')}>
-              {mode === 'editor' ? '进入跟练' : '编辑这首谱面'}
+          <div className="workspace-bottom" hidden={mode !== 'editor'}>
+            <span>EDITOR / 空格 播放暂停 · Ctrl+S 保存</span>
+            <button onClick={() => setMode('player')}>
+              进入跟练
               <ArrowUpRight size={16} />
             </button>
           </div>
@@ -602,14 +623,14 @@ export default function App() {
                 <strong>写下动作</strong>
                 <p>
                   点击时间轴放置，拖动空白处创建 HOLD。选择工具支持框选；长条两端可以拉伸；SWAY
-                  在长条属性中开启。
+                  在长条属性中开启。1↔2、3↔4 同组轨道可互拖；选中后按 F 或“反向”翻转方向。
                 </p>
               </li>
               <li>
                 <strong>边播边录</strong>
                 <p>
-                  启用按键录谱，1～4 选轨，方向键写入。HOLD
-                  模式按下开始、松开结束；暂停或跳转取消未完成的长条。
+                  启用按键录谱，1～4 选轨。方向键点按写入 TAP，长按写入 HOLD，Ctrl + 长按写入
+                  SWAY。松开结束；暂停或跳转取消未完成的录入。跟随默认锁定，解锁后可关闭。
                 </p>
               </li>
               <li>

@@ -4,7 +4,15 @@ import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
 import { DirectionGlyph, LaneGlyph } from '../components/Glyph';
 const PREVIEW_MS = 3600;
-export function Player({ chart, media }: { chart: Chart; media: MediaController }) {
+export function Player({
+  chart,
+  media,
+  showGuide = false,
+}: {
+  chart: Chart;
+  media: MediaController;
+  showGuide?: boolean;
+}) {
   const time = useTime(media);
   const special = specialAt(chart, time);
   const SpecialIcon =
@@ -15,7 +23,7 @@ export function Player({ chart, media }: { chart: Chart; media: MediaController 
         : Heart;
   return (
     <section className="player-lanes" aria-label="跟练四轨">
-      <div className="lane-heading">
+      <div className="lane-heading" hidden={!showGuide}>
         <span className="eyebrow">FOLLOW THE RHYTHM</span>
         <span className="direction-hint">
           动作提示 <span>→</span>
@@ -56,8 +64,8 @@ export function Player({ chart, media }: { chart: Chart; media: MediaController 
               <div className="lane-label">
                 <LaneGlyph lane={lane.id} />
                 <div>
-                  <small>0{i + 1}</small>
-                  <strong>{lane.english}</strong>
+                  <small hidden={!showGuide}>0{i + 1}</small>
+                  <strong hidden={!showGuide}>{lane.english}</strong>
                   <span>{lane.name}</span>
                 </div>
               </div>
@@ -131,15 +139,15 @@ export function Player({ chart, media }: { chart: Chart; media: MediaController 
             </span>
             <div className="special-progress" style={{ width: `${special.progress * 100}%` }} />
           </>
-        ) : (
+        ) : showGuide ? (
           <>
             <span className="small-star">✳</span>
             <span>跟着节奏，自在地动起来。</span>
             <span className="tiny-label">YOUR BODY. YOUR BEAT.</span>
           </>
-        )}
+        ) : null}
       </div>
-      <div className="lane-legend">
+      <div className="lane-legend" hidden={!showGuide}>
         <span>
           <i className="legend-tap" />
           方向提示

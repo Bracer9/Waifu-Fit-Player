@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { blankChart, parseChart, serializeChart, type Chart, type Note } from './model';
 import { gridLines, nextGrid, noteState, noteX, snapTime, specialAt } from './timing';
-import { deleteEvents, historyReducer, moveEvents, pasteEvents, resnapEvents } from './editing';
+import {
+  deleteEvents,
+  flipNotes,
+  historyReducer,
+  moveEvents,
+  pasteEvents,
+  resnapEvents,
+  shiftNoteLanes,
+} from './editing';
 import { demoChart } from './demo';
 const segments: Chart['tempoSegments'] = [
   { id: 'a', anchorMs: 2000, bpm: 120, meter: '4/4' },
@@ -175,6 +183,34 @@ describe('谱面读写与校验', () => {
   });
 });
 describe('编辑与历史', () => {
+  it('批量反向支持两个轴，保留时长与 SWAY，忽略 SPECIAL，并可撤销', () => {
+    const chart = fixture();
+    chart.notes.push({ id: 'tap', kind: 'tap', lane: 'punch', direction: 'right', timeMs: 1000 });
+    const flipped = flipNotes(chart, ['hold', 'tap', 's1']);
+    expect(flipped.notes[0]).toEqual({ ...hold, direction: 'up' });
+    expect(flipped.notes[1].direction).toBe('left');
+    expect(flipped.specialEvents).toEqual(chart.specialEvents);
+    expect(flipNotes(flipped, ['hold', 'tap'])).toEqual(chart);
+    const state = historyReducer(
+      { past: [], present: chart, future: [] },
+      { type: 'edit', chart: flipped },
+    );
+    expect(historyReducer(state, { type: 'undo' }).present).toEqual(chart);
+  });
+  it('跨轨移动只接受同轴，保留全部音符属性，往返不损失数据', () => {
+    const chart = fixture();
+    const moved = shiftNoteLanes(chart, ['hold'], 'squat', 'calf_raise');
+    expect(moved.notes[0]).toEqual({ ...hold, lane: 'calf_raise' });
+    expect(shiftNoteLanes(moved, ['hold'], 'calf_raise', 'squat')).toEqual(chart);
+    expect(shiftNoteLanes(chart, ['hold'], 'squat', 'punch')).toEqual(chart);
+    chart.notes.push({ id: 'tap', kind: 'tap', lane: 'punch', direction: 'left', timeMs: 1000 });
+    expect(shiftNoteLanes(chart, ['tap'], 'punch', 'side_crunch').notes[1].lane).toBe(
+      'side_crunch',
+    );
+    // Multi-selection preserves row spacing; an incompatible group stays on its original rows.
+    chart.notes.push({ ...hold, id: 'other', lane: 'calf_raise' });
+    expect(shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'calf_raise')).toEqual(chart);
+  });
   it('整体移动保留 HOLD 时长并约束开始与结束', () => {
     const chart = fixture();
     const moved = moveEvents(chart, ['hold'], -20000, 180000);

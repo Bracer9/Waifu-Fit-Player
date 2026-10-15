@@ -4,12 +4,14 @@ import { MediaController } from './media';
 import { nextGrid, snapTime } from './timing';
 export const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
-  !!target.closest('input, textarea, select, [contenteditable="true"]');
+  !!target.closest(
+    'textarea, select, [contenteditable="true"], input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="file"])',
+  );
+// Only gesture classification uses wall time; note timestamps always use the video clock.
+const HOLD_THRESHOLD_MS = 250;
 type Options = {
   enabled: boolean;
   lane: Lane;
-  hold: boolean;
-  sway: boolean;
   snap: Snap;
   chart: Chart;
   media: MediaController;
@@ -25,21 +27,26 @@ export function useRecording(options: Options) {
     lane: Lane;
     direction: Direction;
     timeMs: number;
+    pressedAt: number;
     modifier: 'none' | 'sway';
   } | null>(null);
   useEffect(() => {
     const cancel = () => {
       if (pending.current) {
         pending.current = null;
-        opts.current.notify('已取消尚未完成的 HOLD。');
+        opts.current.notify('已取消尚未完成的录入。');
       }
     };
     const keydown = (e: KeyboardEvent) => {
       const o = opts.current;
-      if (!o.enabled || isTyping(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (['1', '2', '3', '4'].includes(e.key)) {
+      if (!o.enabled || isTyping(e.target) || e.metaKey || e.altKey) return;
+      if (!e.ctrlKey && ['1', '2', '3', '4'].includes(e.key)) {
         e.preventDefault();
-        if (!e.repeat) o.onLane(LANES[Number(e.key) - 1].id);
+        if (!e.repeat) {
+          const lane = LANES[Number(e.key) - 1].id;
+          opts.current = { ...o, lane };
+          o.onLane(lane);
+        }
         return;
       }
       const dir = (
@@ -61,22 +68,32 @@ export function useRecording(options: Options) {
         o.snap,
         o.media.getStatus().durationMs,
       );
-      if (o.hold)
-        pending.current = {
-          key: e.key,
-          lane: o.lane,
-          direction: dir,
-          timeMs,
-          modifier: o.sway ? 'sway' : 'none',
-        };
-      else o.onNote({ id: uid(), lane: o.lane, direction: dir, kind: 'tap', timeMs });
+      pending.current = {
+        key: e.key,
+        lane: o.lane,
+        direction: dir,
+        timeMs,
+        pressedAt: performance.now(),
+        modifier: e.ctrlKey ? 'sway' : 'none',
+      };
     };
     const keyup = (e: KeyboardEvent) => {
       const p = pending.current,
         o = opts.current;
       if (!p || e.key !== p.key) return;
+      e.preventDefault();
       pending.current = null;
       if (!o.enabled || !o.media.getStatus().playing) return;
+      if (performance.now() - p.pressedAt < HOLD_THRESHOLD_MS) {
+        o.onNote({
+          id: uid(),
+          lane: p.lane,
+          direction: p.direction,
+          kind: 'tap',
+          timeMs: p.timeMs,
+        });
+        return;
+      }
       const duration = o.media.getStatus().durationMs;
       let endTimeMs = snapTime(
         o.media.element!.currentTime * 1000,
