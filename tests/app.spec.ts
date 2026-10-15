@@ -5,6 +5,14 @@ const errors: string[] = [];
 test.beforeEach(async ({ page }) => {
   errors.length = 0;
   page.on('pageerror', (error) => errors.push(error.message));
+  // Native OS pickers are covered by the handle integration tests; this suite exercises the file-input fallback.
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    }),
+  );
   await page.goto('/');
 });
 test.afterEach(() => expect(errors).toEqual([]));
@@ -31,9 +39,10 @@ async function exportChart(page: Page): Promise<Chart> {
 }
 async function emptyEditor(page: Page) {
   await demo(page);
-  const meta = await (await page.request.get('/demo-media.json')).json();
+  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  const current = await exportChart(page);
   const chart = blankChart('浏览器测试作品');
-  chart.videoHint = { fileName: meta.fileName, durationMs: 266775 };
+  chart.videoHint = current.videoHint;
   await page.getByLabel('导入谱面文件').setInputFiles({
     name: 'test.wfp.json',
     mimeType: 'application/json',
@@ -56,7 +65,7 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   await demo(page);
   await expect(page.locator('video')).toHaveCount(1);
   const videoNode = (await page.locator('video').elementHandle())!;
-  for (const name of ['新建', '打开谱面', '更换视频', '保存', '导出 JSON', '操作帮助'])
+  for (const name of ['新建', '打开作品', '更换视频', '保存', '导出 JSON', '操作帮助'])
     await expect(page.getByRole('button', { name, exact: true })).not.toBeVisible();
   await expect(page.getByRole('navigation')).not.toBeVisible();
   await expect(page.getByTestId('special-cue')).toHaveText('');
@@ -88,7 +97,7 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   await expect(page.getByTestId('target-squat')).toHaveAttribute('data-state', 'sway');
   await page.getByRole('button', { name: '返回工作台', exact: true }).click();
   expect(await videoNode.evaluate((v) => v.isConnected)).toBe(true);
-  await expect(page.getByRole('button', { name: '打开谱面', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '打开作品', exact: true })).toBeVisible();
   await page.screenshot({ path: 'artifacts/demo-editor.png', fullPage: true });
   expect(
     await page.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime),
@@ -458,7 +467,7 @@ test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(4);
   expect(chart.tempoSegments[0].bpm).toBe(133);
-  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
 });
 
 test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async ({ page }) => {

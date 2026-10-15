@@ -13,8 +13,8 @@ async function videos(dir) {
 await mkdir(path.join(root, 'public'), { recursive: true });
 const source = (await videos(path.join(root, 'maps')))[0];
 const target = path.join(root, 'public', 'demo.mp4');
+const sourceStat = source ? await stat(source) : null;
 if (source) {
-  const sourceStat = await stat(source);
   const targetStat = await stat(target).catch(() => null);
   if (
     !targetStat ||
@@ -30,6 +30,8 @@ await writeFile(
   JSON.stringify({
     available: Boolean(source),
     fileName: source ? path.basename(source) : '',
+    size: sourceStat?.size,
+    lastModified: sourceStat?.mtimeMs,
     url: '/demo.mp4',
   }),
 );

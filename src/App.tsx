@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -22,6 +23,19 @@ import { Editor } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
 import { ModalBackdrop } from './components/ModalBackdrop';
+import {
+  demoVideo,
+  prepareVideo,
+  readStoredVideo,
+  releaseVideo,
+  rememberVideo,
+  resolveVideo,
+  videoPicker,
+  type PreparedVideo,
+  type StoredVideo,
+  type VideoAsset,
+  type VideoFileHandle,
+} from './local-media';
 
 type SaveHandle = {
   createWritable: () => Promise<{
@@ -32,6 +46,13 @@ type SaveHandle = {
 type SaveWindow = Window & { showSaveFilePicker?: (options: unknown) => Promise<SaveHandle> };
 const DRAFT_KEY = 'waifu-fit-player-draft-v1';
 const fileTitle = (name: string) => name.replace(/\.[^.]+$/, '');
+type VideoRequest = {
+  kind: 'new' | 'open' | 'replace';
+  chart: Chart;
+  isSaved: boolean;
+  reason?: string;
+  permission?: StoredVideo;
+};
 
 export default function App() {
   const [initial] = useState(() => blankChart());
@@ -45,10 +66,14 @@ export default function App() {
   const dirty = JSON.stringify(chart) !== saved;
   const [media] = useState(() => new MediaController());
   const status = useMediaStatus(media);
-  const [source, setSource] = useState(''),
-    [mediaName, setMediaName] = useState('');
+  const [source, setSource] = useState('');
   const objectUrl = useRef<string | null>(null),
     fileHandle = useRef<SaveHandle | null>(null);
+  const activeVideo = useRef<PreparedVideo | null>(null);
+  const [projectRevision, setProjectRevision] = useState(0);
+  const [binding, setBinding] = useState<VideoRequest | null>(null);
+  const [busy, setBusy] = useState('');
+  const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'player' | 'editor'>('home');
   const [notice, setNotice] = useState(''),
     [help, setHelp] = useState(false),
@@ -65,7 +90,7 @@ export default function App() {
   const chartInput = useRef<HTMLInputElement>(null),
     videoInput = useRef<HTMLInputElement>(null),
     albumRef = useRef<HTMLDivElement>(null);
-  const newVideoIntent = useRef(false);
+  const videoIntent = useRef<VideoRequest | null>(null);
   const notify = useCallback((text: string) => setNotice(text), []);
   const edit = useCallback((next: Chart) => dispatch({ type: 'edit', chart: next }), []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []),
@@ -103,121 +128,153 @@ export default function App() {
     },
     [],
   );
-  const clearMedia = () => {
-    media.pause();
-    setSource('');
-    setMediaName('');
-    if (objectUrl.current) {
-      URL.revokeObjectURL(objectUrl.current);
-      objectUrl.current = null;
-    }
-  };
   const reset = (next: Chart, isSaved = true) => {
     dispatch({ type: 'reset', chart: next });
     setSaved(isSaved ? JSON.stringify(next) : '');
     fileHandle.current = null;
   };
   const guard = (action: () => void) => {
+    if (working.current) return;
     media.pause();
     if (dirty) setPending(() => action);
     else action();
   };
-  const newChart = () =>
-    guard(() => {
-      clearMedia();
-      reset(blankChart());
-      setDemo(false);
-      setMode('editor');
-      newVideoIntent.current = true;
+  const runTask = async (message: string, action: () => Promise<void>) => {
+    if (working.current) return;
+    working.current = true;
+    setBusy(message);
+    try {
+      await action();
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError'))
+        notify(`未能完成：${error instanceof Error ? error.message : '无法读取作品。'}`);
+    } finally {
+      working.current = false;
+      setBusy('');
+    }
+  };
+  const installProject = async (
+    next: Chart,
+    asset: VideoAsset,
+    isSaved: boolean,
+    persist = false,
+    isDemo = false,
+  ) => {
+    const video = await prepareVideo(asset);
+    let paired: Chart;
+    try {
+      paired = parseChart({ ...next, videoHint: video.hint }, video.hint.durationMs);
+      if (persist) await rememberVideo(asset);
+    } catch (error) {
+      releaseVideo(video);
+      throw error;
+    }
+    // Commit the chart and its validated video together. Never clear the current project early.
+    media.pause();
+    media.seek(0);
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = video.ownedUrl ? video.src : null;
+    activeVideo.current = video;
+    setSource(video.src);
+    setProjectRevision((revision) => revision + 1);
+    reset(paired, isDemo || (isSaved && JSON.stringify(paired) === JSON.stringify(next)));
+    setDemo(isDemo);
+    setMode(isDemo ? 'player' : 'editor');
+    setBinding(null);
+  };
+  const openProject = async (next: Chart, isSaved: boolean) => {
+    const result = await resolveVideo(next.videoHint.assetId);
+    if ('asset' in result) {
+      try {
+        await installProject(next, result.asset, isSaved);
+        notify(isSaved ? '作品已打开，关联视频已自动载入。' : '草稿与关联视频已恢复。');
+      } catch (error) {
+        setBinding({
+          kind: 'open',
+          chart: next,
+          isSaved,
+          reason: `关联视频无法用于此作品，请重新定位。${error instanceof Error ? error.message : ''}`,
+        });
+      }
+    } else setBinding({ kind: 'open', chart: next, isSaved, ...result });
+  };
+  const acceptVideo = async (request: VideoRequest, file: File, handle?: VideoFileHandle) => {
+    const next = request.kind === 'new' ? blankChart(fileTitle(file.name)) : request.chart;
+    await installProject(
+      next,
+      { id: crypto.randomUUID(), kind: 'file', file, handle },
+      false,
+      true,
+    );
+    notify(
+      request.kind === 'new' ? '作品已创建，视频关联已记住。' : '视频关联已更新，请保存作品。',
+    );
+  };
+  const chooseVideo = (request: VideoRequest) => {
+    videoIntent.current = request;
+    const picker = videoPicker();
+    if (!picker) {
       videoInput.current?.click();
-    });
-  const openChart = () => guard(() => chartInput.current?.click());
-  const openVideo = () => {
-    newVideoIntent.current = false;
-    guard(() => videoInput.current?.click());
-  };
-  const loadDemo = async () => {
-    try {
-      const response = await fetch('/demo-media.json');
-      if (!response.ok)
-        throw new Error('没有找到示例素材。请先运行启动脚本，或直接导入自己的 MP4。');
-      const meta = await response.json();
-      if (!meta.available) throw new Error('本地没有示例视频。点击“创建新谱面”导入自己的 MP4。');
-      clearMedia();
-      media.seek(0);
-      reset(demoChart(meta.fileName));
-      setDemo(true);
-      setSource(meta.url);
-      setMediaName(meta.fileName);
-      setMode('player');
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '示例加载失败。');
-    }
-  };
-  const importChart = async (file: File) => {
-    try {
-      const next = parseChart(JSON.parse(await file.text()));
-      if (mediaName !== next.videoHint.fileName) clearMedia();
-      reset(next);
-      setDemo(false);
-      setMode('editor');
-      notify(
-        `已打开“${next.title}”${mediaName !== next.videoHint.fileName ? '，请配对本地视频。' : '。'}`,
-      );
-    } catch (error) {
-      notify(`打开失败：${error instanceof Error ? error.message : '无效的 JSON 文件。'}`);
-    }
-  };
-  const importVideo = (file: File) => {
-    if (!/\.mp4$/i.test(file.name) && file.type !== 'video/mp4') {
-      notify('请选择 MP4 视频文件。');
       return;
     }
+    // Invoke the picker directly in the click gesture, before any asynchronous storage work.
+    void picker()
+      .then(([handle]) => {
+        if (handle)
+          return runTask('正在读取并关联视频…', async () => {
+            await acceptVideo(request, await handle.getFile(), handle);
+          });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        // Saving another project may consume the browser's file-picker activation.
+        setBinding({ ...request, reason: '请选择视频以完成作品。' });
+        notify(error instanceof Error ? error.message : '无法打开视频选择器。');
+      });
+  };
+  const newChart = () =>
+    guard(() => chooseVideo({ kind: 'new', chart: blankChart(), isSaved: false }));
+  const openChart = () => guard(() => chartInput.current?.click());
+  const openVideo = () => {
+    if (working.current) return;
     media.pause();
-    if (
-      !newVideoIntent.current &&
-      chart.videoHint.fileName &&
-      chart.videoHint.fileName !== file.name
-    ) {
-      notify('所选视频的名称与谱面记录不同，请预览确认配对。已有动作时间保持不变。');
-    }
-    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
-    objectUrl.current = URL.createObjectURL(file);
-    setSource(objectUrl.current);
-    setMediaName(file.name);
-    if (newVideoIntent.current) {
-      const next = blankChart(fileTitle(file.name));
-      next.videoHint.fileName = file.name;
-      reset(next, false);
-    }
-    newVideoIntent.current = false;
-    setDemo(false);
-    if (mode === 'home') setMode('editor');
+    chooseVideo({ kind: 'replace', chart, isSaved: false });
   };
-  const onMetadata = () => {
-    const video = media.element;
-    if (!video || !Number.isFinite(video.duration)) return;
-    const durationMs = Math.round(video.duration * 1000);
-    const outside =
-      [...chart.notes, ...chart.specialEvents].some(
-        (n) => ('endTimeMs' in n ? (n.endTimeMs ?? n.timeMs) : n.timeMs) > durationMs,
-      ) || chart.tempoSegments.some((s) => s.anchorMs > durationMs);
-    if (outside) notify('此视频比谱面短，存在越界事件。编辑内容已保留，请更换视频或修正后再保存。');
-    else if (chart.videoHint.fileName !== mediaName || chart.videoHint.durationMs !== durationMs) {
-      const next = { ...chart, videoHint: { fileName: mediaName, durationMs } };
-      edit(next);
-      if (demo && !dirty) setSaved(JSON.stringify(next));
-    }
-  };
+  const loadDemo = () =>
+    runTask('正在打开示例作品…', async () => {
+      const asset = await demoVideo();
+      if (asset.kind === 'demo')
+        await installProject(demoChart(asset.fileName), asset, true, false, true);
+    });
+  const importChart = (file: File) =>
+    runTask('正在打开作品和关联视频…', async () => {
+      const next = parseChart(JSON.parse(await file.text()));
+      await openProject(next, true);
+    });
+  const authorizeVideo = (request: VideoRequest) =>
+    runTask('正在恢复视频访问…', async () => {
+      const record = request.permission;
+      if (!record?.handle?.requestPermission) return;
+      // This must run in the button gesture, rather than automatically during JSON loading.
+      if ((await record.handle.requestPermission({ mode: 'read' })) !== 'granted') {
+        setBinding({ ...request, reason: '尚未允许读取。可以再次授权，或重新选择视频。' });
+        return;
+      }
+      const result = await readStoredVideo(record);
+      if ('asset' in result) await installProject(request.chart, result.asset, request.isSaved);
+      else setBinding({ ...request, permission: undefined, ...result });
+    });
   const save = async (exportCopy = false): Promise<boolean> => {
+    if (!activeVideo.current || !status.ready || working.current) {
+      notify('请先完成作品的视频关联并等待视频载入。');
+      return false;
+    }
+    working.current = true;
     setSaving(true);
     try {
       const next = {
         ...chart,
-        videoHint: {
-          fileName: mediaName || chart.videoHint.fileName,
-          durationMs: status.durationMs || chart.videoHint.durationMs,
-        },
+        videoHint: activeVideo.current.hint,
       };
       const text = serializeChart(next, status.durationMs || undefined);
       const name = `${next.title.replace(/[<>:"/\\|?*]/g, '_')}.wfp.json`;
@@ -228,7 +285,7 @@ export default function App() {
           (await picker.call(window, {
             suggestedName: name,
             types: [
-              { description: 'Waifu Fit Player 谱面', accept: { 'application/json': ['.json'] } },
+              { description: 'Waifu Fit Player 作品', accept: { 'application/json': ['.json'] } },
             ],
           }));
         const writable = await handle.createWritable();
@@ -246,7 +303,9 @@ export default function App() {
       if (JSON.stringify(next) !== JSON.stringify(chart)) edit(next);
       setSaved(JSON.stringify(next));
       notify(
-        exportCopy || !picker ? '谱面已导出。下次打开 JSON 并重新选择视频即可。' : '谱面已保存。',
+        exportCopy || !picker
+          ? '作品已导出，下次打开会自动载入关联视频。'
+          : '作品已保存，已记住关联视频。',
       );
       return true;
     } catch (error) {
@@ -254,12 +313,13 @@ export default function App() {
         notify(`保存失败：${error instanceof Error ? error.message : '无法写入文件。'}`);
       return false;
     } finally {
+      working.current = false;
       setSaving(false);
     }
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (pending || help) return;
+      if (pending || help || binding || busy) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mode === 'editor' && mod && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -280,7 +340,15 @@ export default function App() {
     };
     const keyup = (e: KeyboardEvent) => {
       // Space is a transport command, including when a checkbox or button has focus.
-      if (!pending && !help && mode !== 'home' && e.code === 'Space' && !isTyping(e.target))
+      if (
+        !pending &&
+        !help &&
+        !binding &&
+        !busy &&
+        mode !== 'home' &&
+        e.code === 'Space' &&
+        !isTyping(e.target)
+      )
         e.preventDefault();
     };
     window.addEventListener('keydown', key);
@@ -291,18 +359,13 @@ export default function App() {
     };
   });
   const recover = () =>
-    guard(() => {
-      try {
-        const next = parseChart(JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'));
-        clearMedia();
-        reset(next, false);
-        setDemo(false);
-        setMode('editor');
-        notify('本地草稿已恢复，请重新配对视频。');
-      } catch {
-        notify('草稿无法读取，请打开已保存的 JSON。');
-      }
-    });
+    guard(
+      () =>
+        void runTask('正在恢复作品草稿…', async () => {
+          const next = parseChart(JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'));
+          await openProject(next, false);
+        }),
+    );
   const fullScreen = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => notify('无法退出全屏。'));
     else
@@ -339,10 +402,18 @@ export default function App() {
           >
             工作台
           </button>
-          <button className={mode === 'player' ? 'active' : ''} onClick={() => setMode('player')}>
+          <button
+            className={mode === 'player' ? 'active' : ''}
+            disabled={!source}
+            onClick={() => setMode('player')}
+          >
             跟练模式
           </button>
-          <button className={mode === 'editor' ? 'active' : ''} onClick={() => setMode('editor')}>
+          <button
+            className={mode === 'editor' ? 'active' : ''}
+            disabled={!source}
+            onClick={() => setMode('editor')}
+          >
             谱面编辑
           </button>
         </nav>
@@ -411,13 +482,17 @@ export default function App() {
               </button>
               <button className="button small ghost" onClick={openChart}>
                 <FolderOpen size={15} />
-                打开谱面
+                打开作品
               </button>
               <button className="button small ghost" onClick={openVideo}>
                 <Film size={15} />
                 {source ? '更换视频' : '选择视频'}
               </button>
-              <button className="button small dark" onClick={() => void save()} disabled={saving}>
+              <button
+                className="button small dark"
+                onClick={() => void save()}
+                disabled={saving || !status.ready}
+              >
                 <Save size={15} />
                 保存
               </button>
@@ -425,7 +500,7 @@ export default function App() {
                 className="icon-button export-button"
                 title="导出 JSON 副本（Ctrl+Shift+S）"
                 aria-label="导出 JSON"
-                disabled={saving}
+                disabled={saving || !status.ready}
                 onClick={() => void save(true)}
               >
                 <Download size={17} />
@@ -464,7 +539,6 @@ export default function App() {
                   src={source || undefined}
                   preload="metadata"
                   playsInline
-                  onLoadedMetadata={onMetadata}
                   onDoubleClick={() => media.toggle().catch(() => {})}
                 />
                 {!source && (
@@ -498,6 +572,7 @@ export default function App() {
           <Transport media={media} fullScreen={fullScreen} notify={notify} />
           {mode === 'editor' && (
             <Editor
+              key={projectRevision}
               chart={chart}
               media={media}
               onChange={edit}
@@ -537,17 +612,71 @@ export default function App() {
         aria-label="导入视频文件"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) importVideo(file);
+          const request = videoIntent.current;
+          if (file && request)
+            void runTask('正在读取并关联视频…', () => acceptVideo(request, file));
           e.currentTarget.value = '';
         }}
       />
-      {notice && (
-        <div className="toast" role="status">
-          <span>{notice}</span>
-          <button aria-label="关闭提示" onClick={() => setNotice('')}>
-            <X size={17} />
-          </button>
-        </div>
+      {notice &&
+        createPortal(
+          <div className="toast" role="status">
+            <span>{notice}</span>
+            <button aria-label="关闭提示" onClick={() => setNotice('')}>
+              <X size={17} />
+            </button>
+          </div>,
+          document.fullscreenElement || document.body,
+        )}
+      {busy ? (
+        <ModalBackdrop key="loading" onClose={() => {}}>
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="loading-title"
+          >
+            <h2 id="loading-title">{busy}</h2>
+            <p>视频和谱面准备完成后，将一起打开。</p>
+          </section>
+        </ModalBackdrop>
+      ) : (
+        binding && (
+          <ModalBackdrop key="binding" onClose={() => setBinding(null)}>
+            <section
+              className="modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="video-binding-title"
+            >
+              <span className="eyebrow">{binding.chart.title}</span>
+              <h2 id="video-binding-title">
+                {binding.permission ? '允许读取关联视频' : '定位作品的视频'}
+              </h2>
+              <p>{binding.reason}</p>
+              {binding.chart.videoHint.fileName && (
+                <p className="linked-video-name">{binding.chart.videoHint.fileName}</p>
+              )}
+              <div className="modal-actions">
+                <button className="button light" onClick={() => setBinding(null)}>
+                  取消打开
+                </button>
+                <button
+                  className={`button ${binding.permission ? 'light' : 'primary'}`}
+                  onClick={() => chooseVideo(binding)}
+                >
+                  <Film size={16} />
+                  选择对应视频
+                </button>
+                {binding.permission && (
+                  <button className="button primary" onClick={() => void authorizeVideo(binding)}>
+                    允许读取视频
+                  </button>
+                )}
+              </div>
+            </section>
+          </ModalBackdrop>
+        )
       )}
       {pending && (
         <ModalBackdrop onClose={() => setPending(null)}>
@@ -611,7 +740,7 @@ export default function App() {
             <ol>
               <li>
                 <strong>打开视频</strong>
-                <p>新建谱面后选择 MP4。音乐使用视频本身的声音。</p>
+                <p>新建作品时选择 MP4，自动建立谱面与视频的关联。音乐使用视频本身的声音。</p>
               </li>
               <li>
                 <strong>对齐节拍</strong>
@@ -636,8 +765,8 @@ export default function App() {
               <li>
                 <strong>保存，然后跟练</strong>
                 <p>
-                  Ctrl+S 保存 JSON，Ctrl+Shift+S
-                  导出副本。切换“跟练模式”开始；视频和谱面始终同步。下次打开 JSON 后重新选择视频。
+                  Ctrl+S 保存 JSON，Ctrl+Shift+S 导出作品副本。下次打开 JSON
+                  会自动载入关联视频；仅在视频丢失或权限失效时需要重新定位或授权。
                 </p>
               </li>
             </ol>

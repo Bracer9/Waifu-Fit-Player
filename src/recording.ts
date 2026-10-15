@@ -83,7 +83,15 @@ export function useRecording(options: Options) {
       if (!p || e.key !== p.key) return;
       e.preventDefault();
       pending.current = null;
-      if (!o.enabled || !o.media.getStatus().playing) return;
+      if (
+        !o.enabled ||
+        !o.media.getStatus().playing ||
+        !o.media.element ||
+        o.media.element.paused ||
+        o.media.element.seeking ||
+        o.media.element.ended
+      )
+        return;
       if (performance.now() - p.pressedAt < HOLD_THRESHOLD_MS) {
         o.onNote({
           id: uid(),

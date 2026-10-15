@@ -26,7 +26,7 @@ export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
 export type Chart = {
   schemaVersion: 1;
   title: string;
-  videoHint: { fileName: string; durationMs: number };
+  videoHint: { fileName: string; durationMs: number; assetId?: string };
   specialMove: { name: string; icon: 'heart' | 'star' | 'sparkles'; previewBeats: number } | null;
   tempoSegments: TempoSegment[];
   notes: Note[];
@@ -75,6 +75,13 @@ export function parseChart(input: unknown, durationMs?: number): Chart {
     Number(input.videoHint.durationMs) < 0
   )
     errors.push('videoHint 的文件名或时长无效。');
+  if (
+    record(input.videoHint) &&
+    input.videoHint.assetId !== undefined &&
+    (typeof input.videoHint.assetId !== 'string' ||
+      !/^(?:[a-f0-9-]{36}|demo-[a-f0-9]{64})$/.test(input.videoHint.assetId))
+  )
+    errors.push('videoHint 的视频关联 ID 无效。');
   const limit =
     durationMs || (record(input.videoHint) ? Number(input.videoHint.durationMs) : 0) || Infinity;
   const ids = new Set<string>();

@@ -2152,6 +2152,12 @@ nav button.active:after {
   }
 }
 /* Practice keeps the stage and transport; authoring controls live in the workbench. */
+.linked-video-name {
+  overflow-wrap: anywhere;
+  padding: 12px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+}
 .practice-app {
   display: flex;
   flex-direction: column;

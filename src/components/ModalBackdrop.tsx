@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 export function ModalBackdrop({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -21,6 +22,10 @@ export function ModalBackdrop({ children, onClose }: { children: ReactNode; onCl
       }
       if (event.key === 'Tab') {
         const elements = focusable();
+        if (!elements.length) {
+          event.preventDefault();
+          return;
+        }
         const target =
           event.shiftKey && document.activeElement === elements[0]
             ? elements.at(-1)
@@ -39,9 +44,10 @@ export function ModalBackdrop({ children, onClose }: { children: ReactNode; onCl
       previous?.focus();
     };
   }, []);
-  return (
+  return createPortal(
     <div className="modal-backdrop" ref={ref}>
       {children}
-    </div>
+    </div>,
+    document.fullscreenElement || document.body,
   );
 }

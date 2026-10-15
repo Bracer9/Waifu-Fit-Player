@@ -93,7 +93,7 @@ export function Home({
           <FolderOpen />
           <div>
             <strong>打开已有作品</strong>
-            <p>导入 JSON 谱面，配对本地 MP4</p>
+            <p>打开作品，自动载入关联视频和谱面</p>
           </div>
           <ArrowUpRight />
         </button>
@@ -111,7 +111,7 @@ export function Home({
             <Music2 />
             <div>
               <strong>{hasDraft ? '恢复上次的本地草稿' : '为下一首喜欢的歌做谱'}</strong>
-              <p>{hasDraft ? '恢复谱面后重新选择视频即可' : '边播放边按键，也可以点击时间轴'}</p>
+              <p>{hasDraft ? '一起恢复谱面与关联视频' : '边播放边按键，也可以点击时间轴'}</p>
             </div>
             <ArrowRight />
           </button>
