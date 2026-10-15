@@ -27,6 +27,26 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
       ).toBeCloseTo(16 / 9, 2);
       await expect(video).toHaveCSS('object-fit', 'contain');
       await expect(page.locator('.play-lane')).toHaveCount(5);
+      await expect
+        .poll(() =>
+          page
+            .locator('.studio-scene')
+            .evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0),
+        )
+        .toBe(true);
+      // The foreground bottle must remain fully visible and clear of the actual playfield.
+      const bottle = (await page.locator('.studio-bottle').boundingBox())!;
+      expect(bottle.x).toBeGreaterThanOrEqual(0);
+      expect(bottle.y).toBeGreaterThanOrEqual(0);
+      expect(bottle.x + bottle.width).toBeLessThanOrEqual(width);
+      expect(bottle.y + bottle.height).toBeLessThanOrEqual(height);
+      for (const item of await page.locator('.note-highway, .video-panel').all()) {
+        const box = (await item.boundingBox())!;
+        expect(bottle.x + bottle.width <= box.x || bottle.y >= box.y + box.height).toBe(true);
+      }
+      const foreground = (await page.locator('.practice-foreground').boundingBox())!;
+      expect(foreground.height).toBeGreaterThan(height * 0.2);
+      await expect(page.locator('.practice-foreground')).toHaveCSS('pointer-events', 'none');
       expect(
         await page.evaluate(() => ({
           x: document.documentElement.scrollWidth > innerWidth,
