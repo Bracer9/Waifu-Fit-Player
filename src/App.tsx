@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  ArrowLeft,
   ArrowUpRight,
   Check,
   Download,
@@ -22,6 +21,7 @@ import { Player } from './views/Player';
 import { Editor } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
+import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import {
   demoVideo,
@@ -454,12 +454,13 @@ export default function App() {
           hidden={mode === 'home'}
           ref={albumRef}
         >
+          {mode === 'player' && <PracticeBackdrop />}
           <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
             <i />
             VOL. 01
           </div>
-          <div className="workspace-header">
+          <div className="workspace-header" hidden={mode === 'player'}>
             <div className="workspace-title">
               <span className="eyebrow" hidden={mode === 'player'}>
                 {mode === 'editor' ? 'MAKE YOUR OWN RHYTHM' : 'NOW PLAYING'}
@@ -510,74 +511,77 @@ export default function App() {
                 <Download size={17} />
               </button>
             </div>
-            {mode === 'player' && (
-              <button
-                className="button small ghost return-workspace"
-                onClick={() => {
-                  media.pause();
-                  setMode('editor');
-                }}
-              >
-                <ArrowLeft size={16} />
-                WORKBENCH
-              </button>
-            )}
           </div>
           <div className="stage-grid">
             <div className="stage-left">
+              {mode === 'player' && <PracticeCover title={chart.title} />}
               {mode !== 'home' && (
                 <Player chart={chart} media={media} showGuide={mode === 'editor'} />
               )}
             </div>
-            <section className="video-panel" aria-label="Video">
-              <div className="video-topline" hidden={mode === 'player'}>
-                <span>
-                  <i />
-                  {mode === 'editor' ? 'VIDEO PREVIEW' : 'YOUR PRIVATE STAGE'}
-                </span>
-                <span>↗</span>
-              </div>
-              <div className="video-viewport">
-                <video
-                  ref={media.attach}
-                  src={source || undefined}
-                  preload="metadata"
-                  playsInline
-                  onDoubleClick={() => media.toggle().catch(() => {})}
+            <div className="stage-right">
+              {mode === 'player' && (
+                <PracticeMasthead
+                  onReturn={() => {
+                    media.pause();
+                    setMode('editor');
+                  }}
                 />
-                {!source && (
-                  <div className="video-placeholder">
-                    <div className="placeholder-icon">
-                      <Film size={32} />
+              )}
+              <section className="video-panel" aria-label="Video">
+                <div className="video-topline" hidden={mode === 'player'}>
+                  <span>
+                    <i />
+                    {mode === 'editor' ? 'VIDEO PREVIEW' : 'YOUR PRIVATE STAGE'}
+                  </span>
+                  <span>↗</span>
+                </div>
+                <div className="video-viewport">
+                  <video
+                    ref={media.attach}
+                    src={source || undefined}
+                    preload="metadata"
+                    playsInline
+                    onDoubleClick={() => media.toggle().catch(() => {})}
+                  />
+                  {!source && (
+                    <div className="video-placeholder">
+                      <div className="placeholder-icon">
+                        <Film size={32} />
+                      </div>
+                      <strong>让喜欢的角色，陪你动起来。</strong>
+                      <p>选择一个本地 MP4 视频，开始这一首。</p>
+                      <button className="button primary small" onClick={openVideo}>
+                        <Plus size={15} />
+                        选择视频
+                      </button>
                     </div>
-                    <strong>让喜欢的角色，陪你动起来。</strong>
-                    <p>选择一个本地 MP4 视频，开始这一首。</p>
-                    <button className="button primary small" onClick={openVideo}>
-                      <Plus size={15} />
-                      选择视频
-                    </button>
-                  </div>
+                  )}
+                  {status.error && (
+                    <div className="video-error">
+                      {mode === 'player'
+                        ? 'Video unavailable. Select the video again.'
+                        : status.error}
+                      <button onClick={openVideo}>
+                        {mode === 'player' ? 'Select video' : '重新选择视频'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="video-caption" hidden={mode === 'player'}>
+                  <span>
+                    <Heart size={12} /> MOVE WITH YOUR FAVORITE
+                  </span>
+                  <span>VIDEO + MUSIC</span>
+                </div>
+                {mode === 'player' && (
+                  <Transport media={media} fullScreen={fullScreen} notify={notify} />
                 )}
-                {status.error && (
-                  <div className="video-error">
-                    {mode === 'player'
-                      ? 'Video unavailable. Select the video again.'
-                      : status.error}
-                    <button onClick={openVideo}>
-                      {mode === 'player' ? 'Select video' : '重新选择视频'}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="video-caption" hidden={mode === 'player'}>
-                <span>
-                  <Heart size={12} /> MOVE WITH YOUR FAVORITE
-                </span>
-                <span>VIDEO + MUSIC</span>
-              </div>
-            </section>
+              </section>
+            </div>
+            {mode === 'player' && <div className="album-hinge" aria-hidden="true" />}
           </div>
-          <Transport media={media} fullScreen={fullScreen} notify={notify} />
+          {mode !== 'player' && <Transport media={media} fullScreen={fullScreen} notify={notify} />}
           {mode === 'editor' && (
             <Editor
               key={projectRevision}

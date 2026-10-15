@@ -6,4 +6,5 @@ import '@fontsource/barlow-condensed/latin-700.css';
 import '@fontsource/barlow-condensed/latin-800.css';
 import '@fontsource/barlow-condensed/latin-900.css';
 import './styles.css';
+import './practice.css';
 createRoot(document.getElementById('root')!).render(<App />);

@@ -162,7 +162,7 @@ export function Player({
                 </div>
                 {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
                 {holding && <span className="holding-label">{noteAction(holding)}</span>}
-                {release && (
+                {release && !holding && (
                   <span className="release-label" style={{ opacity: flash }}>
                     {release.direction === 'close' &&
                     release.kind === 'hold' &&
