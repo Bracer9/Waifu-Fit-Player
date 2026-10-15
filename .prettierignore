@@ -1,0 +1,10 @@
+node_modules
+dist
+artifacts
+public/demo-media.json
+test-results
+playwright-report
+package-lock.json
+Waifu-Fit-Player_Codex_Handoff
+references
+maps

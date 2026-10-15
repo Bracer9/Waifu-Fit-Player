@@ -23,3 +23,10 @@ coverage/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Generated local demo media and browser test output
+/public/demo.mp4
+/public/demo-media.json
+/test-results/
+/playwright-report/
+/artifacts/

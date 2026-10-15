@@ -1,0 +1,120 @@
+import { useEffect, useRef } from 'react';
+import { LANES, uid, type Chart, type Direction, type Lane, type Note, type Snap } from './model';
+import { MediaController } from './media';
+import { nextGrid, snapTime } from './timing';
+export const isTyping = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  !!target.closest('input, textarea, select, [contenteditable="true"]');
+type Options = {
+  enabled: boolean;
+  lane: Lane;
+  hold: boolean;
+  sway: boolean;
+  snap: Snap;
+  chart: Chart;
+  media: MediaController;
+  onLane: (lane: Lane) => void;
+  onNote: (note: Note) => void;
+  notify: (message: string) => void;
+};
+export function useRecording(options: Options) {
+  const opts = useRef(options);
+  opts.current = options;
+  const pending = useRef<{
+    key: string;
+    lane: Lane;
+    direction: Direction;
+    timeMs: number;
+    modifier: 'none' | 'sway';
+  } | null>(null);
+  useEffect(() => {
+    const cancel = () => {
+      if (pending.current) {
+        pending.current = null;
+        opts.current.notify('已取消尚未完成的 HOLD。');
+      }
+    };
+    const keydown = (e: KeyboardEvent) => {
+      const o = opts.current;
+      if (!o.enabled || isTyping(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        e.preventDefault();
+        if (!e.repeat) o.onLane(LANES[Number(e.key) - 1].id);
+        return;
+      }
+      const dir = (
+        { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' } as Record<
+          string,
+          Direction
+        >
+      )[e.key];
+      if (!dir) return;
+      e.preventDefault();
+      if (e.repeat || pending.current || !o.media.getStatus().playing) return;
+      if (!(LANES.find((l) => l.id === o.lane)!.directions as readonly Direction[]).includes(dir)) {
+        o.notify('当前轨道不支持这个方向。');
+        return;
+      }
+      const timeMs = snapTime(
+        o.media.element!.currentTime * 1000,
+        o.chart.tempoSegments,
+        o.snap,
+        o.media.getStatus().durationMs,
+      );
+      if (o.hold)
+        pending.current = {
+          key: e.key,
+          lane: o.lane,
+          direction: dir,
+          timeMs,
+          modifier: o.sway ? 'sway' : 'none',
+        };
+      else o.onNote({ id: uid(), lane: o.lane, direction: dir, kind: 'tap', timeMs });
+    };
+    const keyup = (e: KeyboardEvent) => {
+      const p = pending.current,
+        o = opts.current;
+      if (!p || e.key !== p.key) return;
+      pending.current = null;
+      if (!o.enabled || !o.media.getStatus().playing) return;
+      const duration = o.media.getStatus().durationMs;
+      let endTimeMs = snapTime(
+        o.media.element!.currentTime * 1000,
+        o.chart.tempoSegments,
+        o.snap,
+        duration,
+      );
+      if (endTimeMs <= p.timeMs)
+        endTimeMs = nextGrid(p.timeMs, o.chart.tempoSegments, o.snap, duration);
+      if (endTimeMs > p.timeMs)
+        o.onNote({
+          id: uid(),
+          lane: p.lane,
+          direction: p.direction,
+          timeMs: p.timeMs,
+          kind: 'hold',
+          modifier: p.modifier,
+          endTimeMs,
+        });
+    };
+    window.addEventListener('keydown', keydown);
+    window.addEventListener('keyup', keyup);
+    window.addEventListener('blur', cancel);
+    const video = options.media.element;
+    ['pause', 'seeking', 'ended', 'emptied'].forEach((name) =>
+      video?.addEventListener(name, cancel),
+    );
+    return () => {
+      window.removeEventListener('keydown', keydown);
+      window.removeEventListener('keyup', keyup);
+      window.removeEventListener('blur', cancel);
+      ['pause', 'seeking', 'ended', 'emptied'].forEach((name) =>
+        video?.removeEventListener(name, cancel),
+      );
+      pending.current = null;
+    };
+  }, [options.media]);
+  useEffect(() => {
+    if (!options.enabled) pending.current = null;
+  }, [options.enabled]);
+}

@@ -1,0 +1,1655 @@
+{
+  "schemaVersion": 1,
+  "title": "爽快奪回 Sunlight",
+  "videoHint": {
+    "fileName": "YTDown.com_YouTube_Media_hh_8_CyG5Cc_艦これ-神風と春風で爽快奪回Sunlight-4K-MMD-カメラ配布-Camera-DL_001_1080p.mp4",
+    "durationMs": 266775
+  },
+  "specialMove": {
+    "name": "比心 / HEART POSE",
+    "icon": "heart",
+    "previewBeats": 3
+  },
+  "tempoSegments": [
+    {
+      "id": "demo-tempo",
+      "anchorMs": 2000,
+      "bpm": 150,
+      "meter": "4/4"
+    }
+  ],
+  "notes": [
+    {
+      "id": "demo-0",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 2000,
+      "endTimeMs": 3600
+    },
+    {
+      "id": "demo-1",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 3600
+    },
+    {
+      "id": "demo-2",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 5200
+    },
+    {
+      "id": "demo-3",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 6000
+    },
+    {
+      "id": "demo-4",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 6800
+    },
+    {
+      "id": "demo-5",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 7600
+    },
+    {
+      "id": "demo-6",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 8400
+    },
+    {
+      "id": "demo-7",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 9200
+    },
+    {
+      "id": "demo-8",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 10000
+    },
+    {
+      "id": "demo-9",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 10800
+    },
+    {
+      "id": "demo-10",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 11600
+    },
+    {
+      "id": "demo-11",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 13200
+    },
+    {
+      "id": "demo-12",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 14800,
+      "endTimeMs": 16400
+    },
+    {
+      "id": "demo-13",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 16400
+    },
+    {
+      "id": "demo-14",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 18000
+    },
+    {
+      "id": "demo-15",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 18800
+    },
+    {
+      "id": "demo-16",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 19600
+    },
+    {
+      "id": "demo-17",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 20400
+    },
+    {
+      "id": "demo-18",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 21200
+    },
+    {
+      "id": "demo-19",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 22000
+    },
+    {
+      "id": "demo-20",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 22800
+    },
+    {
+      "id": "demo-21",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 23600
+    },
+    {
+      "id": "demo-22",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 27600,
+      "endTimeMs": 29200
+    },
+    {
+      "id": "demo-23",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 29200
+    },
+    {
+      "id": "demo-24",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 30800
+    },
+    {
+      "id": "demo-25",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 31600
+    },
+    {
+      "id": "demo-26",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 32400
+    },
+    {
+      "id": "demo-27",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 33200
+    },
+    {
+      "id": "demo-28",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 34000
+    },
+    {
+      "id": "demo-29",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 34800
+    },
+    {
+      "id": "demo-30",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 35600
+    },
+    {
+      "id": "demo-31",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 36400
+    },
+    {
+      "id": "demo-32",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 37200
+    },
+    {
+      "id": "demo-33",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 38800
+    },
+    {
+      "id": "demo-34",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 40400,
+      "endTimeMs": 42000
+    },
+    {
+      "id": "demo-35",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 42000
+    },
+    {
+      "id": "demo-36",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 43600
+    },
+    {
+      "id": "demo-37",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 44400
+    },
+    {
+      "id": "demo-38",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 45200
+    },
+    {
+      "id": "demo-39",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 46000
+    },
+    {
+      "id": "demo-40",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 46800
+    },
+    {
+      "id": "demo-41",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 47600
+    },
+    {
+      "id": "demo-42",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 48400
+    },
+    {
+      "id": "demo-43",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 49200
+    },
+    {
+      "id": "demo-44",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 53200,
+      "endTimeMs": 54800
+    },
+    {
+      "id": "demo-45",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 54800
+    },
+    {
+      "id": "demo-46",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 56400
+    },
+    {
+      "id": "demo-47",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 57200
+    },
+    {
+      "id": "demo-48",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 58000
+    },
+    {
+      "id": "demo-49",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 58800
+    },
+    {
+      "id": "demo-50",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 59600
+    },
+    {
+      "id": "demo-51",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 60400
+    },
+    {
+      "id": "demo-52",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 61200
+    },
+    {
+      "id": "demo-53",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 62000
+    },
+    {
+      "id": "demo-54",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 62800
+    },
+    {
+      "id": "demo-55",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 64400
+    },
+    {
+      "id": "demo-56",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 66000,
+      "endTimeMs": 67600
+    },
+    {
+      "id": "demo-57",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 67600
+    },
+    {
+      "id": "demo-58",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 69200
+    },
+    {
+      "id": "demo-59",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 70000
+    },
+    {
+      "id": "demo-60",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 70800
+    },
+    {
+      "id": "demo-61",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 71600
+    },
+    {
+      "id": "demo-62",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 72400
+    },
+    {
+      "id": "demo-63",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 73200
+    },
+    {
+      "id": "demo-64",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 74000
+    },
+    {
+      "id": "demo-65",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 74800
+    },
+    {
+      "id": "demo-66",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 78800,
+      "endTimeMs": 80400
+    },
+    {
+      "id": "demo-67",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 80400
+    },
+    {
+      "id": "demo-68",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 82000
+    },
+    {
+      "id": "demo-69",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 82800
+    },
+    {
+      "id": "demo-70",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 83600
+    },
+    {
+      "id": "demo-71",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 84400
+    },
+    {
+      "id": "demo-72",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 85200
+    },
+    {
+      "id": "demo-73",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 86000
+    },
+    {
+      "id": "demo-74",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 86800
+    },
+    {
+      "id": "demo-75",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 87600
+    },
+    {
+      "id": "demo-76",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 88400
+    },
+    {
+      "id": "demo-77",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 90000
+    },
+    {
+      "id": "demo-78",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 91600,
+      "endTimeMs": 93200
+    },
+    {
+      "id": "demo-79",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 93200
+    },
+    {
+      "id": "demo-80",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 94800
+    },
+    {
+      "id": "demo-81",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 95600
+    },
+    {
+      "id": "demo-82",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 96400
+    },
+    {
+      "id": "demo-83",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 97200
+    },
+    {
+      "id": "demo-84",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 98000
+    },
+    {
+      "id": "demo-85",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 98800
+    },
+    {
+      "id": "demo-86",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 99600
+    },
+    {
+      "id": "demo-87",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 100400
+    },
+    {
+      "id": "demo-88",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 104400,
+      "endTimeMs": 106000
+    },
+    {
+      "id": "demo-89",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 106000
+    },
+    {
+      "id": "demo-90",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 107600
+    },
+    {
+      "id": "demo-91",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 108400
+    },
+    {
+      "id": "demo-92",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 109200
+    },
+    {
+      "id": "demo-93",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 110000
+    },
+    {
+      "id": "demo-94",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 110800
+    },
+    {
+      "id": "demo-95",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 111600
+    },
+    {
+      "id": "demo-96",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 112400
+    },
+    {
+      "id": "demo-97",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 113200
+    },
+    {
+      "id": "demo-98",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 114000
+    },
+    {
+      "id": "demo-99",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 115600
+    },
+    {
+      "id": "demo-100",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 117200,
+      "endTimeMs": 118800
+    },
+    {
+      "id": "demo-101",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 118800
+    },
+    {
+      "id": "demo-102",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 120400
+    },
+    {
+      "id": "demo-103",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 121200
+    },
+    {
+      "id": "demo-104",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 122000
+    },
+    {
+      "id": "demo-105",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 122800
+    },
+    {
+      "id": "demo-106",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 123600
+    },
+    {
+      "id": "demo-107",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 124400
+    },
+    {
+      "id": "demo-108",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 125200
+    },
+    {
+      "id": "demo-109",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 126000
+    },
+    {
+      "id": "demo-110",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 130000,
+      "endTimeMs": 131600
+    },
+    {
+      "id": "demo-111",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 131600
+    },
+    {
+      "id": "demo-112",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 133200
+    },
+    {
+      "id": "demo-113",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 134000
+    },
+    {
+      "id": "demo-114",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 134800
+    },
+    {
+      "id": "demo-115",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 135600
+    },
+    {
+      "id": "demo-116",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 136400
+    },
+    {
+      "id": "demo-117",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 137200
+    },
+    {
+      "id": "demo-118",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 138000
+    },
+    {
+      "id": "demo-119",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 138800
+    },
+    {
+      "id": "demo-120",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 139600
+    },
+    {
+      "id": "demo-121",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 141200
+    },
+    {
+      "id": "demo-122",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 142800,
+      "endTimeMs": 144400
+    },
+    {
+      "id": "demo-123",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 144400
+    },
+    {
+      "id": "demo-124",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 146000
+    },
+    {
+      "id": "demo-125",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 146800
+    },
+    {
+      "id": "demo-126",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 147600
+    },
+    {
+      "id": "demo-127",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 148400
+    },
+    {
+      "id": "demo-128",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 149200
+    },
+    {
+      "id": "demo-129",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 150000
+    },
+    {
+      "id": "demo-130",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 150800
+    },
+    {
+      "id": "demo-131",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 151600
+    },
+    {
+      "id": "demo-132",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 155600,
+      "endTimeMs": 157200
+    },
+    {
+      "id": "demo-133",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 157200
+    },
+    {
+      "id": "demo-134",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 158800
+    },
+    {
+      "id": "demo-135",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 159600
+    },
+    {
+      "id": "demo-136",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 160400
+    },
+    {
+      "id": "demo-137",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 161200
+    },
+    {
+      "id": "demo-138",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 162000
+    },
+    {
+      "id": "demo-139",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 162800
+    },
+    {
+      "id": "demo-140",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 163600
+    },
+    {
+      "id": "demo-141",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 164400
+    },
+    {
+      "id": "demo-142",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 165200
+    },
+    {
+      "id": "demo-143",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 166800
+    },
+    {
+      "id": "demo-144",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 168400,
+      "endTimeMs": 170000
+    },
+    {
+      "id": "demo-145",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 170000
+    },
+    {
+      "id": "demo-146",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 171600
+    },
+    {
+      "id": "demo-147",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 172400
+    },
+    {
+      "id": "demo-148",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 173200
+    },
+    {
+      "id": "demo-149",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 174000
+    },
+    {
+      "id": "demo-150",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 174800
+    },
+    {
+      "id": "demo-151",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 175600
+    },
+    {
+      "id": "demo-152",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 176400
+    },
+    {
+      "id": "demo-153",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 177200
+    },
+    {
+      "id": "demo-154",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 181200,
+      "endTimeMs": 182800
+    },
+    {
+      "id": "demo-155",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 182800
+    },
+    {
+      "id": "demo-156",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 184400
+    },
+    {
+      "id": "demo-157",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 185200
+    },
+    {
+      "id": "demo-158",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 186000
+    },
+    {
+      "id": "demo-159",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 186800
+    },
+    {
+      "id": "demo-160",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 187600
+    },
+    {
+      "id": "demo-161",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 188400
+    },
+    {
+      "id": "demo-162",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 189200
+    },
+    {
+      "id": "demo-163",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 190000
+    },
+    {
+      "id": "demo-164",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 190800
+    },
+    {
+      "id": "demo-165",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 192400
+    },
+    {
+      "id": "demo-166",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 194000,
+      "endTimeMs": 195600
+    },
+    {
+      "id": "demo-167",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 195600
+    },
+    {
+      "id": "demo-168",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 197200
+    },
+    {
+      "id": "demo-169",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 198000
+    },
+    {
+      "id": "demo-170",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 198800
+    },
+    {
+      "id": "demo-171",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 199600
+    },
+    {
+      "id": "demo-172",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 200400
+    },
+    {
+      "id": "demo-173",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 201200
+    },
+    {
+      "id": "demo-174",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 202000
+    },
+    {
+      "id": "demo-175",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 202800
+    },
+    {
+      "id": "demo-176",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 206800,
+      "endTimeMs": 208400
+    },
+    {
+      "id": "demo-177",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 208400
+    },
+    {
+      "id": "demo-178",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 210000
+    },
+    {
+      "id": "demo-179",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 210800
+    },
+    {
+      "id": "demo-180",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 211600
+    },
+    {
+      "id": "demo-181",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 212400
+    },
+    {
+      "id": "demo-182",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 213200
+    },
+    {
+      "id": "demo-183",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 214000
+    },
+    {
+      "id": "demo-184",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 214800
+    },
+    {
+      "id": "demo-185",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 215600
+    },
+    {
+      "id": "demo-186",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 216400
+    },
+    {
+      "id": "demo-187",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 218000
+    },
+    {
+      "id": "demo-188",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 219600,
+      "endTimeMs": 221200
+    },
+    {
+      "id": "demo-189",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 221200
+    },
+    {
+      "id": "demo-190",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 222800
+    },
+    {
+      "id": "demo-191",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 223600
+    },
+    {
+      "id": "demo-192",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 224400
+    },
+    {
+      "id": "demo-193",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 225200
+    },
+    {
+      "id": "demo-194",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 226000
+    },
+    {
+      "id": "demo-195",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 226800
+    },
+    {
+      "id": "demo-196",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 227600
+    },
+    {
+      "id": "demo-197",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 228400
+    },
+    {
+      "id": "demo-198",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "sway",
+      "timeMs": 232400,
+      "endTimeMs": 234000
+    },
+    {
+      "id": "demo-199",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 234000
+    },
+    {
+      "id": "demo-200",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 235600
+    },
+    {
+      "id": "demo-201",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 236400
+    },
+    {
+      "id": "demo-202",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 237200
+    },
+    {
+      "id": "demo-203",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 238000
+    },
+    {
+      "id": "demo-204",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 238800
+    },
+    {
+      "id": "demo-205",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 239600
+    },
+    {
+      "id": "demo-206",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 240400
+    },
+    {
+      "id": "demo-207",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 241200
+    },
+    {
+      "id": "demo-208",
+      "lane": "side_crunch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 242000
+    },
+    {
+      "id": "demo-209",
+      "lane": "side_crunch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 243600
+    },
+    {
+      "id": "demo-210",
+      "lane": "squat",
+      "direction": "down",
+      "kind": "hold",
+      "modifier": "none",
+      "timeMs": 245200,
+      "endTimeMs": 246800
+    },
+    {
+      "id": "demo-211",
+      "lane": "squat",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 246800
+    },
+    {
+      "id": "demo-212",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 248400
+    },
+    {
+      "id": "demo-213",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 249200
+    },
+    {
+      "id": "demo-214",
+      "lane": "punch",
+      "direction": "left",
+      "kind": "tap",
+      "timeMs": 250000
+    },
+    {
+      "id": "demo-215",
+      "lane": "punch",
+      "direction": "right",
+      "kind": "tap",
+      "timeMs": 250800
+    },
+    {
+      "id": "demo-216",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 251600
+    },
+    {
+      "id": "demo-217",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 252400
+    },
+    {
+      "id": "demo-218",
+      "lane": "calf_raise",
+      "direction": "up",
+      "kind": "tap",
+      "timeMs": 253200
+    },
+    {
+      "id": "demo-219",
+      "lane": "calf_raise",
+      "direction": "down",
+      "kind": "tap",
+      "timeMs": 254000
+    }
+  ],
+  "specialEvents": [
+    {
+      "id": "special-7",
+      "timeMs": 24400,
+      "endTimeMs": 26000
+    },
+    {
+      "id": "special-15",
+      "timeMs": 50000,
+      "endTimeMs": 51600
+    },
+    {
+      "id": "special-23",
+      "timeMs": 75600,
+      "endTimeMs": 77200
+    },
+    {
+      "id": "special-31",
+      "timeMs": 101200,
+      "endTimeMs": 102800
+    },
+    {
+      "id": "special-39",
+      "timeMs": 126800,
+      "endTimeMs": 128400
+    },
+    {
+      "id": "special-47",
+      "timeMs": 152400,
+      "endTimeMs": 154000
+    },
+    {
+      "id": "special-55",
+      "timeMs": 178000,
+      "endTimeMs": 179600
+    },
+    {
+      "id": "special-63",
+      "timeMs": 203600,
+      "endTimeMs": 205200
+    },
+    {
+      "id": "special-71",
+      "timeMs": 229200,
+      "endTimeMs": 230800
+    },
+    {
+      "id": "special-79",
+      "timeMs": 254800,
+      "endTimeMs": 256400
+    }
+  ]
+}

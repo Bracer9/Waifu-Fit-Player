@@ -1,0 +1,637 @@
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import {
+  ArrowUpRight,
+  Check,
+  Download,
+  Film,
+  FolderOpen,
+  Heart,
+  HelpCircle,
+  Plus,
+  Save,
+  X,
+} from 'lucide-react';
+import { blankChart, parseChart, serializeChart, type Chart } from './model';
+import { historyReducer } from './editing';
+import { MediaController, useMediaStatus } from './media';
+import { isTyping } from './recording';
+import { demoChart } from './demo';
+import { Player } from './views/Player';
+import { Editor } from './views/Editor';
+import { Home } from './views/Home';
+import { Transport } from './components/Transport';
+import { ModalBackdrop } from './components/ModalBackdrop';
+
+type SaveHandle = {
+  createWritable: () => Promise<{
+    write: (text: string) => Promise<void>;
+    close: () => Promise<void>;
+  }>;
+};
+type SaveWindow = Window & { showSaveFilePicker?: (options: unknown) => Promise<SaveHandle> };
+const DRAFT_KEY = 'waifu-fit-player-draft-v1';
+const fileTitle = (name: string) => name.replace(/\.[^.]+$/, '');
+
+export default function App() {
+  const [initial] = useState(() => blankChart());
+  const [history, dispatch] = useReducer(historyReducer, {
+    past: [],
+    present: initial,
+    future: [],
+  });
+  const chart = history.present;
+  const [saved, setSaved] = useState(JSON.stringify(initial));
+  const dirty = JSON.stringify(chart) !== saved;
+  const [media] = useState(() => new MediaController());
+  const status = useMediaStatus(media);
+  const [source, setSource] = useState(''),
+    [mediaName, setMediaName] = useState('');
+  const objectUrl = useRef<string | null>(null),
+    fileHandle = useRef<SaveHandle | null>(null);
+  const [mode, setMode] = useState<'home' | 'player' | 'editor'>('home');
+  const [notice, setNotice] = useState(''),
+    [help, setHelp] = useState(false),
+    [demo, setDemo] = useState(false);
+  const [pending, setPending] = useState<(() => void) | null>(null),
+    [saving, setSaving] = useState(false);
+  const [hasDraft, setHasDraft] = useState(() => {
+    try {
+      return !!localStorage.getItem(DRAFT_KEY);
+    } catch {
+      return false;
+    }
+  });
+  const chartInput = useRef<HTMLInputElement>(null),
+    videoInput = useRef<HTMLInputElement>(null),
+    albumRef = useRef<HTMLDivElement>(null);
+  const newVideoIntent = useRef(false);
+  const notify = useCallback((text: string) => setNotice(text), []);
+  const edit = useCallback((next: Chart) => dispatch({ type: 'edit', chart: next }), []);
+  const undo = useCallback(() => dispatch({ type: 'undo' }), []),
+    redo = useCallback(() => dispatch({ type: 'redo' }), []);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(''), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+  useEffect(() => {
+    const beforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [dirty]);
+  useEffect(() => {
+    if (!dirty) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, serializeChart(chart));
+        setHasDraft(true);
+      } catch {
+        /* Export remains available if browser storage is full. */
+      }
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [chart, dirty]);
+  useEffect(
+    () => () => {
+      if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    },
+    [],
+  );
+  const clearMedia = () => {
+    media.pause();
+    setSource('');
+    setMediaName('');
+    if (objectUrl.current) {
+      URL.revokeObjectURL(objectUrl.current);
+      objectUrl.current = null;
+    }
+  };
+  const reset = (next: Chart, isSaved = true) => {
+    dispatch({ type: 'reset', chart: next });
+    setSaved(isSaved ? JSON.stringify(next) : '');
+    fileHandle.current = null;
+  };
+  const guard = (action: () => void) => {
+    media.pause();
+    if (dirty) setPending(() => action);
+    else action();
+  };
+  const newChart = () =>
+    guard(() => {
+      clearMedia();
+      reset(blankChart());
+      setDemo(false);
+      setMode('editor');
+      newVideoIntent.current = true;
+      videoInput.current?.click();
+    });
+  const openChart = () => guard(() => chartInput.current?.click());
+  const openVideo = () => {
+    newVideoIntent.current = false;
+    guard(() => videoInput.current?.click());
+  };
+  const loadDemo = async () => {
+    try {
+      const response = await fetch('/demo-media.json');
+      if (!response.ok)
+        throw new Error('没有找到示例素材。请先运行启动脚本，或直接导入自己的 MP4。');
+      const meta = await response.json();
+      if (!meta.available) throw new Error('本地没有示例视频。点击“创建新谱面”导入自己的 MP4。');
+      clearMedia();
+      media.seek(0);
+      reset(demoChart(meta.fileName));
+      setDemo(true);
+      setSource(meta.url);
+      setMediaName(meta.fileName);
+      setMode('player');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '示例加载失败。');
+    }
+  };
+  const importChart = async (file: File) => {
+    try {
+      const next = parseChart(JSON.parse(await file.text()));
+      if (mediaName !== next.videoHint.fileName) clearMedia();
+      reset(next);
+      setDemo(false);
+      setMode('editor');
+      notify(
+        `已打开“${next.title}”${mediaName !== next.videoHint.fileName ? '，请配对本地视频。' : '。'}`,
+      );
+    } catch (error) {
+      notify(`打开失败：${error instanceof Error ? error.message : '无效的 JSON 文件。'}`);
+    }
+  };
+  const importVideo = (file: File) => {
+    if (!/\.mp4$/i.test(file.name) && file.type !== 'video/mp4') {
+      notify('请选择 MP4 视频文件。');
+      return;
+    }
+    media.pause();
+    if (
+      !newVideoIntent.current &&
+      chart.videoHint.fileName &&
+      chart.videoHint.fileName !== file.name
+    ) {
+      notify('所选视频的名称与谱面记录不同，请预览确认配对。已有动作时间保持不变。');
+    }
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = URL.createObjectURL(file);
+    setSource(objectUrl.current);
+    setMediaName(file.name);
+    if (newVideoIntent.current) {
+      const next = blankChart(fileTitle(file.name));
+      next.videoHint.fileName = file.name;
+      reset(next, false);
+    }
+    newVideoIntent.current = false;
+    setDemo(false);
+    if (mode === 'home') setMode('editor');
+  };
+  const onMetadata = () => {
+    const video = media.element;
+    if (!video || !Number.isFinite(video.duration)) return;
+    const durationMs = Math.round(video.duration * 1000);
+    const outside =
+      [...chart.notes, ...chart.specialEvents].some(
+        (n) => ('endTimeMs' in n ? (n.endTimeMs ?? n.timeMs) : n.timeMs) > durationMs,
+      ) || chart.tempoSegments.some((s) => s.anchorMs > durationMs);
+    if (outside) notify('此视频比谱面短，存在越界事件。编辑内容已保留，请更换视频或修正后再保存。');
+    else if (chart.videoHint.fileName !== mediaName || chart.videoHint.durationMs !== durationMs) {
+      const next = { ...chart, videoHint: { fileName: mediaName, durationMs } };
+      edit(next);
+      if (demo && !dirty) setSaved(JSON.stringify(next));
+    }
+  };
+  const save = async (exportCopy = false): Promise<boolean> => {
+    setSaving(true);
+    try {
+      const next = {
+        ...chart,
+        videoHint: {
+          fileName: mediaName || chart.videoHint.fileName,
+          durationMs: status.durationMs || chart.videoHint.durationMs,
+        },
+      };
+      const text = serializeChart(next, status.durationMs || undefined);
+      const name = `${next.title.replace(/[<>:"/\\|?*]/g, '_')}.wfp.json`;
+      const picker = (window as SaveWindow).showSaveFilePicker;
+      if (!exportCopy && picker) {
+        const handle =
+          fileHandle.current ||
+          (await picker.call(window, {
+            suggestedName: name,
+            types: [
+              { description: 'Waifu Fit Player 谱面', accept: { 'application/json': ['.json'] } },
+            ],
+          }));
+        const writable = await handle.createWritable();
+        await writable.write(text);
+        await writable.close();
+        fileHandle.current = handle;
+      } else {
+        const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      if (JSON.stringify(next) !== JSON.stringify(chart)) edit(next);
+      setSaved(JSON.stringify(next));
+      notify(
+        exportCopy || !picker ? '谱面已导出。下次打开 JSON 并重新选择视频即可。' : '谱面已保存。',
+      );
+      return true;
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError'))
+        notify(`保存失败：${error instanceof Error ? error.message : '无法写入文件。'}`);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (pending || help) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void save(e.shiftKey);
+        return;
+      }
+      if (isTyping(e.target)) return;
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        e.shiftKey ? redo() : undo();
+      } else if (mod && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      } else if (e.code === 'Space' && mode !== 'home') {
+        e.preventDefault();
+        if (!e.repeat) media.toggle().catch(() => notify('请点击播放按钮开始。'));
+      }
+    };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  });
+  const recover = () =>
+    guard(() => {
+      try {
+        const next = parseChart(JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'));
+        clearMedia();
+        reset(next, false);
+        setDemo(false);
+        setMode('editor');
+        notify('本地草稿已恢复，请重新配对视频。');
+      } catch {
+        notify('草稿无法读取，请打开已保存的 JSON。');
+      }
+    });
+  const fullScreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => notify('无法退出全屏。'));
+    else
+      albumRef.current?.requestFullscreen().catch(() => notify('浏览器未允许全屏，请使用 F11。'));
+  };
+
+  return (
+    <div className="app">
+      <div className="ambient-shape pink" />
+      <div className="ambient-shape cyan" />
+      <div className="ambient-dots" />
+      <header className="app-header">
+        <button
+          className="wordmark"
+          onClick={() => {
+            media.pause();
+            setMode('home');
+          }}
+          aria-label="返回主页"
+        >
+          <span className="brand-icon">▶</span>
+          <span>
+            WAIFU<span className="brand-fit">FIT</span>
+            <small>PLAYER / MOVE WITH MUSIC</small>
+          </span>
+        </button>
+        <nav aria-label="主导航">
+          <button
+            className={mode === 'home' ? 'active' : ''}
+            onClick={() => {
+              media.pause();
+              setMode('home');
+            }}
+          >
+            工作台
+          </button>
+          <button className={mode === 'player' ? 'active' : ''} onClick={() => setMode('player')}>
+            跟练模式
+          </button>
+          <button className={mode === 'editor' ? 'active' : ''} onClick={() => setMode('editor')}>
+            谱面编辑
+          </button>
+        </nav>
+        <div className="header-right">
+          <span className="local-badge">
+            <i />
+            LOCAL ONLY
+          </span>
+          <button
+            className="icon-button"
+            title="操作帮助"
+            aria-label="操作帮助"
+            onClick={() => setHelp(true)}
+          >
+            <HelpCircle size={20} />
+          </button>
+        </div>
+      </header>
+      <main>
+        <div hidden={mode !== 'home'}>
+          <Home
+            chart={chart}
+            hasMedia={!!source}
+            hasDraft={hasDraft}
+            onDemo={() => guard(() => void loadDemo())}
+            onNew={newChart}
+            onOpen={openChart}
+            onResume={() => setMode('player')}
+            onRecover={recover}
+          />
+        </div>
+        <div
+          className={`album-workspace ${mode === 'editor' ? 'editing' : ''}`}
+          hidden={mode === 'home'}
+          ref={albumRef}
+        >
+          <div className="album-spine">
+            <span>WFP / PERSONAL RHYTHM COLLECTION</span>
+            <i />
+            VOL. 01
+          </div>
+          <div className="workspace-header">
+            <div className="workspace-title">
+              <span className="eyebrow">
+                {mode === 'editor' ? 'MAKE YOUR OWN RHYTHM' : 'NOW PLAYING'}
+              </span>
+              <h1>
+                {chart.title}
+                <span
+                  className={`save-dot ${dirty ? 'dirty' : ''}`}
+                  aria-hidden="true"
+                  title={dirty ? '有未保存的修改' : '已保存'}
+                />
+              </h1>
+              <p>
+                {demo
+                  ? '功能演示谱 · 150 BPM · 尚未逐拍校准编舞'
+                  : `${chart.tempoSegments[0]?.bpm ?? 120} BPM · ${chart.notes.length} 个动作提示 · ${dirty ? '未保存修改' : '谱面已保存'}`}
+              </p>
+            </div>
+            <div className="workspace-actions">
+              <button className="button small ghost" onClick={newChart}>
+                <Plus size={15} />
+                新建
+              </button>
+              <button className="button small ghost" onClick={openChart}>
+                <FolderOpen size={15} />
+                打开谱面
+              </button>
+              <button className="button small ghost" onClick={openVideo}>
+                <Film size={15} />
+                {source ? '更换视频' : '选择视频'}
+              </button>
+              <button className="button small dark" onClick={() => void save()} disabled={saving}>
+                <Save size={15} />
+                保存
+              </button>
+              <button
+                className="icon-button export-button"
+                title="导出 JSON 副本（Ctrl+Shift+S）"
+                aria-label="导出 JSON"
+                disabled={saving}
+                onClick={() => void save(true)}
+              >
+                <Download size={17} />
+              </button>
+            </div>
+          </div>
+          <div className="stage-grid">
+            <div className="stage-left">
+              {mode !== 'home' && <Player chart={chart} media={media} />}
+            </div>
+            <section className="video-panel" aria-label="舞蹈视频">
+              <div className="video-topline">
+                <span>
+                  <i />
+                  {mode === 'editor' ? 'VIDEO PREVIEW' : 'YOUR PRIVATE STAGE'}
+                </span>
+                <span>↗</span>
+              </div>
+              <div className="video-viewport">
+                <video
+                  ref={media.attach}
+                  src={source || undefined}
+                  preload="metadata"
+                  playsInline
+                  onLoadedMetadata={onMetadata}
+                  onDoubleClick={() => media.toggle().catch(() => {})}
+                />
+                {!source && (
+                  <div className="video-placeholder">
+                    <div className="placeholder-icon">
+                      <Film size={32} />
+                    </div>
+                    <strong>让喜欢的角色，陪你动起来。</strong>
+                    <p>选择一个本地 MP4 视频，开始这一首。</p>
+                    <button className="button primary small" onClick={openVideo}>
+                      <Plus size={15} />
+                      选择视频
+                    </button>
+                  </div>
+                )}
+                {status.error && (
+                  <div className="video-error">
+                    {status.error}
+                    <button onClick={openVideo}>重新选择视频</button>
+                  </div>
+                )}
+              </div>
+              <div className="video-caption">
+                <span>
+                  <Heart size={12} /> MOVE WITH YOUR FAVORITE
+                </span>
+                <span>VIDEO + MUSIC</span>
+              </div>
+            </section>
+          </div>
+          <Transport media={media} fullScreen={fullScreen} notify={notify} />
+          {mode === 'editor' && (
+            <Editor
+              chart={chart}
+              media={media}
+              onChange={edit}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={!!history.past.length}
+              canRedo={!!history.future.length}
+              notify={notify}
+            />
+          )}
+          <div className="workspace-bottom">
+            <span>
+              {mode === 'editor'
+                ? 'EDITOR / 空格 播放暂停 · Ctrl+S 保存'
+                : 'JUST FOLLOW ALONG / 无需按键，跟随动作提示'}
+            </span>
+            <button onClick={() => setMode(mode === 'editor' ? 'player' : 'editor')}>
+              {mode === 'editor' ? '进入跟练' : '编辑这首谱面'}
+              <ArrowUpRight size={16} />
+            </button>
+          </div>
+        </div>
+      </main>
+      <input
+        hidden
+        ref={chartInput}
+        type="file"
+        accept=".json,application/json"
+        aria-label="导入谱面文件"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void importChart(file);
+          e.currentTarget.value = '';
+        }}
+      />
+      <input
+        hidden
+        ref={videoInput}
+        type="file"
+        accept=".mp4,video/mp4"
+        aria-label="导入视频文件"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) importVideo(file);
+          e.currentTarget.value = '';
+        }}
+      />
+      {notice && (
+        <div className="toast" role="status">
+          <span>{notice}</span>
+          <button aria-label="关闭提示" onClick={() => setNotice('')}>
+            <X size={17} />
+          </button>
+        </div>
+      )}
+      {pending && (
+        <ModalBackdrop onClose={() => setPending(null)}>
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unsaved-title"
+          >
+            <span className="eyebrow">SAVE YOUR RHYTHM</span>
+            <h2 id="unsaved-title">先保留刚才的灵感？</h2>
+            <p>当前谱面有未保存的修改。可以先保存，也可以不保存并继续操作。</p>
+            <div className="modal-actions">
+              <button className="button light" onClick={() => setPending(null)}>
+                取消
+              </button>
+              <button
+                className="button light"
+                onClick={() => {
+                  const action = pending;
+                  setPending(null);
+                  action();
+                }}
+              >
+                不保存并继续
+              </button>
+              <button
+                className="button primary"
+                disabled={saving}
+                onClick={async () => {
+                  if (await save()) {
+                    const action = pending;
+                    setPending(null);
+                    action();
+                  }
+                }}
+              >
+                保存并继续
+              </button>
+            </div>
+          </section>
+        </ModalBackdrop>
+      )}
+      {help && (
+        <ModalBackdrop onClose={() => setHelp(false)}>
+          <section
+            className="modal help-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-title"
+          >
+            <button
+              className="modal-close icon-button"
+              aria-label="关闭帮助"
+              onClick={() => setHelp(false)}
+            >
+              <X />
+            </button>
+            <span className="eyebrow">QUICK START</span>
+            <h2 id="help-title">从第一拍开始。</h2>
+            <ol>
+              <li>
+                <strong>打开视频</strong>
+                <p>新建谱面后选择 MP4。音乐使用视频本身的声音。</p>
+              </li>
+              <li>
+                <strong>对齐节拍</strong>
+                <p>
+                  “节拍段”中填写 BPM，定位视频后设为第一拍。变拍处新增段；修改网格不会移动已有动作。
+                </p>
+              </li>
+              <li>
+                <strong>写下动作</strong>
+                <p>
+                  点击时间轴放置，拖动空白处创建 HOLD。选择工具支持框选；长条两端可以拉伸；SWAY
+                  在长条属性中开启。
+                </p>
+              </li>
+              <li>
+                <strong>边播边录</strong>
+                <p>
+                  启用按键录谱，1～4 选轨，方向键写入。HOLD
+                  模式按下开始、松开结束；暂停或跳转取消未完成的长条。
+                </p>
+              </li>
+              <li>
+                <strong>保存，然后跟练</strong>
+                <p>
+                  Ctrl+S 保存 JSON，Ctrl+Shift+S
+                  导出副本。切换“跟练模式”开始；视频和谱面始终同步。下次打开 JSON 后重新选择视频。
+                </p>
+              </li>
+            </ol>
+            <div className="help-note">
+              SPECIAL：在“曲目”中定义一种招牌动作，在细标记行重复放置。
+              <br />
+              左右方向以你的身体为准；长条尾部到框即结束保持。
+            </div>
+            <button className="button primary" onClick={() => setHelp(false)}>
+              <Check size={17} />
+              开始吧
+            </button>
+          </section>
+        </ModalBackdrop>
+      )}
+    </div>
+  );
+}
