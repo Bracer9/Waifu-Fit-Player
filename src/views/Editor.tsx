@@ -343,7 +343,7 @@ export function Editor({
   };
   const changeKind = (type: NoteType) => {
     if (!event) return;
-    if (type === 'sway' && (!selectedNote || selectedNote.direction === 'close')) return;
+    if (type === 'sway' && !selectedNote) return;
     if (type !== 'tap') {
       const end =
         'endTimeMs' in event && event.endTimeMs !== undefined
@@ -516,7 +516,7 @@ export function Editor({
           direction: dir,
           timeMs: start,
           kind: 'hold',
-          modifier: drawType === 'sway' && dir !== 'close' ? 'sway' : 'none',
+          modifier: drawType === 'sway' ? 'sway' : 'none',
           endTimeMs: finish,
         }
       : { id: d.id!, lane: d.lane, direction: dir, timeMs: start, kind: 'tap' };
@@ -818,10 +818,7 @@ export function Editor({
               aria-pressed={direction === d}
               data-lane={lane}
               style={{ '--lane': noteColor(lane, d) } as React.CSSProperties}
-              onClick={() => {
-                setDirection(d);
-                if (d === 'close' && drawType === 'sway') setDrawType('hold');
-              }}
+              onClick={() => setDirection(d)}
             >
               {noteSymbol(lane, d)}
             </button>
@@ -850,9 +847,9 @@ export function Editor({
           <option value="hold">
             {lane === 'step' ? (direction === 'close' ? '慢速合腿' : '单脚支撑 HOLD') : '绘制 HOLD'}
           </option>
-          {direction !== 'close' && (
-            <option value="sway">{lane === 'step' ? '重心摇摆 SWAY' : '自由摇摆 SWAY'}</option>
-          )}
+          <option value="sway">
+            {lane === 'step' && direction !== 'close' ? '重心摇摆 SWAY' : '自由摇摆 SWAY'}
+          </option>
         </select>
         <span className="record-hint">
           {recording
@@ -1013,9 +1010,11 @@ export function Editor({
                             ? '保持 HOLD'
                             : '持续 SPECIAL'}
                       </option>
-                      {selectedNote && selectedNote.direction !== 'close' && (
+                      {selectedNote && (
                         <option value="sway">
-                          {selectedNote.lane === 'step' ? '重心摇摆 SWAY' : '自由摇摆 SWAY'}
+                          {selectedNote.lane === 'step' && selectedNote.direction !== 'close'
+                            ? '重心摇摆 SWAY'
+                            : '自由摇摆 SWAY'}
                         </option>
                       )}
                     </select>
@@ -1050,7 +1049,9 @@ export function Editor({
                           <option key={d} value={d}>
                             {noteSymbol(selectedNote.lane, d)}{' '}
                             {d === 'close'
-                              ? '合腿'
+                              ? selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
+                                ? '原地'
+                                : '合腿'
                               : d === 'left'
                                 ? '左'
                                 : d === 'right'
@@ -1088,7 +1089,9 @@ export function Editor({
                     <p className="inspector-tip">
                       {noteAction(selectedNote)}
                       {selectedNote.direction === 'close'
-                        ? '：另一只脚向刚迈出的脚靠拢。'
+                        ? selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
+                          ? '：保持当前站位，自由摇摆。'
+                          : '：另一只脚向刚迈出的脚靠拢。'
                         : '；合腿请另放 C。C 与两格踏步仅用于 STEP 轨。'}
                     </p>
                   )}
@@ -1292,7 +1295,10 @@ export function Editor({
                 </button>
               ))
             ) : (
-              <p>三格范围内可完成；C 收拢到最近一次迈出的脚。长条结束后再开始下一次踏步。</p>
+              <p>
+                三格范围内可完成；普通 C 收拢到最近一次迈出的脚，C SWAY
+                保持站位。长条结束后再开始下一次踏步。
+              </p>
             )}
           </div>
         </details>

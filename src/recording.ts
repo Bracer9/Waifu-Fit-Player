@@ -85,7 +85,7 @@ export function useRecording(options: Options) {
         direction: dir,
         timeMs,
         pressedAt: performance.now(),
-        modifier: e.ctrlKey && dir !== 'close' ? 'sway' : 'none',
+        modifier: e.ctrlKey ? 'sway' : 'none',
         ...(o.lane === 'step' && dir !== 'close' && e.shiftKey ? { distance: 2 } : {}),
       };
     };

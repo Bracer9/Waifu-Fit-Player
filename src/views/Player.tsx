@@ -175,7 +175,11 @@ export function Player({
                 )}
                 {release && (
                   <span className="release-label" style={{ opacity: flash }}>
-                    {release.direction === 'close' ? '并拢' : '释放'}
+                    {release.direction === 'close' &&
+                    release.kind === 'hold' &&
+                    release.modifier !== 'sway'
+                      ? '并拢'
+                      : '释放'}
                   </span>
                 )}
                 {chart.specialMove &&

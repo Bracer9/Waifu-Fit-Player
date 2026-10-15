@@ -88,6 +88,8 @@ export function demoChart(fileName: string): Chart {
       tap('step', 'close', b + 3);
       stepHold('left', b + 4, b + 7, 'sway');
       tap('step', 'close', b + 7);
+    } else if (bar % 8 === 7) {
+      stepHold('close', b, b + 4, 'sway');
     }
   }
   return sortChart(chart);

@@ -87,7 +87,6 @@ export function changeNoteDirection(note: Note, direction: Direction): Note {
   const next = { ...note, direction };
   if (direction === 'close') {
     delete next.distance;
-    if (next.kind === 'hold') next.modifier = 'none';
   }
   return next;
 }

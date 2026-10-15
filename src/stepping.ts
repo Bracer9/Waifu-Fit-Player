@@ -22,7 +22,8 @@ export function checkStepPositions(chart: Chart): StepIssue[] {
       continue;
     }
     lastStart = note.timeMs;
-    if (note.direction === 'close') {
+    // C SWAY is free swaying in place: neither foot nor the last lead foot changes.
+    if (note.direction === 'close' && !(note.kind === 'hold' && note.modifier === 'sway')) {
       if (!lead || feet.left === feet.right) {
         warn(note, '当前已并腿，C 前需要一个 L/R 迈步。');
         continue;

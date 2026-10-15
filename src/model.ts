@@ -77,7 +77,8 @@ export const isStepMove = (note: Note) => note.lane === 'step' && note.direction
 export function noteAction(note: Note): string {
   if (note.lane !== 'step')
     return note.kind === 'hold' && note.modifier === 'sway' ? 'SWAY' : 'HOLD';
-  if (note.direction === 'close') return note.kind === 'hold' ? '慢速合腿' : '合腿';
+  if (note.direction === 'close')
+    return note.kind === 'hold' ? (note.modifier === 'sway' ? '自由摇摆' : '慢速合腿') : '合腿';
   if (note.kind === 'tap')
     return `向${note.direction === 'left' ? '左' : '右'}迈${note.distance === 2 ? '两' : '一'}格`;
   return note.modifier === 'sway' ? '重心摇摆' : `${note.direction === 'left' ? '左' : '右'}脚支撑`;
@@ -187,8 +188,6 @@ export function parseChart(input: unknown, durationMs?: number): Chart {
           errors.push(`${label}：HOLD 终点必须晚于起点。`);
         if (note.modifier !== 'none' && note.modifier !== 'sway')
           errors.push(`${label}：HOLD modifier 无效。`);
-        if (note.direction === 'close' && note.modifier === 'sway')
-          errors.push(`${label}：C 长条表示慢速合腿，不能使用 SWAY。`);
       } else if (note.kind !== 'tap' || 'modifier' in note || 'endTimeMs' in note)
         errors.push(`${label}：普通音符不能有保持属性。`);
     });
