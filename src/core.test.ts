@@ -87,6 +87,36 @@ describe('分段网格与绝对媒体时间', () => {
   });
 });
 describe('谱面读写与校验', () => {
+  it('STEP 的 TAP、HOLD、SWAY 往返保留，拒绝上下方向，旧四轨谱无需迁移', () => {
+    const chart = fixture();
+    chart.notes.push(
+      { id: 'step-l', lane: 'step', direction: 'left', timeMs: 20000, kind: 'tap' },
+      {
+        id: 'step-r',
+        lane: 'step',
+        direction: 'right',
+        timeMs: 21000,
+        kind: 'hold',
+        endTimeMs: 22000,
+        modifier: 'none',
+      },
+      {
+        id: 'step-sway',
+        lane: 'step',
+        direction: 'left',
+        timeMs: 23000,
+        kind: 'hold',
+        endTimeMs: 24000,
+        modifier: 'sway',
+      },
+    );
+    expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
+    for (const direction of ['up', 'down'])
+      expect(() => parseChart({ ...chart, notes: [{ ...chart.notes[1], direction }] })).toThrow(
+        '轨道或方向不匹配',
+      );
+    expect(parseChart(fixture())).toEqual(fixture());
+  });
   it('完整往返保留保持、SWAY、分段以及重复 SPECIAL', () => {
     const chart = fixture();
     expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
@@ -210,6 +240,22 @@ describe('编辑与历史', () => {
     // Multi-selection preserves row spacing; an incompatible group stays on its original rows.
     chart.notes.push({ ...hold, id: 'other', lane: 'calf_raise' });
     expect(shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'calf_raise')).toEqual(chart);
+  });
+  it('左右三轨支持 STEP，批量移动保留行距并拒绝越出方向组', () => {
+    const chart = fixture();
+    chart.notes = [
+      { ...hold, id: 'p', lane: 'punch', direction: 'left' },
+      { id: 's', kind: 'tap', lane: 'step', direction: 'right', timeMs: 17000 },
+    ];
+    const moved = shiftNoteLanes(chart, ['p', 's'], 'punch', 'step');
+    expect(moved.notes).toEqual([
+      { ...chart.notes[0], lane: 'step' },
+      { ...chart.notes[1], lane: 'side_crunch' },
+    ]);
+    expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'punch')).toEqual(chart);
+    expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'side_crunch')).toEqual(moved);
+    expect(shiftNoteLanes(chart, ['s'], 'step', 'calf_raise')).toEqual(chart);
+    expect(flipNotes(moved, ['p']).notes[0]).toEqual({ ...moved.notes[0], direction: 'right' });
   });
   it('整体移动保留 HOLD 时长并约束开始与结束', () => {
     const chart = fixture();

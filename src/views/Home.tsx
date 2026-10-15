@@ -50,7 +50,7 @@ export function Home({
         <div className="hero-meta">
           <span>本地视频</span>
           <b>＋</b>
-          <span>四轨动作</span>
+          <span>五轨动作</span>
           <b>＋</b>
           <span>自由编谱</span>
         </div>

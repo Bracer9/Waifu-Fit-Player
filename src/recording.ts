@@ -40,7 +40,7 @@ export function useRecording(options: Options) {
     const keydown = (e: KeyboardEvent) => {
       const o = opts.current;
       if (!o.enabled || isTyping(e.target) || e.metaKey || e.altKey) return;
-      if (!e.ctrlKey && ['1', '2', '3', '4'].includes(e.key)) {
+      if (!e.ctrlKey && LANES.some((_, i) => e.key === String(i + 1))) {
         e.preventDefault();
         if (!e.repeat) {
           const lane = LANES[Number(e.key) - 1].id;

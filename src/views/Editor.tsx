@@ -22,7 +22,8 @@ import {
   ZoomIn,
 } from 'lucide-react';
 import {
-  arrow,
+  noteColor,
+  noteSymbol,
   LANES,
   uid,
   type Chart,
@@ -43,7 +44,7 @@ import {
   shiftNoteLanes,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
-import { DirectionGlyph } from '../components/Glyph';
+import { NoteGlyph } from '../components/Glyph';
 
 type Props = {
   chart: Chart;
@@ -400,7 +401,7 @@ export function Editor({
       return;
     }
     const row = Math.floor((y - RULER) / ROW);
-    const targetLane = row >= 4 ? 'special' : LANES[row]?.id;
+    const targetLane = row >= LANES.length ? 'special' : LANES[row]?.id;
     if (!targetLane) return;
     const target = (e.target as HTMLElement).closest<HTMLElement>('[data-event]');
     const id = target?.dataset.event;
@@ -537,8 +538,8 @@ export function Editor({
       setMarquee(box);
       const ids = [...chart.notes, ...chart.specialEvents]
         .filter((n) => {
-          const index = 'lane' in n ? LANES.findIndex((l) => l.id === n.lane) : 4;
-          const yy = RULER + index * ROW + (index === 4 ? SPECIAL : ROW) / 2;
+          const index = 'lane' in n ? LANES.findIndex((l) => l.id === n.lane) : LANES.length;
+          const yy = RULER + index * ROW + (index === LANES.length ? SPECIAL : ROW) / 2;
           const xx = LABEL + n.timeMs * px,
             end =
               'endTimeMs' in n && n.endTimeMs !== undefined ? LABEL + n.endTimeMs * px : xx + 18;
@@ -581,20 +582,33 @@ export function Editor({
       <div
         key={n.id}
         data-event={n.id}
+        data-lane={isSpecial ? 'special' : n.lane}
+        data-direction={isSpecial ? undefined : n.direction}
         data-testid={isSpecial ? 'special-event' : 'editor-note'}
         className={`timeline-event ${end !== undefined ? 'long' : ''} ${isSway ? 'sway' : ''} ${isSpecial ? 'special' : ''} ${selected.includes(n.id) ? 'selected' : ''}`}
-        title={`${isSpecial ? 'SPECIAL' : arrow[n.direction]} ${formatTime(n.timeMs, true)}${end ? ' — ' + formatTime(end, true) : ''}`}
+        title={`${isSpecial ? 'SPECIAL' : noteSymbol(n.lane, n.direction)} ${formatTime(n.timeMs, true)}${end ? ' — ' + formatTime(end, true) : ''}`}
         style={
           {
             left: LABEL + n.timeMs * px,
             top: RULER + index * ROW + (isSpecial ? 5 : 10),
-            width: end !== undefined ? Math.max(24, (end - n.timeMs) * px) : 29,
-            '--lane': isSpecial ? '#d3b5ff' : LANES[index].color,
+            width:
+              end !== undefined
+                ? Math.max(32, (end - n.timeMs) * px)
+                : !isSpecial && n.lane === 'step'
+                  ? 32
+                  : 29,
+            '--lane': isSpecial ? '#d3b5ff' : noteColor(n.lane, n.direction),
           } as React.CSSProperties
         }
       >
         {end !== undefined && <span className="resize-handle start" data-handle="start" />}
-        {isSpecial ? '★' : <DirectionGlyph direction={n.direction} size={18} />}
+        {isSpecial ? (
+          '★'
+        ) : (
+          <span className="event-glyph">
+            <NoteGlyph lane={n.lane} direction={n.direction} size={18} />
+          </span>
+        )}
         {end !== undefined && (
           <span className="event-caption">{isSway ? 'SWAY' : isSpecial ? 'SPECIAL' : 'HOLD'}</span>
         )}
@@ -729,6 +743,7 @@ export function Editor({
           {LANES.map((l, i) => (
             <button
               key={l.id}
+              data-lane={l.id}
               onClick={() => pickLane(l.id)}
               aria-pressed={lane === l.id}
               className={lane === l.id ? 'active' : ''}
@@ -744,10 +759,13 @@ export function Editor({
             <button
               key={d}
               className={direction === d ? 'active' : ''}
-              aria-label={`放置方向${arrow[d]}`}
+              aria-label={`放置方向${noteSymbol(lane, d)}`}
+              aria-pressed={direction === d}
+              data-lane={lane}
+              style={{ '--lane': noteColor(lane, d) } as React.CSSProperties}
               onClick={() => setDirection(d)}
             >
-              {arrow[d]}
+              {noteSymbol(lane, d)}
             </button>
           ))}
         </div>
@@ -771,7 +789,7 @@ export function Editor({
         </label>
         <span className="record-hint">
           {recording
-            ? '1–4 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
+            ? '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
             : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
       </div>
@@ -784,7 +802,7 @@ export function Editor({
           >
             <div
               className={`timeline-surface tool-${tool}`}
-              style={{ width, height: RULER + 4 * ROW + SPECIAL }}
+              style={{ width, height: RULER + LANES.length * ROW + SPECIAL }}
               onPointerDown={pointerDown}
               onPointerMove={pointerMove}
               onPointerUp={pointerUp}
@@ -800,7 +818,7 @@ export function Editor({
               ))}
               <div
                 className="timeline-row special-row"
-                style={{ top: RULER + 4 * ROW, height: SPECIAL }}
+                style={{ top: RULER + LANES.length * ROW, height: SPECIAL }}
               />
               {lines.map((line) => (
                 <div
@@ -829,7 +847,7 @@ export function Editor({
                   LANES.findIndex((l) => l.id === n.lane),
                 ),
               )}
-              {shown.specialEvents.map((n) => renderEvent(n, 4))}
+              {shown.specialEvents.map((n) => renderEvent(n, LANES.length))}
               <div className="playhead" style={{ left: LABEL + time * px }}>
                 <span />
               </div>
@@ -844,6 +862,7 @@ export function Editor({
                 {LANES.map((l, i) => (
                   <button
                     key={l.id}
+                    data-lane={l.id}
                     style={{ height: ROW, '--lane': l.color } as React.CSSProperties}
                     className={lane === l.id ? 'active' : ''}
                     onPointerDown={(e) => e.stopPropagation()}
@@ -851,7 +870,7 @@ export function Editor({
                   >
                     <span>0{i + 1}</span>
                     {l.name}
-                    <small>{l.directions.map((d) => arrow[d]).join(' ')}</small>
+                    <small>{l.directions.map((d) => noteSymbol(l.id, d)).join(' ')}</small>
                   </button>
                 ))}
                 <button
@@ -932,7 +951,8 @@ export function Editor({
                       >
                         {LANES.find((l) => l.id === selectedNote.lane)!.directions.map((d) => (
                           <option key={d} value={d}>
-                            {arrow[d]} {d}
+                            {noteSymbol(selectedNote.lane, d)}{' '}
+                            {d === 'left' ? '左' : d === 'right' ? '右' : d === 'up' ? '上' : '下'}
                           </option>
                         ))}
                       </select>

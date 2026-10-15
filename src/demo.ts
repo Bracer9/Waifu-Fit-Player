@@ -1,4 +1,4 @@
-import type { Chart, Lane, Direction } from './model';
+import { sortChart, type Chart, type Lane, type Direction } from './model';
 export function demoChart(fileName: string): Chart {
   const chart: Chart = {
     schemaVersion: 1,
@@ -53,6 +53,23 @@ export function demoChart(fileName: string): Chart {
       tap('side_crunch', 'left', b);
       tap('side_crunch', 'right', b + 4);
     }
+    if (bar % 8 === 1) {
+      tap('step', 'left', b);
+      tap('step', 'right', b + 2);
+      tap('step', 'left', b + 4);
+      tap('step', 'right', b + 6);
+    } else if (bar % 8 === 3 || bar % 8 === 5) {
+      chart.notes.push({
+        id: `demo-${index++}`,
+        lane: 'step',
+        direction: bar % 8 === 3 ? 'left' : 'right',
+        kind: 'hold',
+        modifier: bar % 8 === 3 ? 'none' : 'sway',
+        timeMs: 2000 + b * 400,
+        endTimeMs: 2000 + (b + 3) * 400,
+      });
+      tap('step', bar % 8 === 3 ? 'right' : 'left', b + 4);
+    }
   }
-  return chart;
+  return sortChart(chart);
 }

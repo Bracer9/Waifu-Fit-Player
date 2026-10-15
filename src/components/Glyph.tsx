@@ -21,6 +21,7 @@ export function LaneGlyph({ lane }: { lane: Lane }) {
     calf_raise:
       'M26 20L25 33L21 47M25 33L31 47M25 22L15 31M25 22L34 31M12 48V39M8 43L12 39L16 43M39 48V39M35 43L39 39L43 43',
     punch: 'M24 21L23 34L13 48M23 34L32 48M24 22L34 25L46 25M24 22L14 28L10 22',
+    step: 'M26 21L26 33L17 44M26 33L35 44M26 22L16 28M26 22L36 28M5 43H13M9 39L5 43L9 47M43 43H51M47 39L51 43L47 47',
     side_crunch: 'M26 21L22 34L18 48M22 34L31 48M26 21L34 13L29 7M25 22L16 15L20 7',
   };
   return (
@@ -39,6 +40,33 @@ export function LaneGlyph({ lane }: { lane: Lane }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+export function NoteGlyph({
+  lane,
+  direction,
+  size = 24,
+}: {
+  lane: Lane;
+  direction: Direction;
+  size?: number;
+}) {
+  if (lane !== 'step') return <DirectionGlyph direction={direction} size={size} />;
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <text
+        x="16"
+        y="17"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="currentColor"
+        fontFamily="'Barlow Condensed', Arial, sans-serif"
+        fontWeight="800"
+        fontSize="30"
+      >
+        {direction === 'left' ? 'L' : 'R'}
+      </text>
     </svg>
   );
 }

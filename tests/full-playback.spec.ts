@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { demoChart } from '../src/demo';
+import { LANES } from '../src/model';
 
-test('整首真实视频 1x 播放，四轨状态与媒体时间保持一致', async ({ page }) => {
+test('整首真实视频 1x 播放，五轨状态与媒体时间保持一致', async ({ page }) => {
   test.setTimeout(310000);
   await page.goto('/');
   await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
@@ -31,7 +32,7 @@ test('整首真实视频 1x 播放，四轨状态与媒体时间保持一致', a
               (n.kind === 'hold' && Math.abs(n.endTimeMs - frame.time) < 100),
           )
         ) {
-          const expected = ['squat', 'calf_raise', 'punch', 'side_crunch'].map((lane) => {
+          const expected = LANES.map(({ id: lane }) => {
             const n = chart.notes.find(
               (n) =>
                 n.lane === lane &&

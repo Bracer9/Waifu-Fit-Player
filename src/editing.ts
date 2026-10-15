@@ -55,18 +55,18 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
     ),
   };
 }
-/** Preserve a multi-selection's row spacing; reject a row shift if any note leaves its axis pair. */
+/** Preserve row spacing and only move to lanes that accept every selected note's direction. */
 export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to: Lane): Chart {
   const fromIndex = LANES.findIndex((l) => l.id === from);
   const toIndex = LANES.findIndex((l) => l.id === to);
   const delta = toIndex - fromIndex;
-  if (!delta || Math.floor(fromIndex / 2) !== Math.floor(toIndex / 2)) return chart;
+  if (!delta) return chart;
   const notes = chart.notes.filter((n) => selected.includes(n.id));
   if (
     notes.some((n) => {
       const index = LANES.findIndex((l) => l.id === n.lane);
       const next = index + delta;
-      return next < 0 || next >= LANES.length || Math.floor(index / 2) !== Math.floor(next / 2);
+      return !(LANES[next]?.directions as readonly Direction[] | undefined)?.includes(n.direction);
     })
   )
     return chart;

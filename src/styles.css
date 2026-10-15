@@ -6,6 +6,7 @@
   font-weight: 400;
   --pink: #f64e93;
   --cyan: #35c9db;
+  --miku: #39c5bb;
   --ink: #242329;
   --cream: #faf6ed;
   --line: #dedbd3;
@@ -649,6 +650,9 @@ nav button.active:after {
   min-width: 0;
 }
 .player-lanes {
+  --note-size: 33px;
+  --target-size: 41px;
+  --glyph-size: 24px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -711,6 +715,12 @@ nav button.active:after {
   background: var(--lane);
   clip-path: polygon(0 0, 100% 100%, 0 100%);
   z-index: 2;
+}
+.play-lane[data-lane='step'] .lane-label {
+  background: linear-gradient(110deg, var(--cyan) 65%, var(--pink) 65%);
+}
+.play-lane[data-lane='step'] .lane-label:after {
+  background: var(--pink);
 }
 .lane-label > svg {
   width: 40px;
@@ -821,6 +831,16 @@ nav button.active:after {
   color: #fff;
   --lane: #c78cfa;
 }
+.play-lane[data-lane='step'] .player-hold.sway {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--lane),
+    var(--lane) 8px,
+    color-mix(in srgb, var(--lane), white 30%) 8px,
+    color-mix(in srgb, var(--lane), white 30%) 16px
+  );
+  box-shadow: 0 0 11px var(--lane);
+}
 .player-hold.active {
   filter: brightness(1.15);
 }
@@ -828,7 +848,7 @@ nav button.active:after {
   position: absolute;
   left: 88%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(calc(1 + var(--impact-pulse, 0) * 0.07));
   width: 41px;
   height: 41px;
   border: 2px solid #fff8fc;
@@ -868,17 +888,57 @@ nav button.active:after {
   background: #b47bed;
   box-shadow: 0 0 18px #b47bed;
 }
-.hit-flash {
+.play-lane[data-lane='step'] .hit-target.holding {
+  background: var(--lane);
+  box-shadow: 0 0 17px var(--lane);
+}
+.note-impact {
   position: absolute;
-  width: 54px;
-  height: 54px;
-  border: 3px solid white;
   left: 88%;
   top: 50%;
-  border-radius: 50%;
-  box-shadow: 0 0 15px var(--lane);
+  width: 0;
+  height: 0;
   pointer-events: none;
   z-index: 4;
+}
+.impact-ring,
+.impact-halo,
+.impact-core,
+.impact-particle {
+  position: absolute;
+  border-radius: 50%;
+}
+.impact-ring {
+  width: var(--target-size);
+  height: var(--target-size);
+  border: 2px solid #fff8fc;
+  box-shadow:
+    0 0 10px var(--lane),
+    inset 0 0 6px var(--lane);
+}
+.impact-halo {
+  width: calc(var(--target-size) * 1.5);
+  height: calc(var(--target-size) * 1.1);
+  background: radial-gradient(ellipse, var(--lane), transparent 70%);
+}
+.impact-core {
+  display: grid;
+  place-items: center;
+  width: var(--note-size);
+  height: var(--note-size);
+  background: var(--lane);
+  color: white;
+  box-shadow: 0 0 12px var(--lane);
+}
+.impact-core svg {
+  width: var(--glyph-size);
+  height: var(--glyph-size);
+}
+.impact-particle {
+  width: 7px;
+  height: 3px;
+  background: #fff8fc;
+  box-shadow: 0 0 5px var(--lane);
 }
 .holding-label,
 .release-label {
@@ -1214,7 +1274,7 @@ nav button.active:after {
   font-size: 9px;
 }
 .editing .stage-grid {
-  height: 228px;
+  height: 280px;
   gap: 20px;
 }
 .editing .video-topline {
@@ -1292,9 +1352,13 @@ nav button.active:after {
   width: 19px;
   height: 19px;
 }
-.editing .hit-flash {
-  width: 34px;
-  height: 34px;
+.editing .player-lanes {
+  --note-size: 24px;
+  --target-size: 27px;
+  --glyph-size: 17px;
+}
+.editing .impact-particle {
+  display: none;
 }
 .editing .holding-label,
 .editing .release-label {
@@ -1438,6 +1502,7 @@ nav button.active:after {
 }
 .record-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 7px 10px;
@@ -1504,6 +1569,25 @@ nav button.active:after {
   background: #2f2930;
   border-color: #2f2930;
   color: #fff;
+}
+.direction-picks button[data-lane='step'] {
+  border-radius: 50%;
+  background: var(--lane);
+  border-color: var(--lane);
+  color: white;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 19px;
+}
+.direction-picks button[data-lane='step'].active {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.lane-picks button[data-lane='step'].active {
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--cyan), white 75%) 60%,
+    color-mix(in srgb, var(--pink), white 75%) 60%
+  );
 }
 .record-hint {
   margin-left: auto;
@@ -1630,6 +1714,32 @@ nav button.active:after {
   background: repeating-linear-gradient(-45deg, #9166c3, #9166c3 6px, #aa7ed4 6px, #aa7ed4 12px);
   border-color: #cea5ff;
 }
+.event-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.timeline-event[data-lane='step']:not(.long) {
+  border-radius: 50%;
+}
+.timeline-event[data-lane='step'] .event-glyph {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid #fff8fc;
+  background: var(--lane);
+}
+.timeline-event[data-lane='step'].sway {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--lane),
+    var(--lane) 6px,
+    color-mix(in srgb, var(--lane), #23212b 25%) 6px,
+    color-mix(in srgb, var(--lane), #23212b 25%) 12px
+  );
+  border-color: color-mix(in srgb, var(--lane), white 40%);
+}
 .timeline-event.selected {
   outline: 2px solid #fff;
   outline-offset: 2px;
@@ -1719,6 +1829,9 @@ nav button.active:after {
   bottom: 11px;
   width: 3px;
   background: var(--lane);
+}
+.sticky-labels > button[data-lane='step']:before {
+  background: linear-gradient(var(--cyan) 50%, var(--pink) 50%);
 }
 .sticky-labels > button.active {
   background: #ffffff09;
@@ -1902,6 +2015,7 @@ nav button.active:after {
   margin-top: 10px;
 }
 .toast {
+  pointer-events: none;
   position: fixed;
   bottom: 28px;
   left: 50%;
@@ -1924,6 +2038,7 @@ nav button.active:after {
   line-height: 1.7;
 }
 .toast button {
+  pointer-events: auto;
   display: flex;
   color: #c8b4c3;
 }
@@ -2022,7 +2137,7 @@ nav button.active:after {
     margin-top: 22px;
   }
   .editing .stage-grid {
-    height: 250px;
+    height: 310px;
   }
   .editing .play-lane {
     height: 42px;
@@ -2115,7 +2230,7 @@ nav button.active:after {
     margin-top: 17px;
   }
   .editing .stage-grid {
-    height: 202px;
+    height: 255px;
   }
   .editing .lane-label {
     width: 105px;
@@ -2162,17 +2277,17 @@ nav button.active:after {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 32px 40px;
+  padding: 18px 32px;
 }
 .practice-app main {
   width: 100%;
 }
 .album-workspace.practice {
   margin: 0 auto;
-  padding: 22px 24px;
+  padding: 16px 20px;
 }
 .practice .workspace-header {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 .practice .workspace-title h1 {
   font-size: 20px;
@@ -2182,7 +2297,18 @@ nav button.active:after {
   flex-shrink: 0;
 }
 .practice .stage-grid {
-  height: clamp(350px, 64vh, 650px);
+  height: clamp(518px, 68vh, 720px);
+}
+.practice .player-lanes {
+  --note-size: 66px;
+  --target-size: 82px;
+  --glyph-size: 48px;
+}
+.practice .lanes-stack {
+  gap: 8px;
+}
+.practice .play-lane {
+  min-height: 86px;
 }
 .practice .player-note,
 .practice .hold-head {
@@ -2212,10 +2338,6 @@ nav button.active:after {
   width: 58px;
   height: 58px;
 }
-.practice .hit-flash {
-  width: 94px;
-  height: 94px;
-}
 .practice .lane-label {
   width: clamp(115px, 9vw, 150px);
   justify-content: center;
@@ -2228,12 +2350,23 @@ nav button.active:after {
 }
 .practice .special-slot {
   flex-shrink: 0;
+  height: 38px;
+  margin-top: 8px;
+  padding: 4px 12px;
+}
+.practice .special-slot > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.practice .special-slot small {
+  margin: 0;
 }
 .practice .special-slot:not(.visible) {
   visibility: hidden;
 }
 .practice .transport {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .album-workspace.practice:fullscreen {
   display: flex;
@@ -2271,6 +2404,15 @@ nav button.active:after {
   font-size: 10px;
 }
 @media (prefers-reduced-motion: reduce) {
+  .impact-particle,
+  .impact-halo {
+    display: none;
+  }
+  .impact-ring,
+  .impact-core,
+  .hit-target {
+    transform: translate(-50%, -50%) !important;
+  }
   * {
     scroll-behavior: auto !important;
     transition: none !important;

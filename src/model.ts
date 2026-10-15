@@ -1,19 +1,32 @@
 export const LANES = [
-  { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: '#ff559b' },
+  { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: 'var(--pink)' },
   {
     id: 'calf_raise',
     name: '提踵',
     english: 'CALF RAISE',
     directions: ['up', 'down'],
-    color: '#37cce0',
+    color: 'var(--miku)',
   },
-  { id: 'punch', name: '出拳', english: 'PUNCH', directions: ['left', 'right'], color: '#ff76aa' },
+  {
+    id: 'punch',
+    name: '出拳',
+    english: 'PUNCH',
+    directions: ['left', 'right'],
+    color: 'var(--pink)',
+  },
+  {
+    id: 'step',
+    name: '踏步',
+    english: 'STEP',
+    directions: ['left', 'right'],
+    color: 'var(--cyan)',
+  },
   {
     id: 'side_crunch',
     name: '侧收腹',
     english: 'SIDE CRUNCH',
     directions: ['left', 'right'],
-    color: '#43d5bc',
+    color: 'var(--miku)',
   },
 ] as const;
 export type Lane = (typeof LANES)[number]['id'];
@@ -35,6 +48,14 @@ export type Chart = {
 export type Snap = 0 | 1 | 2 | 4;
 export const uid = () => crypto.randomUUID();
 export const arrow: Record<Direction, string> = { up: '↑', down: '↓', left: '←', right: '→' };
+export const noteSymbol = (lane: Lane, direction: Direction) =>
+  lane === 'step' ? (direction === 'left' ? 'L' : 'R') : arrow[direction];
+export const noteColor = (lane: Lane, direction: Direction) =>
+  lane === 'step'
+    ? direction === 'left'
+      ? 'var(--cyan)'
+      : 'var(--pink)'
+    : LANES.find((item) => item.id === lane)!.color;
 export function blankChart(title = '我的新作品'): Chart {
   return {
     schemaVersion: 1,

@@ -1,8 +1,9 @@
 import { Heart, Sparkles, Star } from 'lucide-react';
-import { type Chart, LANES } from '../model';
+import { type Chart, LANES, noteColor, noteSymbol } from '../model';
 import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
-import { DirectionGlyph, LaneGlyph } from '../components/Glyph';
+import { NoteGlyph, LaneGlyph } from '../components/Glyph';
+import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 const PREVIEW_MS = 3600;
 export function Player({
   chart,
@@ -22,7 +23,7 @@ export function Player({
         ? Sparkles
         : Heart;
   return (
-    <section className="player-lanes" aria-label="跟练四轨">
+    <section className="player-lanes" aria-label="跟练五轨">
       <div className="lane-heading" hidden={!showGuide}>
         <span className="eyebrow">FOLLOW THE RHYTHM</span>
         <span className="direction-hint">
@@ -35,30 +36,39 @@ export function Player({
             (n) =>
               n.lane === lane.id &&
               n.timeMs <= time + PREVIEW_MS + 300 &&
-              (n.kind === 'hold' ? n.endTimeMs : n.timeMs + 300) >= time,
+              (n.kind === 'hold' ? n.endTimeMs : n.timeMs + IMPACT_MS) >= time,
           );
           const holding = visible.find(
             (n) => n.kind === 'hold' && n.timeMs <= time && n.endTimeMs > time,
           );
-          const hit = visible.find((n) => time >= n.timeMs && time - n.timeMs < 260);
-          const release = chart.notes.find(
-            (n) =>
-              n.lane === lane.id &&
-              n.kind === 'hold' &&
-              time >= n.endTimeMs &&
-              time - n.endTimeMs < 260,
-          );
-          const flash = hit
-            ? 1 - (time - hit.timeMs) / 260
-            : release?.kind === 'hold'
-              ? 1 - (time - release.endTimeMs) / 260
-              : 0;
+          const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
+          const release = chart.notes
+            .filter(
+              (n) =>
+                n.lane === lane.id &&
+                n.kind === 'hold' &&
+                time >= n.endTimeMs &&
+                time - n.endTimeMs < IMPACT_MS,
+            )
+            .at(-1);
+          const releaseTime = release?.kind === 'hold' ? release.endTimeMs : -Infinity;
+          const impact = hit && hit.timeMs >= releaseTime ? hit : release;
+          const impactTime = impact === hit ? hit?.timeMs : releaseTime;
+          const elapsed = impact && impactTime !== undefined ? time - impactTime : IMPACT_MS;
+          const flash = 1 - elapsed / IMPACT_MS;
           const sway = holding?.kind === 'hold' && holding.modifier === 'sway';
           return (
             <div
               className={`play-lane ${holding ? 'is-holding' : ''} ${sway ? 'is-sway' : ''}`}
-              style={{ '--lane': lane.color, '--flash': flash } as React.CSSProperties}
+              style={
+                {
+                  '--lane': lane.color,
+                  '--flash': flash,
+                  '--impact-pulse': flash ** 2,
+                } as React.CSSProperties
+              }
               key={lane.id}
+              data-lane={lane.id}
               data-testid={`lane-${lane.id}`}
             >
               <div className="lane-label">
@@ -76,8 +86,19 @@ export function Player({
                   const head = noteX(note.timeMs, time, 88, PREVIEW_MS);
                   if (note.kind === 'tap')
                     return time < note.timeMs ? (
-                      <div className="player-note tap" style={{ left: `${head}%` }} key={note.id}>
-                        <DirectionGlyph direction={note.direction} />
+                      <div
+                        className="player-note tap"
+                        style={
+                          {
+                            left: `${head}%`,
+                            '--lane': noteColor(note.lane, note.direction),
+                          } as React.CSSProperties
+                        }
+                        key={note.id}
+                        data-direction={note.direction}
+                        aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction)}`}
+                      >
+                        <NoteGlyph lane={note.lane} direction={note.direction} />
                       </div>
                     ) : null;
                   const tail = noteX(note.endTimeMs, time, 88, PREVIEW_MS);
@@ -86,13 +107,23 @@ export function Player({
                     <div
                       key={note.id}
                       className={`player-hold ${note.modifier === 'sway' ? 'sway' : ''} ${time >= note.timeMs ? 'active' : ''}`}
-                      style={{ left: `${tail}%`, width: `${Math.max(0, right - tail)}%` }}
+                      data-direction={note.direction}
+                      aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction)} ${note.modifier === 'sway' ? 'SWAY' : 'HOLD'}`}
+                      style={
+                        {
+                          left: `${tail}%`,
+                          width: `${Math.max(0, right - tail)}%`,
+                          ...(note.lane === 'step'
+                            ? { '--lane': noteColor(note.lane, note.direction) }
+                            : {}),
+                        } as React.CSSProperties
+                      }
                     >
                       <span className="hold-caption">
                         {note.modifier === 'sway' ? '∿ SWAY ∿' : 'HOLD'}
                       </span>
                       <div className="hold-head">
-                        <DirectionGlyph direction={note.direction} />
+                        <NoteGlyph lane={note.lane} direction={note.direction} />
                       </div>
                     </div>
                   );
@@ -101,16 +132,21 @@ export function Player({
                   className={`hit-target ${holding ? 'holding' : ''}`}
                   data-testid={`target-${lane.id}`}
                   data-state={holding ? (sway ? 'sway' : 'holding') : 'idle'}
+                  style={
+                    holding?.lane === 'step'
+                      ? ({
+                          '--lane': noteColor(holding.lane, holding.direction),
+                        } as React.CSSProperties)
+                      : undefined
+                  }
                 >
-                  {holding ? <DirectionGlyph direction={holding.direction} size={29} /> : <span />}
+                  {holding ? (
+                    <NoteGlyph lane={holding.lane} direction={holding.direction} size={29} />
+                  ) : (
+                    <span />
+                  )}
                 </div>
-                <div
-                  className="hit-flash"
-                  style={{
-                    opacity: flash,
-                    transform: `translate(-50%,-50%) scale(${1 + (1 - flash) * 0.45})`,
-                  }}
-                />
+                {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
                 {holding && <span className="holding-label">{sway ? 'SWAY' : '保持'}</span>}
                 {release && (
                   <span className="release-label" style={{ opacity: flash }}>
