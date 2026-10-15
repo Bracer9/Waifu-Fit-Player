@@ -1772,6 +1772,35 @@ nav button.active:after {
 .resize-handle:hover {
   background: #fff9;
 }
+.resize-handle.tap-extend {
+  width: 12px;
+  right: -15px;
+  top: 5px;
+  bottom: 5px;
+  border: 1px solid #fff8fc;
+  border-radius: 3px;
+  background: var(--lane);
+  box-shadow: 0 1px 4px #0006;
+}
+.resize-handle.tap-extend:before {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 2px;
+  right: 100%;
+  top: calc(50% - 1px);
+  background: #fff8fc;
+}
+.resize-handle.tap-extend:after {
+  content: '';
+  position: absolute;
+  inset: 5px 3px;
+  border-left: 1px solid white;
+  border-right: 1px solid white;
+}
+.resize-handle.tap-extend:hover {
+  filter: brightness(1.2);
+}
 .playhead {
   position: absolute;
   top: 0;

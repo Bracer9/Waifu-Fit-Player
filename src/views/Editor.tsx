@@ -37,6 +37,7 @@ import { MediaController, useMediaStatus, useTime } from '../media';
 import { formatTime, gridLines, nextGrid, segmentAt, snapTime } from '../timing';
 import {
   deleteEvents,
+  extendTap,
   flipNotes,
   moveEvents,
   pasteEvents,
@@ -57,7 +58,7 @@ type Props = {
   notify: (text: string) => void;
 };
 type Drag = {
-  mode: 'move' | 'start' | 'end' | 'draw' | 'marquee';
+  mode: 'move' | 'start' | 'end' | 'extend' | 'draw' | 'marquee';
   x: number;
   y: number;
   time: number;
@@ -420,7 +421,7 @@ export function Editor({
       const handle = (e.target as HTMLElement).closest<HTMLElement>('[data-handle]')?.dataset
         .handle;
       drag.current = {
-        mode: handle === 'start' ? 'start' : handle === 'end' ? 'end' : 'move',
+        mode: handle === 'start' || handle === 'end' || handle === 'extend' ? handle : 'move',
         x,
         y,
         time: t,
@@ -516,6 +517,8 @@ export function Editor({
       if (d.lane !== 'special' && targetLane)
         moved = shiftNoteLanes(moved, d.ids, d.lane, targetLane);
       updateDraft(moved);
+    } else if (d.mode === 'extend') {
+      updateDraft(x > d.x + 4 ? extendTap(d.original, d.id!, t, duration) : d.original);
     } else if (d.mode === 'start' || d.mode === 'end') {
       const resize = <T extends Note | SpecialEvent>(n: T): T => {
         if (n.id !== d.id || !('endTimeMs' in n) || n.endTimeMs === undefined) return n;
@@ -613,6 +616,18 @@ export function Editor({
           <span className="event-caption">{isSway ? 'SWAY' : isSpecial ? 'SPECIAL' : 'HOLD'}</span>
         )}
         {end !== undefined && <span className="resize-handle end" data-handle="end" />}
+        {!isSpecial &&
+          n.kind === 'tap' &&
+          selected.length === 1 &&
+          selected[0] === n.id &&
+          n.timeMs < duration && (
+            <span
+              className="resize-handle tap-extend"
+              data-handle="extend"
+              data-testid="extend-note"
+              title="向右拖动，延长为 HOLD"
+            />
+          )}
       </div>
     );
   };

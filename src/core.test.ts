@@ -3,6 +3,7 @@ import { blankChart, parseChart, serializeChart, type Chart, type Note } from '.
 import { gridLines, nextGrid, noteState, noteX, snapTime, specialAt } from './timing';
 import {
   deleteEvents,
+  extendTap,
   flipNotes,
   historyReducer,
   moveEvents,
@@ -213,6 +214,52 @@ describe('谱面读写与校验', () => {
   });
 });
 describe('编辑与历史', () => {
+  it.each(['squat', 'step'] as const)(
+    '直接延长 %s TAP 保留 ID、方向和起点，可一次撤销重做',
+    (lane) => {
+      const chart = fixture();
+      const tap: Note = {
+        id: 'tap',
+        lane,
+        direction: lane === 'step' ? 'right' : 'down',
+        kind: 'tap',
+        timeMs: 20000,
+      };
+      chart.notes.push(tap);
+      const extended = extendTap(chart, tap.id, 25000, 180000);
+      expect(extended.notes[1]).toEqual({
+        ...tap,
+        kind: 'hold',
+        endTimeMs: 25000,
+        modifier: 'none',
+      });
+      expect(extended.notes[0]).toEqual(chart.notes[0]);
+      expect(chart.notes[1]).toEqual(tap);
+      expect(extended.specialEvents).toEqual(chart.specialEvents);
+      expect(parseChart(JSON.parse(serializeChart(extended)))).toEqual(extended);
+      const history = historyReducer(
+        { past: [], present: chart, future: [] },
+        { type: 'edit', chart: extended },
+      );
+      const undone = historyReducer(history, { type: 'undo' });
+      expect(undone.present).toEqual(chart);
+      expect(historyReducer(undone, { type: 'redo' }).present).toEqual(extended);
+    },
+  );
+  it('直接延长受视频末尾限制，拒绝零长、负长和修改已有 HOLD', () => {
+    const chart = fixture();
+    chart.notes.push({ id: 'tap', lane: 'step', direction: 'left', kind: 'tap', timeMs: 179000 });
+    expect(extendTap(chart, 'tap', 190000, 180000).notes[1]).toMatchObject({
+      timeMs: 179000,
+      endTimeMs: 180000,
+    });
+    expect(extendTap(chart, 'tap', 179000, 180000)).toBe(chart);
+    expect(extendTap(chart, 'tap', 170000, 180000)).toBe(chart);
+    expect(extendTap(chart, 'tap', NaN, 180000)).toBe(chart);
+    expect(extendTap(chart, 'hold', 30000, 180000)).toBe(chart);
+    chart.notes[1].timeMs = 180000;
+    expect(extendTap(chart, 'tap', 190000, 180000)).toBe(chart);
+  });
   it('批量反向支持两个轴，保留时长与 SWAY，忽略 SPECIAL，并可撤销', () => {
     const chart = fixture();
     chart.notes.push({ id: 'tap', kind: 'tap', lane: 'punch', direction: 'right', timeMs: 1000 });

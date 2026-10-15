@@ -172,6 +172,87 @@ test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往�
   expect(await exportChart(page)).toEqual(chart);
 });
 
+test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和一次撤销', async ({ page }) => {
+  await emptyEditor(page);
+  await draw(page, 1000, 0);
+  const tap = (await exportChart(page)).notes[0];
+  const handle = page.getByTestId('extend-note');
+  await expect(handle).toBeVisible();
+  await handle.click();
+  expect((await exportChart(page)).notes).toEqual([tap]);
+  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await page.screenshot({ path: 'artifacts/tap-extend-handle.png', fullPage: true });
+  const surface = page.locator('.timeline-surface');
+  const handleBox = (await handle.boundingBox())!;
+  const surfaceBox = (await surface.boundingBox())!;
+  await page.mouse.move(handleBox.x + 6, handleBox.y + 10);
+  await page.mouse.down();
+  // 2470 ms snaps to 2500 ms, while the original 1000 ms start remains fixed.
+  await page.mouse.move(surfaceBox.x + 124 + 247, handleBox.y + 10, { steps: 8 });
+  await expect(page.getByTestId('editor-note')).toHaveClass(/long/);
+  await page.mouse.up();
+  const extended = { ...tap, kind: 'hold', endTimeMs: 2500, modifier: 'none' };
+  expect((await exportChart(page)).notes).toEqual([extended]);
+  await expect(page.getByLabel('开始 / ms')).toHaveValue('1000');
+  await expect(page.getByLabel('结束 / ms')).toHaveValue('2500');
+  await expect(handle).toHaveCount(0);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  expect((await exportChart(page)).notes).toEqual([tap]);
+  await expect(handle).toBeVisible();
+  await page.getByRole('button', { name: '重做', exact: true }).click();
+  expect((await exportChart(page)).notes).toEqual([extended]);
+  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '放置方向R', exact: true }).click();
+  await draw(page, 4000, 3);
+  const step = (await exportChart(page)).notes[1];
+  await expect(handle).toBeVisible();
+  const stepBox = (await handle.boundingBox())!;
+  // Moving vertically or returning to the original grip keeps a TAP.
+  await page.mouse.move(stepBox.x + 6, stepBox.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(stepBox.x + 6, stepBox.y + 30, { steps: 3 });
+  await page.mouse.up();
+  expect((await exportChart(page)).notes[1]).toEqual(step);
+  await page.mouse.move(stepBox.x + 6, stepBox.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(stepBox.x + 100, stepBox.y + 10, { steps: 4 });
+  await page.mouse.move(stepBox.x + 6, stepBox.y + 10, { steps: 4 });
+  await page.mouse.up();
+  expect((await exportChart(page)).notes[1]).toEqual(step);
+  // Native pointer cancellation must also discard the conversion preview.
+  await page.mouse.move(stepBox.x + 6, stepBox.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(stepBox.x + 100, stepBox.y + 10, { steps: 4 });
+  await surface.dispatchEvent('pointercancel');
+  await page.mouse.up();
+  expect((await exportChart(page)).notes[1]).toEqual(step);
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  await page.mouse.move(stepBox.x + 6, stepBox.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(surfaceBox.x + 124 + 583, stepBox.y + 10, { steps: 6 });
+  await page.mouse.up();
+  let chart = await exportChart(page);
+  expect(chart.notes[1]).toEqual({ ...step, kind: 'hold', endTimeMs: 5830, modifier: 'none' });
+  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  chart = await exportChart(page);
+  expect(chart.notes[1]).toMatchObject({ lane: 'step', direction: 'right', modifier: 'sway' });
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'extended.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  expect(await exportChart(page)).toEqual(chart);
+  await draw(page, 6500, 1);
+  await page.keyboard.down('Shift');
+  await page
+    .getByTestId('editor-note')
+    .first()
+    .click({ position: { x: 15, y: 14 } });
+  await page.keyboard.up('Shift');
+  await expect(page.locator('.timeline-event.selected')).toHaveCount(2);
+  await expect(handle).toHaveCount(0);
+});
+
 test('分段节拍、唯一 SPECIAL 重复事件、网格修改不移动音符', async ({ page }) => {
   await emptyEditor(page);
   await draw(page, 2000, 1);

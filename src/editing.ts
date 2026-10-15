@@ -41,6 +41,18 @@ export function deleteEvents(chart: Chart, selected: string[]): Chart {
     specialEvents: chart.specialEvents.filter((n) => !selected.includes(n.id)),
   };
 }
+/** Extend an existing tap without moving its start, changing its direction, or creating another ID. */
+export function extendTap(chart: Chart, id: string, endTimeMs: number, duration: number): Chart {
+  const note = chart.notes.find((n) => n.id === id);
+  const end = Math.round(clamp(endTimeMs, 0, duration));
+  if (!note || note.kind !== 'tap' || !Number.isFinite(end) || end <= note.timeMs) return chart;
+  return {
+    ...chart,
+    notes: chart.notes.map((n) =>
+      n.id === id ? { ...note, kind: 'hold', modifier: 'none', endTimeMs: end } : n,
+    ),
+  };
+}
 export function flipNotes(chart: Chart, selected: string[]): Chart {
   const opposite: Record<Direction, Direction> = {
     up: 'down',
