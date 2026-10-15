@@ -2184,6 +2184,38 @@ nav button.active:after {
 .practice .stage-grid {
   height: clamp(350px, 64vh, 650px);
 }
+.practice .player-note,
+.practice .hold-head {
+  width: 66px;
+  height: 66px;
+  border-width: 4px;
+}
+.practice .player-note svg,
+.practice .hold-head svg {
+  width: 48px;
+  height: 48px;
+}
+.practice .player-hold {
+  height: 54px;
+  border-width: 4px;
+  border-radius: 40px;
+}
+.practice .hold-head {
+  right: -34px;
+}
+.practice .hit-target {
+  width: 82px;
+  height: 82px;
+  border-width: 4px;
+}
+.practice .hit-target svg {
+  width: 58px;
+  height: 58px;
+}
+.practice .hit-flash {
+  width: 94px;
+  height: 94px;
+}
 .practice .lane-label {
   width: clamp(115px, 9vw, 150px);
   justify-content: center;
