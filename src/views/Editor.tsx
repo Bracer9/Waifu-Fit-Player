@@ -63,6 +63,7 @@ type Props = {
   canRedo: boolean;
   notify: (text: string) => void;
 };
+type NoteType = 'tap' | 'hold' | 'sway';
 type Drag = {
   mode: 'move' | 'start' | 'end' | 'extend' | 'draw' | 'marquee';
   x: number;
@@ -167,8 +168,7 @@ export function Editor({
   const [lane, setLane] = useState<Lane>('squat');
   const [direction, setDirection] = useState<Direction>('down');
   const [stepDistance, setDrawDistance] = useState<StepDistance>(1);
-  const [hold, setHold] = useState(false),
-    [sway, setSway] = useState(false);
+  const [drawType, setDrawType] = useState<NoteType>('tap');
   const [recording, setRecording] = useState(false),
     [snap, setSnap] = useState<Snap>(2);
   const [tool, setTool] = useState<'select' | 'draw'>('draw');
@@ -341,16 +341,22 @@ export function Editor({
         ),
       });
   };
-  const changeKind = (isHold: boolean) => {
+  const changeKind = (type: NoteType) => {
     if (!event) return;
-    if (isHold) {
-      const end = nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
+    if (type === 'sway' && (!selectedNote || selectedNote.direction === 'close')) return;
+    if (type !== 'tap') {
+      const end =
+        'endTimeMs' in event && event.endTimeMs !== undefined
+          ? event.endTimeMs
+          : nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
       if (end <= event.timeMs) {
         notify('视频末尾没有足够空间创建 HOLD。');
         return;
       }
       patchEvent(
-        selectedNote ? { kind: 'hold', modifier: 'none', endTimeMs: end } : { endTimeMs: end },
+        selectedNote
+          ? { kind: 'hold', modifier: type === 'sway' ? 'sway' : 'none', endTimeMs: end }
+          : { endTimeMs: end },
       );
     } else if (selectedNote) {
       const note: Note = {
@@ -486,7 +492,7 @@ export function Editor({
     setDraft(value);
   };
   const drawEvent = (d: Drag, end: number): Chart => {
-    const isHold = hold || Math.abs(end - d.time) > 10;
+    const isHold = drawType !== 'tap' || Math.abs(end - d.time) > 10;
     let start = Math.min(d.time, end),
       finish = Math.max(d.time, end);
     if (isHold && finish <= start) finish = nextGrid(start, chart.tempoSegments, snap, duration);
@@ -510,7 +516,7 @@ export function Editor({
           direction: dir,
           timeMs: start,
           kind: 'hold',
-          modifier: sway && dir !== 'close' ? 'sway' : 'none',
+          modifier: drawType === 'sway' && dir !== 'close' ? 'sway' : 'none',
           endTimeMs: finish,
         }
       : { id: d.id!, lane: d.lane, direction: dir, timeMs: start, kind: 'tap' };
@@ -812,7 +818,10 @@ export function Editor({
               aria-pressed={direction === d}
               data-lane={lane}
               style={{ '--lane': noteColor(lane, d) } as React.CSSProperties}
-              onClick={() => setDirection(d)}
+              onClick={() => {
+                setDirection(d);
+                if (d === 'close' && drawType === 'sway') setDrawType('hold');
+              }}
             >
               {noteSymbol(lane, d)}
             </button>
@@ -834,23 +843,17 @@ export function Editor({
         <select
           aria-label="绘制类型"
           hidden={recording}
-          value={hold ? 'hold' : 'tap'}
-          onChange={(e) => setHold(e.target.value === 'hold')}
+          value={drawType}
+          onChange={(e) => setDrawType(e.target.value as NoteType)}
         >
           <option value="tap">普通 TAP</option>
           <option value="hold">
             {lane === 'step' ? (direction === 'close' ? '慢速合腿' : '单脚支撑 HOLD') : '绘制 HOLD'}
           </option>
+          {direction !== 'close' && (
+            <option value="sway">{lane === 'step' ? '重心摇摆 SWAY' : '自由摇摆 SWAY'}</option>
+          )}
         </select>
-        <label className="check-label" hidden={recording}>
-          <input
-            type="checkbox"
-            checked={direction !== 'close' && sway}
-            disabled={!hold || direction === 'close'}
-            onChange={(e) => setSway(e.target.checked)}
-          />
-          SWAY
-        </label>
         <span className="record-hint">
           {recording
             ? lane === 'step'
@@ -991,21 +994,30 @@ export function Editor({
                     <span>类型</span>
                     <select
                       aria-label="选中事件类型"
-                      value={'endTimeMs' in event && event.endTimeMs !== undefined ? 'hold' : 'tap'}
-                      onChange={(e) => changeKind(e.target.value === 'hold')}
+                      value={
+                        selectedNote?.kind === 'hold' && selectedNote.modifier === 'sway'
+                          ? 'sway'
+                          : 'endTimeMs' in event && event.endTimeMs !== undefined
+                            ? 'hold'
+                            : 'tap'
+                      }
+                      onChange={(e) => changeKind(e.target.value as NoteType)}
                     >
                       <option value="tap">{selectedNote ? '普通 TAP' : '瞬间 SPECIAL'}</option>
                       <option value="hold">
                         {selectedNote?.lane === 'step'
                           ? selectedNote.direction === 'close'
                             ? '慢速合腿'
-                            : selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
-                              ? '重心摇摆 SWAY'
-                              : '单脚支撑 HOLD'
+                            : '单脚支撑 HOLD'
                           : selectedNote
                             ? '保持 HOLD'
                             : '持续 SPECIAL'}
                       </option>
+                      {selectedNote && selectedNote.direction !== 'close' && (
+                        <option value="sway">
+                          {selectedNote.lane === 'step' ? '重心摇摆 SWAY' : '自由摇摆 SWAY'}
+                        </option>
+                      )}
                     </select>
                   </label>
                   {'endTimeMs' in event && event.endTimeMs !== undefined && (
@@ -1079,18 +1091,6 @@ export function Editor({
                         ? '：另一只脚向刚迈出的脚靠拢。'
                         : '；合腿请另放 C。C 与两格踏步仅用于 STEP 轨。'}
                     </p>
-                  )}
-                  {selectedNote?.kind === 'hold' && selectedNote.direction !== 'close' && (
-                    <label className="check-label inspector-check">
-                      <input
-                        type="checkbox"
-                        checked={selectedNote.modifier === 'sway'}
-                        onChange={(e) =>
-                          patchEvent({ modifier: e.target.checked ? 'sway' : 'none' })
-                        }
-                      />
-                      保持时自由摇摆 SWAY
-                    </label>
                   )}
                   <div className="inspector-actions">
                     <button onClick={duplicate}>

@@ -132,7 +132,7 @@ test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往�
   expect(chart.notes[0].timeMs).toBe(3000);
   await draw(page, 1000, 0, 2500);
   await expect(page.getByTestId('editor-note')).toHaveCount(2);
-  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  await page.getByLabel('选中事件类型').selectOption('sway');
   chart = await exportChart(page);
   expect(chart.notes[0]).toMatchObject({
     kind: 'hold',
@@ -233,7 +233,7 @@ test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和�
   await page.mouse.up();
   let chart = await exportChart(page);
   expect(chart.notes[1]).toEqual({ ...step, kind: 'hold', endTimeMs: 5830, modifier: 'none' });
-  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  await page.getByLabel('选中事件类型').selectOption('sway');
   chart = await exportChart(page);
   expect(chart.notes[1]).toMatchObject({ lane: 'step', direction: 'right', modifier: 'sway' });
   await page.getByLabel('导入谱面文件').setInputFiles({
@@ -369,7 +369,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
 test('方向翻转按钮和 F、多选撤销、同轴跨轨拖动与长条属性保留', async ({ page }) => {
   await emptyEditor(page);
   await draw(page, 1000, 0, 2000);
-  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  await page.getByLabel('选中事件类型').selectOption('sway');
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
   expect((await exportChart(page)).notes[0]).toMatchObject({ direction: 'up', modifier: 'sway' });
   await page.keyboard.press('f');
@@ -561,7 +561,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await draw(page, 2000, 3, 3000);
   await page.getByRole('button', { name: '放置方向L', exact: true }).click();
   await draw(page, 4000, 3, 5000);
-  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  await page.getByLabel('选中事件类型').selectOption('sway');
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
   expect((await exportChart(page)).notes[2]).toMatchObject({
     lane: 'step',
@@ -711,6 +711,83 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await page.screenshot({ path: 'artifacts/step-fullscreen.png', fullPage: true });
 });
 
+test('类型菜单直接绘制 SWAY，HOLD 与 SWAY 互转保留时长，C 没有摇摆选项', async ({ page }) => {
+  await emptyEditor(page);
+  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '放置方向R', exact: true }).click();
+  await page.getByLabel('绘制踏步跨度').selectOption('2');
+  const drawingType = page.getByLabel('绘制类型');
+  const selectedType = page.getByLabel('选中事件类型');
+  await expect(drawingType.locator('option')).toHaveText([
+    '普通 TAP',
+    '单脚支撑 HOLD',
+    '重心摇摆 SWAY',
+  ]);
+  await expect(page.getByRole('checkbox', { name: /SWAY/ })).toHaveCount(0);
+  await drawingType.selectOption('sway');
+  await draw(page, 1000, 3, 2500);
+  const original = (await exportChart(page)).notes[0];
+  expect(original).toMatchObject({
+    lane: 'step',
+    direction: 'right',
+    distance: 2,
+    kind: 'hold',
+    modifier: 'sway',
+    timeMs: 1000,
+    endTimeMs: 2500,
+  });
+  await expect(selectedType).toHaveValue('sway');
+  await selectedType.selectOption('hold');
+  expect((await exportChart(page)).notes[0]).toEqual({ ...original, modifier: 'none' });
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await expect(selectedType).toHaveValue('sway');
+  expect((await exportChart(page)).notes[0]).toEqual(original);
+  await page.getByRole('button', { name: '重做', exact: true }).click();
+  await expect(selectedType).toHaveValue('hold');
+  await selectedType.selectOption('sway');
+  expect((await exportChart(page)).notes[0]).toEqual(original);
+  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await page.screenshot({ path: 'artifacts/sway-type-menus.png', fullPage: true });
+  // TAP conversions retain identity/direction/distance and only create a new end when needed.
+  await selectedType.selectOption('tap');
+  const tap = (await exportChart(page)).notes[0];
+  expect(tap).toEqual({
+    id: original.id,
+    lane: 'step',
+    direction: 'right',
+    distance: 2,
+    kind: 'tap',
+    timeMs: 1000,
+  });
+  await selectedType.selectOption('sway');
+  expect((await exportChart(page)).notes[0]).toEqual({
+    ...tap,
+    kind: 'hold',
+    modifier: 'sway',
+    endTimeMs: 1500,
+  });
+  await page.getByRole('button', { name: '放置方向C', exact: true }).click();
+  await expect(drawingType).toHaveValue('hold');
+  await expect(drawingType.locator('option')).toHaveText(['普通 TAP', '慢速合腿']);
+  await draw(page, 4000, 3, 5000);
+  await expect(selectedType.locator('option[value="sway"]')).toHaveCount(0);
+  expect((await exportChart(page)).notes[1]).toMatchObject({
+    direction: 'close',
+    kind: 'hold',
+    modifier: 'none',
+    timeMs: 4000,
+    endTimeMs: 5000,
+  });
+  await page.getByRole('button', { name: '放置方向R', exact: true }).click();
+  await expect(drawingType).toHaveValue('hold');
+  await drawingType.selectOption('tap');
+  await draw(page, 6000, 3);
+  await draw(page, 7000, 3, 8000);
+  const chart = await exportChart(page);
+  expect(chart.notes[2]).toMatchObject({ kind: 'tap', distance: 2 });
+  expect(chart.notes[3]).toMatchObject({ kind: 'hold', modifier: 'none', distance: 2 });
+});
+
 test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上方向', async ({ page }) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
@@ -768,7 +845,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await draw(page, 1000, 3, 1500);
   await page.getByRole('button', { name: '放置方向C', exact: true }).click();
   await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
-  await expect(page.getByRole('checkbox', { name: 'SWAY', exact: true })).toBeDisabled();
+  await expect(page.getByLabel('绘制类型').locator('option[value="sway"]')).toHaveCount(0);
   await draw(page, 2000, 3);
   const grip = (await page.getByTestId('extend-note').boundingBox())!;
   const surface = (await page.locator('.timeline-surface').boundingBox())!;
@@ -776,7 +853,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await page.mouse.down();
   await page.mouse.move(surface.x + 124 + 250, grip.y + 10, { steps: 6 });
   await page.mouse.up();
-  await expect(page.getByLabel('保持时自由摇摆 SWAY')).toHaveCount(0);
+  await expect(page.getByLabel('选中事件类型').locator('option[value="sway"]')).toHaveCount(0);
   await expect(page.getByLabel('选中事件类型').locator('option:checked')).toHaveText('慢速合腿');
   await page.getByRole('button', { name: '放置方向R', exact: true }).click();
   await page.getByLabel('绘制踏步跨度').selectOption('2');
@@ -789,7 +866,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await draw(page, 4000, 3);
   await page.getByRole('button', { name: '放置方向L', exact: true }).click();
   await draw(page, 5000, 3, 6000);
-  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  await page.getByLabel('选中事件类型').selectOption('sway');
   await page.getByLabel('选中音符方向').selectOption('close');
   let chart = await exportChart(page);
   expect(chart.notes[4]).toMatchObject({ direction: 'close', modifier: 'none', kind: 'hold' });
