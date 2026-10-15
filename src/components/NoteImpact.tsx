@@ -49,7 +49,7 @@ export function NoteImpact({
           transform: `translate(-50%, -50%) scale(${1 - ease * 0.2})`,
         }}
       >
-        <NoteGlyph lane={note.lane} direction={note.direction} />
+        <NoteGlyph lane={note.lane} direction={note.direction} distance={note.distance} />
       </div>
       {[
         [-1, -1],

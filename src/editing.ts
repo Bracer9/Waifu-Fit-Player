@@ -1,10 +1,12 @@
 import {
   LANES,
+  isStepMove,
   type Chart,
   type Direction,
   type Lane,
   type Note,
   type Snap,
+  type StepDistance,
   type SpecialEvent,
   sortChart,
   uid,
@@ -59,6 +61,7 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
     down: 'up',
     left: 'right',
     right: 'left',
+    close: 'close',
   };
   return {
     ...chart,
@@ -66,6 +69,27 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
       selected.includes(n.id) ? { ...n, direction: opposite[n.direction] } : n,
     ),
   };
+}
+export function setStepDistance(chart: Chart, selected: string[], distance?: StepDistance): Chart {
+  return {
+    ...chart,
+    notes: chart.notes.map((note) => {
+      if (!selected.includes(note.id) || !isStepMove(note)) return note;
+      const next = { ...note };
+      const value = distance ?? (note.distance === 2 ? 1 : 2);
+      if (value === 1) delete next.distance;
+      else next.distance = value;
+      return next;
+    }),
+  };
+}
+export function changeNoteDirection(note: Note, direction: Direction): Note {
+  const next = { ...note, direction };
+  if (direction === 'close') {
+    delete next.distance;
+    if (next.kind === 'hold') next.modifier = 'none';
+  }
+  return next;
 }
 /** Preserve row spacing and only move to lanes that accept every selected note's direction. */
 export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to: Lane): Chart {
@@ -78,17 +102,21 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
     notes.some((n) => {
       const index = LANES.findIndex((l) => l.id === n.lane);
       const next = index + delta;
-      return !(LANES[next]?.directions as readonly Direction[] | undefined)?.includes(n.direction);
+      return (
+        !(LANES[next]?.directions as readonly Direction[] | undefined)?.includes(n.direction) ||
+        (n.distance === 2 && LANES[next]?.id !== 'step')
+      );
     })
   )
     return chart;
   return {
     ...chart,
-    notes: chart.notes.map((n) =>
-      selected.includes(n.id)
-        ? { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id }
-        : n,
-    ),
+    notes: chart.notes.map((n) => {
+      if (!selected.includes(n.id)) return n;
+      const next = { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id };
+      if (next.lane !== 'step') delete next.distance;
+      return next;
+    }),
   };
 }
 export function moveEvents(

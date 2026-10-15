@@ -1,6 +1,6 @@
-import type { Direction, Lane } from '../model';
+import { noteSymbol, type Direction, type Lane, type StepDistance } from '../model';
 export function DirectionGlyph({ direction, size = 24 }: { direction: Direction; size?: number }) {
-  const angle = { up: 0, right: 90, down: 180, left: 270 }[direction];
+  const angle = { up: 0, right: 90, down: 180, left: 270, close: 0 }[direction];
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
       <path
@@ -47,10 +47,12 @@ export function NoteGlyph({
   lane,
   direction,
   size = 24,
+  distance = 1,
 }: {
   lane: Lane;
   direction: Direction;
   size?: number;
+  distance?: StepDistance;
 }) {
   if (lane !== 'step') return <DirectionGlyph direction={direction} size={size} />;
   return (
@@ -65,7 +67,7 @@ export function NoteGlyph({
         fontWeight="800"
         fontSize="30"
       >
-        {direction === 'left' ? 'L' : 'R'}
+        {noteSymbol(lane, direction, distance)}
       </text>
     </svg>
   );

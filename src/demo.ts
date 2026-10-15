@@ -10,13 +10,29 @@ export function demoChart(fileName: string): Chart {
     specialEvents: [],
   };
   let index = 0;
-  const tap = (lane: Lane, direction: Direction, beat: number) =>
+  const tap = (lane: Lane, direction: Direction, beat: number, distance?: 2) =>
     chart.notes.push({
       id: `demo-${index++}`,
       lane,
       direction,
       kind: 'tap',
       timeMs: 2000 + beat * 400,
+      ...(distance ? { distance } : {}),
+    });
+  const stepHold = (
+    direction: Direction,
+    beat: number,
+    end: number,
+    modifier: 'none' | 'sway' = 'none',
+  ) =>
+    chart.notes.push({
+      id: `demo-${index++}`,
+      lane: 'step',
+      direction,
+      kind: 'hold',
+      modifier,
+      timeMs: 2000 + beat * 400,
+      endTimeMs: 2000 + end * 400,
     });
   for (let bar = 0; bar < 80; bar++) {
     const b = bar * 8;
@@ -55,20 +71,23 @@ export function demoChart(fileName: string): Chart {
     }
     if (bar % 8 === 1) {
       tap('step', 'left', b);
-      tap('step', 'right', b + 2);
-      tap('step', 'left', b + 4);
+      tap('step', 'close', b + 1);
+      tap('step', 'right', b + 2, 2);
+      tap('step', 'close', b + 3);
+      tap('step', 'left', b + 4, 2);
+      tap('step', 'close', b + 5);
       tap('step', 'right', b + 6);
-    } else if (bar % 8 === 3 || bar % 8 === 5) {
-      chart.notes.push({
-        id: `demo-${index++}`,
-        lane: 'step',
-        direction: bar % 8 === 3 ? 'left' : 'right',
-        kind: 'hold',
-        modifier: bar % 8 === 3 ? 'none' : 'sway',
-        timeMs: 2000 + b * 400,
-        endTimeMs: 2000 + (b + 3) * 400,
-      });
-      tap('step', bar % 8 === 3 ? 'right' : 'left', b + 4);
+      tap('step', 'close', b + 7);
+    } else if (bar % 8 === 3) {
+      stepHold('left', b, b + 2);
+      stepHold('close', b + 2, b + 4);
+      tap('step', 'right', b + 5);
+      tap('step', 'close', b + 6);
+    } else if (bar % 8 === 5) {
+      stepHold('right', b, b + 3, 'sway');
+      tap('step', 'close', b + 3);
+      stepHold('left', b + 4, b + 7, 'sway');
+      tap('step', 'close', b + 7);
     }
   }
   return sortChart(chart);

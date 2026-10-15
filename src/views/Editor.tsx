@@ -24,6 +24,8 @@ import {
 import {
   noteColor,
   noteSymbol,
+  noteAction,
+  isStepMove,
   LANES,
   uid,
   type Chart,
@@ -32,6 +34,7 @@ import {
   type Note,
   type Snap,
   type SpecialEvent,
+  type StepDistance,
 } from '../model';
 import { MediaController, useMediaStatus, useTime } from '../media';
 import { formatTime, gridLines, nextGrid, segmentAt, snapTime } from '../timing';
@@ -43,9 +46,12 @@ import {
   pasteEvents,
   resnapEvents,
   shiftNoteLanes,
+  setStepDistance,
+  changeNoteDirection,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
 import { NoteGlyph } from '../components/Glyph';
+import { checkStepPositions } from '../stepping';
 
 type Props = {
   chart: Chart;
@@ -160,6 +166,7 @@ export function Editor({
   const duration = status.durationMs || chart.videoHint.durationMs || 180000;
   const [lane, setLane] = useState<Lane>('squat');
   const [direction, setDirection] = useState<Direction>('down');
+  const [stepDistance, setDrawDistance] = useState<StepDistance>(1);
   const [hold, setHold] = useState(false),
     [sway, setSway] = useState(false);
   const [recording, setRecording] = useState(false),
@@ -185,6 +192,7 @@ export function Editor({
   const px = zoom / 1000,
     width = Math.max(duration * px + LABEL + 60, viewport);
   const shown = draft || chart;
+  const stepIssues = useMemo(() => checkStepPositions(shown), [shown]);
   const pickLane = (newLane: Lane) => {
     setLane(newLane);
     const dirs = LANES.find((l) => l.id === newLane)!.directions as readonly Direction[];
@@ -218,6 +226,8 @@ export function Editor({
       element.scrollLeft = Math.max(0, time * px - 120);
   }, [time, follow, status.playing, px]);
   const selectedNote = chart.notes.find((n) => selected.includes(n.id));
+  const selectedStep = chart.notes.find((n) => selected.includes(n.id) && isStepMove(n));
+  const canFlip = chart.notes.some((n) => selected.includes(n.id) && n.direction !== 'close');
   const selectedSpecial = chart.specialEvents.find((n) => selected.includes(n.id));
   const event = selectedNote || selectedSpecial;
   const activeSegment =
@@ -246,6 +256,7 @@ export function Editor({
     setSelected([]);
   };
   const flip = () => onChange(flipNotes(chart, selected));
+  const toggleDistance = () => onChange(setStepDistance(chart, selected));
   const duplicate = () => {
     const notes = chart.notes.filter((n) => selected.includes(n.id)),
       specials = chart.specialEvents.filter((n) => selected.includes(n.id));
@@ -291,6 +302,9 @@ export function Editor({
       } else if (!modifier && !e.altKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         if (!e.repeat) flip();
+      } else if (!modifier && !e.altKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        if (!e.repeat) toggleDistance();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         remove();
@@ -345,6 +359,7 @@ export function Editor({
         direction: selectedNote.direction,
         timeMs: selectedNote.timeMs,
         kind: 'tap',
+        ...(selectedNote.distance ? { distance: selectedNote.distance } : {}),
       };
       onChange({ ...chart, notes: chart.notes.map((n) => (n.id === note.id ? note : n)) });
     } else
@@ -495,10 +510,11 @@ export function Editor({
           direction: dir,
           timeMs: start,
           kind: 'hold',
-          modifier: sway ? 'sway' : 'none',
+          modifier: sway && dir !== 'close' ? 'sway' : 'none',
           endTimeMs: finish,
         }
       : { id: d.id!, lane: d.lane, direction: dir, timeMs: start, kind: 'tap' };
+    if (d.lane === 'step' && dir !== 'close' && stepDistance === 2) note.distance = 2;
     return { ...d.original, notes: [...d.original.notes, note] };
   };
   const pointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -589,7 +605,8 @@ export function Editor({
         data-direction={isSpecial ? undefined : n.direction}
         data-testid={isSpecial ? 'special-event' : 'editor-note'}
         className={`timeline-event ${end !== undefined ? 'long' : ''} ${isSway ? 'sway' : ''} ${isSpecial ? 'special' : ''} ${selected.includes(n.id) ? 'selected' : ''}`}
-        title={`${isSpecial ? 'SPECIAL' : noteSymbol(n.lane, n.direction)} ${formatTime(n.timeMs, true)}${end ? ' — ' + formatTime(end, true) : ''}`}
+        data-step-issue={stepIssues.some((issue) => issue.noteId === n.id) || undefined}
+        title={`${isSpecial ? 'SPECIAL' : noteSymbol(n.lane, n.direction, n.distance)} ${formatTime(n.timeMs, true)}${end ? ' — ' + formatTime(end, true) : ''}${stepIssues.find((issue) => issue.noteId === n.id)?.message ? '\n' + stepIssues.find((issue) => issue.noteId === n.id)!.message : ''}`}
         style={
           {
             left: LABEL + n.timeMs * px,
@@ -609,11 +626,19 @@ export function Editor({
           '★'
         ) : (
           <span className="event-glyph">
-            <NoteGlyph lane={n.lane} direction={n.direction} size={18} />
+            <NoteGlyph lane={n.lane} direction={n.direction} distance={n.distance} size={18} />
           </span>
         )}
         {end !== undefined && (
-          <span className="event-caption">{isSway ? 'SWAY' : isSpecial ? 'SPECIAL' : 'HOLD'}</span>
+          <span className="event-caption">
+            {!isSpecial && n.lane === 'step'
+              ? noteAction(n)
+              : isSway
+                ? 'SWAY'
+                : isSpecial
+                  ? 'SPECIAL'
+                  : 'HOLD'}
+          </span>
         )}
         {end !== undefined && <span className="resize-handle end" data-handle="end" />}
         {!isSpecial &&
@@ -680,11 +705,20 @@ export function Editor({
           className="tool-button flip-button"
           aria-label="反转方向"
           title="反转选中音符方向（F）"
-          disabled={!selectedNote}
+          disabled={!canFlip}
           onClick={flip}
         >
           <ArrowLeftRight size={16} />
           反向 <kbd>F</kbd>
+        </button>
+        <button
+          className="tool-button flip-button"
+          aria-label="切换选中踏步跨度"
+          title="切换选中 L/R 的 1/2 格跨度（D）"
+          disabled={!selectedStep}
+          onClick={toggleDistance}
+        >
+          跨度 <kbd>D</kbd>
         </button>
         <label className="inline-field">
           <Magnet size={15} />
@@ -784,6 +818,19 @@ export function Editor({
             </button>
           ))}
         </div>
+        {lane === 'step' && direction !== 'close' && !recording && (
+          <label className="inline-field step-distance-picker">
+            跨度
+            <select
+              aria-label="绘制踏步跨度"
+              value={stepDistance}
+              onChange={(e) => setDrawDistance(Number(e.target.value) as StepDistance)}
+            >
+              <option value={1}>1 格</option>
+              <option value={2}>2 格</option>
+            </select>
+          </label>
+        )}
         <select
           aria-label="绘制类型"
           hidden={recording}
@@ -791,20 +838,24 @@ export function Editor({
           onChange={(e) => setHold(e.target.value === 'hold')}
         >
           <option value="tap">普通 TAP</option>
-          <option value="hold">绘制 HOLD</option>
+          <option value="hold">
+            {lane === 'step' ? (direction === 'close' ? '慢速合腿' : '单脚支撑 HOLD') : '绘制 HOLD'}
+          </option>
         </select>
         <label className="check-label" hidden={recording}>
           <input
             type="checkbox"
-            checked={sway}
-            disabled={!hold}
+            checked={direction !== 'close' && sway}
+            disabled={!hold || direction === 'close'}
             onChange={(e) => setSway(e.target.checked)}
           />
           SWAY
         </label>
         <span className="record-hint">
           {recording
-            ? '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
+            ? lane === 'step'
+              ? '← L · → R · ↓ C · Shift 跨两格 · 长按 HOLD · Ctrl 摇摆'
+              : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
             : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
       </div>
@@ -944,7 +995,17 @@ export function Editor({
                       onChange={(e) => changeKind(e.target.value === 'hold')}
                     >
                       <option value="tap">{selectedNote ? '普通 TAP' : '瞬间 SPECIAL'}</option>
-                      <option value="hold">{selectedNote ? '保持 HOLD' : '持续 SPECIAL'}</option>
+                      <option value="hold">
+                        {selectedNote?.lane === 'step'
+                          ? selectedNote.direction === 'close'
+                            ? '慢速合腿'
+                            : selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
+                              ? '重心摇摆 SWAY'
+                              : '单脚支撑 HOLD'
+                          : selectedNote
+                            ? '保持 HOLD'
+                            : '持续 SPECIAL'}
+                      </option>
                     </select>
                   </label>
                   {'endTimeMs' in event && event.endTimeMs !== undefined && (
@@ -962,18 +1023,64 @@ export function Editor({
                       <select
                         aria-label="选中音符方向"
                         value={selectedNote.direction}
-                        onChange={(e) => patchEvent({ direction: e.target.value })}
+                        onChange={(e) =>
+                          onChange({
+                            ...chart,
+                            notes: chart.notes.map((n) =>
+                              n.id === selectedNote.id
+                                ? changeNoteDirection(n, e.target.value as Direction)
+                                : n,
+                            ),
+                          })
+                        }
                       >
                         {LANES.find((l) => l.id === selectedNote.lane)!.directions.map((d) => (
                           <option key={d} value={d}>
                             {noteSymbol(selectedNote.lane, d)}{' '}
-                            {d === 'left' ? '左' : d === 'right' ? '右' : d === 'up' ? '上' : '下'}
+                            {d === 'close'
+                              ? '合腿'
+                              : d === 'left'
+                                ? '左'
+                                : d === 'right'
+                                  ? '右'
+                                  : d === 'up'
+                                    ? '上'
+                                    : '下'}
                           </option>
                         ))}
                       </select>
                     </label>
                   )}
-                  {selectedNote?.kind === 'hold' && (
+                  {selectedStep && (
+                    <label className="field">
+                      <span>踏步跨度{selected.length > 1 ? ' · 批量' : ''}</span>
+                      <select
+                        aria-label="选中踏步跨度"
+                        value={selectedStep.distance ?? 1}
+                        onChange={(e) =>
+                          onChange(
+                            setStepDistance(
+                              chart,
+                              selected,
+                              Number(e.target.value) as StepDistance,
+                            ),
+                          )
+                        }
+                      >
+                        <option value={1}>1 格</option>
+                        <option value={2}>2 格</option>
+                      </select>
+                    </label>
+                  )}
+                  {selectedNote?.lane === 'step' && (
+                    <p className="inspector-tip">
+                      {noteAction(selectedNote)}
+                      {selectedNote.direction === 'close'
+                        ? '：另一只脚向刚迈出的脚靠拢。'
+                        : '；合腿请另放 C。C 与两格踏步仅用于 STEP 轨。'}
+                    </p>
+                  )}
+                  {selectedNote?.kind === 'hold' && selectedNote.direction !== 'close' && (
                     <label className="check-label inspector-check">
                       <input
                         type="checkbox"
@@ -1162,6 +1269,34 @@ export function Editor({
           </div>
         </aside>
       </div>
+      {shown.notes.some((n) => n.lane === 'step') && (
+        <details className={`step-checks ${stepIssues.length ? 'has-issues' : ''}`}>
+          <summary>
+            STEP 站位{stepIssues.length ? `：${stepIssues.length} 处需检查` : '检查通过'}{' '}
+            <span>起始：中间并腿</span>
+          </summary>
+          <div className="step-check-list">
+            {stepIssues.length ? (
+              stepIssues.map((issue) => (
+                <button
+                  key={issue.noteId}
+                  onClick={() => {
+                    setSelected([issue.noteId]);
+                    setTab('note');
+                    media.seek(issue.timeMs);
+                    if (scrollRef.current)
+                      scrollRef.current.scrollLeft = Math.max(0, issue.timeMs * px - 150);
+                  }}
+                >
+                  <time>{formatTime(issue.timeMs, true)}</time> {issue.message}
+                </button>
+              ))
+            ) : (
+              <p>三格范围内可完成；C 收拢到最近一次迈出的脚。长条结束后再开始下一次踏步。</p>
+            )}
+          </div>
+        </details>
+      )}
     </section>
   );
 }

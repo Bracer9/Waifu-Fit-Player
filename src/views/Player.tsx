@@ -1,5 +1,5 @@
 import { Heart, Sparkles, Star } from 'lucide-react';
-import { type Chart, LANES, noteColor, noteSymbol } from '../model';
+import { type Chart, LANES, noteColor, noteSymbol, noteAction } from '../model';
 import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph } from '../components/Glyph';
@@ -96,9 +96,13 @@ export function Player({
                         }
                         key={note.id}
                         data-direction={note.direction}
-                        aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction)}`}
+                        aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction, note.distance)}`}
                       >
-                        <NoteGlyph lane={note.lane} direction={note.direction} />
+                        <NoteGlyph
+                          lane={note.lane}
+                          direction={note.direction}
+                          distance={note.distance}
+                        />
                       </div>
                     ) : null;
                   const tail = noteX(note.endTimeMs, time, 88, PREVIEW_MS);
@@ -108,7 +112,7 @@ export function Player({
                       key={note.id}
                       className={`player-hold ${note.modifier === 'sway' ? 'sway' : ''} ${time >= note.timeMs ? 'active' : ''}`}
                       data-direction={note.direction}
-                      aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction)} ${note.modifier === 'sway' ? 'SWAY' : 'HOLD'}`}
+                      aria-label={`${lane.name} ${noteSymbol(note.lane, note.direction, note.distance)} ${noteAction(note)}`}
                       style={
                         {
                           left: `${tail}%`,
@@ -120,10 +124,18 @@ export function Player({
                       }
                     >
                       <span className="hold-caption">
-                        {note.modifier === 'sway' ? '∿ SWAY ∿' : 'HOLD'}
+                        {note.lane === 'step'
+                          ? noteAction(note)
+                          : note.modifier === 'sway'
+                            ? '∿ SWAY ∿'
+                            : 'HOLD'}
                       </span>
                       <div className="hold-head">
-                        <NoteGlyph lane={note.lane} direction={note.direction} />
+                        <NoteGlyph
+                          lane={note.lane}
+                          direction={note.direction}
+                          distance={note.distance}
+                        />
                       </div>
                     </div>
                   );
@@ -132,6 +144,7 @@ export function Player({
                   className={`hit-target ${holding ? 'holding' : ''}`}
                   data-testid={`target-${lane.id}`}
                   data-state={holding ? (sway ? 'sway' : 'holding') : 'idle'}
+                  data-action={holding ? noteAction(holding) : undefined}
                   style={
                     holding?.lane === 'step'
                       ? ({
@@ -141,16 +154,25 @@ export function Player({
                   }
                 >
                   {holding ? (
-                    <NoteGlyph lane={holding.lane} direction={holding.direction} size={29} />
+                    <NoteGlyph
+                      lane={holding.lane}
+                      direction={holding.direction}
+                      distance={holding.distance}
+                      size={29}
+                    />
                   ) : (
                     <span />
                   )}
                 </div>
                 {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
-                {holding && <span className="holding-label">{sway ? 'SWAY' : '保持'}</span>}
+                {holding && (
+                  <span className="holding-label">
+                    {holding.lane === 'step' ? noteAction(holding) : sway ? 'SWAY' : '保持'}
+                  </span>
+                )}
                 {release && (
                   <span className="release-label" style={{ opacity: flash }}>
-                    释放
+                    {release.direction === 'close' ? '并拢' : '释放'}
                   </span>
                 )}
               </div>

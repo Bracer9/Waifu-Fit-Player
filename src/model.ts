@@ -18,7 +18,7 @@ export const LANES = [
     id: 'step',
     name: '踏步',
     english: 'STEP',
-    directions: ['left', 'right'],
+    directions: ['left', 'right', 'close'],
     color: 'var(--cyan)',
   },
   {
@@ -30,10 +30,15 @@ export const LANES = [
   },
 ] as const;
 export type Lane = (typeof LANES)[number]['id'];
-export type Direction = 'up' | 'down' | 'left' | 'right';
-export type Note = { id: string; lane: Lane; direction: Direction; timeMs: number } & (
-  { kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' }
-);
+export type Direction = 'up' | 'down' | 'left' | 'right' | 'close';
+export type StepDistance = 1 | 2;
+export type Note = {
+  id: string;
+  lane: Lane;
+  direction: Direction;
+  timeMs: number;
+  distance?: StepDistance;
+} & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
 export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '4/4' | '3/4' };
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
 export type Chart = {
@@ -47,15 +52,36 @@ export type Chart = {
 };
 export type Snap = 0 | 1 | 2 | 4;
 export const uid = () => crypto.randomUUID();
-export const arrow: Record<Direction, string> = { up: '↑', down: '↓', left: '←', right: '→' };
-export const noteSymbol = (lane: Lane, direction: Direction) =>
-  lane === 'step' ? (direction === 'left' ? 'L' : 'R') : arrow[direction];
+export const arrow: Record<Direction, string> = {
+  up: '↑',
+  down: '↓',
+  left: '←',
+  right: '→',
+  close: 'C',
+};
+export const noteSymbol = (lane: Lane, direction: Direction, distance: StepDistance = 1) =>
+  lane === 'step'
+    ? direction === 'close'
+      ? 'C'
+      : `${direction === 'left' ? 'L' : 'R'}${distance === 2 ? '2' : ''}`
+    : arrow[direction];
 export const noteColor = (lane: Lane, direction: Direction) =>
   lane === 'step'
-    ? direction === 'left'
-      ? 'var(--cyan)'
-      : 'var(--pink)'
+    ? direction === 'close'
+      ? 'var(--step-close)'
+      : direction === 'left'
+        ? 'var(--cyan)'
+        : 'var(--pink)'
     : LANES.find((item) => item.id === lane)!.color;
+export const isStepMove = (note: Note) => note.lane === 'step' && note.direction !== 'close';
+export function noteAction(note: Note): string {
+  if (note.lane !== 'step')
+    return note.kind === 'hold' && note.modifier === 'sway' ? 'SWAY' : 'HOLD';
+  if (note.direction === 'close') return note.kind === 'hold' ? '慢速合腿' : '合腿';
+  if (note.kind === 'tap')
+    return `向${note.direction === 'left' ? '左' : '右'}迈${note.distance === 2 ? '两' : '一'}格`;
+  return note.modifier === 'sway' ? '重心摇摆' : `${note.direction === 'left' ? '左' : '右'}脚支撑`;
+}
 export function blankChart(title = '我的新作品'): Chart {
   return {
     schemaVersion: 1,
@@ -148,12 +174,21 @@ export function parseChart(input: unknown, durationMs?: number): Chart {
       const lane = LANES.find((l) => l.id === note.lane);
       if (!lane || !(lane.directions as readonly unknown[]).includes(note.direction))
         errors.push(`${label}：轨道或方向不匹配。`);
+      if (
+        note.distance !== undefined &&
+        (note.lane !== 'step' ||
+          !['left', 'right'].includes(String(note.direction)) ||
+          (note.distance !== 1 && note.distance !== 2))
+      )
+        errors.push(`${label}：跨度仅适用于 STEP 的 L/R，必须为 1 或 2。`);
       if (note.kind === 'hold') {
         checkTime(note.endTimeMs, `${label} 终点`);
         if (Number(note.endTimeMs) <= Number(note.timeMs))
           errors.push(`${label}：HOLD 终点必须晚于起点。`);
         if (note.modifier !== 'none' && note.modifier !== 'sway')
           errors.push(`${label}：HOLD modifier 无效。`);
+        if (note.direction === 'close' && note.modifier === 'sway')
+          errors.push(`${label}：C 长条表示慢速合腿，不能使用 SWAY。`);
       } else if (note.kind !== 'tap' || 'modifier' in note || 'endTimeMs' in note)
         errors.push(`${label}：普通音符不能有保持属性。`);
     });

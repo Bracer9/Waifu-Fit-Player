@@ -1,5 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { LANES, uid, type Chart, type Direction, type Lane, type Note, type Snap } from './model';
+import {
+  LANES,
+  uid,
+  type Chart,
+  type Direction,
+  type Lane,
+  type Note,
+  type Snap,
+  type StepDistance,
+} from './model';
 import { MediaController } from './media';
 import { nextGrid, snapTime } from './timing';
 export const isTyping = (target: EventTarget | null) =>
@@ -29,6 +38,7 @@ export function useRecording(options: Options) {
     timeMs: number;
     pressedAt: number;
     modifier: 'none' | 'sway';
+    distance?: StepDistance;
   } | null>(null);
   useEffect(() => {
     const cancel = () => {
@@ -49,12 +59,13 @@ export function useRecording(options: Options) {
         }
         return;
       }
-      const dir = (
+      let dir = (
         { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' } as Record<
           string,
           Direction
         >
       )[e.key];
+      if (o.lane === 'step' && dir === 'down') dir = 'close';
       if (!dir) return;
       e.preventDefault();
       if (e.repeat || pending.current || !o.media.getStatus().playing) return;
@@ -74,7 +85,8 @@ export function useRecording(options: Options) {
         direction: dir,
         timeMs,
         pressedAt: performance.now(),
-        modifier: e.ctrlKey ? 'sway' : 'none',
+        modifier: e.ctrlKey && dir !== 'close' ? 'sway' : 'none',
+        ...(o.lane === 'step' && dir !== 'close' && e.shiftKey ? { distance: 2 } : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {
@@ -99,6 +111,7 @@ export function useRecording(options: Options) {
           direction: p.direction,
           kind: 'tap',
           timeMs: p.timeMs,
+          ...(p.distance ? { distance: p.distance } : {}),
         });
         return;
       }
@@ -120,6 +133,7 @@ export function useRecording(options: Options) {
           kind: 'hold',
           modifier: p.modifier,
           endTimeMs,
+          ...(p.distance ? { distance: p.distance } : {}),
         });
     };
     window.addEventListener('keydown', keydown);

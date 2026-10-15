@@ -7,6 +7,7 @@
   --pink: #f64e93;
   --cyan: #35c9db;
   --miku: #39c5bb;
+  --step-close: #a58ad4;
   --ink: #242329;
   --cream: #faf6ed;
   --line: #dedbd3;
@@ -1428,6 +1429,7 @@ nav button.active:after {
 }
 .editor-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 13px;
   padding: 6px 10px;
@@ -1744,6 +1746,61 @@ nav button.active:after {
   outline: 2px solid #fff;
   outline-offset: 2px;
   z-index: 4;
+}
+.timeline-event[data-step-issue]:after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffda76;
+  box-shadow: 0 0 0 1px #4c351f;
+  pointer-events: none;
+}
+.step-distance-picker {
+  font-size: 10px;
+}
+.step-checks {
+  border-bottom: 1px solid #d5c9bf;
+  background: #edf3ed;
+  color: #48625c;
+  font-size: 11px;
+}
+.step-checks.has-issues {
+  background: #f8eddb;
+  color: #88602d;
+}
+.step-checks summary {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.step-checks summary span {
+  margin-left: 12px;
+  opacity: 0.75;
+}
+.step-check-list {
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 0 12px 8px;
+}
+.step-check-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 5px 0;
+  font-size: 11px;
+}
+.step-check-list button:hover {
+  text-decoration: underline;
+}
+.step-check-list time {
+  font-variant-numeric: tabular-nums;
+  margin-right: 8px;
+}
+.step-check-list p {
+  margin: 4px 0;
 }
 .event-caption {
   font-family: 'Barlow Condensed', sans-serif;

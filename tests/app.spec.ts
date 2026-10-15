@@ -711,7 +711,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await page.screenshot({ path: 'artifacts/step-fullscreen.png', fullPage: true });
 });
 
-test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上下方向', async ({ page }) => {
+test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上方向', async ({ page }) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
@@ -723,7 +723,6 @@ test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上下方向', async ({
   await seek(page, 1);
   await page.getByRole('button', { name: '播放', exact: true }).click();
   await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowLeft');
   await page.getByRole('button', { name: '暂停', exact: true }).click();
   expect((await exportChart(page)).notes).toMatchObject([
@@ -760,6 +759,195 @@ test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上下方向', async ({
   for (const note of chart.notes.slice(1)) {
     expect(note.kind === 'hold' && note.endTimeMs - note.timeMs).toBeGreaterThan(250);
     expect(note.kind === 'hold' && note.endTimeMs - note.timeMs).toBeLessThan(1200);
+  }
+});
+
+test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色一致', async ({ page }) => {
+  await emptyEditor(page);
+  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await draw(page, 1000, 3, 1500);
+  await page.getByRole('button', { name: '放置方向C', exact: true }).click();
+  await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
+  await expect(page.getByRole('checkbox', { name: 'SWAY', exact: true })).toBeDisabled();
+  await draw(page, 2000, 3);
+  const grip = (await page.getByTestId('extend-note').boundingBox())!;
+  const surface = (await page.locator('.timeline-surface').boundingBox())!;
+  await page.mouse.move(grip.x + 6, grip.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(surface.x + 124 + 250, grip.y + 10, { steps: 6 });
+  await page.mouse.up();
+  await expect(page.getByLabel('保持时自由摇摆 SWAY')).toHaveCount(0);
+  await expect(page.getByLabel('选中事件类型').locator('option:checked')).toHaveText('慢速合腿');
+  await page.getByRole('button', { name: '放置方向R', exact: true }).click();
+  await page.getByLabel('绘制踏步跨度').selectOption('2');
+  await draw(page, 3000, 3);
+  await page.keyboard.press('d');
+  await expect(page.getByLabel('选中踏步跨度', { exact: true })).toHaveValue('1');
+  await page.getByRole('button', { name: '切换选中踏步跨度', exact: true }).click();
+  await expect(page.getByLabel('选中踏步跨度', { exact: true })).toHaveValue('2');
+  await page.getByRole('button', { name: '放置方向C', exact: true }).click();
+  await draw(page, 4000, 3);
+  await page.getByRole('button', { name: '放置方向L', exact: true }).click();
+  await draw(page, 5000, 3, 6000);
+  await page.getByLabel('保持时自由摇摆 SWAY').check();
+  await page.getByLabel('选中音符方向').selectOption('close');
+  let chart = await exportChart(page);
+  expect(chart.notes[4]).toMatchObject({ direction: 'close', modifier: 'none', kind: 'hold' });
+  expect(chart.notes[4].distance).toBeUndefined();
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await page.getByRole('button', { name: '放置方向C', exact: true }).click();
+  await draw(page, 6500, 3);
+  chart = await exportChart(page);
+  expect(chart.notes).toMatchObject([
+    { direction: 'left', kind: 'hold', timeMs: 1000, endTimeMs: 1500, modifier: 'none' },
+    { direction: 'close', kind: 'hold', timeMs: 2000, endTimeMs: 2500, modifier: 'none' },
+    { direction: 'right', kind: 'tap', timeMs: 3000, distance: 2 },
+    { direction: 'close', kind: 'tap', timeMs: 4000 },
+    {
+      direction: 'left',
+      kind: 'hold',
+      timeMs: 5000,
+      endTimeMs: 6000,
+      distance: 2,
+      modifier: 'sway',
+    },
+    { direction: 'close', kind: 'tap', timeMs: 6500 },
+  ]);
+  await expect(page.locator('.step-checks summary')).toContainText('检查通过');
+  // A batch distance change leaves C intact and is one undoable edit.
+  await page.keyboard.press('Control+a');
+  await page.getByLabel('选中踏步跨度', { exact: true }).selectOption('1');
+  expect((await exportChart(page)).notes.every((n) => n.distance === undefined)).toBe(true);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  expect((await exportChart(page)).notes).toEqual(chart.notes);
+  await page.getByRole('button', { name: '选择工具', exact: true }).click();
+  await draw(page, 7500, 3);
+  await page.getByTestId('editor-note').nth(2).click();
+  await page.keyboard.press('f');
+  await expect(page.getByLabel('选中踏步跨度', { exact: true })).toHaveValue('2');
+  await expect(page.locator('.step-checks summary')).toContainText('需检查');
+  await page.locator('.step-checks summary').click();
+  await page.getByRole('button', { name: /00:03\.000 L2 会超出三格毯子/ }).click();
+  await expect(page.getByLabel('开始 / ms')).toHaveValue('3000');
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await expect(page.locator('.step-checks summary')).toContainText('检查通过');
+  await page.locator('.step-checks summary').click();
+  chart = await exportChart(page);
+  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await page.screenshot({ path: 'artifacts/step-close-editor.png', fullPage: true });
+  page.on('dialog', (dialog) => dialog.accept());
+  await page.reload();
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'step-close.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  await expect(page.getByRole('heading', { name: '浏览器测试作品' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '播放', exact: true })).toBeEnabled();
+  expect(await exportChart(page)).toEqual(chart);
+  await expect(
+    page.locator('.timeline-event[data-direction="close"] .event-glyph').first(),
+  ).toHaveCSS('background-color', 'rgb(165, 138, 212)');
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  const target = page.getByTestId('target-step');
+  await seek(page, 1.25);
+  await expect(target).toHaveAttribute('data-action', '左脚支撑');
+  await seek(page, 2.25);
+  await expect(target).toHaveText('C');
+  await expect(target).toHaveAttribute('data-action', '慢速合腿');
+  await expect(target).toHaveCSS('background-color', 'rgb(165, 138, 212)');
+  for (const viewport of [
+    { width: 1280, height: 720 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
+      viewport.height,
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      viewport.width,
+    );
+    await page.screenshot({
+      path: `artifacts/step-close-player-${viewport.width}.png`,
+      fullPage: true,
+    });
+  }
+  await seek(page, 2.58);
+  await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('并拢');
+  await seek(page, 5.5);
+  await expect(target).toHaveText('L2');
+  await expect(target).toHaveAttribute('data-state', 'sway');
+  await expect(target).toHaveAttribute('data-action', '重心摇摆');
+  await page.screenshot({ path: 'artifacts/step-double-sway.png', fullPage: true });
+});
+
+test('STEP 录 C、Shift 两格、Ctrl+Shift 摇摆，组合键与切轨不改变正在录的音符', async ({ page }) => {
+  await emptyEditor(page);
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
+  await page.keyboard.press('4');
+  const start = async (seconds: number) => {
+    await seek(page, seconds);
+    await page.getByRole('button', { name: '播放', exact: true }).click();
+  };
+  const stop = () => page.getByRole('button', { name: '暂停', exact: true }).click();
+  await start(1);
+  await page.keyboard.press('ArrowLeft');
+  await stop();
+  await start(2);
+  await page.keyboard.press('ArrowDown');
+  await stop();
+  await start(3);
+  await page.keyboard.press('Shift+ArrowRight');
+  await stop();
+  await start(4);
+  await page.keyboard.down('Control');
+  await page.keyboard.down('ArrowDown');
+  await page.waitForTimeout(400);
+  await page.keyboard.up('ArrowDown');
+  await page.keyboard.up('Control');
+  await stop();
+  await start(5);
+  await page.keyboard.down('Shift');
+  await page.keyboard.down('Control');
+  await page.keyboard.down('ArrowLeft');
+  await page.keyboard.up('Shift');
+  await page.keyboard.up('Control');
+  await page.keyboard.press('5');
+  await page.waitForTimeout(400);
+  await page.keyboard.up('ArrowLeft');
+  await stop();
+  await page.keyboard.press('4');
+  await start(6);
+  await page.keyboard.press('ArrowDown');
+  await stop();
+  await start(7);
+  await page.keyboard.down('Shift');
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(400);
+  await page.keyboard.up('ArrowRight');
+  await page.keyboard.up('Shift');
+  await stop();
+  await page.keyboard.press('3');
+  await start(8);
+  await page.keyboard.press('Shift+ArrowLeft');
+  await stop();
+  const chart = await exportChart(page);
+  expect(chart.notes).toMatchObject([
+    { lane: 'step', direction: 'left', kind: 'tap' },
+    { lane: 'step', direction: 'close', kind: 'tap' },
+    { lane: 'step', direction: 'right', kind: 'tap', distance: 2 },
+    { lane: 'step', direction: 'close', kind: 'hold', modifier: 'none' },
+    { lane: 'step', direction: 'left', kind: 'hold', modifier: 'sway', distance: 2 },
+    { lane: 'step', direction: 'close', kind: 'tap' },
+    { lane: 'step', direction: 'right', kind: 'hold', modifier: 'none', distance: 2 },
+    { lane: 'punch', direction: 'left', kind: 'tap' },
+  ]);
+  for (const i of [0, 1, 3, 5, 7]) expect(chart.notes[i].distance).toBeUndefined();
+  for (const i of [3, 4, 6]) {
+    const note = chart.notes[i];
+    expect(note.kind === 'hold' && note.endTimeMs - note.timeMs).toBeGreaterThan(250);
   }
 });
 
