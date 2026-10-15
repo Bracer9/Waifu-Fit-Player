@@ -121,6 +121,119 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
 });
 
+test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续事件和减弱动态效果', async ({ page }) => {
+  const chart = await emptyEditor(page);
+  chart.title = 'SPECIAL 演出测试';
+  chart.specialMove = { name: 'HEART POSE', icon: 'heart', previewBeats: 4 };
+  chart.specialEvents = [
+    { id: 'special-tap', timeMs: 5000 },
+    { id: 'special-hold', timeMs: 8000, endTimeMs: 10000 },
+    { id: 'special-next', timeMs: 10400 },
+  ];
+  chart.notes = [
+    { id: 'normal', lane: 'punch', direction: 'right', kind: 'tap', timeMs: 5000 },
+    {
+      id: 'normal-hold',
+      lane: 'step',
+      direction: 'left',
+      kind: 'hold',
+      modifier: 'none',
+      timeMs: 4000,
+      endTimeMs: 6000,
+    },
+  ];
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'special-effects.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  const flying = page.getByTestId('special-flying');
+  const bursts = page.getByTestId('special-burst');
+  await seek(page, 2.9);
+  await expect(flying).toHaveCount(0);
+  await seek(page, 3.5);
+  await expect(flying).toHaveCount(5);
+  expect(
+    await flying.evaluateAll((els) => els.map((el) => (el as HTMLElement).style.left)),
+  ).toEqual(Array(5).fill('22%'));
+  await seek(page, 4.2);
+  await expect(page.locator('.special-token .lucide-heart')).toHaveCount(5);
+  for (const viewport of [
+    { width: 1280, height: 720 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
+      viewport.height,
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      viewport.width,
+    );
+    await page.screenshot({
+      path: `artifacts/special-flight-${viewport.width}.png`,
+      fullPage: true,
+    });
+  }
+  await seek(page, 5.14);
+  await expect(flying).toHaveCount(0);
+  await expect(bursts).toHaveCount(5);
+  await expect(bursts.locator('.special-shard')).toHaveCount(70);
+  for (const lane of LANES)
+    await expect(page.getByTestId(`lane-${lane.id}`).getByTestId('special-burst')).toHaveCount(1);
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'holding');
+  const frozenFrame = await bursts.evaluateAll((els) => els.map((el) => el.innerHTML));
+  await page.waitForTimeout(180);
+  expect(await bursts.evaluateAll((els) => els.map((el) => el.innerHTML))).toEqual(frozenFrame);
+  await page.screenshot({ path: 'artifacts/special-burst-1920.png', fullPage: true });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'artifacts/special-burst-1280.png', fullPage: true });
+  await page.getByRole('button', { name: '播放', exact: true }).click();
+  await expect(bursts).toHaveCount(0);
+  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await seek(page, 9);
+  await expect(page.getByTestId('special-holding')).toHaveCount(5);
+  await expect(bursts).toHaveCount(0);
+  await expect(page.locator('.special-hold-ring circle').first()).toHaveAttribute(
+    'stroke-dashoffset',
+    '0.5',
+  );
+  await page.screenshot({ path: 'artifacts/special-hold.png', fullPage: true });
+  await seek(page, 10.1);
+  await expect(bursts).toHaveCount(5);
+  await expect(bursts.first()).toHaveAttribute('data-kind', 'release');
+  await expect(page.getByTestId('special-holding')).toHaveCount(0);
+  await expect(flying).toHaveCount(5);
+  await seek(page, 10.5);
+  await expect(bursts).toHaveCount(10);
+  await seek(page, 11.3);
+  await expect(page.locator('.special-lane-effect')).toHaveCount(0);
+  await seek(page, 5.14);
+  expect(await bursts.evaluateAll((els) => els.map((el) => el.innerHTML))).toEqual(frozenFrame);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(bursts.locator('.special-shard').first()).not.toBeVisible();
+  await expect(bursts.locator('.special-flare').first()).not.toBeVisible();
+  await expect(bursts.locator('.special-echo').first()).toBeVisible();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await seek(page, 2);
+  await expect(page.locator('.special-lane-effect')).toHaveCount(0);
+  // The same song-level symbol drives all five rows; changing it does not duplicate chart events.
+  await page.getByRole('button', { name: '返回工作台', exact: true }).click();
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  for (const icon of ['star', 'sparkles']) {
+    await page.getByLabel('SPECIAL 图标').selectOption(icon);
+    await seek(page, 4.2);
+    await expect(page.locator(`.special-token .lucide-${icon}`)).toHaveCount(5);
+  }
+  expect((await exportChart(page)).specialEvents).toEqual(chart.specialEvents);
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '关闭提示', exact: true }).click();
+  await page.getByRole('button', { name: '全屏', exact: true }).click();
+  await expect(flying).toHaveCount(5);
+  await page.screenshot({ path: 'artifacts/special-sparkles-fullscreen.png', fullPage: true });
+});
+
 test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往返', async ({ page }) => {
   await emptyEditor(page);
   await page.getByRole('button', { name: '3 出拳', exact: true }).click();

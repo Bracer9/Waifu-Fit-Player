@@ -4,6 +4,8 @@ import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
+import { specialVisualsAt } from '../special';
+import { SpecialEffect } from '../components/SpecialEffect';
 const PREVIEW_MS = 3600;
 export function Player({
   chart,
@@ -16,6 +18,7 @@ export function Player({
 }) {
   const time = useTime(media);
   const special = specialAt(chart, time);
+  const specialVisuals = specialVisualsAt(chart, time);
   const SpecialIcon =
     chart.specialMove?.icon === 'star'
       ? Star
@@ -175,6 +178,15 @@ export function Player({
                     {release.direction === 'close' ? '并拢' : '释放'}
                   </span>
                 )}
+                {chart.specialMove &&
+                  specialVisuals.map((visual) => (
+                    <SpecialEffect
+                      key={visual.event.id}
+                      visual={visual}
+                      icon={chart.specialMove!.icon}
+                      row={i}
+                    />
+                  ))}
               </div>
             </div>
           );

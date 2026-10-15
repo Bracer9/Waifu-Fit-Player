@@ -8,6 +8,7 @@
   --cyan: #35c9db;
   --miku: #39c5bb;
   --step-close: #a58ad4;
+  --special-gold: #ffda76;
   --ink: #242329;
   --cream: #faf6ed;
   --line: #dedbd3;
@@ -969,6 +970,167 @@ nav button.active:after {
   overflow: hidden;
   font-size: 10px;
   background: #f6f0e8;
+}
+.special-lane-effect {
+  --special-size: 42px;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.special-token {
+  position: absolute;
+  top: 50%;
+  width: var(--special-size);
+  height: var(--special-size);
+  transform: translate(-50%, -50%);
+}
+.special-token-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 28%;
+  border: 3px solid var(--special-gold);
+  background: linear-gradient(135deg, #a58ad4, var(--pink) 70%, #ffad7f);
+  color: #fff9df;
+  box-shadow:
+    inset 0 0 0 2px #fff6,
+    0 0 10px #ffda7690,
+    0 0 23px #f64e9360;
+}
+.special-glyph {
+  width: 70%;
+  height: 70%;
+  filter: drop-shadow(0 2px 0 #754a9c70);
+}
+.special-comet {
+  position: absolute;
+  right: 45%;
+  top: 50%;
+  width: calc(var(--special-size) * 3);
+  height: calc(var(--special-size) * 0.46);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #f64e9340 35%, #ffda76c0 80%, #fff9df);
+}
+.special-comet:before,
+.special-comet:after {
+  content: '';
+  position: absolute;
+  right: 5%;
+  width: 75%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), #fff9df);
+  top: 15%;
+}
+.special-comet:after {
+  width: 55%;
+  top: 85%;
+}
+.special-hold-ring {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  transform: rotate(-90deg);
+  fill: none;
+  stroke: var(--special-gold);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.special-burst {
+  position: absolute;
+  left: 88%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+.special-wave,
+.special-flare,
+.special-shockwave,
+.special-echo,
+.special-shard {
+  position: absolute;
+}
+.special-wave {
+  width: calc(var(--special-size) * 5);
+  height: calc(var(--special-size) * 0.75);
+  background: linear-gradient(90deg, transparent, #a58ad438 30%, #f64e9388 65%, #ffda76);
+  border-radius: 50% 0 0 50%;
+  transform-origin: right center;
+}
+.special-flare {
+  width: calc(var(--special-size) * 1.8);
+  height: calc(var(--special-size) * 0.9);
+  background: #fff4c3;
+  clip-path: polygon(
+    50% 0,
+    57% 34%,
+    92% 9%,
+    67% 43%,
+    100% 50%,
+    67% 57%,
+    92% 91%,
+    57% 66%,
+    50% 100%,
+    43% 66%,
+    8% 91%,
+    33% 57%,
+    0 50%,
+    33% 43%,
+    8% 9%,
+    43% 34%
+  );
+}
+.special-shockwave {
+  width: var(--special-size);
+  height: var(--special-size);
+  border: 3px solid var(--special-gold);
+  border-radius: 50%;
+  box-shadow:
+    0 0 10px #ffda7690,
+    inset 0 0 8px #ffda7640;
+}
+.special-shockwave.ring-1 {
+  border-color: var(--pink);
+  border-width: 2px;
+  box-shadow: 0 0 12px #f64e9390;
+}
+.special-echo {
+  width: var(--special-size);
+  height: var(--special-size);
+  display: grid;
+  place-items: center;
+  color: #fff9df;
+  filter: drop-shadow(0 0 7px var(--pink));
+}
+.special-shard {
+  background: var(--shard-color);
+  box-shadow: 0 0 6px var(--shard-color);
+}
+.special-shard.streak {
+  width: calc(var(--special-size) * 0.28);
+  height: calc(var(--special-size) * 0.045);
+  border-radius: 100%;
+}
+.special-shard.star {
+  width: calc(var(--special-size) * 0.19);
+  height: calc(var(--special-size) * 0.19);
+  clip-path: polygon(50% 0, 63% 37%, 100% 50%, 63% 63%, 50% 100%, 37% 63%, 0 50%, 37% 37%);
+}
+.editing .special-lane-effect {
+  --special-size: 27px;
+}
+.editing .special-token-face {
+  border-width: 2px;
+}
+.editing .special-shard {
+  display: none;
+}
+.practice .special-lane-effect {
+  --special-size: 72px;
 }
 .special-slot > div > small {
   display: block;
@@ -2490,6 +2652,19 @@ nav button.active:after {
   font-size: 10px;
 }
 @media (prefers-reduced-motion: reduce) {
+  .special-comet,
+  .special-shard,
+  .special-flare,
+  .special-wave {
+    display: none;
+  }
+  .special-token-face {
+    transform: none !important;
+  }
+  .special-shockwave,
+  .special-echo {
+    transform: translate(-50%, -50%) !important;
+  }
   .impact-particle,
   .impact-halo {
     display: none;
