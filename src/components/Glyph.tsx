@@ -68,7 +68,9 @@ export function noteGlyphShape(
         ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
         : shape === 'step' && distance === 2
           ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
-          : 'M20 4L34 18H26V35H14V18H6Z';
+          : lane === 'side_crunch'
+            ? 'M20 1L37 19H28V38H12V19H3Z'
+            : 'M20 4L34 18H26V35H14V18H6Z';
   return { shape, angle, path };
 }
 

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { noteColor } from '../model';
 import type { DisplayNote } from '../armDisplay';
+import { CrunchImpact } from './CrunchImpact';
 
 export const IMPACT_MS = 520;
 
@@ -15,6 +16,8 @@ export function NoteImpact({
   release: boolean;
 }) {
   const progress = Math.min(1, Math.max(0, elapsed / IMPACT_MS));
+  if (note.lane === 'side_crunch')
+    return <CrunchImpact progress={progress} release={release} sustain={note.kind === 'hold'} />;
   const ease = 1 - (1 - progress) ** 3;
   const fade = (1 - progress) ** 1.35;
   const color = note.pairedPunch

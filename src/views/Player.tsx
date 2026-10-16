@@ -12,6 +12,7 @@ import { MediaController, useTime } from '../media';
 import { chartTimeAt, noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
+import { preloadCrunchTextures } from '../components/CrunchImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect, SpecialGlyph, preloadSpecialTextures } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
@@ -32,6 +33,7 @@ export function Player({
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {
     preloadSpecialTextures();
+    preloadCrunchTextures();
     const root = tracks.current!;
     const highway = root.querySelector<HTMLElement>('.note-highway')!;
     const probe = root.querySelector<HTMLElement>('.note-metrics')!;
@@ -75,6 +77,11 @@ export function Player({
       '--lane': note.pairedPunch
         ? 'var(--arms-both)'
         : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot),
+      ...(note.lane === 'side_crunch'
+        ? {
+            '--accent-charge': Math.max(0, 1 - Math.max(0, note.timeMs - time) / 650),
+          }
+        : {}),
     } as React.CSSProperties;
   };
   const beats = useMemo(() => createBeatMap(chart.tempoSegments), [chart.tempoSegments]);
@@ -115,6 +122,10 @@ export function Player({
             1,
             Math.max(0, (nextHeadDistance / metrics.marker - 0.85) / 0.3),
           );
+          const accentCharge =
+            lane.id === 'side_crunch'
+              ? Math.max(0, 1 - nextHeadDistance / ((metrics.width * 0.88 * 650) / PREVIEW_MS))
+              : 0;
           const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
           const release = displayNotes
             .filter(
@@ -314,6 +325,19 @@ export function Player({
                     <span />
                   )}
                 </div>
+                {accentCharge > 0 && !showGuide && (
+                  <svg
+                    className="crunch-charge"
+                    viewBox="0 0 40 40"
+                    aria-hidden="true"
+                    style={{
+                      opacity: accentCharge,
+                      transform: `translate(-50%, -50%) scale(${1.2 - accentCharge * 0.2})`,
+                    }}
+                  >
+                    <path d="M12 5L4 12V28L12 35M28 5L36 12V28L28 35" />
+                  </svg>
+                )}
                 {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
                 {holding && (
                   <span className="holding-label" style={{ opacity: cueOpacity }}>
