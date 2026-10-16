@@ -169,6 +169,7 @@ export function HoldRibbon({
                         releaseNote.direction,
                         releaseNote.hand,
                         releaseNote.armAction,
+                        releaseNote.foot,
                       ),
                     } as React.CSSProperties
                   }

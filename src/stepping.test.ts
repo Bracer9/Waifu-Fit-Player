@@ -4,11 +4,19 @@ import {
   parseChart,
   serializeChart,
   sortChart,
-  STEP_VARIANTS,
+  noteColor,
+  stepFoot,
   type Chart,
   type Note,
 } from './model';
-import { changeNoteForm, extendTap, flipNotes, setStepDistance, shiftNoteLanes } from './editing';
+import {
+  changeNoteForm,
+  extendTap,
+  flipNotes,
+  setStepDistance,
+  setStepFoot,
+  shiftNoteLanes,
+} from './editing';
 import { checkStepPositions } from './stepping';
 import { demoChart } from './demo';
 
@@ -30,8 +38,48 @@ const hold = (
 ): Note => ({ ...tap(id, direction, timeMs, distance), kind: 'hold', endTimeMs, modifier });
 const chartOf = (notes: Note[]): Chart =>
   sortChart({ ...blankChart(), videoHint: { fileName: 'demo.mp4', durationMs: 20000 }, notes });
+const STEP_VARIANTS = [
+  ...(['left', 'right'] as const).flatMap((direction) =>
+    (['tap', 'follow', 'hold', 'sway'] as const).map((type) => ({ direction, type })),
+  ),
+  { direction: 'free', type: 'sway' } as const,
+];
 
 describe('统一 STEP 动作', () => {
+  it('所有 STEP 类型的用脚颜色独立于方向，转换、反向和保存均保留', () => {
+    for (const variant of STEP_VARIANTS) {
+      const original = changeNoteForm(
+        tap('n', 'left', 1000),
+        variant.type,
+        variant.direction,
+        3000,
+      );
+      for (const foot of ['left', 'right'] as const) {
+        const chart = setStepFoot(chartOf([original]), ['n'], foot);
+        expect(chart.notes[0]).toEqual({ ...original, foot });
+        expect(noteColor('step', original.direction, undefined, undefined, foot)).toBe(
+          foot === 'left' ? 'var(--cyan)' : 'var(--pink)',
+        );
+        expect(flipNotes(chart, ['n']).notes[0].foot).toBe(foot);
+        for (const next of STEP_VARIANTS)
+          expect(changeNoteForm(chart.notes[0], next.type, next.direction, 4000).foot).toBe(foot);
+        expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
+      }
+      const swapped = setStepFoot(chartOf([original]), ['n']);
+      expect(stepFoot(swapped.notes[0])).not.toBe(stepFoot(original));
+      expect(stepFoot(setStepFoot(swapped, ['n']).notes[0])).toBe(stepFoot(original));
+    }
+    const crossed = shiftNoteLanes(
+      chartOf([{ ...tap('n', 'left', 1000), foot: 'right' }]),
+      ['n'],
+      'step',
+      'punch',
+    );
+    expect(crossed.notes[0].foot).toBeUndefined();
+    expect(parseChart(crossed)).toEqual(crossed);
+    for (const foot of ['both', 'any', null])
+      expect(() => parseChart(chartOf([{ ...tap('n', 'left', 1000), foot } as Note]))).toThrow();
+  });
   it('STEP 动作互相转换，FOLLOW 仅 TAP；保留 ID、起点和已有长条结束时间', () => {
     for (const from of STEP_VARIANTS)
       for (const to of STEP_VARIANTS) {
@@ -112,7 +160,7 @@ describe('统一 STEP 动作', () => {
       tap('r', 'right', 2500),
     ]);
     expect(flipNotes(chart, ['l', 'f']).notes).toEqual([
-      { ...chart.notes[0], direction: 'right' },
+      { ...chart.notes[0], direction: 'right', foot: 'left' },
       chart.notes[1],
       chart.notes[2],
     ]);

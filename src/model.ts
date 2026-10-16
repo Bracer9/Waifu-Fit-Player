@@ -10,6 +10,7 @@ export const ARM_DIRECTIONS = [
 ] as const;
 export type ArmAction = 'reach' | 'punch';
 export type ArmHand = 'any' | 'left' | 'right' | 'both';
+export type StepFoot = 'left' | 'right';
 export const ARM_HANDS = [
   { value: 'any', label: 'ANY', color: 'var(--arms-any)' },
   { value: 'left', label: 'L', color: 'var(--cyan)' },
@@ -51,19 +52,13 @@ export type Lane = (typeof LANES)[number]['id'];
 export type Direction = (typeof ARM_DIRECTIONS)[number] | 'free';
 export type StepDistance = 1 | 2;
 export type NoteType = 'tap' | 'hold' | 'sway' | 'follow';
-export const STEP_VARIANTS = [
-  { value: 'left-tap', direction: 'left', type: 'tap', label: 'L · TAP' },
-  { value: 'right-tap', direction: 'right', type: 'tap', label: 'R · TAP' },
-  { value: 'left-follow', direction: 'left', type: 'follow', label: 'L · FOLLOW' },
-  { value: 'right-follow', direction: 'right', type: 'follow', label: 'R · FOLLOW' },
-  { value: 'left-hold', direction: 'left', type: 'hold', label: 'L · HOLD' },
-  { value: 'right-hold', direction: 'right', type: 'hold', label: 'R · HOLD' },
-  { value: 'left-sway', direction: 'left', type: 'sway', label: 'L · SWAY' },
-  { value: 'right-sway', direction: 'right', type: 'sway', label: 'R · SWAY' },
-  { value: 'free-sway', direction: 'free', type: 'sway', label: 'FREE SWAY' },
+export const STEP_TYPES = [
+  { value: 'tap', label: 'TAP' },
+  { value: 'follow', label: 'FOLLOW' },
+  { value: 'hold', label: 'HOLD' },
+  { value: 'sway', label: 'SWAY' },
+  { value: 'free-sway', label: 'FREE SWAY' },
 ] as const;
-export const stepVariantValue = (direction: Direction, type: NoteType) =>
-  direction === 'free' ? 'free-sway' : `${direction}-${type}`;
 export type Note = {
   id: string;
   lane: Lane;
@@ -73,6 +68,7 @@ export type Note = {
   follow?: true;
   armAction?: ArmAction;
   hand?: ArmHand;
+  foot?: StepFoot;
 } & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
 export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '4/4' | '3/4' };
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
@@ -110,6 +106,8 @@ export const armActionValue = (note: Pick<Note, 'lane' | 'direction' | 'armActio
   isPunchAction(note.lane, note.direction, note.armAction)
     ? `punch-${note.direction}`
     : note.direction;
+export const stepFoot = (note: Pick<Note, 'direction' | 'foot'>): StepFoot =>
+  note.foot ?? (note.direction === 'right' ? 'right' : 'left');
 export const noteSymbol = (
   lane: Lane,
   direction: Direction,
@@ -123,17 +121,21 @@ export const noteSymbol = (
         ? 'FREE'
         : `${direction === 'left' ? 'L' : 'R'}${distance === 2 ? '2' : ''}`
       : arrow[direction];
-export const noteColor = (lane: Lane, direction: Direction, hand?: ArmHand, action?: ArmAction) =>
+export const noteColor = (
+  lane: Lane,
+  direction: Direction,
+  hand?: ArmHand,
+  action?: ArmAction,
+  foot?: StepFoot,
+) =>
   lane === 'punch'
     ? ARM_HANDS.find(
         (item) => item.value === armHand({ lane, direction, hand, armAction: action }),
       )!.color
     : lane === 'step'
-      ? direction === 'free'
-        ? 'var(--step-free)'
-        : direction === 'left'
-          ? 'var(--cyan)'
-          : 'var(--pink)'
+      ? stepFoot({ direction, foot }) === 'left'
+        ? 'var(--cyan)'
+        : 'var(--pink)'
       : LANES.find((item) => item.id === lane)!.color;
 export const isFollowStep = (note: Note) =>
   note.lane === 'step' && note.kind === 'tap' && note.follow === true;
@@ -303,6 +305,11 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
           ))
       )
         errors.push(`${label}：用手颜色仅适用于 ARMS 箭头，拳套的左右手由 L/R 决定。`);
+      if (
+        note.foot !== undefined &&
+        (note.lane !== 'step' || (note.foot !== 'left' && note.foot !== 'right'))
+      )
+        errors.push(`${label}：用脚颜色仅适用于 STEP，必须为 left 或 right。`);
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
       if (

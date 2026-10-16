@@ -58,24 +58,28 @@ export function ArmHandPicker({
   value,
   onChange,
   label,
+  feet = false,
 }: {
   value: ArmHand;
   onChange: (hand: ArmHand) => void;
   label: string;
+  feet?: boolean;
 }) {
   return (
     <div className="arm-hands" role="group" aria-label={label}>
-      {ARM_HANDS.map((hand) => (
-        <button
-          key={hand.value}
-          aria-label={`${label} ${hand.label}`}
-          aria-pressed={value === hand.value}
-          style={{ '--hand': hand.color } as React.CSSProperties}
-          onClick={() => onChange(hand.value)}
-        >
-          {hand.label}
-        </button>
-      ))}
+      {ARM_HANDS.filter((hand) => !feet || hand.value === 'left' || hand.value === 'right').map(
+        (hand) => (
+          <button
+            key={hand.value}
+            aria-label={`${label} ${hand.label}`}
+            aria-pressed={value === hand.value}
+            style={{ '--hand': hand.color } as React.CSSProperties}
+            onClick={() => onChange(hand.value)}
+          >
+            {hand.label}
+          </button>
+        ),
+      )}
     </div>
   );
 }

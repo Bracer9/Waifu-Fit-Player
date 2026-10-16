@@ -311,7 +311,11 @@ describe('编辑与历史', () => {
     ]);
     expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'side_crunch')).toEqual(moved);
     expect(shiftNoteLanes(chart, ['s'], 'step', 'calf_raise')).toEqual(chart);
-    expect(flipNotes(moved, ['p']).notes[0]).toEqual({ ...moved.notes[0], direction: 'right' });
+    expect(flipNotes(moved, ['p']).notes[0]).toEqual({
+      ...moved.notes[0],
+      direction: 'right',
+      foot: 'left',
+    });
   });
   it('整体移动保留 HOLD 时长并约束开始与结束', () => {
     const chart = fixture();

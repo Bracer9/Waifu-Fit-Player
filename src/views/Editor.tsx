@@ -29,11 +29,11 @@ import {
   isFollowStep,
   isPunchAction,
   armHand,
+  stepFoot,
   armActionValue,
   noteType,
   LANES,
-  STEP_VARIANTS,
-  stepVariantValue,
+  STEP_TYPES,
   uid,
   type Chart,
   type Direction,
@@ -45,6 +45,7 @@ import {
   type StepDistance,
   type ArmAction,
   type ArmHand,
+  type StepFoot,
 } from '../model';
 import { MediaController, useMediaStatus, useTime } from '../media';
 import {
@@ -69,6 +70,8 @@ import {
   changeArmAction,
   nextArmHand,
   setArmHand,
+  nextStepFoot,
+  setStepFoot,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
 import { NoteGlyph, PalmPrint, ShoePrint } from '../components/Glyph';
@@ -196,6 +199,7 @@ export function Editor({
   const [direction, setDirection] = useState<Direction>('down');
   const [drawArmAction, setDrawArmAction] = useState<ArmAction>('reach');
   const [drawHand, setDrawHand] = useState<ArmHand>('any');
+  const [drawFoot, setDrawFoot] = useState<StepFoot>('left');
   const [stepDistance, setDrawDistance] = useState<StepDistance>(1);
   const [drawType, setDrawType] = useState<NoteType>('tap');
   const [recording, setRecording] = useState(false),
@@ -244,6 +248,8 @@ export function Editor({
     media,
     hand: drawHand,
     onHand: () => setDrawHand((hand) => nextArmHand(hand)),
+    foot: drawFoot,
+    onFoot: () => setDrawFoot(nextStepFoot),
     onLane: pickLane,
     onNote: (note) => onChange({ ...chart, notes: [...chart.notes, note] }),
     notify,
@@ -267,6 +273,7 @@ export function Editor({
   }, [time, follow, status.playing, px]);
   const selectedNote = chart.notes.find((n) => selected.includes(n.id));
   const selectedStep = chart.notes.find((n) => selected.includes(n.id) && isStepMove(n));
+  const selectedFoot = chart.notes.find((n) => selected.includes(n.id) && n.lane === 'step');
   const selectedArm = chart.notes.find(
     (n) =>
       selected.includes(n.id) &&
@@ -304,8 +311,10 @@ export function Editor({
   const flip = () => onChange(flipNotes(chart, selected));
   const toggleDistance = () => onChange(setStepDistance(chart, selected));
   const toggleHand = () => {
-    if (selectedArm && !recording) onChange(setArmHand(chart, selected));
+    if ((selectedArm || selectedFoot) && !recording)
+      onChange(setStepFoot(setArmHand(chart, selected), selected));
     else if (lane === 'punch') setDrawHand((hand) => nextArmHand(hand));
+    else if (lane === 'step') setDrawFoot(nextStepFoot);
   };
   const duplicate = () => {
     const notes = chart.notes.filter((n) => selected.includes(n.id)),
@@ -577,6 +586,7 @@ export function Editor({
           ...(isFollow ? { follow: true } : {}),
         };
     if (d.lane === 'step' && dir !== 'free' && stepDistance === 2 && !isFollow) note.distance = 2;
+    if (d.lane === 'step') note.foot = drawFoot;
     if (d.lane === 'punch') {
       note.armAction = drawArmAction;
       if (drawArmAction === 'reach' && drawHand !== 'any') note.hand = drawHand;
@@ -684,7 +694,9 @@ export function Editor({
                 : !isSpecial && n.lane === 'step'
                   ? 32
                   : 29,
-            '--lane': isSpecial ? '#d3b5ff' : noteColor(n.lane, n.direction, n.hand, n.armAction),
+            '--lane': isSpecial
+              ? '#d3b5ff'
+              : noteColor(n.lane, n.direction, n.hand, n.armAction, n.foot),
           } as React.CSSProperties
         }
       >
@@ -793,7 +805,7 @@ export function Editor({
         <button
           className="tool-button flip-button"
           aria-label="反转方向"
-          title="反转选中音符方向／拳套 L ↔ R（F），箭头的用手颜色不变"
+          title="反转选中音符方向／拳套 L ↔ R（F），箭头的用手或用脚颜色不变"
           disabled={!canFlip}
           onClick={flip}
         >
@@ -802,12 +814,12 @@ export function Editor({
         </button>
         <button
           className="tool-button flip-button"
-          aria-label="切换手臂用手"
-          title="箭头用手：ANY → L → R → BOTH（H）；拳套用 F 互换"
-          disabled={!selectedArm && lane !== 'punch'}
+          aria-label="切换用手或用脚颜色"
+          title="H：ARMS 循环用手；STEP 切换 L/R 用脚颜色；拳套用 F 互换"
+          disabled={!selectedArm && !selectedFoot && lane !== 'punch' && lane !== 'step'}
           onClick={toggleHand}
         >
-          换手 <kbd>H</kbd>
+          换色 <kbd>H</kbd>
         </button>
         <button
           className="tool-button flip-button"
@@ -901,21 +913,27 @@ export function Editor({
             </button>
           ))}
         </div>
-        <div className="direction-picks" hidden={recording || lane === 'step' || lane === 'punch'}>
-          {LANES.find((l) => l.id === lane)!.directions.map((d) => (
-            <button
-              key={d}
-              className={direction === d ? 'active' : ''}
-              aria-label={`放置方向${noteSymbol(lane, d)}`}
-              aria-pressed={direction === d}
-              data-lane={lane}
-              data-direction={d}
-              style={{ '--lane': noteColor(lane, d) } as React.CSSProperties}
-              onClick={() => setDirection(d)}
-            >
-              <NoteGlyph lane={lane} direction={d} size={20} />
-            </button>
-          ))}
+        <div className="direction-picks" hidden={recording || lane === 'punch'}>
+          {LANES.find((l) => l.id === lane)!
+            .directions.filter((d) => d !== 'free')
+            .map((d) => (
+              <button
+                key={d}
+                className={direction === d ? 'active' : ''}
+                aria-label={`放置方向${noteSymbol(lane, d)}`}
+                aria-pressed={direction === d}
+                data-lane={lane}
+                data-direction={d}
+                style={
+                  {
+                    '--lane': noteColor(lane, d, undefined, undefined, drawFoot),
+                  } as React.CSSProperties
+                }
+                onClick={() => setDirection(d)}
+              >
+                <NoteGlyph lane={lane} direction={d} size={20} />
+              </button>
+            ))}
         </div>
         {lane === 'punch' && (
           <>
@@ -935,6 +953,14 @@ export function Editor({
             )}
           </>
         )}
+        {lane === 'step' && (
+          <ArmHandPicker
+            feet
+            label="录入用脚"
+            value={drawFoot}
+            onChange={(foot) => setDrawFoot(foot as StepFoot)}
+          />
+        )}
         {lane === 'step' && direction !== 'free' && drawType !== 'follow' && !recording && (
           <label className="inline-field step-distance-picker">
             跨度
@@ -951,17 +977,17 @@ export function Editor({
         <select
           aria-label="绘制类型"
           hidden={recording}
-          value={lane === 'step' ? stepVariantValue(direction, drawType) : drawType}
+          value={lane === 'step' && direction === 'free' ? 'free-sway' : drawType}
           onChange={(e) => {
             if (lane === 'step') {
-              const variant = STEP_VARIANTS.find((v) => v.value === e.target.value)!;
-              setDirection(variant.direction);
-              setDrawType(variant.type);
+              const free = e.target.value === 'free-sway';
+              setDirection(free ? 'free' : direction === 'free' ? 'left' : direction);
+              setDrawType(free ? 'sway' : (e.target.value as NoteType));
             } else setDrawType(e.target.value as NoteType);
           }}
         >
           {lane === 'step' ? (
-            STEP_VARIANTS.map((variant) => (
+            STEP_TYPES.map((variant) => (
               <option key={variant.value} value={variant.value}>
                 {variant.label}
               </option>
@@ -977,12 +1003,12 @@ export function Editor({
         <span className="record-hint">
           {recording
             ? lane === 'step'
-              ? '← L · → R · Alt + ←/→ FOLLOW · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
+              ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
               : lane === 'punch'
                 ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · H 换手 · 长按 HOLD · Ctrl+长按 SWAY'
                 : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
             : lane === 'step' && drawType === 'follow'
-              ? 'FOLLOW：另一只脚同方向跟上并拢 · 点击放置 · 仅 TAP'
+              ? 'FOLLOW：指定脚同方向跟上并拢 · H 换脚颜色 · 仅 TAP'
               : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
       </div>
@@ -1124,7 +1150,9 @@ export function Editor({
                       aria-label="选中事件类型"
                       value={
                         selectedNote?.lane === 'step'
-                          ? stepVariantValue(selectedNote.direction, noteType(selectedNote))
+                          ? selectedNote.direction === 'free'
+                            ? 'free-sway'
+                            : noteType(selectedNote)
                           : selectedNote?.kind === 'hold' && selectedNote.modifier === 'sway'
                             ? 'sway'
                             : 'endTimeMs' in event && event.endTimeMs !== undefined
@@ -1133,13 +1161,20 @@ export function Editor({
                       }
                       onChange={(e) => {
                         if (selectedNote?.lane === 'step') {
-                          const variant = STEP_VARIANTS.find((v) => v.value === e.target.value)!;
-                          changeKind(variant.type, variant.direction);
+                          const free = e.target.value === 'free-sway';
+                          changeKind(
+                            free ? 'sway' : (e.target.value as NoteType),
+                            free
+                              ? 'free'
+                              : selectedNote.direction === 'free'
+                                ? 'left'
+                                : selectedNote.direction,
+                          );
                         } else changeKind(e.target.value as NoteType);
                       }}
                     >
                       {selectedNote?.lane === 'step' ? (
-                        STEP_VARIANTS.map((variant) => (
+                        STEP_TYPES.map((variant) => (
                           <option key={variant.value} value={variant.value}>
                             {variant.label}
                           </option>
@@ -1161,6 +1196,45 @@ export function Editor({
                       max={duration}
                       onCommit={(n) => patchEvent({ endTimeMs: Math.round(n) })}
                     />
+                  )}
+                  {selectedNote?.lane === 'step' && (
+                    <div className="arm-inspector">
+                      <span>移动方向</span>
+                      <div className="direction-picks">
+                        {(['left', 'right'] as const).map((direction) => (
+                          <button
+                            key={direction}
+                            aria-label={`选中踏步方向 ${direction === 'left' ? '←' : '→'}`}
+                            aria-pressed={selectedNote.direction === direction}
+                            className={selectedNote.direction === direction ? 'active' : ''}
+                            style={
+                              {
+                                '--lane': noteColor(
+                                  'step',
+                                  direction,
+                                  undefined,
+                                  undefined,
+                                  stepFoot(selectedNote),
+                                ),
+                              } as React.CSSProperties
+                            }
+                            onClick={() => changeKind(noteType(selectedNote), direction)}
+                          >
+                            <NoteGlyph lane="step" direction={direction} size={20} />
+                          </button>
+                        ))}
+                      </div>
+                      <span>用脚颜色 · H{selected.length > 1 ? ' · 批量' : ''}</span>
+                      <ArmHandPicker
+                        feet
+                        label="选中踏步用脚"
+                        value={stepFoot(selectedNote)}
+                        onChange={(foot) =>
+                          onChange(setStepFoot(chart, selected, foot as StepFoot))
+                        }
+                      />
+                      <p className="inspector-tip">L 左脚蓝色，R 右脚红色；箭头表示移动方向。</p>
+                    </div>
                   )}
                   {selectedNote?.lane === 'punch' && (
                     <div className="arm-inspector">

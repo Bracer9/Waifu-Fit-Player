@@ -74,7 +74,7 @@ export function Player({
     return {
       '--lane': note.pairedPunch
         ? 'var(--arms-both)'
-        : noteColor(note.lane, note.direction, note.hand, note.armAction),
+        : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot),
     } as React.CSSProperties;
   };
   const beats = useMemo(() => createBeatMap(chart.tempoSegments), [chart.tempoSegments]);

@@ -5,6 +5,8 @@ import {
   isPunchAction,
   ARM_HANDS,
   type ArmHand,
+  type StepFoot,
+  stepFoot,
   type Chart,
   type Direction,
   type Lane,
@@ -82,7 +84,13 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
   return {
     ...chart,
     notes: chart.notes.map((n) =>
-      selected.includes(n.id) ? { ...n, direction: opposite[n.direction] } : n,
+      selected.includes(n.id) && n.direction !== 'free'
+        ? {
+            ...n,
+            direction: opposite[n.direction],
+            ...(n.lane === 'step' ? { foot: stepFoot(n) } : {}),
+          }
+        : n,
     ),
   };
 }
@@ -103,6 +111,17 @@ export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Ch
       if (next.hand === 'any') delete next.hand;
       return next;
     }),
+  };
+}
+export const nextStepFoot = (foot: StepFoot): StepFoot => (foot === 'left' ? 'right' : 'left');
+export function setStepFoot(chart: Chart, selected: string[], foot?: StepFoot): Chart {
+  return {
+    ...chart,
+    notes: chart.notes.map((note) =>
+      selected.includes(note.id) && note.lane === 'step'
+        ? { ...note, foot: foot ?? nextStepFoot(stepFoot(note)) }
+        : note,
+    ),
   };
 }
 export function changeArmAction(note: Note, value: string): Note {
@@ -142,6 +161,7 @@ export function changeNoteForm(
     direction,
     timeMs: note.timeMs,
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
+    ...(note.lane === 'step' ? { foot: stepFoot(note) } : {}),
     ...(note.lane === 'step' && direction !== 'free' && type !== 'follow' && note.distance
       ? { distance: note.distance }
       : {}),
@@ -179,7 +199,10 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
     notes: chart.notes.map((n) => {
       if (!selected.includes(n.id)) return n;
       const next = { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id };
-      if (next.lane !== 'step') delete next.distance;
+      if (next.lane !== 'step') {
+        delete next.distance;
+        delete next.foot;
+      }
       if (next.lane !== 'punch') {
         delete next.armAction;
         delete next.hand;

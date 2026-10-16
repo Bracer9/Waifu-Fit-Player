@@ -19,7 +19,7 @@ export function NoteImpact({
   const fade = (1 - progress) ** 1.35;
   const color = note.pairedPunch
     ? 'var(--arms-both)'
-    : noteColor(note.lane, note.direction, note.hand, note.armAction);
+    : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot);
   return (
     <div
       className={`note-impact ${release ? 'release' : 'arrival'}`}

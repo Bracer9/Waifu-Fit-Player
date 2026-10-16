@@ -2,6 +2,27 @@
 import { readFile } from 'node:fs/promises';
 import { blankChart, LANES, type Chart } from '../src/model';
 const errors: string[] = [];
+async function stepChoice(page: Page, target: 'draw' | 'selected', value: string) {
+  const [direction, type] = value.split('-');
+  if (direction !== 'free') {
+    await page
+      .getByRole('button', {
+        name:
+          target === 'draw'
+            ? `放置方向${direction === 'left' ? 'L' : 'R'}`
+            : `选中踏步方向 ${direction === 'left' ? '←' : '→'}`,
+        exact: true,
+      })
+      .click();
+    if (target === 'draw')
+      await page
+        .getByRole('button', { name: `录入用脚 ${direction === 'left' ? 'L' : 'R'}`, exact: true })
+        .click();
+  }
+  await page
+    .getByLabel(target === 'draw' ? '绘制类型' : '选中事件类型')
+    .selectOption(direction === 'free' ? 'free-sway' : type);
+}
 test.beforeEach(async ({ page }) => {
   errors.length = 0;
   page.on('pageerror', (error) => errors.push(error.message));
@@ -420,7 +441,7 @@ test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和�
   await page.getByRole('button', { name: '重做', exact: true }).click();
   expect((await exportChart(page)).notes).toEqual([extended]);
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
-  await page.getByLabel('绘制类型').selectOption('right-tap');
+  await stepChoice(page, 'draw', 'right-tap');
   await draw(page, 4000, 3);
   const step = (await exportChart(page)).notes[1];
   await expect(handle).toBeVisible();
@@ -451,7 +472,7 @@ test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和�
   await page.mouse.up();
   let chart = await exportChart(page);
   expect(chart.notes[1]).toEqual({ ...step, kind: 'hold', endTimeMs: 5830, modifier: 'none' });
-  await page.getByLabel('选中事件类型').selectOption('right-sway');
+  await stepChoice(page, 'selected', 'right-sway');
   chart = await exportChart(page);
   expect(chart.notes[1]).toMatchObject({ lane: 'step', direction: 'right', modifier: 'sway' });
   await page.getByLabel('导入谱面文件').setInputFiles({
@@ -776,13 +797,13 @@ test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({
 test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失反馈', async ({ page }) => {
   await emptyEditor(page);
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
-  await page.getByLabel('绘制类型').selectOption('left-tap');
+  await stepChoice(page, 'draw', 'left-tap');
   await draw(page, 1000, 3);
-  await page.getByLabel('绘制类型').selectOption('right-tap');
+  await stepChoice(page, 'draw', 'right-tap');
   await draw(page, 2000, 3, 3000);
-  await page.getByLabel('绘制类型').selectOption('left-tap');
+  await stepChoice(page, 'draw', 'left-tap');
   await draw(page, 4000, 3, 5000);
-  await page.getByLabel('选中事件类型').selectOption('left-sway');
+  await stepChoice(page, 'selected', 'left-sway');
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
   expect((await exportChart(page)).notes[2]).toMatchObject({
     lane: 'step',
@@ -949,23 +970,19 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   const drawing = page.getByLabel('绘制类型');
   const selected = page.getByLabel('选中事件类型');
   await expect(drawing.locator('option')).toHaveText([
-    'L · TAP',
-    'R · TAP',
-    'L · FOLLOW',
-    'R · FOLLOW',
-    'L · HOLD',
-    'R · HOLD',
-    'L · SWAY',
-    'R · SWAY',
+    'TAP',
+    'FOLLOW',
+    'HOLD',
+    'SWAY',
     'FREE SWAY',
   ]);
-  await drawing.selectOption('right-hold');
+  await stepChoice(page, 'draw', 'right-hold');
   await page.getByLabel('绘制踏步跨度').selectOption('2');
   await draw(page, 1000, 3, 3000);
   const original = (await exportChart(page)).notes[0];
   await expect(page.getByLabel('选中音符方向')).toHaveCount(0);
   for (const value of ['left-hold', 'right-sway', 'left-sway', 'free-sway', 'right-hold']) {
-    await selected.selectOption(value);
+    await stepChoice(page, 'selected', value);
     const note = (await exportChart(page)).notes[0];
     expect(note).toMatchObject({
       id: original.id,
@@ -978,11 +995,11 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
     if (value === 'free-sway') expect(note.distance).toBeUndefined();
   }
   await page.getByRole('button', { name: '撤销', exact: true }).click();
-  await expect(selected).toHaveValue('free-sway');
+  await expect(selected).toHaveValue('sway');
   await page.getByRole('button', { name: '重做', exact: true }).click();
-  await expect(selected).toHaveValue('right-hold');
+  await expect(selected).toHaveValue('hold');
   for (const value of ['left-tap', 'right-tap']) {
-    await selected.selectOption(value);
+    await stepChoice(page, 'selected', value);
     const note = (await exportChart(page)).notes[0];
     expect(note).toMatchObject({
       id: original.id,
@@ -1024,7 +1041,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   await expect(target).toHaveAttribute('data-state', 'sway');
   await expect(target).toHaveAttribute('data-action', 'FREE SWAY');
   await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'FREE');
-  await expect(target).toHaveCSS('color', 'rgb(115, 222, 209)');
+  await expect(target).toHaveCSS('color', 'rgb(246, 78, 147)');
   await page.screenshot({ path: 'artifacts/independent-free-sway.png', fullPage: true });
   await seek(page, 6.1);
   await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('RELEASE');
@@ -1034,25 +1051,24 @@ test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
-  const drawing = page.getByLabel('绘制类型');
   const selected = page.getByLabel('选中事件类型');
-  await drawing.selectOption('left-follow');
+  await stepChoice(page, 'draw', 'left-follow');
   await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
   await draw(page, 500, 3, 1800);
   await expect(page.getByTestId('extend-note')).toHaveCount(0);
   await expect(page.getByLabel('结束 / ms')).toHaveCount(0);
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
-  await expect(selected).toHaveValue('right-follow');
-  await selected.selectOption('left-tap');
+  await expect(selected).toHaveValue('follow');
+  await stepChoice(page, 'selected', 'left-tap');
   await expect(page.getByTestId('extend-note')).toBeVisible();
-  await selected.selectOption('left-follow');
+  await stepChoice(page, 'selected', 'left-follow');
   for (const [type, time] of [
     ['left-tap', 2500],
     ['left-follow', 3000],
     ['right-tap', 4000],
     ['right-follow', 4500],
   ] as const) {
-    await drawing.selectOption(type);
+    await stepChoice(page, 'draw', type);
     await draw(page, time, 3);
   }
   let chart = await exportChart(page);

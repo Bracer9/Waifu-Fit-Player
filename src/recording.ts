@@ -10,6 +10,7 @@ import {
   type StepDistance,
   type ArmAction,
   type ArmHand,
+  type StepFoot,
 } from './model';
 import { MediaController } from './media';
 import { chartTimeAt, nextGrid, snapTime } from './timing';
@@ -33,6 +34,8 @@ type Options = {
   notify: (message: string) => void;
   hand: ArmHand;
   onHand: () => void;
+  foot: StepFoot;
+  onFoot: () => void;
 };
 export function useRecording(options: Options) {
   const opts = useRef(options);
@@ -49,6 +52,7 @@ export function useRecording(options: Options) {
     follow?: true;
     armAction?: ArmAction;
     hand?: ArmHand;
+    foot?: StepFoot;
   } | null>(null);
   useEffect(() => {
     const cancel = () => {
@@ -86,11 +90,19 @@ export function useRecording(options: Options) {
         }
         return;
       }
-      if (o.lane === 'punch' && e.code === 'KeyH' && !e.ctrlKey && !e.altKey) {
+      if (
+        (o.lane === 'punch' || o.lane === 'step') &&
+        e.code === 'KeyH' &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         e.stopPropagation();
         if (e.target instanceof HTMLSelectElement) e.target.blur();
-        if (!e.repeat) o.onHand();
+        if (!e.repeat) {
+          if (o.lane === 'step') o.onFoot();
+          else o.onHand();
+        }
         return;
       }
       let dir = (
@@ -156,6 +168,7 @@ export function useRecording(options: Options) {
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
         ...(armAction ? { armAction } : {}),
         ...(armAction === 'reach' && o.hand !== 'any' ? { hand: o.hand } : {}),
+        ...(o.lane === 'step' ? { foot: o.foot } : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {
@@ -186,6 +199,7 @@ export function useRecording(options: Options) {
           ...(p.follow ? { follow: true } : {}),
           ...(p.armAction ? { armAction: p.armAction } : {}),
           ...(p.hand ? { hand: p.hand } : {}),
+          ...(p.foot ? { foot: p.foot } : {}),
         });
         return;
       }
@@ -212,6 +226,7 @@ export function useRecording(options: Options) {
           ...(p.distance ? { distance: p.distance } : {}),
           ...(p.armAction ? { armAction: p.armAction } : {}),
           ...(p.hand ? { hand: p.hand } : {}),
+          ...(p.foot ? { foot: p.foot } : {}),
         });
     };
     window.addEventListener('keydown', keydown, true);
