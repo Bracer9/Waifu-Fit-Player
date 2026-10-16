@@ -45,11 +45,11 @@ SPECIAL HOLD 由白芯符号、粉色荧光长带和白芯尾圆连接，青色�
 
 右页视频窗口固定为 **16:9**，播放控制收在其下方；Chrome 全屏也保持相同比例。视频始终完整显示，不裁切人物或拉伸画面。较窄的竖屏会将两页上下排列。工作台保持平面布局，切换时保留同一个视频元素、进度与播放速度。
 
-本次尝试位于独立分支 `ui/album-stage`。修改前版本为 `91f3630`，同时保留在 `main` 和固定标签 `checkpoint/pre-album-ui-20261016`。工作区干净时，以下操作可切换版本，之后刷新浏览器：
+项目远程仓库为 [Bracer9/Waifu-Fit-Player](https://github.com/Bracer9/Waifu-Fit-Player)。首次上传时，`main` 与 `ui/album-stage` 均指向已验证的最新版，后者保留折页 UI 的开发分支。修改前版本 `91f3630` 保存在固定标签 `checkpoint/pre-album-ui-20261016`，不再依赖会继续更新的 `main`。工作区干净时，以下操作可切换版本，之后刷新浏览器：
 
 ```powershell
-git switch main            # 回到本次 UI 改动前
-git switch ui/album-stage  # 再次预览折页专辑版本
+git switch --detach checkpoint/pre-album-ui-20261016  # 回到折页 UI 改动前
+git switch main                                      # 回到主分支最新版
 ```
 
 切换只涉及程序代码，不修改本地视频、已导出的谱面或浏览器保存的视频关联。
