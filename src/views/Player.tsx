@@ -30,7 +30,10 @@ export function Player({
         ? Sparkles
         : Heart;
   return (
-    <section className="player-lanes" aria-label="Movement tracks">
+    <section
+      className={`player-lanes ${showGuide ? 'preview-lanes' : ''}`}
+      aria-label="Movement tracks"
+    >
       <div className="lane-heading" hidden={!showGuide}>
         <span className="eyebrow">FOLLOW THE RHYTHM</span>
         <span className="direction-hint">
@@ -71,6 +74,7 @@ export function Player({
               style={
                 {
                   '--lane': lane.color,
+                  '--track-surface': `color-mix(in srgb, ${lane.color} 18%, #191a22)`,
                   '--flash': flash,
                   '--impact-pulse': flash ** 2,
                   '--sustain-pulse': sustainPulse,
@@ -125,9 +129,7 @@ export function Player({
                         {
                           left: `${tail}%`,
                           width: `${Math.max(0, right - tail)}%`,
-                          ...(!showGuide || note.lane === 'step'
-                            ? { '--lane': noteColor(note.lane, note.direction) }
-                            : {}),
+                          '--lane': noteColor(note.lane, note.direction),
                         } as React.CSSProperties
                       }
                     >
@@ -141,6 +143,7 @@ export function Player({
                       <span className="hold-caption">{noteAction(note)}</span>
                       <div className="hold-head">
                         <NoteGlyph
+                          variant="tip"
                           lane={note.lane}
                           direction={note.direction}
                           distance={note.distance}
@@ -154,6 +157,12 @@ export function Player({
                   data-testid={`target-${lane.id}`}
                   data-state={holding ? (sway ? 'sway' : 'holding') : 'idle'}
                   data-action={holding ? noteAction(holding) : undefined}
+                  data-direction={holding?.direction}
+                  aria-label={
+                    holding
+                      ? `${lane.english} ${noteSymbol(holding.lane, holding.direction, holding.distance)} ${noteAction(holding)}`
+                      : `${lane.english} target`
+                  }
                   style={
                     holding?.lane === 'step'
                       ? ({
@@ -164,6 +173,7 @@ export function Player({
                 >
                   {holding ? (
                     <NoteGlyph
+                      variant="tip"
                       lane={holding.lane}
                       direction={holding.direction}
                       distance={holding.distance}

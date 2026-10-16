@@ -7,7 +7,7 @@
   --pink: #f64e93;
   --cyan: #35c9db;
   --miku: #39c5bb;
-  --step-close: #a58ad4;
+  --step-close: #fff1d8;
   --special-gold: #ffda76;
   --ink: #242329;
   --cream: #faf6ed;
@@ -719,10 +719,10 @@ nav button.active:after {
   z-index: 2;
 }
 .play-lane[data-lane='step'] .lane-label {
-  background: linear-gradient(110deg, var(--cyan) 65%, var(--pink) 65%);
+  background: var(--lane);
 }
 .play-lane[data-lane='step'] .lane-label:after {
-  background: var(--pink);
+  background: var(--lane);
 }
 .lane-label > svg {
   width: 40px;
@@ -787,6 +787,35 @@ nav button.active:after {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.note-glyph {
+  display: block;
+  overflow: visible;
+}
+.glyph-body {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.2px;
+  stroke-linejoin: round;
+}
+.glyph-inset {
+  fill: white;
+  opacity: 0.45;
+}
+.glyph-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6px;
+}
+.glyph-mark {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glyph-core {
+  fill: currentColor;
 }
 .player-note {
   position: absolute;
@@ -1714,6 +1743,9 @@ nav button.active:after {
   gap: 3px;
 }
 .direction-picks button {
+  display: grid;
+  place-items: center;
+  padding: 0;
   height: 24px;
   width: 25px;
   border: 1px solid #e1d5c7;
@@ -1740,12 +1772,11 @@ nav button.active:after {
   outline: 2px solid var(--ink);
   outline-offset: 1px;
 }
+.direction-picks button[data-direction='close'] {
+  color: var(--ink);
+}
 .lane-picks button[data-lane='step'].active {
-  background: linear-gradient(
-    110deg,
-    color-mix(in srgb, var(--cyan), white 75%) 60%,
-    color-mix(in srgb, var(--pink), white 75%) 60%
-  );
+  background: color-mix(in srgb, var(--cyan), white 75%);
 }
 .record-hint {
   margin-left: auto;
@@ -1887,6 +1918,10 @@ nav button.active:after {
   border-radius: 50%;
   border: 1px solid #fff8fc;
   background: var(--lane);
+}
+.timeline-event[data-direction='close'],
+.timeline-event[data-direction='close'] .event-glyph {
+  color: var(--ink);
 }
 .timeline-event[data-lane='step'].sway {
   background: repeating-linear-gradient(

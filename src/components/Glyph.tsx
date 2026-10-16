@@ -1,20 +1,4 @@
 import { noteSymbol, type Direction, type Lane, type StepDistance } from '../model';
-export function DirectionGlyph({ direction, size = 24 }: { direction: Direction; size?: number }) {
-  const angle = { up: 0, right: 90, down: 180, left: 270, close: 0 }[direction];
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <path
-        d="M16 27V6M6 16L16 6L26 16"
-        transform={`rotate(${angle} 16 16)`}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 export function LaneGlyph({ lane }: { lane: Lane }) {
   const paths: Record<Lane, string> = {
     squat: 'M21 20L14 31L28 34L20 48M21 22L35 25L43 25M14 31L8 43L24 48',
@@ -48,27 +32,58 @@ export function NoteGlyph({
   direction,
   size = 24,
   distance = 1,
+  variant = 'tap',
 }: {
   lane: Lane;
   direction: Direction;
   size?: number;
   distance?: StepDistance;
+  variant?: 'tap' | 'tip';
 }) {
-  if (lane !== 'step') return <DirectionGlyph direction={direction} size={size} />;
+  const shape = lane !== 'step' ? 'arrow' : direction === 'close' ? 'close' : 'step';
+  const angle = { up: 0, right: 90, down: 180, left: 270, close: 0 }[direction];
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <text
-        x="16"
-        y="17"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="currentColor"
-        fontFamily="'Barlow Condensed', Arial, sans-serif"
-        fontWeight="800"
-        fontSize="30"
-      >
-        {noteSymbol(lane, direction, distance)}
-      </text>
+    <svg
+      className={`note-glyph glyph--${shape}`}
+      data-symbol={noteSymbol(lane, direction, distance)}
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+    >
+      {shape === 'arrow' ? (
+        <g transform={`rotate(${angle} 20 20)`}>
+          <path
+            className="glyph-body"
+            d={variant === 'tip' ? 'M20 4L34 27L20 21L6 27Z' : 'M20 3L36 19H26V36H14V19H4Z'}
+          />
+          <path
+            className="glyph-inset"
+            d={variant === 'tip' ? 'M20 10L28 23L20 18L12 23Z' : 'M20 8L30 18H23V32H17V18H10Z'}
+          />
+        </g>
+      ) : shape === 'step' ? (
+        <>
+          <circle className="glyph-ring" cx="20" cy="20" r="16.5" />
+          <path
+            className="glyph-mark"
+            d={
+              distance === 2
+                ? 'M19 13L26 20L19 27M11 13L18 20L11 27'
+                : 'M11 20H28M21 13L28 20L21 27'
+            }
+            transform={direction === 'left' ? 'rotate(180 20 20)' : undefined}
+          />
+        </>
+      ) : (
+        <>
+          <path
+            className="glyph-body"
+            d="M4 9L15 20L4 31L1 28L9 20L1 12ZM36 9L25 20L36 31L39 28L31 20L39 12Z"
+          />
+          <circle className="glyph-core" cx="20" cy="20" r="2.5" />
+        </>
+      )}
     </svg>
   );
 }

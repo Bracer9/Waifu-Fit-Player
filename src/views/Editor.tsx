@@ -818,10 +818,11 @@ export function Editor({
               aria-label={`放置方向${noteSymbol(lane, d)}`}
               aria-pressed={direction === d}
               data-lane={lane}
+              data-direction={d}
               style={{ '--lane': noteColor(lane, d) } as React.CSSProperties}
               onClick={() => setDirection(d)}
             >
-              {noteSymbol(lane, d)}
+              <NoteGlyph lane={lane} direction={d} size={20} />
             </button>
           ))}
         </div>

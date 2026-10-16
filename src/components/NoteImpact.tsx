@@ -28,7 +28,7 @@ export function NoteImpact({
       <div
         className="impact-halo"
         style={{
-          opacity: fade * 0.95,
+          opacity: fade * (note.direction === 'close' ? 0.55 : 0.95),
           transform: `translate(-50%, -50%) scale(${0.6 + ease * 0.9})`,
         }}
       />
@@ -46,7 +46,16 @@ export function NoteImpact({
           transform: `translate(-50%, -50%) scale(${1.15 - ease * 0.55})`,
         }}
       >
-        <NoteGlyph lane={note.lane} direction={note.direction} distance={note.distance} />
+        {release ? (
+          <span className="release-core" />
+        ) : (
+          <NoteGlyph
+            lane={note.lane}
+            direction={note.direction}
+            distance={note.distance}
+            variant={note.kind === 'hold' ? 'tip' : 'tap'}
+          />
+        )}
       </div>
       <div
         className="impact-flare"

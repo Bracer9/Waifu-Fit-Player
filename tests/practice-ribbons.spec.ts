@@ -47,6 +47,43 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
       kind: 'hold',
       modifier: 'sway',
     },
+    {
+      id: 'step-balance',
+      lane: 'step',
+      direction: 'left',
+      timeMs: 8000,
+      endTimeMs: 10000,
+      kind: 'hold',
+      modifier: 'none',
+    },
+    {
+      id: 'step-close',
+      lane: 'step',
+      direction: 'close',
+      timeMs: 10000,
+      endTimeMs: 11500,
+      kind: 'hold',
+      modifier: 'none',
+    },
+    {
+      id: 'step-double',
+      lane: 'step',
+      direction: 'right',
+      distance: 2,
+      timeMs: 12500,
+      endTimeMs: 15000,
+      kind: 'hold',
+      modifier: 'sway',
+    },
+    {
+      id: 'step-free',
+      lane: 'step',
+      direction: 'close',
+      timeMs: 15500,
+      endTimeMs: 18500,
+      kind: 'hold',
+      modifier: 'sway',
+    },
   ];
   await page.getByLabel('导入谱面文件').setInputFiles({
     name: 'studio-session.wfp.json',
@@ -84,10 +121,25 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
     'none',
   );
   await expect(sway.locator('.ribbon-bloom')).toBeVisible();
-  await page.screenshot({ path: 'artifacts/neon-ribbons-1920.png', fullPage: true });
+  const arrow = page.getByTestId('lane-squat').locator('.player-note').first();
+  await expect(arrow).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(arrow).toHaveCSS('border-width', '0px');
+  await expect(arrow.locator('.glyph-ring')).toHaveCount(0);
+  await expect(page.getByTestId('lane-step').locator('.player-note .glyph--step')).toHaveCount(2);
+  await expect(
+    page.getByTestId('lane-step').locator('.player-note[data-direction="close"]'),
+  ).toHaveCSS('color', 'rgb(255, 241, 216)');
+  await expect(page.getByTestId('lane-calf_raise').locator('.hold-tail')).toHaveCSS(
+    'border-radius',
+    '50%',
+  );
+  await page.screenshot({ path: 'artifacts/arrow-notes-1920.png', fullPage: true });
   await page.setViewportSize({ width: 2560, height: 1440 });
-  await page.screenshot({ path: 'artifacts/neon-ribbons-2560-1440.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-notes-2560-1440.png', fullPage: true });
   await page.setViewportSize({ width: 1920, height: 1080 });
+  await seek(1.6);
+  await page.screenshot({ path: 'artifacts/arrow-hold-approach-1920.png', fullPage: true });
+  await seek(2.12);
   const d = await path.getAttribute('d');
   const idleWidth = await sway
     .locator('.hold-ribbon svg')
@@ -114,7 +166,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await expect(page.locator('.combo-stat strong')).toHaveText('040');
   await seek(2.28);
   await expect(page.getByTestId('impact-calf_raise').locator('.impact-ring')).toBeVisible();
-  await page.screenshot({ path: 'artifacts/neon-hold-arrival-1920.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-hold-arrival-1920.png', fullPage: true });
   const burst = await page
     .getByTestId('impact-calf_raise')
     .locator('.impact-ring')
@@ -125,20 +177,33 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
     burst!,
   );
   await seek(2.67);
-  await page.screenshot({ path: 'artifacts/neon-tap-impact-1920.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-tap-impact-1920.png', fullPage: true });
   await seek(3.21);
   await expect(page.locator('.combo-stat strong')).toHaveText('014');
-  await page.screenshot({ path: 'artifacts/neon-sustain-1920.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-sustain-1920.png', fullPage: true });
   await seek(5.58);
   await expect(page.getByTestId('impact-calf_raise')).toHaveClass(/release/);
-  await page.screenshot({ path: 'artifacts/neon-hold-release-1920.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-hold-release-1920.png', fullPage: true });
+  await seek(9.4);
+  await expect(
+    page.getByTestId('lane-step').locator('.player-hold[data-direction="close"] .hold-tail'),
+  ).toBeVisible();
+  await page.screenshot({ path: 'artifacts/arrow-close-approach-1920.png', fullPage: true });
+  await seek(10.4);
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SLOW CLOSE');
+  await expect(page.getByTestId('target-step')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await page.screenshot({ path: 'artifacts/arrow-close-hold-1920.png', fullPage: true });
+  await seek(16.1);
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('target-step').locator('.glyph--close')).toBeVisible();
+  await page.screenshot({ path: 'artifacts/arrow-free-sway-1920.png', fullPage: true });
   await seek(2.12);
   await expect(path).toHaveAttribute('d', d!);
   await expect(page.locator('.combo-stat strong')).toHaveText('000');
   await expect(page.locator('.calorie-stat strong')).toHaveText('— KCAL');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(path).toBeVisible();
-  await page.screenshot({ path: 'artifacts/neon-reduced-motion.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-reduced-motion.png', fullPage: true });
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   expect(await node.evaluate((element) => element.isConnected)).toBe(true);
   await expect

@@ -840,14 +840,19 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
       'rgb(57, 197, 187)',
     );
   await seek(page, 0.5);
-  await expect(page.getByTestId('lane-step').locator('.player-note')).toHaveText('L');
+  await expect(page.getByTestId('lane-step').locator('.player-note .note-glyph')).toHaveAttribute(
+    'data-symbol',
+    'L',
+  );
   await expect(page.getByTestId('lane-step').locator('.player-note')).toHaveCSS(
-    'background-color',
+    'color',
     'rgb(53, 201, 219)',
   );
-  await expect(page.getByTestId('lane-step').locator('.hold-head').first()).toHaveText('R');
+  await expect(
+    page.getByTestId('lane-step').locator('.hold-head .note-glyph').first(),
+  ).toHaveAttribute('data-symbol', 'R');
   await expect(page.getByTestId('lane-step').locator('.hold-head').first()).toHaveCSS(
-    'background-color',
+    'color',
     pink,
   );
   await seek(page, 1.08);
@@ -882,12 +887,18 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await expect(impact).toHaveCount(0);
   await seek(page, 2.5);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'holding');
-  await expect(page.getByTestId('target-step')).toHaveText('R');
-  await expect(page.getByTestId('target-step')).toHaveCSS('background-color', pink);
+  await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveAttribute(
+    'data-symbol',
+    'R',
+  );
+  await expect(page.getByTestId('target-step')).toHaveCSS('color', pink);
   await seek(page, 4.5);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'sway');
-  await expect(page.getByTestId('target-step')).toHaveText('L');
-  await expect(page.getByTestId('target-step')).toHaveCSS('background-color', 'rgb(53, 201, 219)');
+  await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveAttribute(
+    'data-symbol',
+    'L',
+  );
+  await expect(page.getByTestId('target-step')).toHaveCSS('color', 'rgb(53, 201, 219)');
   await page.screenshot({ path: 'artifacts/step-sway.png', fullPage: true });
   await seek(page, 5.08);
   await expect(impact).toHaveClass(/release/);
@@ -1017,10 +1028,10 @@ test('C 自由 SWAY 原地绘制、HOLD 转换、保存重开和跟练提示', a
   await expect(page.getByRole('status')).not.toBeVisible();
   await seek(page, 1.5);
   const target = page.getByTestId('target-step');
-  await expect(target).toHaveText('C');
+  await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'C');
   await expect(target).toHaveAttribute('data-state', 'sway');
   await expect(target).toHaveAttribute('data-action', 'FREE SWAY');
-  await expect(target).toHaveCSS('background-color', 'rgb(165, 138, 212)');
+  await expect(target).toHaveCSS('color', 'rgb(255, 241, 216)');
   await expect(page.getByTestId('lane-step').locator('.hold-caption')).toHaveText('FREE SWAY');
   await page.screenshot({ path: 'artifacts/step-free-sway.png', fullPage: true });
   await seek(page, 3.1);
@@ -1165,16 +1176,16 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   expect(await exportChart(page)).toEqual(chart);
   await expect(
     page.locator('.timeline-event[data-direction="close"] .event-glyph').first(),
-  ).toHaveCSS('background-color', 'rgb(165, 138, 212)');
+  ).toHaveCSS('background-color', 'rgb(255, 241, 216)');
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
   await expect(page.getByRole('status')).not.toBeVisible();
   const target = page.getByTestId('target-step');
   await seek(page, 1.25);
   await expect(target).toHaveAttribute('data-action', 'BALANCE HOLD');
   await seek(page, 2.25);
-  await expect(target).toHaveText('C');
+  await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'C');
   await expect(target).toHaveAttribute('data-action', 'SLOW CLOSE');
-  await expect(target).toHaveCSS('background-color', 'rgb(165, 138, 212)');
+  await expect(target).toHaveCSS('color', 'rgb(255, 241, 216)');
   for (const viewport of [
     { width: 1280, height: 720 },
     { width: 1920, height: 1080 },
@@ -1194,7 +1205,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await seek(page, 2.58);
   await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('CLOSED');
   await seek(page, 5.5);
-  await expect(target).toHaveText('L2');
+  await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'L2');
   await expect(target).toHaveAttribute('data-state', 'sway');
   await expect(target).toHaveAttribute('data-action', 'SWAY');
   await page.screenshot({ path: 'artifacts/step-double-sway.png', fullPage: true });
