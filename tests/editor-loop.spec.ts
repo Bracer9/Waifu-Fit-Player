@@ -14,22 +14,52 @@ test('workbench loop funnels drag independently and loop the actual offset video
   await offset.fill('500');
   await offset.press('Enter');
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  const inputA = page.getByRole('textbox', { name: '循环起点位置', exact: true });
+  const inputB = page.getByRole('textbox', { name: '循环终点位置', exact: true });
+  await inputA.fill('1.128');
+  await inputA.press('Enter');
+  await expect(inputA).toHaveValue(/03:/);
+  expect(await page.locator('.timeline-scroll').evaluate((e) => e.scrollLeft)).toBeGreaterThan(
+    10000,
+  );
+  await inputB.fill('03:40.123');
+  await inputB.press('Enter');
+  await expect(inputB).toHaveValue('03:40.123');
+  await inputA.fill('00:00.500');
+  await inputA.press('Enter');
+  await inputB.fill('4000ms');
+  await inputB.press('Enter');
+  await expect(inputB).toHaveValue('00:04.000');
   const noteCount = await page.getByTestId('editor-note').count();
   const dragTo = async (name: string, timeMs: number) => {
     const handle = page.getByRole('button', { name, exact: true });
     await handle.scrollIntoViewIfNeeded();
     const box = (await handle.boundingBox())!;
+    const boundary = (await handle.locator('..').boundingBox())!;
+    const grabOffset = box.x + box.width / 2 - boundary.x;
     const timeline = (await page.locator('.timeline-surface').boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
-    await page.mouse.move(timeline.x + 124 + timeMs / 10 + 1.5, box.y + box.height / 2, {
+    await page.mouse.move(timeline.x + 124 + timeMs / 10 + grabOffset, box.y + box.height / 2, {
       steps: 8,
     });
     await page.mouse.up();
   };
   await dragTo('循环起点', 2000);
+  // Both halves stay in the top ruler and join without covering each other's hit area.
+  await dragTo('循环终点', 2000);
+  const upper = (await page.getByRole('button', { name: '循环起点', exact: true }).boundingBox())!;
+  const lower = (await page.getByRole('button', { name: '循环终点', exact: true }).boundingBox())!;
+  const ruler = (await page.locator('.timeline-ruler').boundingBox())!;
+  expect(upper.x).toBe(lower.x);
+  expect(upper.y).toBe(ruler.y);
+  expect(lower.y).toBe(upper.y + upper.height);
+  expect(lower.y + lower.height).toBeLessThanOrEqual(ruler.y + ruler.height);
+  await expect(page.getByRole('button', { name: '区间循环', exact: true })).toBeDisabled();
+  await page.locator('.editor').screenshot({ path: 'artifacts/workbench-loop-joined.png' });
   await dragTo('循环终点', 4000);
-  await expect(page.locator('.loop-readout')).toHaveText('A 00:02.000 — B 00:04.000');
+  await expect(inputA).toHaveValue('00:02.000');
+  await expect(inputB).toHaveValue('00:04.000');
   expect(await page.getByTestId('editor-note').count()).toBe(noteCount);
   const toggle = page.getByRole('button', { name: '区间循环', exact: true });
   await toggle.click();

@@ -49,7 +49,7 @@ import {
   type StepFoot,
 } from '../model';
 import { MediaController, useMediaStatus, useTime, type LoopRange } from '../media';
-import { TimelineLoop } from '../components/TimelineLoop';
+import { LoopPositionField, TimelineLoop } from '../components/TimelineLoop';
 import {
   chartTimeAt,
   videoTimeAt,
@@ -198,8 +198,8 @@ export function Editor({
     const startMs = Math.max(loopMin, Math.min(loopMax - 100, time));
     return { startMs, endMs: Math.min(loopMax, startMs + 4000) };
   });
-  const loopEnd = Math.max(loopMin + 100, Math.min(loopMax, loopSelection.endMs));
-  const loopStart = Math.max(loopMin, Math.min(loopEnd - 100, loopSelection.startMs));
+  const loopEnd = Math.max(loopMin, Math.min(loopMax, loopSelection.endMs));
+  const loopStart = Math.max(loopMin, Math.min(loopEnd, loopSelection.startMs));
   const loopDragging = useRef(false);
   useEffect(() => {
     media.setLoopRange(
@@ -924,14 +924,58 @@ export function Editor({
           className={`tool-button loop-toggle ${loopEnabled ? 'active' : ''}`}
           aria-label="区间循环"
           aria-pressed={loopEnabled}
+          disabled={loopEnd <= loopStart}
+          title={loopEnd <= loopStart ? '拖开上沿的两个半漏斗，选择循环范围' : '开启或关闭区间循环'}
           onClick={() => setLoopEnabled(!loopEnabled)}
         >
           <Repeat2 size={16} /> 区间循环
         </button>
         <span className="loop-readout">
-          A {formatTime(loopStart, true)} — B {formatTime(loopEnd, true)}
+          {(['startMs', 'endMs'] as const).map((edge) => (
+            <label key={edge}>
+              {edge === 'startMs' ? 'A' : '— B'}
+              <LoopPositionField
+                label={edge === 'startMs' ? '循环起点位置' : '循环终点位置'}
+                timeMs={edge === 'startMs' ? loopStart : loopEnd}
+                segments={chart.tempoSegments}
+                notify={notify}
+                onCommit={(value) => {
+                  if (value < loopMin || value > loopMax) {
+                    notify(
+                      `循环位置须在 ${formatTime(loopMin, true)} — ${formatTime(loopMax, true)} 之间。`,
+                    );
+                    return false;
+                  }
+                  const length = loopEnd - loopStart;
+                  const next =
+                    edge === 'startMs'
+                      ? {
+                          startMs: value,
+                          endMs: value > loopEnd ? Math.min(loopMax, value + length) : loopEnd,
+                        }
+                      : {
+                          startMs:
+                            value < loopStart ? Math.max(loopMin, value - length) : loopStart,
+                          endMs: value,
+                        };
+                  setLoopSelection(next);
+                  if (next.endMs <= next.startMs) setLoopEnabled(false);
+                  const scroller = scrollRef.current;
+                  if (
+                    scroller &&
+                    (value * px < scroller.scrollLeft ||
+                      value * px > scroller.scrollLeft + scroller.clientWidth - LABEL - 24)
+                  )
+                    scroller.scrollLeft = Math.max(0, value * px - 100);
+                  return true;
+                }}
+              />
+            </label>
+          ))}
         </span>
-        <span className="loop-help">拖动上沿 A / 下沿 B 选择范围 · Alt 不吸附</span>
+        <span className="loop-help">
+          上半 A / 下半 B · 可填 1.128（段.小节）或 03:12.500 · Alt 拖动不吸附
+        </span>
       </div>
       <div className="record-toolbar">
         <button
@@ -1125,14 +1169,15 @@ export function Editor({
                 }}
                 onChange={(edge, value, unsnapped) => {
                   const t = unsnapped ? Math.round(value) : snapAt(value);
-                  setLoopSelection(
+                  const nextRange =
                     edge === 'startMs'
-                      ? { startMs: Math.max(loopMin, Math.min(loopEnd - 100, t)), endMs: loopEnd }
+                      ? { startMs: Math.max(loopMin, Math.min(loopEnd, t)), endMs: loopEnd }
                       : {
                           startMs: loopStart,
-                          endMs: Math.min(loopMax, Math.max(loopStart + 100, t)),
-                        },
-                  );
+                          endMs: Math.min(loopMax, Math.max(loopStart, t)),
+                        };
+                  setLoopSelection(nextRange);
+                  if (nextRange.endMs <= nextRange.startMs) setLoopEnabled(false);
                 }}
               />
               {marquee && (

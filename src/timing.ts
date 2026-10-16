@@ -110,3 +110,29 @@ export function formatTime(ms: number, precise = false): string {
   const safe = Math.max(0, Math.round(ms));
   return `${String(Math.floor(safe / 60000)).padStart(2, '0')}:${String(Math.floor(safe / 1000) % 60).padStart(2, '0')}${precise ? '.' + String(safe % 1000).padStart(3, '0') : ''}`;
 }
+
+/** Ruler labels use segment.bar; a third number optionally selects a beat. */
+export function parseTimelinePosition(value: string, segments: TempoSegment[]): number | undefined {
+  const text = value.trim();
+  const time = /^(\d+):([0-5]?\d)(?:\.(\d{1,3}))?$/.exec(text);
+  if (time)
+    return (
+      Number(time[1]) * 60000 + Number(time[2]) * 1000 + Number((time[3] ?? '').padEnd(3, '0'))
+    );
+  const milliseconds = /^(\d+)\s*ms$/i.exec(text);
+  if (milliseconds) return Number(milliseconds[1]);
+  const position = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?$/.exec(text);
+  if (!position) return undefined;
+  const sorted = [...segments].sort((a, b) => a.anchorMs - b.anchorMs);
+  const index = position[2] === undefined ? 0 : Number(position[1]) - 1;
+  const bar = Number(position[2] ?? position[1]);
+  const beat = Number(position[3] ?? 1);
+  const segment = sorted[index];
+  if (!segment) return undefined;
+  const meter = segment.meter === '3/4' ? 3 : 4;
+  if (bar < 1 || beat < 1 || beat > meter) return undefined;
+  const result = segment.anchorMs + (((bar - 1) * meter + beat - 1) * 60000) / segment.bpm;
+  if (!Number.isFinite(result) || result >= (sorted[index + 1]?.anchorMs ?? Infinity))
+    return undefined;
+  return Math.round(result);
+}

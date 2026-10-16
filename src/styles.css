@@ -2208,8 +2208,27 @@ nav button.active:after {
   color: #fff;
 }
 .loop-readout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-variant-numeric: tabular-nums;
   color: #51454e;
+}
+.loop-readout label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.loop-position-input {
+  width: 94px;
+  height: 25px;
+  padding: 3px 6px;
+  border: 1px solid #d5c7bd;
+  border-radius: 3px;
+  background: #fffaf2;
+  color: #51454e;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
 }
 .loop-help {
   margin-left: auto;
@@ -2230,7 +2249,6 @@ nav button.active:after {
   top: 0;
   bottom: 0;
   border-top: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
   background: #ffffff03;
 }
 .timeline-loop.enabled .loop-region {
@@ -2244,9 +2262,9 @@ nav button.active:after {
 }
 .loop-handle {
   position: absolute;
-  left: -11px;
-  width: 23px;
-  height: 24px;
+  left: -12px;
+  width: 24px;
+  height: 11px;
   padding: 0;
   pointer-events: auto;
   touch-action: none;
@@ -2257,22 +2275,18 @@ nav button.active:after {
   top: 0;
 }
 .loop-boundary.end .loop-handle {
-  bottom: 0;
+  top: 11px;
 }
 .loop-handle > span {
-  display: grid;
-  place-items: center;
-  height: 21px;
+  display: block;
+  width: 16px;
+  height: 100%;
+  margin: 0 auto;
   background: var(--loop-color);
-  color: #24232b;
-  clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
-  font:
-    700 10px 'Barlow Condensed',
-    sans-serif;
+  clip-path: polygon(0 0, 100% 0, 100% 50%, 50% 100%, 0 50%);
 }
 .loop-boundary.end .loop-handle > span {
-  clip-path: polygon(50% 0, 100% 40%, 100% 100%, 0 100%, 0 40%);
-  padding-top: 4px;
+  clip-path: polygon(50% 0, 100% 50%, 100% 100%, 0 100%, 0 50%);
 }
 .loop-handle:hover,
 .loop-handle:focus-visible {

@@ -1,6 +1,50 @@
-import { useEffect, useRef, type PointerEvent, type RefObject } from 'react';
+import { useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react';
 import type { LoopRange } from '../media';
-import { formatTime } from '../timing';
+import type { TempoSegment } from '../model';
+import { formatTime, parseTimelinePosition } from '../timing';
+
+export function LoopPositionField({
+  label,
+  timeMs,
+  segments,
+  onCommit,
+  notify,
+}: {
+  label: string;
+  timeMs: number;
+  segments: TempoSegment[];
+  onCommit: (timeMs: number) => boolean;
+  notify: (text: string) => void;
+}) {
+  const formatted = formatTime(timeMs, true);
+  const [draft, setDraft] = useState(formatted);
+  useEffect(() => setDraft(formatted), [formatted]);
+  return (
+    <input
+      className="loop-position-input"
+      aria-label={label}
+      title="输入 1.128（第 1 段第 128 小节）、1.128.3（第 3 拍）、03:12.500 或 192500ms；回车确认"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={(e) => {
+        const parsed = parseTimelinePosition(e.currentTarget.value, segments);
+        if (parsed === undefined) {
+          notify(
+            '位置格式：1.128（段.小节）、1.128.3（段.小节.拍）、03:12.500 或 192500ms。小节不能越过下一节拍段。',
+          );
+          setDraft(formatted);
+        } else setDraft(onCommit(parsed) ? formatTime(parsed, true) : formatted);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.currentTarget.value = formatted;
+          setDraft(formatted);
+          e.currentTarget.blur();
+        } else if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+    />
+  );
+}
 
 type Edge = keyof LoopRange;
 type Props = {
@@ -102,7 +146,7 @@ export function TimelineLoop(props: Props) {
             type="button"
             className="loop-handle"
             aria-label={edge === 'startMs' ? '循环起点' : '循环终点'}
-            title={`${edge === 'startMs' ? '循环起点' : '循环终点'} ${formatTime(props.range[edge], true)} · 拖动调整，Alt 暂时取消吸附`}
+            title={`${edge === 'startMs' ? '上半：循环起点 A' : '下半：循环终点 B'} ${formatTime(props.range[edge], true)} · 拖动调整，Alt 暂时取消吸附`}
             onPointerDown={(e) => start(e, edge)}
             onPointerMove={move}
             onPointerUp={stop}
@@ -119,7 +163,7 @@ export function TimelineLoop(props: Props) {
               );
             }}
           >
-            <span>{edge === 'startMs' ? 'A' : 'B'}</span>
+            <span aria-hidden="true" />
           </button>
         </div>
       ))}
