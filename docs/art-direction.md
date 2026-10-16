@@ -7,7 +7,6 @@
 - 对照图：`references/idea.jpg`（目标）和 `references/current.png`（用户提供的修改前画面）。
 - 生成方式：内置 `image_gen` 编辑模式；以 v2 背景为编辑目标，idea 为几何配色参考。
 - 当前素材：`public/art/studio-scene-v3.png`（1672 × 941，约 1.85 MB），直接复制原始结果，保留 v2 便于对照。
-- 原始输出：`C:/Users/ASUS/.codex/generated_images/01a13f52-d208-7f53-b2b5-7fd8018e2aa7/exec-7adb3669-4a8b-4a61-b810-cbf1917b0d32.png`。
 - 地板改成奶油白、青蓝、粉色的大面积多边形，保留垫子纹理、边缘厚度、局部光照和接触阴影；没有向背景内绘制游戏界面或角色。
 - 专辑采用共享透视空间，左右页分别围绕中央连接边旋转 35° / −32°；整体不再沿 Z 轴倾斜。背板位于纸面后方 9px，外缘高光和底部厚边与页面一起投影。
 - SWAY 使用完整时长对应的 SVG 贝塞尔曲线；播放时仅在判定线裁切，不重新拉伸剩余波形。HOLD 使用同一套细光带；方向符号、STEP L/R/C/L2/R2、动作状态继续由原谱面数据驱动。
@@ -25,7 +24,6 @@ Use case: precise-object-edit. Edit the first input image, which is the local ga
 - 用户提供的参考图：`references/ui-references/uiref-1.png`。
 - 生成方式：内置 `image_gen` 编辑模式，以上述参考图为输入；无外部 API 或运行时生成。
 - 项目内素材：`public/art/studio-scene-v2.png`（1672 × 941，约 1.96 MB）。原始生成结果直接复制，未二次改图。
-- 原始输出：`C:/Users/ASUS/.codex/generated_images/01a13f52-d208-7f53-b2b5-7fd8018e2aa7/exec-9afb08d8-a351-406a-adc0-0477a079d709.png`。
 - 水壶：`src/components/PracticeArtwork.tsx` 中的本地 SVG，渐变瓶身、瓶盖握纹、高光、接触阴影与 01 印字。独立前景层避免被书页遮挡，不接收鼠标事件。
 - 垫子文字是 CSS 排版；运动垫织纹、厚边、反光与灯具已包含在背景素材中。
 

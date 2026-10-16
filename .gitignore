@@ -12,12 +12,8 @@ coverage/
 !.env.example
 *.log
 
-# Local song media (chart JSON files remain tracked)
-/maps/**/*.mp4
-/maps/**/*.mp3
-/maps/**/*.wav
-/maps/**/*.m4a
-/maps/**/*.webm
+# Local song charts and media
+/maps/
 
 # OS-generated files
 .DS_Store

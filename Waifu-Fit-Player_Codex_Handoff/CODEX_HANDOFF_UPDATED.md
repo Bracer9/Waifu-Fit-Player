@@ -1,7 +1,7 @@
 # Waifu Fit Player — Codex 规划交接文档
 
 > **当前任务：只做规划，不开始开发。**
-> 项目目录：`D:\ai\Waifu-Fit-Player`  
+> 项目目录：仓库根目录 `Waifu-Fit-Player/`
 > 文档版本：0.2 · 2026-10-15（增加每首歌一种 SPECIAL 标志性动作）  
 > 项目显示名暂用 **Waifu Fit Player**；早期构想与参考图使用 **Miku Fit Player**，并非两个项目。
 
@@ -336,7 +336,7 @@ Vite 提供 React/TypeScript 模板、本地开发与静态构建流程；具体
 可采用如下目录；**这是后续实现参考，不是要求本轮生成这些文件**：
 
 ```text
-D:\ai\Waifu-Fit-Player\
+Waifu-Fit-Player/
 ├─ CODEX_HANDOFF.md
 ├─ design/reference/gameplay-pop-reference.png
 └─ src/                         # 用户批准后才创建或调整
@@ -589,7 +589,7 @@ x(timeMs) = hitX - (timeMs - t) × v
 ## 14. 用户可直接交给 Codex 的开场指令
 
 ```text
-项目目录：D:\ai\Waifu-Fit-Player
+项目目录：当前 Waifu-Fit-Player 仓库根目录
 
 先读取 CODEX_HANDOFF.md 和 design/reference/gameplay-pop-reference.png，
 再只读检查项目中的 AGENTS.md、README、配置和已有代码。
