@@ -13,6 +13,8 @@ export function preloadSpecialTextures() {
     'sparkles',
     'star-white',
     'star-cyan',
+    'hold-strip',
+    'hold-tail',
     'burst-heart',
     'burst-star',
     'burst-sparkles',
@@ -43,35 +45,49 @@ export function SpecialEffect({
   icon: IconName;
   width: number;
 }) {
-  const { event, phase, progress, remaining } = visual;
+  const { event, phase, progress, tailProgress } = visual;
+  const sustain = tailProgress !== null && phase !== 'burst';
+  const headX = progress * 0.88 * width;
+  const tailX = (tailProgress ?? 0) * 0.88 * width;
+  // Clip offscreen duration mathematically, keeping the backing texture bounded
+  // even for a minute-long hold. Transform a fixed texture instead of repainting it.
+  const startX = Math.max(0, tailX);
+  const stripWidth = Math.max(0, headX - startX);
   return (
     <div className="special-lane-effect" aria-hidden="true" data-event={event.id} data-icon={icon}>
+      {sustain && (
+        <>
+          <span
+            className="special-hold-strip"
+            style={{ transform: `translate3d(${startX}px, -50%, 0) scaleX(${stripWidth / 256})` }}
+          />
+          <span
+            className="special-hold-tail"
+            style={{
+              transform: `translate3d(${startX}px, -50%, 0) translateX(-50%)`,
+              visibility: tailX >= 0 ? 'visible' : 'hidden',
+            }}
+          />
+        </>
+      )}
       {phase !== 'burst' && (
         <div
-          className={`special-token ${phase}`}
+          className={`special-token ${phase}${sustain ? ' sustain' : ''}`}
           data-testid={`special-${phase}`}
           style={{
-            transform: `translate3d(${progress * 0.88 * width}px, -50%, 0) translateX(-50%)`,
+            transform: `translate3d(${headX}px, -50%, 0) translateX(-50%)`,
           }}
         >
-          {phase === 'flying' && <span className="special-comet" />}
-          <div
-            className="special-token-face"
-            style={{ transform: `rotate(${phase === 'flying' ? -14 * (1 - progress) : 0}deg)` }}
-          >
+          {phase === 'flying' && !sustain && <span className="special-comet" />}
+          {sustain ? (
             <SpecialGlyph icon={icon} />
-          </div>
-          {phase === 'holding' && (
-            <svg className="special-hold-ring" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="46"
-                pathLength="1"
-                strokeDasharray="1"
-                strokeDashoffset={1 - remaining}
-              />
-            </svg>
+          ) : (
+            <div
+              className="special-token-face"
+              style={{ transform: `rotate(${phase === 'flying' ? -14 * (1 - progress) : 0}deg)` }}
+            >
+              <SpecialGlyph icon={icon} />
+            </div>
           )}
         </div>
       )}

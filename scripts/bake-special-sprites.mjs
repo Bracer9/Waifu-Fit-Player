@@ -7,6 +7,7 @@ import { Heart, Sparkles, Star } from 'lucide-react';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const output = new URL('../public/art/special/', import.meta.url);
+const holdOnly = process.argv.includes('--hold-only');
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
@@ -41,19 +42,39 @@ try {
       size: 192,
       content: `<circle cx="48" cy="48" r="32" fill="none" stroke="${name === 'pink' ? '#faffff' : color}" stroke-width="${name === 'pink' ? 2 : 1.5}" style="filter:drop-shadow(0 0 3px ${color}) drop-shadow(0 0 3px ${color})"/>`,
     });
-  for (const { name, size, viewBox, content } of sprites) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${viewBox}">${content}</svg>`;
+  // The strip is uniform horizontally: stretching it changes length, never the glow width.
+  sprites.push(
+    {
+      name: 'hold-strip',
+      width: 16,
+      height: 192,
+      viewBox: '0 0 8 96',
+      content:
+        '<g style="filter:drop-shadow(0 0 3px #f64e93) drop-shadow(0 0 8px #f64e9390)"><rect x="-32" y="36" width="72" height="24" fill="#f64e93" stroke="#faffff" stroke-width="1.5"/><path d="M-32 62H40" stroke="#35c9db" stroke-width="1.5"/></g>',
+    },
+    {
+      name: 'hold-tail',
+      size: 192,
+      viewBox: '0 0 96 96',
+      content:
+        '<g style="filter:drop-shadow(0 0 3px #f64e93) drop-shadow(0 0 7px #f64e9370)"><circle cx="48" cy="48" r="22" fill="#f64e93" stroke="#faffff" stroke-width="1.8"/><path d="M28 60A23 23 0 0 0 64 65" fill="none" stroke="#35c9db" stroke-width="1.5"/><circle cx="48" cy="48" r="12" fill="#faffff"/></g>',
+    },
+  );
+  const selected = holdOnly ? sprites.filter(({ name }) => name.startsWith('hold-')) : sprites;
+  for (const { name, size, width = size, height = size, viewBox, content } of selected) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}">${content}</svg>`;
     const data = await page.evaluate(
-      async ({ svg, size }) => {
+      async ({ svg, width, height }) => {
         const image = new Image();
         image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
         await image.decode();
         const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = size;
+        canvas.width = width;
+        canvas.height = height;
         canvas.getContext('2d').drawImage(image, 0, 0);
         return canvas.toDataURL('image/png').split(',')[1];
       },
-      { svg, size },
+      { svg, width, height },
     );
     await writeFile(new URL(`${name}.png`, output), Buffer.from(data, 'base64'));
   }
@@ -65,7 +86,7 @@ try {
       ]),
     ),
   );
-  const atlases = await page.evaluate(async (urls) => {
+  const bakeAtlases = async (urls) => {
     const textures = new Map(
       await Promise.all(
         Object.entries(urls).map(async ([name, url]) => {
@@ -147,10 +168,13 @@ try {
       result[icon] = atlas.toDataURL('image/png').split(',')[1];
     }
     return result;
-  }, urls);
+  };
+  const atlases = holdOnly ? {} : await page.evaluate(bakeAtlases, urls);
   for (const [icon, data] of Object.entries(atlases))
     await writeFile(new URL(`burst-${icon}.png`, output), Buffer.from(data, 'base64'));
-  console.log(`Baked ${sprites.length} SPECIAL textures and 3 burst atlases.`);
+  console.log(
+    `Baked ${selected.length} SPECIAL textures and ${Object.keys(atlases).length} burst atlases.`,
+  );
 } finally {
   await browser.close();
 }

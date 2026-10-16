@@ -65,4 +65,29 @@ describe('SPECIAL 五轨演出时序', () => {
     chart.specialMove = null;
     expect(specialVisualsAt(chart, 5100)).toEqual([]);
   });
+  it('长条头尾同速，入场与保持连续，长度准确表示媒体时长', () => {
+    const chart = fixture();
+    // 150 BPM / two preview beats = 800 ms. A two-second hold extends offscreen.
+    const incoming = specialVisualsAt(chart, 7600)[0];
+    expect(incoming.progress).toBe(0.5);
+    expect(incoming.tailProgress).toBe(-2);
+    expect(incoming.progress - incoming.tailProgress!).toBe(2000 / 800);
+    expect(specialVisualsAt(chart, 7999)[0].tailProgress).toBeCloseTo(-1.50125);
+    expect(specialVisualsAt(chart, 8000)[0].tailProgress).toBe(-1.5);
+    expect(specialVisualsAt(chart, 9200)[0].tailProgress).toBe(0);
+    expect(specialVisualsAt(chart, 9600)[0].tailProgress).toBe(0.5);
+    expect(specialVisualsAt(chart, 9999)[0].tailProgress).toBeCloseTo(0.99875);
+    expect(specialVisualsAt(chart, 10000)[0]).toMatchObject({ phase: 'burst', tailProgress: 1 });
+    expect(specialVisualsAt(chart, 4500)[0].tailProgress).toBeNull();
+  });
+  it('短 SPECIAL HOLD 入场也有独立尾点，预告拍数改变时头尾一起变速', () => {
+    const chart = fixture();
+    chart.specialEvents = [{ id: 'short', timeMs: 5000, endTimeMs: 5200 }];
+    const frame = specialVisualsAt(chart, 4800)[0];
+    expect(frame.progress - frame.tailProgress!).toBeCloseTo(0.2);
+    chart.specialMove!.previewBeats = 4;
+    const slower = specialVisualsAt(chart, 4800)[0];
+    expect(slower.progress - slower.tailProgress!).toBeCloseTo(0.1);
+    expect(specialVisualsAt(chart, 5200)[0].tailProgress).toBe(1);
+  });
 });

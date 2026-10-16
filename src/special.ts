@@ -7,6 +7,8 @@ export type SpecialVisual = {
   phase: 'flying' | 'holding' | 'burst';
   progress: number;
   remaining: number;
+  /** Unclamped: negative means the release point is still outside the left edge. */
+  tailProgress: number | null;
   bursts: { kind: 'arrival' | 'release'; progress: number }[];
 };
 
@@ -35,6 +37,8 @@ export function specialVisualsAt(chart: Chart, timeMs: number): SpecialVisual[] 
         phase: flying ? 'flying' : holding ? 'holding' : 'burst',
         progress: clamp((timeMs - event.timeMs + preview) / preview, 0, 1),
         remaining: holding ? (event.endTimeMs! - timeMs) / (event.endTimeMs! - event.timeMs) : 0,
+        tailProgress:
+          event.endTimeMs === undefined ? null : (timeMs - event.endTimeMs + preview) / preview,
         bursts,
       },
     ];

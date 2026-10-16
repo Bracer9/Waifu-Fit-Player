@@ -288,10 +288,16 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await seek(page, 9);
   await expect(page.getByTestId('special-holding')).toHaveCount(5);
   await expect(bursts).toHaveCount(0);
-  await expect(page.locator('.special-hold-ring circle').first()).toHaveAttribute(
-    'stroke-dashoffset',
-    '0.5',
-  );
+  await expect(page.locator('.special-hold-strip')).toHaveCount(5);
+  const remaining = await page
+    .locator('.special-hold-strip')
+    .first()
+    .evaluate((el) => {
+      const m = new DOMMatrix(getComputedStyle(el).transform);
+      return (m.a * 256) / (el.closest<HTMLElement>('.note-highway')!.clientWidth * 0.88);
+    });
+  expect(remaining).toBeCloseTo(0.5, 3);
+  await expect(page.locator('.special-hold-ring')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/special-hold.png', fullPage: true });
   await seek(page, 10.1);
   await expect(bursts).toHaveCount(5);
