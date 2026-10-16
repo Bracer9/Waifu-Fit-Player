@@ -1,7 +1,7 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
 import { noteColor, type Note } from '../model';
-import { noteGlyphShape, ShoePrint } from './Glyph';
+import { noteGlyphShape, PalmPrint, ShoePrint } from './Glyph';
 
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
 export function HoldRibbon({
@@ -29,7 +29,7 @@ export function HoldRibbon({
 }) {
   const mask = useId();
   const outline = useId();
-  const shoeClip = useId();
+  const cueClip = useId();
   const width = Math.max(1, fullWidth * visibleFraction);
   const height = size * 1.08;
   const connected = headOpacity > 0;
@@ -41,14 +41,14 @@ export function HoldRibbon({
     : undefined;
   const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
-  const shoeX = fullWidth / 2;
-  // Notes are 1.25× larger; the shoe keeps its previous dimensions.
-  const shoeSize = (size / 1.25) * 0.82;
-  const showShoe =
-    note.lane === 'step' &&
+  const cueX = fullWidth / 2;
+  // Match the original shoe dimensions for both hand and foot cues.
+  const cueSize = (size / 1.25) * 0.82;
+  const showCue =
+    (note.lane === 'step' || note.lane === 'punch') &&
     sway &&
     (note.direction === 'left' || note.direction === 'right') &&
-    shoeX > size * 0.75;
+    cueX > size * 0.75;
   const path = useMemo(
     () =>
       ribbonOutline({
@@ -74,8 +74,8 @@ export function HoldRibbon({
           data-visible-fraction={visibleFraction}
         >
           <defs>
-            {showShoe && (
-              <clipPath id={shoeClip} clipPathUnits="userSpaceOnUse">
+            {showCue && (
+              <clipPath id={cueClip} clipPathUnits="userSpaceOnUse">
                 <rect x={-size} y={-size} width={width + size} height={height + size * 2} />
               </clipPath>
             )}
@@ -161,14 +161,14 @@ export function HoldRibbon({
             </g>
           </g>
           {/* Clip at the judgment line as the ribbon is consumed, without hiding
-              the entire shoe early or cutting it with another note's gap mask. */}
-          {showShoe && (
-            <g clipPath={`url(#${shoeClip})`}>
+              the entire cue early or cutting it with another note's gap mask. */}
+          {showCue && (
+            <g clipPath={`url(#${cueClip})`}>
               <g
                 className="ribbon-slide-cue"
-                transform={`translate(${shoeX - shoeSize / 2} ${(height - shoeSize) / 2}) scale(${shoeSize / 40})`}
+                transform={`translate(${cueX - cueSize / 2} ${(height - cueSize) / 2}) scale(${cueSize / 40})`}
               >
-                <ShoePrint />
+                {note.lane === 'punch' ? <PalmPrint /> : <ShoePrint />}
               </g>
             </g>
           )}

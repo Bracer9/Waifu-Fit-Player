@@ -49,6 +49,16 @@ export function ShoePrint() {
     />
   );
 }
+
+/** An upright open palm, shared by both punch-sway directions. */
+export function PalmPrint() {
+  return (
+    <path
+      className="palm-print"
+      d="M14 23L8 17Q6 15 4 17Q3 18 4 20L12 32Q15 37 21 37H24Q34 37 34 27V15Q34 12 31.5 12Q29 12 29 15V20V9Q29 6 26.5 6Q24 6 24 9V18V5Q24 2 21.5 2Q19 2 19 5V18V8Q19 5 16.5 5Q14 5 14 8Z"
+    />
+  );
+}
 export function NoteGlyph({
   lane,
   direction,

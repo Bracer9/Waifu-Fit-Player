@@ -55,7 +55,7 @@ import {
   changeNoteForm,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
-import { NoteGlyph, ShoePrint } from '../components/Glyph';
+import { NoteGlyph, PalmPrint, ShoePrint } from '../components/Glyph';
 import { checkStepPositions } from '../stepping';
 
 type Props = {
@@ -647,10 +647,10 @@ export function Editor({
           <span className="event-caption">
             {!isSpecial &&
               isSway &&
-              n.lane === 'step' &&
+              (n.lane === 'step' || n.lane === 'punch') &&
               (n.direction === 'left' || n.direction === 'right') && (
                 <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                  <ShoePrint />
+                  {n.lane === 'punch' ? <PalmPrint /> : <ShoePrint />}
                 </svg>
               )}
             {!isSpecial && n.lane === 'step'
