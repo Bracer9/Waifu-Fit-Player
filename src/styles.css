@@ -868,7 +868,9 @@ nav button.active:after {
   font-size: 12px;
 }
 .shoe-print,
-.hold-ribbon .shoe-print {
+.hold-ribbon .shoe-print,
+.squat-down-cue,
+.hold-ribbon .squat-down-cue {
   fill: #faffff;
   stroke: none;
 }

@@ -10,7 +10,7 @@ import {
 } from '../model';
 import { MediaController, useTime } from '../media';
 import { chartTimeAt, noteX, specialAt } from '../timing';
-import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint } from '../components/Glyph';
+import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect, SpecialGlyph, preloadSpecialTextures } from '../components/SpecialEffect';
@@ -247,13 +247,20 @@ export function Player({
                       )}
                       <span className="hold-caption">
                         {showGuide &&
-                          (note.lane === 'step' || note.lane === 'punch') &&
-                          note.modifier === 'sway' &&
-                          (note.lane === 'punch' ||
-                            note.direction === 'left' ||
-                            note.direction === 'right') && (
+                          ((note.lane === 'squat' && note.modifier === 'none') ||
+                            ((note.lane === 'step' || note.lane === 'punch') &&
+                              note.modifier === 'sway' &&
+                              (note.lane === 'punch' ||
+                                note.direction === 'left' ||
+                                note.direction === 'right'))) && (
                             <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                              {note.lane === 'punch' ? <PalmPrint /> : <ShoePrint />}
+                              {note.lane === 'squat' ? (
+                                <SquatDownCue />
+                              ) : note.lane === 'punch' ? (
+                                <PalmPrint />
+                              ) : (
+                                <ShoePrint />
+                              )}
                             </svg>
                           )}
                         {noteAction(note)}

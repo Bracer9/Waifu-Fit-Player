@@ -1,7 +1,7 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
 import { noteColor } from '../model';
-import { GlyphLabel, noteGlyphShape, PalmPrint, PunchPair, ShoePrint } from './Glyph';
+import { GlyphLabel, noteGlyphShape, PalmPrint, PunchPair, ShoePrint, SquatDownCue } from './Glyph';
 import type { DisplayNote } from '../armDisplay';
 
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
@@ -48,12 +48,13 @@ export function HoldRibbon({
   const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
   const cueX = fullWidth / 2;
-  // Match the original shoe dimensions for both hand and foot cues.
+  // Keep all midpoint cues at the original shoe dimensions.
   const cueSize = (size / 1.25) * 0.82;
   const showCue =
-    (note.lane === 'step' || note.lane === 'punch') &&
-    sway &&
-    (note.lane === 'punch' || note.direction === 'left' || note.direction === 'right') &&
+    ((note.lane === 'squat' && !sway) ||
+      ((note.lane === 'step' || note.lane === 'punch') &&
+        sway &&
+        (note.lane === 'punch' || note.direction === 'left' || note.direction === 'right'))) &&
     cueX > size * 0.75;
   const path = useMemo(
     () =>
@@ -202,7 +203,13 @@ export function HoldRibbon({
                 className="ribbon-slide-cue"
                 transform={`translate(${cueX - cueSize / 2} ${(height - cueSize) / 2}) scale(${cueSize / 40})`}
               >
-                {note.lane === 'punch' ? <PalmPrint /> : <ShoePrint />}
+                {note.lane === 'squat' ? (
+                  <SquatDownCue />
+                ) : note.lane === 'punch' ? (
+                  <PalmPrint />
+                ) : (
+                  <ShoePrint />
+                )}
               </g>
             </g>
           )}

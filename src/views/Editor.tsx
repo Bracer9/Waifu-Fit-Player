@@ -74,7 +74,7 @@ import {
   setStepFoot,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
-import { NoteGlyph, PalmPrint, ShoePrint } from '../components/Glyph';
+import { NoteGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { checkStepPositions } from '../stepping';
 import { ArmActionPicker, ArmHandPicker } from '../components/ArmPicker';
 
@@ -718,11 +718,18 @@ export function Editor({
         {end !== undefined && (
           <span className="event-caption">
             {!isSpecial &&
-              isSway &&
-              (n.lane === 'step' || n.lane === 'punch') &&
-              (n.lane === 'punch' || n.direction === 'left' || n.direction === 'right') && (
+              ((n.lane === 'squat' && !isSway) ||
+                (isSway &&
+                  (n.lane === 'step' || n.lane === 'punch') &&
+                  (n.lane === 'punch' || n.direction === 'left' || n.direction === 'right'))) && (
                 <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                  {n.lane === 'punch' ? <PalmPrint /> : <ShoePrint />}
+                  {n.lane === 'squat' ? (
+                    <SquatDownCue />
+                  ) : n.lane === 'punch' ? (
+                    <PalmPrint />
+                  ) : (
+                    <ShoePrint />
+                  )}
                 </svg>
               )}
             {!isSpecial && n.lane === 'step'

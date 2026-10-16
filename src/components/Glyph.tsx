@@ -137,6 +137,16 @@ export function PalmPrint() {
     />
   );
 }
+/** A solid downward cue for the middle of a squat hold, without an extra frame. */
+export function SquatDownCue() {
+  return (
+    <path
+      className="squat-down-cue"
+      d={noteGlyphShape('squat', 'down').path}
+      transform="rotate(180 20 20)"
+    />
+  );
+}
 export function NoteGlyph({
   lane,
   direction,
