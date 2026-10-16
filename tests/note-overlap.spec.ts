@@ -1,6 +1,110 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import type { Chart, Note } from '../src/model';
+import { LANES, type Chart, type Note } from '../src/model';
+
+test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相接才共用连接点', async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true }),
+  );
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto('/');
+  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
+  const chart: Chart = JSON.parse(await readFile((await (await downloading).path())!, 'utf8'));
+  chart.title = 'ADJACENT SUSTAINS';
+  chart.specialEvents = [];
+  chart.notes = LANES.flatMap((lane) =>
+    // Reproduce the same-direction PUNCH SWAY pair from the report, plus HOLD
+    // and reversed/free STEP actions. Only the final pair shares an endpoint.
+    [200, -200, 0].flatMap((gap, group) => {
+      const start = 3000 + group * 10000;
+      const direction = lane.directions[0];
+      const modifier = lane.id === 'squat' || lane.id === 'calf_raise' ? 'none' : 'sway';
+      return [
+        {
+          id: `${lane.id}-${group}-first`,
+          lane: lane.id,
+          direction,
+          timeMs: start,
+          endTimeMs: start + 1300,
+          kind: 'hold',
+          modifier,
+        },
+        {
+          id: `${lane.id}-${group}-next`,
+          lane: lane.id,
+          direction:
+            lane.id === 'punch' ? direction : lane.id === 'step' ? 'free' : lane.directions[1],
+          timeMs: start + 1300 + gap,
+          endTimeMs: start + 2600 + gap,
+          kind: 'hold',
+          modifier,
+        },
+      ] satisfies Note[];
+    }),
+  );
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'adjacent-sustains.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+  const seek = async (seconds: number) => {
+    await page.locator('video').evaluate((v: HTMLVideoElement, time) => {
+      v.currentTime = time;
+    }, seconds);
+    await expect
+      .poll(() => page.locator('video').evaluate((v: HTMLVideoElement) => v.seeking))
+      .toBe(false);
+  };
+  const firstNotes = (group: number) =>
+    page.locator(`.practice .player-hold[data-note-id$="-${group}-first"]`);
+  await seek(2.85);
+  await page.screenshot({ path: 'artifacts/adjacent-sway-fullscreen-1920.png' });
+  await page
+    .getByTestId('lane-punch')
+    .screenshot({ path: 'artifacts/adjacent-sway-punch-1920.png' });
+  await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
+  for (const viewport of [
+    { width: 1280, height: 720 },
+    { width: 2560, height: 1440 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const tail of await firstNotes(0).locator('.hold-tail').all()) {
+      await expect(tail).toBeVisible();
+      await expect(tail).toHaveCSS('opacity', '1');
+    }
+  }
+  await seek(3.5);
+  await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect
+    .poll(() => page.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime))
+    .toBeGreaterThan(3.7);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
+  await seek(4.35);
+  await expect(firstNotes(0)).toHaveCount(0);
+  await expect(
+    page.locator('.practice .player-hold[data-note-id$="-0-next"] .hold-tail'),
+  ).toHaveCount(5);
+  await seek(12.85);
+  await expect(firstNotes(1).locator('.hold-tail')).toHaveCount(5);
+  await page.screenshot({ path: 'artifacts/overlapping-sway-tails-1920.png' });
+  await seek(22.85);
+  await expect(firstNotes(2).locator('.hold-tail')).toHaveCount(0);
+  await expect(
+    page.locator('.practice .player-hold[data-note-id$="-2-next"] .hold-head'),
+  ).toHaveCount(5);
+  await seek(2.85);
+  await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
+});
 
 test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长条不覆盖动作标记', async ({ page }) => {
   const errors: string[] = [];

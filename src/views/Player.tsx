@@ -187,9 +187,9 @@ export function Player({
                         ((noteX(other.timeMs, time, 88, PREVIEW_MS) - tail) * metrics.width) / 100,
                     )
                     .filter((x) => x > -metrics.marker && x < remainingPx + metrics.marker);
-                  const hideTail =
-                    joinedTails.has(note.id) ||
-                    gaps.some((x) => Math.abs(x) < metrics.marker * 0.65);
+                  // Only an exact temporal handoff shares a marker. Pixel proximity
+                  // must not erase a separate note's release point or shorten its body.
+                  const joinedTail = joinedTails.has(note.id);
                   return (
                     <div
                       key={note.id}
@@ -221,7 +221,7 @@ export function Player({
                           headOpacity={
                             time < note.timeMs ? 1 : holding?.id === note.id ? cueOpacity : 0
                           }
-                          joinedTail={hideTail}
+                          joinedTail={joinedTail}
                           gaps={gaps}
                           sway={note.modifier === 'sway'}
                         />
