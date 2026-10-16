@@ -28,11 +28,11 @@ export function LaneGlyph({ lane }: { lane: Lane }) {
   );
 }
 export function noteGlyphShape(lane: Lane, direction: Direction, distance: StepDistance = 1) {
-  const shape = lane !== 'step' ? 'arrow' : direction === 'close' ? 'close' : 'step';
-  const angle = { up: 0, right: 90, down: 180, left: 270, close: 0 }[direction];
+  const shape = lane !== 'step' ? 'arrow' : direction === 'free' ? 'free' : 'step';
+  const angle = { up: 0, right: 90, down: 180, left: 270, free: 0 }[direction];
   const path =
-    shape === 'close'
-      ? 'M31 9A15 15 0 1 0 31 31L26 25A7 7 0 1 1 26 15Z'
+    shape === 'free'
+      ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
       : shape === 'step' && distance === 2
         ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
         : 'M20 4L34 18H26V35H14V18H6Z';
@@ -63,9 +63,9 @@ export function NoteGlyph({
       viewBox="0 0 40 40"
       aria-hidden="true"
     >
-      <g transform={shape === 'close' ? undefined : `rotate(${angle} 20 20)`}>
-        {!joined && <path className="glyph-edge" d={path} />}
-        <path className="glyph-body" d={path} />
+      <g transform={shape === 'free' ? undefined : `rotate(${angle} 20 20)`}>
+        {!joined && <path className="glyph-edge" fillRule="evenodd" d={path} />}
+        <path className="glyph-body" fillRule="evenodd" d={path} />
       </g>
     </svg>
   );

@@ -25,9 +25,10 @@ import {
   noteColor,
   noteSymbol,
   noteAction,
-  noteTypeLabel,
   isStepMove,
   LANES,
+  STEP_VARIANTS,
+  stepVariantValue,
   uid,
   type Chart,
   type Direction,
@@ -49,7 +50,7 @@ import {
   resnapEvents,
   shiftNoteLanes,
   setStepDistance,
-  changeNoteDirection,
+  changeNoteForm,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
 import { NoteGlyph } from '../components/Glyph';
@@ -228,7 +229,7 @@ export function Editor({
   }, [time, follow, status.playing, px]);
   const selectedNote = chart.notes.find((n) => selected.includes(n.id));
   const selectedStep = chart.notes.find((n) => selected.includes(n.id) && isStepMove(n));
-  const canFlip = chart.notes.some((n) => selected.includes(n.id) && n.direction !== 'close');
+  const canFlip = chart.notes.some((n) => selected.includes(n.id) && n.direction !== 'free');
   const selectedSpecial = chart.specialEvents.find((n) => selected.includes(n.id));
   const event = selectedNote || selectedSpecial;
   const activeSegment =
@@ -342,34 +343,21 @@ export function Editor({
         ),
       });
   };
-  const changeKind = (type: NoteType) => {
+  const changeKind = (type: NoteType, direction = selectedNote?.direction) => {
     if (!event) return;
-    if (type === 'sway' && !selectedNote) return;
-    if (type !== 'tap') {
-      const end =
-        'endTimeMs' in event && event.endTimeMs !== undefined
-          ? event.endTimeMs
-          : nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
-      if (end <= event.timeMs) {
-        notify('视频末尾没有足够空间创建 HOLD。');
-        return;
-      }
-      patchEvent(
-        selectedNote
-          ? { kind: 'hold', modifier: type === 'sway' ? 'sway' : 'none', endTimeMs: end }
-          : { endTimeMs: end },
-      );
-    } else if (selectedNote) {
-      const note: Note = {
-        id: selectedNote.id,
-        lane: selectedNote.lane,
-        direction: selectedNote.direction,
-        timeMs: selectedNote.timeMs,
-        kind: 'tap',
-        ...(selectedNote.distance ? { distance: selectedNote.distance } : {}),
-      };
+    const end =
+      'endTimeMs' in event && event.endTimeMs !== undefined
+        ? event.endTimeMs
+        : nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
+    if (type !== 'tap' && end <= event.timeMs) {
+      notify('视频末尾没有足够空间创建长条。');
+      return;
+    }
+    if (selectedNote && direction) {
+      const note = changeNoteForm(selectedNote, type, direction, end);
       onChange({ ...chart, notes: chart.notes.map((n) => (n.id === note.id ? note : n)) });
-    } else
+    } else if (type === 'hold') patchEvent({ endTimeMs: end });
+    else if (type === 'tap')
       onChange({
         ...chart,
         specialEvents: chart.specialEvents.map((n) =>
@@ -521,7 +509,7 @@ export function Editor({
           endTimeMs: finish,
         }
       : { id: d.id!, lane: d.lane, direction: dir, timeMs: start, kind: 'tap' };
-    if (d.lane === 'step' && dir !== 'close' && stepDistance === 2) note.distance = 2;
+    if (d.lane === 'step' && dir !== 'free' && stepDistance === 2) note.distance = 2;
     return { ...d.original, notes: [...d.original.notes, note] };
   };
   const pointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -664,7 +652,13 @@ export function Editor({
     );
   };
   return (
-    <section className="editor" aria-label="谱面编辑器">
+    <section
+      className="editor"
+      aria-label="谱面编辑器"
+      onChange={(e) => {
+        if (recording && e.target instanceof HTMLSelectElement) e.target.blur();
+      }}
+    >
       <div className="editor-toolbar">
         <div className="tool-group">
           <button
@@ -810,7 +804,7 @@ export function Editor({
             </button>
           ))}
         </div>
-        <div className="direction-picks" hidden={recording}>
+        <div className="direction-picks" hidden={recording || lane === 'step'}>
           {LANES.find((l) => l.id === lane)!.directions.map((d) => (
             <button
               key={d}
@@ -826,7 +820,7 @@ export function Editor({
             </button>
           ))}
         </div>
-        {lane === 'step' && direction !== 'close' && !recording && (
+        {lane === 'step' && direction !== 'free' && !recording && (
           <label className="inline-field step-distance-picker">
             跨度
             <select
@@ -842,17 +836,33 @@ export function Editor({
         <select
           aria-label="绘制类型"
           hidden={recording}
-          value={drawType}
-          onChange={(e) => setDrawType(e.target.value as NoteType)}
+          value={lane === 'step' ? stepVariantValue(direction, drawType) : drawType}
+          onChange={(e) => {
+            if (lane === 'step') {
+              const variant = STEP_VARIANTS.find((v) => v.value === e.target.value)!;
+              setDirection(variant.direction);
+              setDrawType(variant.type);
+            } else setDrawType(e.target.value as NoteType);
+          }}
         >
-          <option value="tap">TAP</option>
-          <option value="hold">{noteTypeLabel('hold', lane, direction)}</option>
-          <option value="sway">{noteTypeLabel('sway', lane, direction)}</option>
+          {lane === 'step' ? (
+            STEP_VARIANTS.map((variant) => (
+              <option key={variant.value} value={variant.value}>
+                {variant.label}
+              </option>
+            ))
+          ) : (
+            <>
+              <option value="tap">TAP</option>
+              <option value="hold">HOLD</option>
+              <option value="sway">SWAY</option>
+            </>
+          )}
         </select>
         <span className="record-hint">
           {recording
             ? lane === 'step'
-              ? '← L · → R · ↓ C · Shift 跨两格 · 长按 HOLD · Ctrl 摇摆'
+              ? '← L · → R · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
               : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
             : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
@@ -990,24 +1000,38 @@ export function Editor({
                     <select
                       aria-label="选中事件类型"
                       value={
-                        selectedNote?.kind === 'hold' && selectedNote.modifier === 'sway'
-                          ? 'sway'
-                          : 'endTimeMs' in event && event.endTimeMs !== undefined
-                            ? 'hold'
-                            : 'tap'
+                        selectedNote?.lane === 'step'
+                          ? stepVariantValue(
+                              selectedNote.direction,
+                              selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
+                                ? 'sway'
+                                : selectedNote.kind,
+                            )
+                          : selectedNote?.kind === 'hold' && selectedNote.modifier === 'sway'
+                            ? 'sway'
+                            : 'endTimeMs' in event && event.endTimeMs !== undefined
+                              ? 'hold'
+                              : 'tap'
                       }
-                      onChange={(e) => changeKind(e.target.value as NoteType)}
+                      onChange={(e) => {
+                        if (selectedNote?.lane === 'step') {
+                          const variant = STEP_VARIANTS.find((v) => v.value === e.target.value)!;
+                          changeKind(variant.type, variant.direction);
+                        } else changeKind(e.target.value as NoteType);
+                      }}
                     >
-                      <option value="tap">{selectedNote ? 'TAP' : 'SPECIAL'}</option>
-                      <option value="hold">
-                        {selectedNote
-                          ? noteTypeLabel('hold', selectedNote.lane, selectedNote.direction)
-                          : 'SPECIAL HOLD'}
-                      </option>
-                      {selectedNote && (
-                        <option value="sway">
-                          {noteTypeLabel('sway', selectedNote.lane, selectedNote.direction)}
-                        </option>
+                      {selectedNote?.lane === 'step' ? (
+                        STEP_VARIANTS.map((variant) => (
+                          <option key={variant.value} value={variant.value}>
+                            {variant.label}
+                          </option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="tap">{selectedNote ? 'TAP' : 'SPECIAL'}</option>
+                          <option value="hold">{selectedNote ? 'HOLD' : 'SPECIAL HOLD'}</option>
+                          {selectedNote && <option value="sway">SWAY</option>}
+                        </>
                       )}
                     </select>
                   </label>
@@ -1020,7 +1044,7 @@ export function Editor({
                       onCommit={(n) => patchEvent({ endTimeMs: Math.round(n) })}
                     />
                   )}
-                  {selectedNote && (
+                  {selectedNote && selectedNote.lane !== 'step' && (
                     <label className="field">
                       <span>动作方向</span>
                       <select
@@ -1031,7 +1055,7 @@ export function Editor({
                             ...chart,
                             notes: chart.notes.map((n) =>
                               n.id === selectedNote.id
-                                ? changeNoteDirection(n, e.target.value as Direction)
+                                ? { ...n, direction: e.target.value as Direction }
                                 : n,
                             ),
                           })
@@ -1040,17 +1064,13 @@ export function Editor({
                         {LANES.find((l) => l.id === selectedNote.lane)!.directions.map((d) => (
                           <option key={d} value={d}>
                             {noteSymbol(selectedNote.lane, d)}{' '}
-                            {d === 'close'
-                              ? selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
-                                ? 'FREE'
-                                : 'CLOSE'
-                              : d === 'left'
-                                ? 'LEFT'
-                                : d === 'right'
-                                  ? 'RIGHT'
-                                  : d === 'up'
-                                    ? 'UP'
-                                    : 'DOWN'}
+                            {d === 'left'
+                              ? 'LEFT'
+                              : d === 'right'
+                                ? 'RIGHT'
+                                : d === 'up'
+                                  ? 'UP'
+                                  : 'DOWN'}
                           </option>
                         ))}
                       </select>
@@ -1079,11 +1099,9 @@ export function Editor({
                   )}
                   {selectedNote?.lane === 'step' && (
                     <p className="inspector-tip">
-                      {selectedNote.direction === 'close'
-                        ? selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
-                          ? '保持当前站位，自由摇摆。'
-                          : '另一只脚向刚迈出的脚靠拢。'
-                        : '长按为单脚支撑；合腿请另放 C。C 与两格踏步仅用于 STEP 轨。'}
+                      {selectedNote.direction === 'free'
+                        ? '原地自由摇摆；可在类型菜单直接切换为左右 TAP、HOLD 或 SWAY。'
+                        : 'TAP 为迈步；HOLD 为单脚支撑；SWAY 为迈出后摇摆。类型菜单可直接互换。'}
                     </p>
                   )}
                   <div className="inspector-actions">
@@ -1266,8 +1284,8 @@ export function Editor({
       {shown.notes.some((n) => n.lane === 'step') && (
         <details className={`step-checks ${stepIssues.length ? 'has-issues' : ''}`}>
           <summary>
-            STEP 站位{stepIssues.length ? `：${stepIssues.length} 处需检查` : '检查通过'}{' '}
-            <span>起始：中间并腿</span>
+            STEP 动作{stepIssues.length ? `：${stepIssues.length} 处需检查` : '检查通过'}{' '}
+            <span>检查动作时间重叠</span>
           </summary>
           <div className="step-check-list">
             {stepIssues.length ? (
@@ -1286,10 +1304,7 @@ export function Editor({
                 </button>
               ))
             ) : (
-              <p>
-                三格范围内可完成；普通 C 收拢到最近一次迈出的脚，C SWAY
-                保持站位。长条结束后再开始下一次踏步。
-              </p>
+              <p>长条结束后再开始下一次踏步；自由摇摆不指定左右方向。</p>
             )}
           </div>
         </details>

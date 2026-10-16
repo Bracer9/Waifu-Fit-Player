@@ -36,7 +36,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
     { id: 'punch-2', lane: 'punch', direction: 'right', timeMs: 3400, kind: 'tap' },
     { id: 'punch-3', lane: 'punch', direction: 'left', timeMs: 4200, kind: 'tap' },
     { id: 'step-1', lane: 'step', direction: 'left', timeMs: 2600, kind: 'tap' },
-    { id: 'step-c', lane: 'step', direction: 'close', timeMs: 3000, kind: 'tap' },
+    { id: 'step-middle', lane: 'step', direction: 'right', timeMs: 3000, kind: 'tap' },
     { id: 'step-2', lane: 'step', direction: 'right', distance: 2, timeMs: 3600, kind: 'tap' },
     {
       id: 'side-sway',
@@ -57,13 +57,13 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
       modifier: 'none',
     },
     {
-      id: 'step-close',
+      id: 'step-free-short',
       lane: 'step',
-      direction: 'close',
+      direction: 'free',
       timeMs: 10000,
       endTimeMs: 11500,
       kind: 'hold',
-      modifier: 'none',
+      modifier: 'sway',
     },
     {
       id: 'step-double',
@@ -78,7 +78,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
     {
       id: 'step-free',
       lane: 'step',
-      direction: 'close',
+      direction: 'free',
       timeMs: 15500,
       endTimeMs: 18500,
       kind: 'hold',
@@ -125,10 +125,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await expect(arrow).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(arrow).toHaveCSS('border-width', '0px');
   await expect(arrow.locator('.glyph-ring')).toHaveCount(0);
-  await expect(page.getByTestId('lane-step').locator('.player-note .glyph--step')).toHaveCount(2);
-  await expect(
-    page.getByTestId('lane-step').locator('.player-note[data-direction="close"]'),
-  ).toHaveCSS('color', 'rgb(115, 222, 209)');
+  await expect(page.getByTestId('lane-step').locator('.player-note .glyph--step')).toHaveCount(3);
   await expect(page.getByTestId('lane-calf_raise').locator('.hold-tail')).toHaveCSS(
     'border-radius',
     '50%',
@@ -189,16 +186,16 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await page.screenshot({ path: 'artifacts/arrow-hold-release-1920.png', fullPage: true });
   await seek(9.4);
   await expect(
-    page.getByTestId('lane-step').locator('.player-hold[data-direction="close"] .hold-tail'),
+    page.getByTestId('lane-step').locator('.player-hold[data-direction="free"] .hold-tail'),
   ).toBeVisible();
-  await page.screenshot({ path: 'artifacts/arrow-close-approach-1920.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-free-short-approach-1920.png', fullPage: true });
   await seek(10.4);
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SLOW CLOSE');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
   await expect(page.getByTestId('target-step')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await page.screenshot({ path: 'artifacts/arrow-close-hold-1920.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/arrow-free-short-hold-1920.png', fullPage: true });
   await seek(16.1);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
-  await expect(page.getByTestId('target-step').locator('.glyph--close')).toBeVisible();
+  await expect(page.getByTestId('target-step').locator('.glyph--free')).toBeVisible();
   await page.screenshot({ path: 'artifacts/arrow-free-sway-1920.png', fullPage: true });
   await seek(2.12);
   await expect(path).toHaveAttribute('d', d!);

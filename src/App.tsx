@@ -790,11 +790,9 @@ export default function App() {
               <li>
                 <strong>STEP 踏步</strong>
                 <p>
-                  ← L 左脚向左一格，→ R 右脚向右一格；↓ C 让另一只脚靠拢。Shift + 左右录入 L2 /
-                  R2，一次跨两格。L/R 长按为单脚支撑，C 长按为慢速合腿；Ctrl +
-                  左右长按为迈出后重心摇摆，Ctrl + 长按 ↓ 为原地自由摇摆（C
-                  SWAY）。鼠标绘制可选跨度；选中 L/R 按 D 切换一／两格，F 反向保留跨度。
-                  工作台从中间并腿开始检查站位，点击提示可定位音符。
+                  ← / → 录入左右踏步，点按 TAP、长按 HOLD、Ctrl + 长按 SWAY。 ↓ 直接录入 FREE
+                  SWAY，长按决定时长。Shift + 左右跨两格。 绘制和选中事件的类型菜单统一提供左右
+                  TAP、HOLD、SWAY 与 FREE SWAY， 可直接互换；选中 L/R 按 D 切换跨度，F 反向。
                 </p>
               </li>
               <li>

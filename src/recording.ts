@@ -11,11 +11,13 @@ import {
 } from './model';
 import { MediaController } from './media';
 import { nextGrid, snapTime } from './timing';
-export const isTyping = (target: EventTarget | null) =>
+export const isTextEntry = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   !!target.closest(
-    'textarea, select, [contenteditable="true"], input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="file"])',
+    'textarea, [contenteditable="true"], input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="file"])',
   );
+export const isTyping = (target: EventTarget | null) =>
+  isTextEntry(target) || target instanceof HTMLSelectElement;
 // Only gesture classification uses wall time; note timestamps always use the video clock.
 const HOLD_THRESHOLD_MS = 250;
 type Options = {
@@ -49,9 +51,19 @@ export function useRecording(options: Options) {
     };
     const keydown = (e: KeyboardEvent) => {
       const o = opts.current;
-      if (!o.enabled || isTyping(e.target) || e.metaKey || e.altKey) return;
+      if (!o.enabled || isTextEntry(e.target) || e.metaKey || e.altKey) return;
+      // Armed recording owns transport / movement keys even when a closed select retains focus.
+      if (e.code === 'Space' && e.target instanceof HTMLSelectElement) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.blur();
+        if (!e.repeat) void o.media.toggle().catch(() => o.notify('请点击播放后继续录谱。'));
+        return;
+      }
       if (!e.ctrlKey && LANES.some((_, i) => e.key === String(i + 1))) {
         e.preventDefault();
+        e.stopPropagation();
+        if (e.target instanceof HTMLSelectElement) e.target.blur();
         if (!e.repeat) {
           const lane = LANES[Number(e.key) - 1].id;
           opts.current = { ...o, lane };
@@ -65,9 +77,11 @@ export function useRecording(options: Options) {
           Direction
         >
       )[e.key];
-      if (o.lane === 'step' && dir === 'down') dir = 'close';
+      if (o.lane === 'step' && dir === 'down') dir = 'free';
       if (!dir) return;
       e.preventDefault();
+      e.stopPropagation();
+      if (e.target instanceof HTMLSelectElement) e.target.blur();
       if (e.repeat || pending.current || !o.media.getStatus().playing) return;
       if (!(LANES.find((l) => l.id === o.lane)!.directions as readonly Direction[]).includes(dir)) {
         o.notify('当前轨道不支持这个方向。');
@@ -85,8 +99,8 @@ export function useRecording(options: Options) {
         direction: dir,
         timeMs,
         pressedAt: performance.now(),
-        modifier: e.ctrlKey ? 'sway' : 'none',
-        ...(o.lane === 'step' && dir !== 'close' && e.shiftKey ? { distance: 2 } : {}),
+        modifier: e.ctrlKey || dir === 'free' ? 'sway' : 'none',
+        ...(o.lane === 'step' && dir !== 'free' && e.shiftKey ? { distance: 2 } : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {
@@ -104,7 +118,8 @@ export function useRecording(options: Options) {
         o.media.element.ended
       )
         return;
-      if (performance.now() - p.pressedAt < HOLD_THRESHOLD_MS) {
+      const short = performance.now() - p.pressedAt < HOLD_THRESHOLD_MS;
+      if (short && p.direction !== 'free') {
         o.onNote({
           id: uid(),
           lane: p.lane,
@@ -122,6 +137,8 @@ export function useRecording(options: Options) {
         o.snap,
         duration,
       );
+      if (short && p.direction === 'free')
+        endTimeMs = nextGrid(p.timeMs, o.chart.tempoSegments, 1, duration);
       if (endTimeMs <= p.timeMs)
         endTimeMs = nextGrid(p.timeMs, o.chart.tempoSegments, o.snap, duration);
       if (endTimeMs > p.timeMs)
@@ -136,7 +153,7 @@ export function useRecording(options: Options) {
           ...(p.distance ? { distance: p.distance } : {}),
         });
     };
-    window.addEventListener('keydown', keydown);
+    window.addEventListener('keydown', keydown, true);
     window.addEventListener('keyup', keyup);
     window.addEventListener('blur', cancel);
     const video = options.media.element;
@@ -144,7 +161,7 @@ export function useRecording(options: Options) {
       video?.addEventListener(name, cancel),
     );
     return () => {
-      window.removeEventListener('keydown', keydown);
+      window.removeEventListener('keydown', keydown, true);
       window.removeEventListener('keyup', keyup);
       window.removeEventListener('blur', cancel);
       ['pause', 'seeking', 'ended', 'emptied'].forEach((name) =>

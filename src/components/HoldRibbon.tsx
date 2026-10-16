@@ -30,8 +30,8 @@ export function HoldRibbon({
   const width = Math.max(1, fullWidth * visibleFraction);
   const height = size * 1.08;
   const connected = headOpacity > 0;
-  // End the band inside the solid part of C, leaving its open counter intact.
-  const headGap = connected ? (note.direction === 'close' ? size * 0.25 : 0) : size * 0.32;
+  // Meet the left junction of the free-sway loop without filling its open centres.
+  const headGap = connected ? (note.direction === 'free' ? size * 0.4 : 0) : size * 0.32;
   const glyph = noteGlyphShape(note.lane, note.direction, note.distance);
   const path = useMemo(
     () =>
@@ -113,7 +113,11 @@ export function HoldRibbon({
                   opacity={headOpacity}
                   transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                 >
-                  <path d={glyph.path} transform={`rotate(${glyph.angle} 20 20)`} />
+                  <path
+                    d={glyph.path}
+                    fillRule="evenodd"
+                    transform={`rotate(${glyph.angle} 20 20)`}
+                  />
                 </g>
               )}
             </g>

@@ -46,12 +46,12 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
     hold('punch-first', 'punch', 'left', 3000, 6500),
     hold('punch-overlap', 'punch', 'right', 4500, 7600),
     hold('step-first', 'step', 'right', 3000, 5000),
-    hold('step-close', 'step', 'close', 5000, 7000),
+    hold('step-free', 'step', 'free', 5000, 7000, 'sway'),
     { id: 'step-next', lane: 'step', direction: 'left', timeMs: 7000, kind: 'tap' },
     hold('side-first', 'side_crunch', 'right', 3000, 5000, 'sway'),
     hold('side-next', 'side_crunch', 'left', 5000, 7000, 'sway'),
     hold('short', 'step', 'left', 8000, 8125),
-    hold('close-sway', 'step', 'close', 9500, 12500, 'sway'),
+    hold('free-sway', 'step', 'free', 9500, 12500, 'sway'),
   ];
   await page.getByLabel('导入谱面文件').setInputFiles({
     name: 'overlap.wfp.json',
@@ -74,7 +74,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   }
   const first = page.locator('.player-hold[data-note-id="step-first"]');
   await expect(first.locator('.hold-tail')).toHaveCount(0);
-  await expect(page.locator('.player-hold[data-note-id="step-close"] .hold-head')).toBeVisible();
+  await expect(page.locator('.player-hold[data-note-id="step-free"] .hold-head')).toBeVisible();
   await expect(page.locator('.player-hold[data-note-id="squat-hold"] mask ellipse')).toHaveCount(2);
   await expect(page.locator('.practice .note-impact .note-glyph')).toHaveCount(0);
   const tail = page.locator('.player-hold[data-note-id="punch-overlap"] .hold-tail');
@@ -92,7 +92,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   await expect(tail).toHaveCSS('z-index', '2');
   await page.screenshot({ path: 'artifacts/notes-junction-fullscreen-1920.png' });
   await seek(5.04);
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-direction', 'close');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-direction', 'free');
   await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveCount(1);
   await expect(page.getByTestId('impact-step').locator('.note-glyph')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/notes-handoff-fullscreen-1920.png' });

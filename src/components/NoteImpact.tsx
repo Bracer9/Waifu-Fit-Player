@@ -27,7 +27,7 @@ export function NoteImpact({
       <div
         className="impact-halo"
         style={{
-          opacity: fade * (note.direction === 'close' ? 0.55 : 0.95),
+          opacity: fade * (note.direction === 'free' ? 0.55 : 0.95),
           transform: `translate(-50%, -50%) scale(${0.6 + ease * 0.9})`,
         }}
       />

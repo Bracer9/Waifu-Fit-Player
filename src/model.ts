@@ -18,7 +18,7 @@ export const LANES = [
     id: 'step',
     name: '踏步',
     english: 'STEP',
-    directions: ['left', 'right', 'close'],
+    directions: ['left', 'right', 'free'],
     color: 'var(--cyan)',
   },
   {
@@ -30,9 +30,20 @@ export const LANES = [
   },
 ] as const;
 export type Lane = (typeof LANES)[number]['id'];
-export type Direction = 'up' | 'down' | 'left' | 'right' | 'close';
+export type Direction = 'up' | 'down' | 'left' | 'right' | 'free';
 export type StepDistance = 1 | 2;
 export type NoteType = 'tap' | 'hold' | 'sway';
+export const STEP_VARIANTS = [
+  { value: 'left-tap', direction: 'left', type: 'tap', label: 'L · TAP' },
+  { value: 'right-tap', direction: 'right', type: 'tap', label: 'R · TAP' },
+  { value: 'left-hold', direction: 'left', type: 'hold', label: 'L · HOLD' },
+  { value: 'right-hold', direction: 'right', type: 'hold', label: 'R · HOLD' },
+  { value: 'left-sway', direction: 'left', type: 'sway', label: 'L · SWAY' },
+  { value: 'right-sway', direction: 'right', type: 'sway', label: 'R · SWAY' },
+  { value: 'free-sway', direction: 'free', type: 'sway', label: 'FREE SWAY' },
+] as const;
+export const stepVariantValue = (direction: Direction, type: NoteType) =>
+  direction === 'free' ? 'free-sway' : `${direction}-${type}`;
 export type Note = {
   id: string;
   lane: Lane;
@@ -58,37 +69,35 @@ export const arrow: Record<Direction, string> = {
   down: '↓',
   left: '←',
   right: '→',
-  close: 'C',
+  free: 'FREE',
 };
 export const noteSymbol = (lane: Lane, direction: Direction, distance: StepDistance = 1) =>
   lane === 'step'
-    ? direction === 'close'
-      ? 'C'
+    ? direction === 'free'
+      ? 'FREE'
       : `${direction === 'left' ? 'L' : 'R'}${distance === 2 ? '2' : ''}`
     : arrow[direction];
 export const noteColor = (lane: Lane, direction: Direction) =>
   lane === 'step'
-    ? direction === 'close'
-      ? 'var(--step-close)'
+    ? direction === 'free'
+      ? 'var(--step-free)'
       : direction === 'left'
         ? 'var(--cyan)'
         : 'var(--pink)'
     : LANES.find((item) => item.id === lane)!.color;
-export const isStepMove = (note: Note) => note.lane === 'step' && note.direction !== 'close';
+export const isStepMove = (note: Note) => note.lane === 'step' && note.direction !== 'free';
 export function noteTypeLabel(
   type: NoteType,
   lane: Lane | 'special',
   direction: Direction,
 ): string {
   if (type === 'tap') return 'TAP';
-  if (type === 'sway') return lane === 'step' && direction === 'close' ? 'FREE SWAY' : 'SWAY';
-  return lane === 'step' ? (direction === 'close' ? 'SLOW CLOSE' : 'BALANCE HOLD') : 'HOLD';
+  if (type === 'sway') return lane === 'step' && direction === 'free' ? 'FREE SWAY' : 'SWAY';
+  return lane === 'step' ? 'BALANCE HOLD' : 'HOLD';
 }
 export function noteAction(note: Note): string {
   if (note.kind === 'tap' && note.lane === 'step')
-    return note.direction === 'close'
-      ? 'CLOSE'
-      : `STEP ${noteSymbol(note.lane, note.direction, note.distance)}`;
+    return `STEP ${noteSymbol(note.lane, note.direction, note.distance)}`;
   return noteTypeLabel(
     note.kind === 'hold' && note.modifier === 'sway' ? 'sway' : note.kind,
     note.lane,
@@ -134,11 +143,20 @@ export class ChartError extends Error {
     this.name = 'ChartError';
   }
 }
-export function parseChart(input: unknown, durationMs?: number): Chart {
+export function parseChart(source: unknown, durationMs?: number): Chart {
   const errors: string[] = [];
   const record = (value: unknown): value is Record<string, unknown> =>
     !!value && typeof value === 'object' && !Array.isArray(value);
-  if (!record(input)) throw new ChartError(['谱面必须是一个 JSON 对象。']);
+  if (!record(source)) throw new ChartError(['谱面必须是一个 JSON 对象。']);
+  // Retired C actions are discarded, including their hold and sway variants.
+  const input = Array.isArray(source.notes)
+    ? {
+        ...source,
+        notes: source.notes.filter(
+          (note) => !record(note) || note.lane !== 'step' || note.direction !== 'close',
+        ),
+      }
+    : source;
   if (input.schemaVersion !== 1)
     throw new ChartError(['不支持此谱面版本，当前仅支持 schemaVersion: 1。']);
   if (typeof input.title !== 'string' || !input.title.trim()) errors.push('作品名称不能为空。');
@@ -201,6 +219,8 @@ export function parseChart(input: unknown, durationMs?: number): Chart {
       const lane = LANES.find((l) => l.id === note.lane);
       if (!lane || !(lane.directions as readonly unknown[]).includes(note.direction))
         errors.push(`${label}：轨道或方向不匹配。`);
+      if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
+        errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
       if (
         note.distance !== undefined &&
         (note.lane !== 'step' ||

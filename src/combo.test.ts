@@ -5,7 +5,7 @@ import { comboAt, createBeatMap, createComboIndex, sustainPulseAt } from './comb
 const hold = (modifier: 'none' | 'sway' = 'none'): Extract<Note, { kind: 'hold' }> => ({
   id: modifier,
   lane: 'step',
-  direction: 'close',
+  direction: 'left',
   kind: 'hold',
   modifier,
   timeMs: 1000,

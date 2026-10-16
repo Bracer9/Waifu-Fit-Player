@@ -279,11 +279,7 @@ export function Player({
                 )}
                 {release && !holding && (
                   <span className="release-label" style={{ opacity: flash }}>
-                    {release.direction === 'close' &&
-                    release.kind === 'hold' &&
-                    release.modifier !== 'sway'
-                      ? 'CLOSED'
-                      : 'RELEASE'}
+                    RELEASE
                   </span>
                 )}
                 {chart.specialMove &&

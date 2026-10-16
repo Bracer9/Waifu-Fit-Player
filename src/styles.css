@@ -7,7 +7,7 @@
   --pink: #f64e93;
   --cyan: #35c9db;
   --miku: #39c5bb;
-  --step-close: #73ded1;
+  --step-free: #73ded1;
   --ink: #242329;
   --cream: #faf6ed;
   --line: #dedbd3;
@@ -1799,7 +1799,7 @@ nav button.active:after {
   outline: 2px solid var(--ink);
   outline-offset: 1px;
 }
-.direction-picks button[data-direction='close'] {
+.direction-picks button[data-direction='free'] {
   color: var(--ink);
 }
 .lane-picks button[data-lane='step'].active {
@@ -1946,8 +1946,8 @@ nav button.active:after {
   border: 1px solid #fff8fc;
   background: var(--lane);
 }
-.timeline-event[data-direction='close'],
-.timeline-event[data-direction='close'] .event-glyph {
+.timeline-event[data-direction='free'],
+.timeline-event[data-direction='free'] .event-glyph {
   color: var(--ink);
 }
 .timeline-event[data-lane='step'].sway {

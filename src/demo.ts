@@ -71,25 +71,17 @@ export function demoChart(fileName: string): Chart {
     }
     if (bar % 8 === 1) {
       tap('step', 'left', b);
-      tap('step', 'close', b + 1);
       tap('step', 'right', b + 2, 2);
-      tap('step', 'close', b + 3);
       tap('step', 'left', b + 4, 2);
-      tap('step', 'close', b + 5);
       tap('step', 'right', b + 6);
-      tap('step', 'close', b + 7);
     } else if (bar % 8 === 3) {
       stepHold('left', b, b + 2);
-      stepHold('close', b + 2, b + 4);
       tap('step', 'right', b + 5);
-      tap('step', 'close', b + 6);
     } else if (bar % 8 === 5) {
       stepHold('right', b, b + 3, 'sway');
-      tap('step', 'close', b + 3);
       stepHold('left', b + 4, b + 7, 'sway');
-      tap('step', 'close', b + 7);
-    } else if (bar % 8 === 7) {
-      stepHold('close', b, b + 4, 'sway');
+    } else if (bar % 8 === 6) {
+      stepHold('free', b + 1, b + 5, 'sway');
     }
   }
   return sortChart(chart);

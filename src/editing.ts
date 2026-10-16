@@ -5,6 +5,7 @@ import {
   type Direction,
   type Lane,
   type Note,
+  type NoteType,
   type Snap,
   type StepDistance,
   type SpecialEvent,
@@ -61,7 +62,7 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
     down: 'up',
     left: 'right',
     right: 'left',
-    close: 'close',
+    free: 'free',
   };
   return {
     ...chart,
@@ -83,12 +84,29 @@ export function setStepDistance(chart: Chart, selected: string[], distance?: Ste
     }),
   };
 }
-export function changeNoteDirection(note: Note, direction: Direction): Note {
-  const next = { ...note, direction };
-  if (direction === 'close') {
-    delete next.distance;
-  }
-  return next;
+/** Change a note's action without replacing its ID or losing an existing sustain duration. */
+export function changeNoteForm(
+  note: Note,
+  type: NoteType,
+  direction: Direction,
+  endTimeMs: number,
+): Note {
+  const base = {
+    id: note.id,
+    lane: note.lane,
+    direction,
+    timeMs: note.timeMs,
+    ...(note.lane === 'step' && direction !== 'free' && note.distance
+      ? { distance: note.distance }
+      : {}),
+  };
+  if (type === 'tap' && direction !== 'free') return { ...base, kind: 'tap' };
+  return {
+    ...base,
+    kind: 'hold',
+    modifier: type === 'sway' || direction === 'free' ? 'sway' : 'none',
+    endTimeMs: note.kind === 'hold' ? note.endTimeMs : endTimeMs,
+  };
 }
 /** Preserve row spacing and only move to lanes that accept every selected note's direction. */
 export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to: Lane): Chart {
