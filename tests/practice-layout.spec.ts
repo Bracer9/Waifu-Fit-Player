@@ -35,16 +35,7 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
             .evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0),
         )
         .toBe(true);
-      // The foreground bottle must remain fully visible and clear of the actual playfield.
-      const bottle = (await page.locator('.studio-bottle').boundingBox())!;
-      expect(bottle.x).toBeGreaterThanOrEqual(0);
-      expect(bottle.y).toBeGreaterThanOrEqual(0);
-      expect(bottle.x + bottle.width).toBeLessThanOrEqual(width);
-      expect(bottle.y + bottle.height).toBeLessThanOrEqual(height);
-      for (const item of await page.locator('.note-highway, .video-panel').all()) {
-        const box = (await item.boundingBox())!;
-        expect(bottle.x + bottle.width <= box.x || bottle.y >= box.y + box.height).toBe(true);
-      }
+      await expect(page.locator('.studio-bottle')).toHaveCount(0);
       const foreground = (await page.locator('.practice-foreground').boundingBox())!;
       expect(foreground.height).toBeGreaterThan(height * 0.2);
       await expect(page.locator('.practice-foreground')).toHaveCSS('pointer-events', 'none');
@@ -88,10 +79,8 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
       expect(outerRight.y - spineRight.y).toBeGreaterThan(height * 0.03);
       expect(Math.abs(spineLeft.x - spineRight.x)).toBeLessThan(2);
       expect(Math.abs(spineLeft.y - spineRight.y)).toBeLessThan(2);
-      if (width / height < 1.8) {
-        expect(outerLeft.x).toBeLessThan(width * 0.05);
-        expect(outerRight.x).toBeGreaterThan(width * 0.95);
-      }
+      expect(Math.abs(outerLeft.x)).toBeLessThan(width * 0.01);
+      expect(Math.abs(outerRight.x - width)).toBeLessThan(width * 0.01);
       if (width === 1920)
         console.info('Album bottom corners at 1920×1080:', JSON.stringify(corners));
     };

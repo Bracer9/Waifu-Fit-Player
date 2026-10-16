@@ -23,8 +23,8 @@ body:has(.practice-app) {
   --album-ink: #1d1c21;
   --album-paper: #fff1e6;
   --leaf-split: 44%;
-  --album-height: min(660px, 64dvh);
-  --album-width: min(85vw, calc(var(--album-height) * 2.5));
+  --album-height: 64dvh;
+  --album-width: 88.6vw;
   display: grid;
   place-items: center;
   width: 100%;
@@ -98,15 +98,6 @@ body:has(.practice-app) {
   line-height: 1.2;
   transform: perspective(700px) rotateX(52deg) rotateZ(-12deg) skewX(24deg);
 }
-.studio-bottle {
-  position: absolute;
-  bottom: max(4px, 1.5%);
-  left: 1.4%;
-  width: clamp(54px, 4.5vw, 90px);
-  max-height: 98%;
-  height: auto;
-  transform: rotate(-2deg);
-}
 .practice .stage-grid,
 .album-workspace.practice:fullscreen .stage-grid {
   position: relative;
@@ -117,7 +108,7 @@ body:has(.practice-app) {
   width: var(--album-width);
   height: var(--album-height);
   min-height: 0;
-  transform: translateY(-2.5vh) rotateX(2deg);
+  transform: translate(-0.75vw, -2.5vh) rotateX(2deg);
   transform-style: preserve-3d;
 }
 .practice .stage-left {
@@ -829,10 +820,6 @@ body:has(.practice-app) {
 }
 
 @media (min-width: 1800px) and (min-height: 1250px) {
-  .album-workspace.practice,
-  .album-workspace.practice:fullscreen {
-    --album-height: 62dvh;
-  }
   .practice-cover {
     height: clamp(148px, 12.2vh, 220px);
   }
@@ -916,9 +903,6 @@ body:has(.practice-app) {
   }
   .practice .transport {
     min-height: 72px;
-  }
-  .studio-bottle {
-    width: 116px;
   }
   .mat-lettering-pink {
     font-size: 72px;
@@ -1008,6 +992,21 @@ body:has(.practice-app) {
   }
   .practice .player-hold.active .ribbon-bloom {
     opacity: 0.65;
+  }
+}
+
+/* Keep a full 16:9 video and its controls inside the spread on ultrawide screens. */
+@media (min-width: 1000px) and (min-aspect-ratio: 2 / 1) {
+  .album-workspace.practice,
+  .album-workspace.practice:fullscreen {
+    --leaf-split: 54%;
+  }
+  .practice .stage-grid,
+  .album-workspace.practice:fullscreen .stage-grid {
+    transform: translate(0.3vw, -1vh) rotateX(2deg);
+  }
+  .practice-masthead {
+    min-height: 48px;
   }
 }
 
