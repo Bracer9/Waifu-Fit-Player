@@ -305,8 +305,8 @@ body:has(.practice-app) {
   --note-size: 52px;
   --target-size: 62px;
   --glyph-size: 36px;
-  --hold-head-size: calc(var(--note-size) * 0.88);
-  --tail-size: calc(var(--note-size) * 0.44);
+  --hold-head-size: var(--note-size);
+  --tail-size: calc(var(--note-size) * 0.58);
   --lane-label-width: clamp(120px, 8.5vw, 158px);
   height: auto;
   flex: 1;
@@ -385,8 +385,17 @@ body:has(.practice-app) {
   background: none;
   color: var(--lane);
   box-shadow: none;
-  filter: drop-shadow(0 0 3px var(--lane))
-    drop-shadow(0 0 9px color-mix(in srgb, var(--lane), transparent 55%));
+  filter: drop-shadow(0 0 2px var(--lane)) drop-shadow(0 0 6px var(--lane));
+}
+.note-metrics {
+  position: absolute;
+  width: var(--note-size);
+  height: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.practice .player-note {
+  z-index: 3;
 }
 .practice .player-note svg,
 .practice .hold-head svg,
@@ -395,24 +404,24 @@ body:has(.practice-app) {
   width: 100%;
   height: 100%;
 }
-.practice .note-glyph .glyph-body,
-.preview-lanes .note-glyph .glyph-body {
-  stroke: #faffff;
-  fill: var(--lane);
-  stroke-width: 1.1px;
-}
 .practice .note-glyph .glyph-ring,
 .practice .note-glyph .glyph-mark,
 .preview-lanes .note-glyph .glyph-ring,
 .preview-lanes .note-glyph .glyph-mark {
   stroke: #faffff;
 }
-.practice .note-glyph .glyph-core {
-  fill: #fff;
+.practice .note-glyph .glyph-edge,
+.preview-lanes .note-glyph .glyph-edge {
+  stroke: #faffff;
+  stroke-width: 8px;
 }
-.practice .player-note[data-direction='close'],
-.practice .player-hold[data-direction='close'] .hold-head {
-  filter: drop-shadow(0 0 4px #fff1d870);
+.practice .note-glyph .glyph-body,
+.preview-lanes .note-glyph .glyph-body {
+  fill: #faffff;
+  stroke: var(--lane);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
 }
 .preview-lanes .player-hold.sway {
   background: color-mix(in srgb, var(--lane), transparent 20%);
@@ -427,7 +436,10 @@ body:has(.practice-app) {
 .practice .player-hold,
 .practice .player-hold.sway,
 .practice .play-lane[data-lane='step'] .player-hold.sway {
-  height: 56px;
+  height: calc(var(--note-size) * 1.08);
+  top: calc(50% - var(--note-size) * 0.54);
+  /* Keep every ribbon below every marker, including markers owned by other notes. */
+  transform: none;
   background: none;
   border: 0;
   border-radius: 0;
@@ -437,78 +449,67 @@ body:has(.practice-app) {
 .hold-ribbon {
   position: absolute;
   inset: 0;
-  /* Leave the tail's glow continuous; the ring masks its own centre. */
-  clip-path: inset(-24px 0 -24px -24px);
-}
-.practice .player-hold:not(.active) .hold-ribbon {
-  clip-path: inset(-24px);
+  z-index: 0;
+  pointer-events: none;
 }
 .hold-tail {
   position: absolute;
+  z-index: 2;
   left: 0;
   top: 50%;
   width: var(--tail-size);
   height: var(--tail-size);
   transform: translate(-50%, -50%);
-  border: 2px solid #faffff;
+  border: 1.5px solid #faffff;
   border-radius: 50%;
-  background: var(--track-surface);
+  background: var(--lane);
+  opacity: var(--tail-opacity, 1);
   box-shadow:
     0 0 4px var(--lane),
     0 0 9px color-mix(in srgb, var(--lane), transparent 40%);
 }
+.hold-tail::after {
+  content: '';
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  background: #faffff;
+  box-shadow: 0 0 3px #fff9;
+}
 .hold-ribbon svg {
   display: block;
+  width: 100%;
   height: 100%;
   max-width: none;
   overflow: visible;
 }
 .hold-ribbon path {
-  fill: none;
-  stroke-linecap: butt;
+  fill: var(--lane);
   stroke-linejoin: round;
 }
 .ribbon-bloom {
   stroke: var(--lane);
-  stroke-width: calc(var(--ribbon-width) + 12px);
-  filter: blur(9px);
-  opacity: 0.65;
+  stroke-width: 8px;
+  filter: blur(6px);
+  opacity: 0.45;
 }
 .ribbon-aura {
   stroke: var(--lane);
-  stroke-width: calc(var(--ribbon-width) + 6px);
-  filter: blur(3px);
-}
-.ribbon-rim {
-  stroke: #edfffd;
-  stroke-width: var(--ribbon-width);
+  stroke-width: 4px;
+  filter: blur(2px);
 }
 .ribbon-color {
-  stroke: var(--lane);
-  stroke-width: calc(var(--ribbon-width) - 3px);
-}
-.ribbon-light {
-  stroke: #ffffff38;
-  stroke-width: calc(var(--ribbon-width) - 3px);
+  stroke: #faffff;
+  stroke-width: 1.5px;
 }
 .practice .player-hold.active .ribbon-bloom {
-  opacity: calc(0.65 + var(--sustain-pulse) * 0.3);
+  opacity: calc(0.45 + var(--sustain-pulse) * 0.25);
 }
 .practice .hold-head {
   width: var(--hold-head-size);
   height: var(--hold-head-size);
   right: calc(var(--hold-head-size) / -2);
-}
-.practice .hold-head .glyph--step .glyph-ring {
-  fill: var(--track-surface);
-}
-.practice .hold-head .glyph--close .glyph-body,
-.practice .hold-head .glyph--close .glyph-core,
-.practice .hit-target .glyph--close .glyph-body,
-.practice .hit-target .glyph--close .glyph-core {
-  stroke: var(--track-surface);
-  stroke-width: 3px;
-  paint-order: stroke fill;
+  z-index: 3;
 }
 .practice .player-hold.active .hold-head,
 .practice .hold-caption {
@@ -533,17 +534,37 @@ body:has(.practice-app) {
   border-color: transparent;
   box-shadow: none;
   filter: drop-shadow(0 0 5px var(--lane));
-  transform: translate(-50%, -50%) scale(calc(1 + var(--sustain-pulse) * 0.08));
+  transform: translate(-50%, -50%);
+  height: 100%;
 }
-.practice .hit-target.holding::after {
-  content: '';
+.hit-target > .holding-cue {
+  display: grid;
+  place-items: center;
   position: absolute;
-  inset: 0;
-  border: 1px solid var(--lane);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--hold-head-size, var(--note-size));
+  height: var(--hold-head-size, var(--note-size));
+  border: 0;
+  background: none;
+  color: var(--lane);
+  filter: drop-shadow(0 0 3px var(--lane));
+}
+.practice .hit-target .holding-cue svg {
+  width: 100%;
+  height: 100%;
+}
+.practice .note-impact {
+  z-index: 2;
+  --target-size: var(--note-size);
+}
+.impact-light {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  opacity: calc(var(--sustain-pulse) * 0.8);
-  transform: scale(calc(1.1 - var(--sustain-pulse) * 0.1));
-  box-shadow: 0 0 8px var(--lane);
+  background: #fff;
+  box-shadow: 0 0 10px var(--lane);
 }
 .practice .note-impact .impact-ring {
   border-width: 2px;
@@ -573,6 +594,8 @@ body:has(.practice-app) {
   height: var(--tail-size, 16px);
   border: 2px solid #fff;
   border-radius: 50%;
+  background: #faffff;
+  box-shadow: inset 0 0 0 3px var(--lane);
 }
 .practice .impact-particle {
   width: 16px;
@@ -603,7 +626,7 @@ body:has(.practice-app) {
   top: -32px;
   background: linear-gradient(transparent, #fff, transparent);
 }
-.practice .hit-target > span {
+.practice .hit-target > span:not(.holding-cue) {
   display: none;
 }
 .practice .hit-target::before {
@@ -871,7 +894,7 @@ body:has(.practice-app) {
   .practice .player-hold,
   .practice .player-hold.sway,
   .practice .play-lane[data-lane='step'] .player-hold.sway {
-    height: 70px;
+    height: calc(var(--note-size) * 1.08);
   }
   .practice .stage-left {
     padding-bottom: 14px;
@@ -1101,6 +1124,6 @@ body:has(.practice-app) {
     --glyph-size: 32px;
   }
   .practice .player-hold {
-    height: 48px;
+    height: calc(var(--note-size) * 1.08);
   }
 }

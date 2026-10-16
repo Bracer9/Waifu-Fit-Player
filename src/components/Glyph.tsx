@@ -42,48 +42,25 @@ export function NoteGlyph({
 }) {
   const shape = lane !== 'step' ? 'arrow' : direction === 'close' ? 'close' : 'step';
   const angle = { up: 0, right: 90, down: 180, left: 270, close: 0 }[direction];
+  const path =
+    shape === 'close'
+      ? 'M31 9A15 15 0 1 0 31 31L26 25A7 7 0 1 1 26 15Z'
+      : shape === 'step' && distance === 2
+        ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
+        : 'M20 4L34 18H26V35H14V18H6Z';
   return (
     <svg
-      className={`note-glyph glyph--${shape}`}
+      className={`note-glyph glyph--${shape} glyph--${variant}`}
       data-symbol={noteSymbol(lane, direction, distance)}
       width={size}
       height={size}
       viewBox="0 0 40 40"
       aria-hidden="true"
     >
-      {shape === 'arrow' ? (
-        <g transform={`rotate(${angle} 20 20)`}>
-          <path
-            className="glyph-body"
-            d={variant === 'tip' ? 'M20 4L34 27L20 21L6 27Z' : 'M20 3L36 19H26V36H14V19H4Z'}
-          />
-          <path
-            className="glyph-inset"
-            d={variant === 'tip' ? 'M20 10L28 23L20 18L12 23Z' : 'M20 8L30 18H23V32H17V18H10Z'}
-          />
-        </g>
-      ) : shape === 'step' ? (
-        <>
-          <circle className="glyph-ring" cx="20" cy="20" r="16.5" />
-          <path
-            className="glyph-mark"
-            d={
-              distance === 2
-                ? 'M19 13L26 20L19 27M11 13L18 20L11 27'
-                : 'M11 20H28M21 13L28 20L21 27'
-            }
-            transform={direction === 'left' ? 'rotate(180 20 20)' : undefined}
-          />
-        </>
-      ) : (
-        <>
-          <path
-            className="glyph-body"
-            d="M4 9L15 20L4 31L1 28L9 20L1 12ZM36 9L25 20L36 31L39 28L31 20L39 12Z"
-          />
-          <circle className="glyph-core" cx="20" cy="20" r="2.5" />
-        </>
-      )}
+      <g transform={shape === 'close' ? undefined : `rotate(${angle} 20 20)`}>
+        <path className="glyph-edge" d={path} />
+        <path className="glyph-body" d={path} />
+      </g>
     </svg>
   );
 }

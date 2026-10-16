@@ -7,7 +7,7 @@
   --pink: #f64e93;
   --cyan: #35c9db;
   --miku: #39c5bb;
-  --step-close: #fff1d8;
+  --step-close: #73ded1;
   --special-gold: #ffda76;
   --ink: #242329;
   --cream: #faf6ed;
@@ -798,6 +798,12 @@ nav button.active:after {
   stroke-width: 1.2px;
   stroke-linejoin: round;
 }
+.glyph-edge {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2px;
+  stroke-linejoin: round;
+}
 .glyph-inset {
   fill: white;
   opacity: 0.45;
@@ -810,7 +816,7 @@ nav button.active:after {
 .glyph-mark {
   fill: none;
   stroke: currentColor;
-  stroke-width: 3px;
+  stroke-width: 2.25px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

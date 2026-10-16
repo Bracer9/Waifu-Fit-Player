@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
 import { noteColor, type Note } from '../model';
-import { NoteGlyph } from './Glyph';
 
 export const IMPACT_MS = 520;
 
@@ -46,16 +45,7 @@ export function NoteImpact({
           transform: `translate(-50%, -50%) scale(${1.15 - ease * 0.55})`,
         }}
       >
-        {release ? (
-          <span className="release-core" />
-        ) : (
-          <NoteGlyph
-            lane={note.lane}
-            direction={note.direction}
-            distance={note.distance}
-            variant={note.kind === 'hold' ? 'tip' : 'tap'}
-          />
-        )}
+        <span className={release ? 'release-core' : 'impact-light'} />
       </div>
       <div
         className="impact-flare"

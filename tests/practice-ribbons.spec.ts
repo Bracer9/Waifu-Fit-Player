@@ -104,10 +104,10 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   const sway = page.getByTestId('lane-side_crunch').locator('.player-hold.sway');
   const path = sway.locator('.ribbon-color');
   await expect(path).toHaveAttribute('d', / C /);
-  await expect(path).toHaveCSS('stroke', 'rgb(57, 197, 187)');
+  await expect(path).toHaveCSS('fill', 'rgb(57, 197, 187)');
   await expect(page.getByTestId('lane-calf_raise').locator('.ribbon-color')).toHaveAttribute(
     'd',
-    / L /,
+    / C /,
   );
   await expect(sway.locator('.hold-head')).toBeVisible();
   await expect(sway).toHaveAttribute('data-direction', 'right');
@@ -128,7 +128,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await expect(page.getByTestId('lane-step').locator('.player-note .glyph--step')).toHaveCount(2);
   await expect(
     page.getByTestId('lane-step').locator('.player-note[data-direction="close"]'),
-  ).toHaveCSS('color', 'rgb(255, 241, 216)');
+  ).toHaveCSS('color', 'rgb(115, 222, 209)');
   await expect(page.getByTestId('lane-calf_raise').locator('.hold-tail')).toHaveCSS(
     'border-radius',
     '50%',
@@ -143,23 +143,26 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   const d = await path.getAttribute('d');
   const idleWidth = await sway
     .locator('.hold-ribbon svg')
-    .evaluate((el) => el.getAttribute('style'));
+    .evaluate((el) => el.getAttribute('data-full-width'));
   await seek(3.2);
   await expect(page.getByTestId('target-side_crunch')).toHaveAttribute('data-state', 'sway');
-  await expect(path).toHaveAttribute('d', d!);
-  expect(await sway.locator('.hold-ribbon svg').getAttribute('style')).not.toBe(idleWidth);
+  await expect(sway.locator('.hold-ribbon svg')).toHaveAttribute('data-full-width', idleWidth!);
+  expect(
+    Number(await sway.locator('.hold-ribbon svg').getAttribute('data-visible-fraction')),
+  ).toBeLessThan(1);
+  const activePath = await path.getAttribute('d');
   await expect(sway.locator('.hold-head')).toBeHidden();
   await expect(page.locator('.combo-stat strong')).toHaveText('014');
   const paused = await sway.getAttribute('style');
   await page.waitForTimeout(200);
   await expect(sway).toHaveAttribute('style', paused!);
-  await expect(path).toHaveAttribute('d', d!);
+  await expect(path).toHaveAttribute('d', activePath!);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
     .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
     .toBeGreaterThan(3.45);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
-  await expect(path).toHaveAttribute('d', d!);
+  await expect(sway.locator('.hold-ribbon svg')).toHaveAttribute('data-full-width', idleWidth!);
   await seek(5.9);
   await expect(page.getByTestId('target-side_crunch')).toHaveAttribute('data-state', 'idle');
   await expect(sway).toHaveCount(0);

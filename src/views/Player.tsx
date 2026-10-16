@@ -1,6 +1,14 @@
 import { Heart, Sparkles, Star } from 'lucide-react';
-import { useMemo } from 'react';
-import { type Chart, LANES, noteColor, noteSymbol, noteAction, specialMoveLabel } from '../model';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type Chart,
+  type Note,
+  LANES,
+  noteColor,
+  noteSymbol,
+  noteAction,
+  specialMoveLabel,
+} from '../model';
 import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph } from '../components/Glyph';
@@ -20,6 +28,50 @@ export function Player({
   showGuide?: boolean;
 }) {
   const time = useTime(media);
+  const tracks = useRef<HTMLElement>(null);
+  const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
+  useLayoutEffect(() => {
+    const root = tracks.current!;
+    const highway = root.querySelector<HTMLElement>('.note-highway')!;
+    const probe = root.querySelector<HTMLElement>('.note-metrics')!;
+    const observer = new ResizeObserver(() => {
+      const next = {
+        width: highway.clientWidth,
+        marker: probe.offsetWidth,
+      };
+      setMetrics((previous) =>
+        Object.keys(next).every(
+          (key) => next[key as keyof typeof next] === previous[key as keyof typeof next],
+        )
+          ? previous
+          : next,
+      );
+    });
+    observer.observe(highway);
+    observer.observe(probe);
+    return () => observer.disconnect();
+  }, []);
+  const joinedTails = useMemo(
+    () =>
+      new Set(
+        chart.notes
+          .filter(
+            (note) =>
+              note.kind === 'hold' &&
+              chart.notes.some(
+                (next) =>
+                  next.id !== note.id && next.lane === note.lane && next.timeMs === note.endTimeMs,
+              ),
+          )
+          .map((note) => note.id),
+      ),
+    [chart.notes],
+  );
+  const noteStyle = (note: Note): React.CSSProperties => {
+    return {
+      '--lane': noteColor(note.lane, note.direction),
+    } as React.CSSProperties;
+  };
   const beats = useMemo(() => createBeatMap(chart.tempoSegments), [chart.tempoSegments]);
   const special = specialAt(chart, time);
   const specialVisuals = specialVisualsAt(chart, time);
@@ -31,9 +83,11 @@ export function Player({
         : Heart;
   return (
     <section
+      ref={tracks}
       className={`player-lanes ${showGuide ? 'preview-lanes' : ''}`}
       aria-label="Movement tracks"
     >
+      <span className="note-metrics" aria-hidden="true" />
       <div className="lane-heading" hidden={!showGuide}>
         <span className="eyebrow">FOLLOW THE RHYTHM</span>
         <span className="direction-hint">
@@ -48,8 +102,19 @@ export function Player({
               n.timeMs <= time + PREVIEW_MS + 300 &&
               (n.kind === 'hold' ? n.endTimeMs : n.timeMs + IMPACT_MS) >= time,
           );
-          const holding = visible.find(
+          const holdings = visible.filter(
             (n) => n.kind === 'hold' && n.timeMs <= time && n.endTimeMs > time,
+          );
+          const holding = holdings.at(-1);
+          const nextHeadDistance = Math.min(
+            ...visible
+              .filter((note) => note.timeMs > time)
+              .map((note) => ((note.timeMs - time) / PREVIEW_MS) * 0.88 * metrics.width),
+          );
+          // Give the incoming action visual priority before its marker touches the old cue.
+          const cueOpacity = Math.min(
+            1,
+            Math.max(0, (nextHeadDistance / metrics.marker - 0.85) / 0.3),
           );
           const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
           const release = chart.notes
@@ -103,11 +168,12 @@ export function Player({
                         style={
                           {
                             left: `${head}%`,
-                            '--lane': noteColor(note.lane, note.direction),
+                            ...noteStyle(note),
                           } as React.CSSProperties
                         }
                         key={note.id}
                         data-direction={note.direction}
+                        data-note-id={note.id}
                         aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)}`}
                       >
                         <NoteGlyph
@@ -119,24 +185,47 @@ export function Player({
                     ) : null;
                   const tail = noteX(note.endTimeMs, time, 88, PREVIEW_MS);
                   const right = Math.min(head, 88);
+                  const remainingPx = (Math.max(0, right - tail) * metrics.width) / 100;
+                  const gaps = visible
+                    .filter((other) => other.id !== note.id && other.timeMs > time)
+                    .map(
+                      (other) =>
+                        ((noteX(other.timeMs, time, 88, PREVIEW_MS) - tail) * metrics.width) / 100,
+                    )
+                    .filter((x) => x > -metrics.marker && x < remainingPx + metrics.marker);
+                  const hideTail =
+                    joinedTails.has(note.id) ||
+                    gaps.some((x) => Math.abs(x) < metrics.marker * 0.65);
                   return (
                     <div
                       key={note.id}
                       className={`player-hold ${note.modifier === 'sway' ? 'sway' : ''} ${time >= note.timeMs ? 'active' : ''}`}
                       data-direction={note.direction}
+                      data-note-id={note.id}
                       aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)} ${noteAction(note)}`}
                       style={
                         {
                           left: `${tail}%`,
                           width: `${Math.max(0, right - tail)}%`,
-                          '--lane': noteColor(note.lane, note.direction),
+                          ...noteStyle(note),
+                          '--tail-opacity': Math.min(
+                            1,
+                            Math.max(0, (remainingPx / metrics.marker - 0.5) / 0.45),
+                          ),
                         } as React.CSSProperties
                       }
                     >
                       {!showGuide && (
                         <HoldRibbon
                           durationMs={note.endTimeMs - note.timeMs}
+                          fullWidth={
+                            ((note.endTimeMs - note.timeMs) * metrics.width * 0.88) / PREVIEW_MS
+                          }
                           visibleFraction={Math.max(0, right - tail) / (head - tail)}
+                          size={metrics.marker}
+                          headGap={metrics.marker * 0.32}
+                          joinedTail={hideTail}
+                          gaps={gaps}
                           sway={note.modifier === 'sway'}
                         />
                       )}
@@ -163,28 +252,33 @@ export function Player({
                       ? `${lane.english} ${noteSymbol(holding.lane, holding.direction, holding.distance)} ${noteAction(holding)}`
                       : `${lane.english} target`
                   }
-                  style={
-                    holding?.lane === 'step'
-                      ? ({
-                          '--lane': noteColor(holding.lane, holding.direction),
-                        } as React.CSSProperties)
-                      : undefined
-                  }
+                  style={{ opacity: cueOpacity, ...(holding ? noteStyle(holding) : {}) }}
                 >
                   {holding ? (
-                    <NoteGlyph
-                      variant="tip"
-                      lane={holding.lane}
-                      direction={holding.direction}
-                      distance={holding.distance}
-                      size={29}
-                    />
+                    <span
+                      className="holding-cue"
+                      data-note-id={holding.id}
+                      data-direction={holding.direction}
+                      style={noteStyle(holding)}
+                    >
+                      <NoteGlyph
+                        variant="tip"
+                        lane={holding.lane}
+                        direction={holding.direction}
+                        distance={holding.distance}
+                        size={29}
+                      />
+                    </span>
                   ) : (
                     <span />
                   )}
                 </div>
                 {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
-                {holding && <span className="holding-label">{noteAction(holding)}</span>}
+                {holding && (
+                  <span className="holding-label" style={{ opacity: cueOpacity }}>
+                    {noteAction(holding)}
+                  </span>
+                )}
                 {release && !holding && (
                   <span className="release-label" style={{ opacity: flash }}>
                     {release.direction === 'close' &&

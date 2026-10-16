@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+﻿import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { blankChart, LANES, type Chart } from '../src/model';
 const errors: string[] = [];
@@ -1031,7 +1031,7 @@ test('C 自由 SWAY 原地绘制、HOLD 转换、保存重开和跟练提示', a
   await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'C');
   await expect(target).toHaveAttribute('data-state', 'sway');
   await expect(target).toHaveAttribute('data-action', 'FREE SWAY');
-  await expect(target).toHaveCSS('color', 'rgb(255, 241, 216)');
+  await expect(target).toHaveCSS('color', 'rgb(115, 222, 209)');
   await expect(page.getByTestId('lane-step').locator('.hold-caption')).toHaveText('FREE SWAY');
   await page.screenshot({ path: 'artifacts/step-free-sway.png', fullPage: true });
   await seek(page, 3.1);
@@ -1176,7 +1176,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   expect(await exportChart(page)).toEqual(chart);
   await expect(
     page.locator('.timeline-event[data-direction="close"] .event-glyph').first(),
-  ).toHaveCSS('background-color', 'rgb(255, 241, 216)');
+  ).toHaveCSS('background-color', 'rgb(115, 222, 209)');
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
   await expect(page.getByRole('status')).not.toBeVisible();
   const target = page.getByTestId('target-step');
@@ -1185,7 +1185,7 @@ test('C 慢合腿、两格编辑与站位提示，保存后播放动作和配色
   await seek(page, 2.25);
   await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'C');
   await expect(target).toHaveAttribute('data-action', 'SLOW CLOSE');
-  await expect(target).toHaveCSS('color', 'rgb(255, 241, 216)');
+  await expect(target).toHaveCSS('color', 'rgb(115, 222, 209)');
   for (const viewport of [
     { width: 1280, height: 720 },
     { width: 1920, height: 1080 },

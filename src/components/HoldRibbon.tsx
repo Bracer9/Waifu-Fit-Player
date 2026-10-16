@@ -1,45 +1,82 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
+import { ribbonOutline } from '../ribbonGeometry';
 
-/** The complete note owns its wave. Clip it at the judgement line without re-phasing it. */
+/** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
 export function HoldRibbon({
   durationMs,
+  fullWidth,
   visibleFraction,
+  size,
+  headGap,
+  joinedTail,
+  gaps,
   sway,
 }: {
   durationMs: number;
+  fullWidth: number;
   visibleFraction: number;
+  size: number;
+  headGap: number;
+  joinedTail: boolean;
+  gaps: number[];
   sway: boolean;
 }) {
-  const width = Math.max(1, durationMs / 10);
-  const path = useMemo(() => {
-    if (!sway) return `M 0 32 L ${width} 32`;
-    const waves = Math.max(1, Math.round(durationMs / 1600));
-    const half = width / (waves * 2);
-    const amplitude = 16 * Math.min(1, durationMs / 800);
-    let d = 'M 0 32';
-    for (let i = 0; i < waves * 2; i++) {
-      const start = i * half;
-      const y = 32 + (i % 2 === 0 ? amplitude : -amplitude);
-      d += ` C ${start + half / 3} ${y}, ${start + (half * 2) / 3} ${y}, ${start + half} 32`;
-    }
-    return d;
-  }, [width, durationMs, sway]);
+  const mask = useId();
+  const width = Math.max(1, fullWidth * visibleFraction);
+  const height = size * 1.08;
+  const path = useMemo(
+    () =>
+      ribbonOutline({
+        durationMs,
+        fullWidth,
+        visibleWidth: width,
+        height,
+        bandWidth: size * 0.32,
+        headGap,
+        tailGap: joinedTail ? size * 0.5 : 0,
+        sway,
+      }),
+    [durationMs, fullWidth, width, height, size, headGap, joinedTail, sway],
+  );
   return (
     <>
       <span className="hold-ribbon" aria-hidden="true">
         <svg
-          viewBox={`0 0 ${width} 64`}
+          viewBox={`0 0 ${width} ${height}`}
           preserveAspectRatio="none"
-          style={{ width: `${100 / Math.max(visibleFraction, 0.0001)}%` }}
+          data-full-width={fullWidth}
+          data-visible-fraction={visibleFraction}
         >
-          <path className="ribbon-bloom" d={path} vectorEffect="non-scaling-stroke" />
-          <path className="ribbon-aura" d={path} vectorEffect="non-scaling-stroke" />
-          <path className="ribbon-rim" d={path} vectorEffect="non-scaling-stroke" />
-          <path className="ribbon-color" d={path} vectorEffect="non-scaling-stroke" />
-          <path className="ribbon-light" d={path} vectorEffect="non-scaling-stroke" />
+          <defs>
+            <mask
+              id={mask}
+              maskUnits="userSpaceOnUse"
+              x="-30"
+              y="-30"
+              width={width + 60}
+              height={height + 60}
+            >
+              <rect x="-30" y="-30" width={width + 60} height={height + 60} fill="white" />
+              {gaps.map((x, index) => (
+                <ellipse
+                  key={index}
+                  cx={x}
+                  cy={height / 2}
+                  rx={size * 0.53}
+                  ry={size * 0.6}
+                  fill="black"
+                />
+              ))}
+            </mask>
+          </defs>
+          <g mask={`url(#${mask})`}>
+            <path className="ribbon-bloom" d={path} />
+            <path className="ribbon-aura" d={path} />
+            <path className="ribbon-color" d={path} />
+          </g>
         </svg>
       </span>
-      <span className="hold-tail" aria-hidden="true" />
+      {!joinedTail && <span className="hold-tail" aria-hidden="true" />}
     </>
   );
 }

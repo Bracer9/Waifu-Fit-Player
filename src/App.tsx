@@ -527,8 +527,13 @@ export default function App() {
             <div className="stage-right">
               {mode === 'player' && (
                 <PracticeMasthead
-                  onReturn={() => {
+                  onReturn={async () => {
                     media.pause();
+                    if (document.fullscreenElement) {
+                      await document
+                        .exitFullscreen()
+                        .catch(() => notify('Unable to exit fullscreen.'));
+                    }
                     setMode('editor');
                   }}
                 />

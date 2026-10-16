@@ -14,7 +14,7 @@
     "check": "tsc -b && vitest run",
     "format": "prettier --write src tests scripts *.ts *.json *.html README.md docs",
     "format:check": "prettier --check src tests scripts *.ts *.json *.html README.md docs",
-    "test:e2e:quick": "playwright test tests/app.spec.ts tests/project.spec.ts tests/practice-layout.spec.ts tests/practice-ribbons.spec.ts"
+    "test:e2e:quick": "playwright test tests/app.spec.ts tests/project.spec.ts tests/practice-layout.spec.ts tests/practice-ribbons.spec.ts tests/note-overlap.spec.ts"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",
