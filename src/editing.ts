@@ -1,6 +1,7 @@
 import {
   LANES,
   isStepMove,
+  isFollowStep,
   type Chart,
   type Direction,
   type Lane,
@@ -48,7 +49,14 @@ export function deleteEvents(chart: Chart, selected: string[]): Chart {
 export function extendTap(chart: Chart, id: string, endTimeMs: number, duration: number): Chart {
   const note = chart.notes.find((n) => n.id === id);
   const end = Math.round(clamp(endTimeMs, 0, duration));
-  if (!note || note.kind !== 'tap' || !Number.isFinite(end) || end <= note.timeMs) return chart;
+  if (
+    !note ||
+    note.kind !== 'tap' ||
+    isFollowStep(note) ||
+    !Number.isFinite(end) ||
+    end <= note.timeMs
+  )
+    return chart;
   return {
     ...chart,
     notes: chart.notes.map((n) =>
@@ -96,10 +104,12 @@ export function changeNoteForm(
     lane: note.lane,
     direction,
     timeMs: note.timeMs,
-    ...(note.lane === 'step' && direction !== 'free' && note.distance
+    ...(note.lane === 'step' && direction !== 'free' && type !== 'follow' && note.distance
       ? { distance: note.distance }
       : {}),
   };
+  if (type === 'follow' && note.lane === 'step' && (direction === 'left' || direction === 'right'))
+    return { ...base, kind: 'tap', follow: true };
   if (type === 'tap' && direction !== 'free') return { ...base, kind: 'tap' };
   return {
     ...base,
@@ -121,7 +131,7 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
       const next = index + delta;
       return (
         !(LANES[next]?.directions as readonly Direction[] | undefined)?.includes(n.direction) ||
-        (n.distance === 2 && LANES[next]?.id !== 'step')
+        ((n.distance === 2 || isFollowStep(n)) && LANES[next]?.id !== 'step')
       );
     })
   )

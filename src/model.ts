@@ -32,10 +32,12 @@ export const LANES = [
 export type Lane = (typeof LANES)[number]['id'];
 export type Direction = 'up' | 'down' | 'left' | 'right' | 'free';
 export type StepDistance = 1 | 2;
-export type NoteType = 'tap' | 'hold' | 'sway';
+export type NoteType = 'tap' | 'hold' | 'sway' | 'follow';
 export const STEP_VARIANTS = [
   { value: 'left-tap', direction: 'left', type: 'tap', label: 'L · TAP' },
   { value: 'right-tap', direction: 'right', type: 'tap', label: 'R · TAP' },
+  { value: 'left-follow', direction: 'left', type: 'follow', label: 'L · FOLLOW' },
+  { value: 'right-follow', direction: 'right', type: 'follow', label: 'R · FOLLOW' },
   { value: 'left-hold', direction: 'left', type: 'hold', label: 'L · HOLD' },
   { value: 'right-hold', direction: 'right', type: 'hold', label: 'R · HOLD' },
   { value: 'left-sway', direction: 'left', type: 'sway', label: 'L · SWAY' },
@@ -50,6 +52,7 @@ export type Note = {
   direction: Direction;
   timeMs: number;
   distance?: StepDistance;
+  follow?: true;
 } & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
 export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '4/4' | '3/4' };
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
@@ -85,17 +88,28 @@ export const noteColor = (lane: Lane, direction: Direction) =>
         ? 'var(--cyan)'
         : 'var(--pink)'
     : LANES.find((item) => item.id === lane)!.color;
-export const isStepMove = (note: Note) => note.lane === 'step' && note.direction !== 'free';
+export const isFollowStep = (note: Note) =>
+  note.lane === 'step' && note.kind === 'tap' && note.follow === true;
+export const isStepMove = (note: Note) =>
+  note.lane === 'step' && note.direction !== 'free' && !isFollowStep(note);
+export const noteType = (note: Note): NoteType =>
+  isFollowStep(note)
+    ? 'follow'
+    : note.kind === 'hold' && note.modifier === 'sway'
+      ? 'sway'
+      : note.kind;
 export function noteTypeLabel(
   type: NoteType,
   lane: Lane | 'special',
   direction: Direction,
 ): string {
+  if (type === 'follow') return 'FOLLOW';
   if (type === 'tap') return 'TAP';
   if (type === 'sway') return lane === 'step' && direction === 'free' ? 'FREE SWAY' : 'SWAY';
   return lane === 'step' ? 'BALANCE HOLD' : 'HOLD';
 }
 export function noteAction(note: Note): string {
+  if (isFollowStep(note)) return `FOLLOW ${noteSymbol(note.lane, note.direction)}`;
   if (note.kind === 'tap' && note.lane === 'step')
     return `STEP ${noteSymbol(note.lane, note.direction, note.distance)}`;
   return noteTypeLabel(
@@ -221,6 +235,15 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
         errors.push(`${label}：轨道或方向不匹配。`);
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
+      if (
+        note.follow !== undefined &&
+        (note.follow !== true ||
+          note.lane !== 'step' ||
+          note.kind !== 'tap' ||
+          !['left', 'right'].includes(String(note.direction)) ||
+          note.distance !== undefined)
+      )
+        errors.push(`${label}：FOLLOW 仅适用于 STEP 左右 TAP，不设置跨度。`);
       if (
         note.distance !== undefined &&
         (note.lane !== 'step' ||

@@ -8,7 +8,7 @@ import {
   type Chart,
   type Note,
 } from './model';
-import { changeNoteForm, flipNotes, setStepDistance, shiftNoteLanes } from './editing';
+import { changeNoteForm, extendTap, flipNotes, setStepDistance, shiftNoteLanes } from './editing';
 import { checkStepPositions } from './stepping';
 import { demoChart } from './demo';
 
@@ -32,7 +32,7 @@ const chartOf = (notes: Note[]): Chart =>
   sortChart({ ...blankChart(), videoHint: { fileName: 'demo.mp4', durationMs: 20000 }, notes });
 
 describe('统一 STEP 动作', () => {
-  it('七种动作互相转换，保留 ID、起点、长条结束时间，FREE 不带跨度', () => {
+  it('STEP 动作互相转换，FOLLOW 仅 TAP；保留 ID、起点和已有长条结束时间', () => {
     for (const from of STEP_VARIANTS)
       for (const to of STEP_VARIANTS) {
         const original = changeNoteForm(tap('n', 'left', 1000, 2), from.type, from.direction, 4000);
@@ -43,7 +43,7 @@ describe('统一 STEP 动作', () => {
           direction: to.direction,
           timeMs: 1000,
         });
-        if (to.type === 'tap') {
+        if (to.type === 'tap' || to.type === 'follow') {
           expect(changed.kind).toBe('tap');
           expect(changed).not.toHaveProperty('endTimeMs');
           expect(changed).not.toHaveProperty('modifier');
@@ -54,10 +54,24 @@ describe('统一 STEP 动作', () => {
             endTimeMs: original.kind === 'hold' ? 4000 : 1500,
           });
         }
-        if (to.direction === 'free') expect(changed.distance).toBeUndefined();
+        expect(changed.follow).toBe(to.type === 'follow' ? true : undefined);
+        if (to.direction === 'free' || to.type === 'follow')
+          expect(changed.distance).toBeUndefined();
         const chart = chartOf([changed]);
         expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
       }
+  });
+  it('FOLLOW 可独立放置、反向与保存，不能拖成长条、加跨度或移到其他轨道', () => {
+    const chart = chartOf([{ ...tap('follow', 'left', 713), follow: true }]);
+    expect(checkStepPositions(chart)).toEqual([]);
+    expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
+    expect(flipNotes(chart, ['follow']).notes[0]).toMatchObject({
+      direction: 'right',
+      follow: true,
+    });
+    expect(extendTap(chart, 'follow', 2000, 20000)).toEqual(chart);
+    expect(setStepDistance(chart, ['follow'], 2)).toEqual(chart);
+    expect(shiftNoteLanes(chart, ['follow'], 'step', 'punch')).toEqual(chart);
   });
   it('旧 C、C HOLD、C SWAY 全部删除，不生成替代音符，不改动输入对象或现存动作', () => {
     const kept = hold('independent-free', 'free', 5000, 7000);
@@ -83,6 +97,11 @@ describe('统一 STEP 动作', () => {
     { ...hold('free-distance', 'free', 1000, 2000), distance: 2 },
     { ...hold('free-lane', 'free', 1000, 2000), lane: 'punch' },
     { ...tap('distance', 'left', 1000), distance: 3 },
+    { ...tap('follow-distance', 'left', 1000, 2), follow: true },
+    { ...tap('follow-lane', 'left', 1000), lane: 'punch', follow: true },
+    { ...hold('follow-hold', 'left', 1000, 2000, 'none'), follow: true },
+    { ...hold('follow-sway', 'left', 1000, 2000), follow: true },
+    { ...hold('follow-free', 'free', 1000, 2000), follow: true },
   ])('拒绝无效自由摇摆或跨度组合 %#', (note) => {
     expect(() => parseChart(chartOf([note as Note]))).toThrow();
   });

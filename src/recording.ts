@@ -41,6 +41,7 @@ export function useRecording(options: Options) {
     pressedAt: number;
     modifier: 'none' | 'sway';
     distance?: StepDistance;
+    follow?: true;
   } | null>(null);
   useEffect(() => {
     const cancel = () => {
@@ -51,7 +52,8 @@ export function useRecording(options: Options) {
     };
     const keydown = (e: KeyboardEvent) => {
       const o = opts.current;
-      if (!o.enabled || isTextEntry(e.target) || e.metaKey || e.altKey) return;
+      const follow = o.lane === 'step' && e.altKey && ['ArrowLeft', 'ArrowRight'].includes(e.key);
+      if (!o.enabled || isTextEntry(e.target) || e.metaKey || (e.altKey && !follow)) return;
       // Armed recording owns transport / movement keys even when a closed select retains focus.
       if (e.code === 'Space' && e.target instanceof HTMLSelectElement) {
         e.preventDefault();
@@ -100,7 +102,8 @@ export function useRecording(options: Options) {
         timeMs,
         pressedAt: performance.now(),
         modifier: e.ctrlKey || dir === 'free' ? 'sway' : 'none',
-        ...(o.lane === 'step' && dir !== 'free' && e.shiftKey ? { distance: 2 } : {}),
+        ...(follow ? { follow: true } : {}),
+        ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {
@@ -119,7 +122,7 @@ export function useRecording(options: Options) {
       )
         return;
       const short = performance.now() - p.pressedAt < HOLD_THRESHOLD_MS;
-      if (short && p.direction !== 'free') {
+      if ((short || p.follow) && p.direction !== 'free') {
         o.onNote({
           id: uid(),
           lane: p.lane,
@@ -127,6 +130,7 @@ export function useRecording(options: Options) {
           kind: 'tap',
           timeMs: p.timeMs,
           ...(p.distance ? { distance: p.distance } : {}),
+          ...(p.follow ? { follow: true } : {}),
         });
         return;
       }

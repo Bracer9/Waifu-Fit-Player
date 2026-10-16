@@ -940,7 +940,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await page.screenshot({ path: 'artifacts/step-fullscreen.png', fullPage: true });
 });
 
-test('STEP 单菜单七种动作互换、左右 HOLD 转 SWAY、跨度和撤销重做', async ({ page }) => {
+test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做', async ({ page }) => {
   await emptyEditor(page);
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
   const drawing = page.getByLabel('绘制类型');
@@ -948,6 +948,8 @@ test('STEP 单菜单七种动作互换、左右 HOLD 转 SWAY、跨度和撤销�
   await expect(drawing.locator('option')).toHaveText([
     'L · TAP',
     'R · TAP',
+    'L · FOLLOW',
+    'R · FOLLOW',
     'L · HOLD',
     'R · HOLD',
     'L · SWAY',
@@ -1023,6 +1025,79 @@ test('STEP 单菜单七种动作互换、左右 HOLD 转 SWAY、跨度和撤销�
   await page.screenshot({ path: 'artifacts/independent-free-sway.png', fullPage: true });
   await seek(page, 6.1);
   await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('RELEASE');
+});
+
+test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显示虚线箭头', async ({ page }) => {
+  await emptyEditor(page);
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  const drawing = page.getByLabel('绘制类型');
+  const selected = page.getByLabel('选中事件类型');
+  await drawing.selectOption('left-follow');
+  await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
+  await draw(page, 500, 3, 1800);
+  await expect(page.getByTestId('extend-note')).toHaveCount(0);
+  await expect(page.getByLabel('结束 / ms')).toHaveCount(0);
+  await page.getByRole('button', { name: '反转方向', exact: true }).click();
+  await expect(selected).toHaveValue('right-follow');
+  await selected.selectOption('left-tap');
+  await expect(page.getByTestId('extend-note')).toBeVisible();
+  await selected.selectOption('left-follow');
+  for (const [type, time] of [
+    ['left-tap', 2500],
+    ['left-follow', 3000],
+    ['right-tap', 4000],
+    ['right-follow', 4500],
+  ] as const) {
+    await drawing.selectOption(type);
+    await draw(page, time, 3);
+  }
+  let chart = await exportChart(page);
+  expect(chart.notes[0]).toMatchObject({
+    timeMs: 500,
+    kind: 'tap',
+    direction: 'left',
+    follow: true,
+  });
+  expect(chart.notes.filter((n) => n.follow)).toHaveLength(3);
+  await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
+  await seek(page, 6);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await page.keyboard.down('Alt');
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(350);
+  await page.keyboard.up('ArrowRight');
+  await page.keyboard.up('Alt');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  chart = await exportChart(page);
+  expect(chart.notes.at(-1)).toMatchObject({ kind: 'tap', direction: 'right', follow: true });
+  for (const note of chart.notes.filter((n) => n.follow)) {
+    expect(note).not.toHaveProperty('endTimeMs');
+    expect(note).not.toHaveProperty('distance');
+  }
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'follow.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  expect((await exportChart(page)).notes).toEqual(chart.notes);
+  await page.screenshot({ path: 'artifacts/follow-editor.png' });
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+  await seek(page, 1.2);
+  const follows = page.getByTestId('lane-step').locator('.player-note .glyph--follow');
+  await expect(follows).toHaveCount(2);
+  await expect(follows.first().locator('.follow-color')).toHaveCSS('fill', 'none');
+  await expect(follows.first().locator('.follow-color')).toHaveCSS('stroke', 'rgb(53, 201, 219)');
+  await expect(follows.last().locator('.follow-color')).toHaveCSS('stroke', 'rgb(246, 78, 147)');
+  await page.screenshot({ path: 'artifacts/follow-game-1920.png' });
+  await page.getByTestId('lane-step').screenshot({ path: 'artifacts/follow-step-1920.png' });
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect
+    .poll(() => page.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime))
+    .toBeGreaterThan(1.4);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
 });
 
 test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上方向', async ({ page }) => {

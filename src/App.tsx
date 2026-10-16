@@ -791,8 +791,9 @@ export default function App() {
                 <strong>STEP 踏步</strong>
                 <p>
                   ← / → 录入左右踏步，点按 TAP、长按 HOLD、Ctrl + 长按 SWAY。 ↓ 直接录入 FREE
-                  SWAY，长按决定时长。Shift + 左右跨两格。 绘制和选中事件的类型菜单统一提供左右
-                  TAP、HOLD、SWAY 与 FREE SWAY， 可直接互换；选中 L/R 按 D 切换跨度，F 反向。
+                  SWAY，长按决定时长。Shift + 左右跨两格；Alt + ← / → 录入 FOLLOW，并步跟脚只支持
+                  TAP。 绘制和选中事件的类型菜单统一提供左右 TAP、FOLLOW、HOLD、SWAY 与 FREE SWAY，
+                  可直接互换；F 反向，普通 L/R 按 D 切换跨度。
                 </p>
               </li>
               <li>

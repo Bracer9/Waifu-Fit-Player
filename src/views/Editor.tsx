@@ -26,6 +26,8 @@ import {
   noteSymbol,
   noteAction,
   isStepMove,
+  isFollowStep,
+  noteType,
   LANES,
   STEP_VARIANTS,
   stepVariantValue,
@@ -197,6 +199,7 @@ export function Editor({
   const stepIssues = useMemo(() => checkStepPositions(shown), [shown]);
   const pickLane = (newLane: Lane) => {
     setLane(newLane);
+    if (newLane !== 'step') setDrawType((current) => (current === 'follow' ? 'tap' : current));
     const dirs = LANES.find((l) => l.id === newLane)!.directions as readonly Direction[];
     setDirection((current) => (dirs.includes(current) ? current : dirs[0]));
   };
@@ -349,7 +352,7 @@ export function Editor({
       'endTimeMs' in event && event.endTimeMs !== undefined
         ? event.endTimeMs
         : nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
-    if (type !== 'tap' && end <= event.timeMs) {
+    if ((type === 'hold' || type === 'sway') && end <= event.timeMs) {
       notify('视频末尾没有足够空间创建长条。');
       return;
     }
@@ -481,8 +484,10 @@ export function Editor({
     setDraft(value);
   };
   const drawEvent = (d: Drag, end: number): Chart => {
-    const isHold = drawType !== 'tap' || Math.abs(end - d.time) > 10;
-    let start = Math.min(d.time, end),
+    const isFollow = d.lane === 'step' && drawType === 'follow';
+    const isHold =
+      !isFollow && (drawType === 'hold' || drawType === 'sway' || Math.abs(end - d.time) > 10);
+    let start = isFollow ? d.time : Math.min(d.time, end),
       finish = Math.max(d.time, end);
     if (isHold && finish <= start) finish = nextGrid(start, chart.tempoSegments, snap, duration);
     start = Math.round(start);
@@ -508,8 +513,15 @@ export function Editor({
           modifier: drawType === 'sway' ? 'sway' : 'none',
           endTimeMs: finish,
         }
-      : { id: d.id!, lane: d.lane, direction: dir, timeMs: start, kind: 'tap' };
-    if (d.lane === 'step' && dir !== 'free' && stepDistance === 2) note.distance = 2;
+      : {
+          id: d.id!,
+          lane: d.lane,
+          direction: dir,
+          timeMs: start,
+          kind: 'tap',
+          ...(isFollow ? { follow: true } : {}),
+        };
+    if (d.lane === 'step' && dir !== 'free' && stepDistance === 2 && !isFollow) note.distance = 2;
     return { ...d.original, notes: [...d.original.notes, note] };
   };
   const pointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -598,10 +610,11 @@ export function Editor({
         data-event={n.id}
         data-lane={isSpecial ? 'special' : n.lane}
         data-direction={isSpecial ? undefined : n.direction}
+        data-action={isSpecial ? undefined : noteAction(n)}
         data-testid={isSpecial ? 'special-event' : 'editor-note'}
         className={`timeline-event ${end !== undefined ? 'long' : ''} ${isSway ? 'sway' : ''} ${isSpecial ? 'special' : ''} ${selected.includes(n.id) ? 'selected' : ''}`}
         data-step-issue={stepIssues.some((issue) => issue.noteId === n.id) || undefined}
-        title={`${isSpecial ? 'SPECIAL' : noteSymbol(n.lane, n.direction, n.distance)} ${formatTime(n.timeMs, true)}${end ? ' — ' + formatTime(end, true) : ''}${stepIssues.find((issue) => issue.noteId === n.id)?.message ? '\n' + stepIssues.find((issue) => issue.noteId === n.id)!.message : ''}`}
+        title={`${isSpecial ? 'SPECIAL' : isFollowStep(n) ? noteAction(n) : noteSymbol(n.lane, n.direction, n.distance)} ${formatTime(n.timeMs, true)}${end ? ' — ' + formatTime(end, true) : ''}${stepIssues.find((issue) => issue.noteId === n.id)?.message ? '\n' + stepIssues.find((issue) => issue.noteId === n.id)!.message : ''}`}
         style={
           {
             left: LABEL + n.timeMs * px,
@@ -621,7 +634,13 @@ export function Editor({
           '★'
         ) : (
           <span className="event-glyph">
-            <NoteGlyph lane={n.lane} direction={n.direction} distance={n.distance} size={18} />
+            <NoteGlyph
+              lane={n.lane}
+              direction={n.direction}
+              distance={n.distance}
+              follow={isFollowStep(n)}
+              size={18}
+            />
           </span>
         )}
         {end !== undefined && (
@@ -638,6 +657,7 @@ export function Editor({
         {end !== undefined && <span className="resize-handle end" data-handle="end" />}
         {!isSpecial &&
           n.kind === 'tap' &&
+          !isFollowStep(n) &&
           selected.length === 1 &&
           selected[0] === n.id &&
           n.timeMs < duration && (
@@ -820,7 +840,7 @@ export function Editor({
             </button>
           ))}
         </div>
-        {lane === 'step' && direction !== 'free' && !recording && (
+        {lane === 'step' && direction !== 'free' && drawType !== 'follow' && !recording && (
           <label className="inline-field step-distance-picker">
             跨度
             <select
@@ -862,9 +882,11 @@ export function Editor({
         <span className="record-hint">
           {recording
             ? lane === 'step'
-              ? '← L · → R · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
+              ? '← L · → R · Alt + ←/→ FOLLOW · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
               : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
-            : '点击放置 · 拖动拉长 · Shift 多选'}
+            : lane === 'step' && drawType === 'follow'
+              ? 'FOLLOW：另一只脚同方向跟上并拢 · 点击放置 · 仅 TAP'
+              : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
       </div>
       <div className="editor-body">
@@ -1001,12 +1023,7 @@ export function Editor({
                       aria-label="选中事件类型"
                       value={
                         selectedNote?.lane === 'step'
-                          ? stepVariantValue(
-                              selectedNote.direction,
-                              selectedNote.kind === 'hold' && selectedNote.modifier === 'sway'
-                                ? 'sway'
-                                : selectedNote.kind,
-                            )
+                          ? stepVariantValue(selectedNote.direction, noteType(selectedNote))
                           : selectedNote?.kind === 'hold' && selectedNote.modifier === 'sway'
                             ? 'sway'
                             : 'endTimeMs' in event && event.endTimeMs !== undefined
@@ -1099,9 +1116,11 @@ export function Editor({
                   )}
                   {selectedNote?.lane === 'step' && (
                     <p className="inspector-tip">
-                      {selectedNote.direction === 'free'
-                        ? '原地自由摇摆；可在类型菜单直接切换为左右 TAP、HOLD 或 SWAY。'
-                        : 'TAP 为迈步；HOLD 为单脚支撑；SWAY 为迈出后摇摆。类型菜单可直接互换。'}
+                      {isFollowStep(selectedNote)
+                        ? 'FOLLOW：另一只脚朝箭头方向跟上并拢；可放在任意拍点，仅 TAP。'
+                        : selectedNote.direction === 'free'
+                          ? '原地自由摇摆；可在类型菜单直接切换为左右 TAP、HOLD 或 SWAY。'
+                          : 'TAP 迈步；FOLLOW 跟脚并拢；HOLD 单脚支撑；SWAY 迈出后摇摆。类型菜单可直接互换。'}
                     </p>
                   )}
                   <div className="inspector-actions">

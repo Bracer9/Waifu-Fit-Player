@@ -791,6 +791,23 @@ nav button.active:after {
   display: block;
   overflow: visible;
 }
+.note-glyph.glyph--follow path {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.follow-edge {
+  stroke: #faffff;
+  stroke-width: 7;
+}
+.follow-color {
+  stroke: var(--lane);
+  stroke-width: 5;
+}
+.follow-core {
+  stroke: #faffff;
+  stroke-width: 1;
+}
 .glyph-body {
   fill: currentColor;
   stroke: currentColor;

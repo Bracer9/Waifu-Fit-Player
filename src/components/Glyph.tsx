@@ -45,6 +45,7 @@ export function NoteGlyph({
   distance = 1,
   variant = 'tap',
   joined = false,
+  follow = false,
 }: {
   lane: Lane;
   direction: Direction;
@@ -52,20 +53,34 @@ export function NoteGlyph({
   distance?: StepDistance;
   variant?: 'tap' | 'tip';
   joined?: boolean;
+  follow?: boolean;
 }) {
   const { shape, angle, path } = noteGlyphShape(lane, direction, distance);
   return (
     <svg
-      className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}`}
-      data-symbol={noteSymbol(lane, direction, distance)}
+      className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}${follow ? ' glyph--follow' : ''}`}
+      data-symbol={`${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance)}`}
       width={size}
       height={size}
       viewBox="0 0 40 40"
       aria-hidden="true"
     >
       <g transform={shape === 'free' ? undefined : `rotate(${angle} 20 20)`}>
-        {!joined && <path className="glyph-edge" fillRule="evenodd" d={path} />}
-        <path className="glyph-body" fillRule="evenodd" d={path} />
+        {follow ? (
+          // Keep the arrow tip intact; only the hollow stem is broken into clear segments.
+          ['follow-edge', 'follow-color', 'follow-core'].map((className) => (
+            <path
+              key={className}
+              className={className}
+              d="M14 18H6L20 4L34 18H26 M26 25V28 M24 35H16 M14 28V25"
+            />
+          ))
+        ) : (
+          <>
+            {!joined && <path className="glyph-edge" fillRule="evenodd" d={path} />}
+            <path className="glyph-body" fillRule="evenodd" d={path} />
+          </>
+        )}
       </g>
     </svg>
   );

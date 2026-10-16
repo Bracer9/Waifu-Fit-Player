@@ -6,6 +6,7 @@ import {
   noteColor,
   noteSymbol,
   noteAction,
+  isFollowStep,
   specialMoveLabel,
 } from '../model';
 import { MediaController, useTime } from '../media';
@@ -64,7 +65,7 @@ export function Player({
       const next = starts.get(`${note.lane}:${note.endTimeMs}`);
       if (!next || next.id === note.id) continue;
       joinedTails.set(note.id, next);
-      if (next.kind === 'tap') joinedTaps.add(next.id);
+      if (next.kind === 'tap' && !isFollowStep(next)) joinedTaps.add(next.id);
     }
     return { joinedTails, joinedTaps };
   }, [chart.notes]);
@@ -169,10 +170,12 @@ export function Player({
                         key={note.id}
                         data-direction={note.direction}
                         data-note-id={note.id}
-                        aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)}`}
+                        data-action={noteAction(note)}
+                        aria-label={`${lane.english} ${isFollowStep(note) ? noteAction(note) : noteSymbol(note.lane, note.direction, note.distance)}`}
                       >
                         <NoteGlyph
                           joined={!showGuide && joinedTaps.has(note.id)}
+                          follow={isFollowStep(note)}
                           lane={note.lane}
                           direction={note.direction}
                           distance={note.distance}
@@ -185,7 +188,8 @@ export function Player({
                   const next = joinedTails.get(note.id);
                   // A TAP at the release time becomes the ribbon's end arrow, sharing
                   // its outline rather than cutting a marker-sized hole in the body.
-                  const releaseNote = next?.kind === 'tap' ? next : undefined;
+                  const releaseNote =
+                    next?.kind === 'tap' && !isFollowStep(next) ? next : undefined;
                   const gaps = visible
                     .filter(
                       (other) =>
