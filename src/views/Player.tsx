@@ -231,10 +231,6 @@ export function Player({
                           left: `${tail}%`,
                           width: `${Math.max(0, right - tail)}%`,
                           ...noteStyle(note),
-                          '--tail-opacity': Math.min(
-                            1,
-                            Math.max(0, (remainingPx / metrics.marker - 0.5) / 0.45),
-                          ),
                         } as React.CSSProperties
                       }
                     >

@@ -191,6 +191,16 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
     .toBeGreaterThan(3.7);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
+  // Even the final 50 ms must keep the endpoint visible, above the held arrow.
+  await seek(4.25);
+  for (const tail of await firstNotes(0).locator('.hold-tail').all()) {
+    await expect(tail).toHaveCSS('opacity', '1');
+    await expect(tail).toHaveCSS('z-index', '4');
+  }
+  await page.screenshot({ path: 'artifacts/sustain-tails-before-judgment.png' });
+  await seek(4.3);
+  for (const tail of await firstNotes(0).locator('.hold-tail').all())
+    expect(await tail.evaluate((el) => parseFloat(el.parentElement!.style.left))).toBeCloseTo(88);
   await seek(4.35);
   await expect(firstNotes(0)).toHaveCount(0);
   await expect(

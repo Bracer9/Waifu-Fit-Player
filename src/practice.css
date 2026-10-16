@@ -465,10 +465,13 @@ body:has(.practice-app) {
   border: 1.5px solid #faffff;
   border-radius: 50%;
   background: var(--lane);
-  opacity: var(--tail-opacity, 1);
   box-shadow:
     0 0 4px var(--lane),
     0 0 9px color-mix(in srgb, var(--lane), transparent 40%);
+}
+/* Keep the arriving tail visible over the held arrow until its actual end time. */
+.hold-tail.at-target {
+  z-index: 4;
 }
 .hold-tail::after {
   content: '';

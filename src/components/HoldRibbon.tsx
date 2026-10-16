@@ -215,7 +215,12 @@ export function HoldRibbon({
           )}
         </svg>
       </span>
-      {!joinedTail && <span className="hold-tail" aria-hidden="true" />}
+      {!joinedTail && (
+        <span
+          className={`hold-tail${visibleFraction < 1 && width < size ? ' at-target' : ''}`}
+          aria-hidden="true"
+        />
+      )}
     </>
   );
 }
