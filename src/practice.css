@@ -423,6 +423,9 @@ body:has(.practice-app) {
   stroke-linejoin: round;
   paint-order: stroke fill;
 }
+.practice .note-glyph.glyph--joined .glyph-body {
+  stroke: none;
+}
 .preview-lanes .player-hold.sway {
   background: color-mix(in srgb, var(--lane), transparent 20%);
   box-shadow: 0 0 8px var(--lane);
@@ -499,8 +502,11 @@ body:has(.practice-app) {
   filter: blur(2px);
 }
 .ribbon-color {
-  stroke: #faffff;
-  stroke-width: 1.5px;
+  stroke: none;
+}
+.ribbon-head-shape path {
+  stroke: var(--lane);
+  stroke-width: 6px;
 }
 .practice .player-hold.active .ribbon-bloom {
   opacity: calc(0.45 + var(--sustain-pulse) * 0.25);

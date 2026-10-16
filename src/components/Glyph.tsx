@@ -27,19 +27,7 @@ export function LaneGlyph({ lane }: { lane: Lane }) {
     </svg>
   );
 }
-export function NoteGlyph({
-  lane,
-  direction,
-  size = 24,
-  distance = 1,
-  variant = 'tap',
-}: {
-  lane: Lane;
-  direction: Direction;
-  size?: number;
-  distance?: StepDistance;
-  variant?: 'tap' | 'tip';
-}) {
+export function noteGlyphShape(lane: Lane, direction: Direction, distance: StepDistance = 1) {
   const shape = lane !== 'step' ? 'arrow' : direction === 'close' ? 'close' : 'step';
   const angle = { up: 0, right: 90, down: 180, left: 270, close: 0 }[direction];
   const path =
@@ -48,9 +36,27 @@ export function NoteGlyph({
       : shape === 'step' && distance === 2
         ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
         : 'M20 4L34 18H26V35H14V18H6Z';
+  return { shape, angle, path };
+}
+export function NoteGlyph({
+  lane,
+  direction,
+  size = 24,
+  distance = 1,
+  variant = 'tap',
+  joined = false,
+}: {
+  lane: Lane;
+  direction: Direction;
+  size?: number;
+  distance?: StepDistance;
+  variant?: 'tap' | 'tip';
+  joined?: boolean;
+}) {
+  const { shape, angle, path } = noteGlyphShape(lane, direction, distance);
   return (
     <svg
-      className={`note-glyph glyph--${shape} glyph--${variant}`}
+      className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}`}
       data-symbol={noteSymbol(lane, direction, distance)}
       width={size}
       height={size}
@@ -58,7 +64,7 @@ export function NoteGlyph({
       aria-hidden="true"
     >
       <g transform={shape === 'close' ? undefined : `rotate(${angle} 20 20)`}>
-        <path className="glyph-edge" d={path} />
+        {!joined && <path className="glyph-edge" d={path} />}
         <path className="glyph-body" d={path} />
       </g>
     </svg>

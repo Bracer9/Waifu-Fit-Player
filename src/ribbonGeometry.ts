@@ -27,6 +27,7 @@ export function ribbonOutline({
   headGap,
   tailGap,
   sway,
+  connected = false,
 }: {
   durationMs: number;
   fullWidth: number;
@@ -36,6 +37,7 @@ export function ribbonOutline({
   headGap: number;
   tailGap: number;
   sway: boolean;
+  connected?: boolean;
 }): string {
   const start = tailGap;
   const end = Math.max(start, visibleWidth - headGap);
@@ -50,7 +52,7 @@ export function ribbonOutline({
     const phase = Math.min(1, (end - x) / Math.max(1, taper * 2));
     const blend = phase * phase * (3 - 2 * phase);
     const center = height / 2 + (sway ? waveOffset(durationMs, x / fullWidth, height) * blend : 0);
-    const tip = Math.min(1, (end - x) / taper);
+    const tip = connected ? 1 : Math.min(1, (end - x) / taper);
     const half = (bandWidth / 2) * tip * (2 - tip);
     top.push([x, center - half]);
     bottom.push([x, center + half]);

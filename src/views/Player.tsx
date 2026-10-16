@@ -223,7 +223,10 @@ export function Player({
                           }
                           visibleFraction={Math.max(0, right - tail) / (head - tail)}
                           size={metrics.marker}
-                          headGap={metrics.marker * 0.32}
+                          note={note}
+                          headOpacity={
+                            time < note.timeMs ? 1 : holding?.id === note.id ? cueOpacity : 0
+                          }
                           joinedTail={hideTail}
                           gaps={gaps}
                           sway={note.modifier === 'sway'}
@@ -233,6 +236,7 @@ export function Player({
                       <div className="hold-head">
                         <NoteGlyph
                           variant="tip"
+                          joined={!showGuide}
                           lane={note.lane}
                           direction={note.direction}
                           distance={note.distance}
@@ -263,6 +267,7 @@ export function Player({
                     >
                       <NoteGlyph
                         variant="tip"
+                        joined={!showGuide}
                         lane={holding.lane}
                         direction={holding.direction}
                         distance={holding.distance}
