@@ -137,15 +137,9 @@ export function PalmPrint() {
     />
   );
 }
-/** A solid downward cue for the middle of a squat hold, without an extra frame. */
+/** Two broad, stemless downward arrowheads for squat holds (about 120 degrees). */
 export function SquatDownCue() {
-  return (
-    <path
-      className="squat-down-cue"
-      d={noteGlyphShape('squat', 'down').path}
-      transform="rotate(180 20 20)"
-    />
-  );
+  return <path className="squat-down-cue" d="M4 9L20 18L36 9M4 22L20 31L36 22" />;
 }
 export function NoteGlyph({
   lane,

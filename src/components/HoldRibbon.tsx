@@ -48,8 +48,8 @@ export function HoldRibbon({
   const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
   const cueX = fullWidth / 2;
-  // Keep all midpoint cues at the original shoe dimensions.
-  const cueSize = (size / 1.25) * 0.82;
+  // The wide squat arrowhead needs more horizontal presence than hand/foot cues.
+  const cueSize = note.lane === 'squat' ? size * 0.9 : (size / 1.25) * 0.82;
   const showCue =
     ((note.lane === 'squat' && !sway) ||
       ((note.lane === 'step' || note.lane === 'punch') &&
