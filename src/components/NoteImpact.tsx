@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { noteColor, type Note } from '../model';
 import { NoteGlyph } from './Glyph';
 
-export const IMPACT_MS = 340;
+export const IMPACT_MS = 520;
 
 /** A brief, local burst driven by media time, so pause and seeking stay deterministic. */
 export function NoteImpact({
@@ -16,11 +16,8 @@ export function NoteImpact({
 }) {
   const progress = Math.min(1, Math.max(0, elapsed / IMPACT_MS));
   const ease = 1 - (1 - progress) ** 3;
-  const fade = (1 - progress) ** 2;
-  const color =
-    note.lane !== 'step' && note.kind === 'hold' && note.modifier === 'sway'
-      ? '#c78cfa'
-      : noteColor(note.lane, note.direction);
+  const fade = (1 - progress) ** 1.35;
+  const color = noteColor(note.lane, note.direction);
   return (
     <div
       className={`note-impact ${release ? 'release' : 'arrival'}`}
@@ -31,41 +28,47 @@ export function NoteImpact({
       <div
         className="impact-halo"
         style={{
-          opacity: fade * 0.65,
-          transform: `translate(-50%, -50%) scale(${0.7 + ease * 0.4})`,
+          opacity: fade * 0.95,
+          transform: `translate(-50%, -50%) scale(${0.6 + ease * 0.9})`,
         }}
       />
       <div
         className="impact-ring"
         style={{
           opacity: 1 - progress,
-          transform: `translate(-50%, -50%) scale(${0.72 + ease * 0.48})`,
+          transform: `translate(-50%, -50%) scale(${0.65 + ease * (release ? 1.1 : 0.9)})`,
         }}
       />
       <div
         className="impact-core"
         style={{
-          opacity: fade * (release ? 0.45 : 0.8),
-          transform: `translate(-50%, -50%) scale(${1 - ease * 0.2})`,
+          opacity: Math.max(0, 1 - progress * 2.4),
+          transform: `translate(-50%, -50%) scale(${1.15 - ease * 0.55})`,
         }}
       >
         <NoteGlyph lane={note.lane} direction={note.direction} distance={note.distance} />
       </div>
-      {[
-        [-1, -1],
-        [1, -1],
-        [-1, 1],
-        [1, 1],
-      ].map(([x, y], i) => (
-        <i
-          className="impact-particle"
-          key={i}
-          style={{
-            opacity: fade * 0.85,
-            transform: `translate(-50%, -50%) translate(${x * (24 + ease * 29)}px, ${y * (12 + ease * 15)}px) rotate(${x * y * 28}deg) scale(${1 - progress * 0.5})`,
-          }}
-        />
-      ))}
+      <div
+        className="impact-flare"
+        style={{
+          opacity: Math.max(0, 1 - progress * 2.8),
+          transform: `translate(-50%, -50%) scale(${0.6 + ease * 0.8})`,
+        }}
+      />
+      {Array.from({ length: 8 }, (_, i) => {
+        const angle = (i * Math.PI) / 4 + Math.PI / 8;
+        const distance = 20 + ease * (i % 2 ? 48 : 62);
+        return (
+          <i
+            className={`impact-particle ${i % 2 ? 'spark' : 'streak'}`}
+            key={i}
+            style={{
+              opacity: fade,
+              transform: `translate(-50%, -50%) translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance * 0.6}px) rotate(${(angle * 180) / Math.PI}deg) scale(${1 - progress * 0.45})`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

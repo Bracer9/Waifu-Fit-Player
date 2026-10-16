@@ -1,6 +1,8 @@
 import { ArrowLeft, Flame, Heart } from 'lucide-react';
+import { useMemo } from 'react';
 import { type Chart } from '../model';
 import { MediaController, useTime } from '../media';
+import { comboAt, createComboIndex } from '../combo';
 
 export function PracticeBackdrop() {
   return (
@@ -116,8 +118,8 @@ export function PracticeForeground() {
 
 function PracticeStats({ chart, media }: { chart: Chart; media: MediaController }) {
   const time = useTime(media);
-  // Follow-along has no input judgement. Derive its full combo from media time, including seeks.
-  const combo = chart.notes.reduce((count, note) => count + Number(note.timeMs <= time), 0);
+  const index = useMemo(() => createComboIndex(chart), [chart.notes, chart.tempoSegments]);
+  const combo = comboAt(index, time);
   return (
     <div className="practice-stats">
       <div className="calorie-stat" aria-label="Calories calculation coming soon">

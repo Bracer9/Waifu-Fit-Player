@@ -18,6 +18,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   const chart: Chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));
   chart.title = 'STUDIO SESSION';
   chart.specialEvents = [];
+  chart.tempoSegments = [{ id: 'tempo', anchorMs: 0, bpm: 120, meter: '4/4' }];
   chart.notes = [
     { id: 'squat-1', lane: 'squat', direction: 'down', timeMs: 2700, kind: 'tap' },
     { id: 'squat-2', lane: 'squat', direction: 'up', timeMs: 3500, kind: 'tap' },
@@ -78,9 +79,14 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await page.evaluate(() => document.fonts.ready);
   await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
-  await page.screenshot({ path: 'artifacts/vfold-ribbons-1920.png', fullPage: true });
+  await expect(page.getByTestId('lane-step').locator('.lane-label')).toHaveCSS(
+    'background-image',
+    'none',
+  );
+  await expect(sway.locator('.ribbon-bloom')).toBeVisible();
+  await page.screenshot({ path: 'artifacts/neon-ribbons-1920.png', fullPage: true });
   await page.setViewportSize({ width: 2560, height: 1440 });
-  await page.screenshot({ path: 'artifacts/vfold-ribbons-2560-1440.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/neon-ribbons-2560-1440.png', fullPage: true });
   await page.setViewportSize({ width: 1920, height: 1080 });
   const d = await path.getAttribute('d');
   const idleWidth = await sway
@@ -91,7 +97,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await expect(path).toHaveAttribute('d', d!);
   expect(await sway.locator('.hold-ribbon svg').getAttribute('style')).not.toBe(idleWidth);
   await expect(sway.locator('.hold-head')).toBeHidden();
-  await expect(page.locator('.combo-stat strong')).toHaveText('006');
+  await expect(page.locator('.combo-stat strong')).toHaveText('014');
   const paused = await sway.getAttribute('style');
   await page.waitForTimeout(200);
   await expect(sway).toHaveAttribute('style', paused!);
@@ -105,14 +111,34 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await seek(5.9);
   await expect(page.getByTestId('target-side_crunch')).toHaveAttribute('data-state', 'idle');
   await expect(sway).toHaveCount(0);
-  await expect(page.locator('.combo-stat strong')).toHaveText('011');
+  await expect(page.locator('.combo-stat strong')).toHaveText('040');
+  await seek(2.28);
+  await expect(page.getByTestId('impact-calf_raise').locator('.impact-ring')).toBeVisible();
+  await page.screenshot({ path: 'artifacts/neon-hold-arrival-1920.png', fullPage: true });
+  const burst = await page
+    .getByTestId('impact-calf_raise')
+    .locator('.impact-ring')
+    .getAttribute('style');
+  await page.waitForTimeout(180);
+  await expect(page.getByTestId('impact-calf_raise').locator('.impact-ring')).toHaveAttribute(
+    'style',
+    burst!,
+  );
+  await seek(2.67);
+  await page.screenshot({ path: 'artifacts/neon-tap-impact-1920.png', fullPage: true });
+  await seek(3.21);
+  await expect(page.locator('.combo-stat strong')).toHaveText('014');
+  await page.screenshot({ path: 'artifacts/neon-sustain-1920.png', fullPage: true });
+  await seek(5.58);
+  await expect(page.getByTestId('impact-calf_raise')).toHaveClass(/release/);
+  await page.screenshot({ path: 'artifacts/neon-hold-release-1920.png', fullPage: true });
   await seek(2.12);
   await expect(path).toHaveAttribute('d', d!);
   await expect(page.locator('.combo-stat strong')).toHaveText('000');
   await expect(page.locator('.calorie-stat strong')).toHaveText('— KCAL');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(path).toBeVisible();
-  await page.screenshot({ path: 'artifacts/vfold-reduced-motion.png', fullPage: true });
+  await page.screenshot({ path: 'artifacts/neon-reduced-motion.png', fullPage: true });
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   expect(await node.evaluate((element) => element.isConnected)).toBe(true);
   await expect

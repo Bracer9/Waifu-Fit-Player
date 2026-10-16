@@ -853,7 +853,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await seek(page, 1.08);
   const impact = page.getByTestId('impact-step');
   await expect(impact).toHaveClass(/arrival/);
-  await expect(impact.locator('.impact-particle')).toHaveCount(4);
+  await expect(impact.locator('.impact-particle')).toHaveCount(8);
   const frozen = await impact.getAttribute('style');
   const ringTransform = await impact.locator('.impact-ring').getAttribute('style');
   await page.waitForTimeout(150);
@@ -878,7 +878,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
     }
     await page.screenshot({ path: `artifacts/step-player-${viewport.width}.png`, fullPage: true });
   }
-  await seek(page, 1.4);
+  await seek(page, 1.6);
   await expect(impact).toHaveCount(0);
   await seek(page, 2.5);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'holding');
@@ -894,7 +894,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(impact.locator('.impact-particle').first()).not.toBeVisible();
   await expect(impact.locator('.impact-halo')).not.toBeVisible();
-  await seek(page, 5.5);
+  await seek(page, 5.6);
   await expect(impact).toHaveCount(0);
   await seek(page, 0.5);
   await expect(impact).toHaveCount(0);

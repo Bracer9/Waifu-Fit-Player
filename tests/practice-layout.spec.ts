@@ -88,6 +88,10 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
       expect(outerRight.y - spineRight.y).toBeGreaterThan(height * 0.03);
       expect(Math.abs(spineLeft.x - spineRight.x)).toBeLessThan(2);
       expect(Math.abs(spineLeft.y - spineRight.y)).toBeLessThan(2);
+      if (width / height < 1.8) {
+        expect(outerLeft.x).toBeLessThan(width * 0.05);
+        expect(outerRight.x).toBeGreaterThan(width * 0.95);
+      }
       if (width === 1920)
         console.info('Album bottom corners at 1920×1080:', JSON.stringify(corners));
     };

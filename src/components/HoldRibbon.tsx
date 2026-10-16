@@ -31,6 +31,8 @@ export function HoldRibbon({
         preserveAspectRatio="none"
         style={{ width: `${100 / Math.max(visibleFraction, 0.0001)}%` }}
       >
+        <path className="ribbon-bloom" d={path} vectorEffect="non-scaling-stroke" />
+        <path className="ribbon-aura" d={path} vectorEffect="non-scaling-stroke" />
         <path className="ribbon-rim" d={path} vectorEffect="non-scaling-stroke" />
         <path className="ribbon-color" d={path} vectorEffect="non-scaling-stroke" />
         <path className="ribbon-light" d={path} vectorEffect="non-scaling-stroke" />

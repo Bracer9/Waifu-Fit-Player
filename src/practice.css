@@ -23,8 +23,8 @@ body:has(.practice-app) {
   --album-ink: #1d1c21;
   --album-paper: #fff1e6;
   --leaf-split: 44%;
-  --album-height: min(620px, 62dvh);
-  --album-width: min(78vw, calc(var(--album-height) * 2.36));
+  --album-height: min(660px, 64dvh);
+  --album-width: min(85vw, calc(var(--album-height) * 2.5));
   display: grid;
   place-items: center;
   width: 100%;
@@ -100,9 +100,9 @@ body:has(.practice-app) {
 }
 .studio-bottle {
   position: absolute;
-  bottom: 1.5%;
-  left: 2.3%;
-  width: clamp(58px, 5vw, 100px);
+  bottom: max(4px, 1.5%);
+  left: 1.4%;
+  width: clamp(54px, 4.5vw, 90px);
   max-height: 98%;
   height: auto;
   transform: rotate(-2deg);
@@ -117,7 +117,7 @@ body:has(.practice-app) {
   width: var(--album-width);
   height: var(--album-height);
   min-height: 0;
-  transform: translateY(-4vh) rotateX(2deg);
+  transform: translateY(-2.5vh) rotateX(2deg);
   transform-style: preserve-3d;
 }
 .practice .stage-left {
@@ -301,6 +301,7 @@ body:has(.practice-app) {
   color: #f58eb8;
 }
 .practice .player-lanes {
+  --ribbon-width: 19px;
   --note-size: 52px;
   --target-size: 62px;
   --glyph-size: 36px;
@@ -320,7 +321,8 @@ body:has(.practice-app) {
   height: auto;
   min-height: 66px;
   border: 0;
-  background: color-mix(in srgb, var(--lane) 12%, #1b1c23);
+  background: color-mix(in srgb, var(--lane) 18%, #191a22);
+  overflow: visible;
 }
 .practice .lane-label {
   width: var(--lane-label-width);
@@ -328,6 +330,11 @@ body:has(.practice-app) {
   justify-content: flex-start;
   gap: 7px;
   color: #fffaf6;
+  background: var(--lane);
+  z-index: 3;
+}
+.practice .play-lane[data-lane='step'] .lane-label {
+  background: var(--lane);
 }
 .practice .lane-label::after {
   display: none;
@@ -341,12 +348,16 @@ body:has(.practice-app) {
 }
 .practice .note-highway {
   margin-left: 0;
+  overflow: visible;
+  /* Notes enter behind the label; impact light can breathe across the thin lane separators. */
+  clip-path: inset(-16px -16px -16px 0);
 }
 .practice .highway-line {
-  opacity: 0.65;
+  opacity: 0.8;
+  box-shadow: 0 0 4px color-mix(in srgb, var(--lane), transparent 55%);
 }
 .practice .highway-grid {
-  background: repeating-linear-gradient(90deg, #ffffff03 0 22%, #0000000d 22% 44%);
+  background: repeating-linear-gradient(90deg, #ffffff02 0 22%, #0000000b 22% 44%);
 }
 .practice .judgement-line {
   position: absolute;
@@ -365,8 +376,14 @@ body:has(.practice-app) {
 .practice .hold-head {
   width: var(--note-size);
   height: var(--note-size);
-  border: 1.5px solid #fff8fc;
-  box-shadow: 0 0 5px color-mix(in srgb, var(--lane), transparent 25%);
+  border: 2px solid #faffff;
+  background-color: var(--lane);
+  background-image: radial-gradient(circle at 38% 25%, #ffffff60, #ffffff08 65%);
+  box-shadow:
+    inset 0 0 8px #ffffff65,
+    0 0 4px #fff,
+    0 0 12px var(--lane),
+    0 0 24px color-mix(in srgb, var(--lane), transparent 50%);
 }
 .practice .player-note svg,
 .practice .hold-head svg,
@@ -393,8 +410,7 @@ body:has(.practice-app) {
   position: absolute;
   inset: 0;
   /* Keep the rounded release cap; clip the full-duration path exactly at the judgement line. */
-  clip-path: inset(-8px 0 -8px -8px);
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--lane), transparent 30%));
+  clip-path: inset(-24px 0 -24px -24px);
 }
 .hold-ribbon svg {
   display: block;
@@ -407,24 +423,38 @@ body:has(.practice-app) {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.ribbon-bloom {
+  stroke: var(--lane);
+  stroke-width: calc(var(--ribbon-width) + 12px);
+  filter: blur(9px);
+  opacity: 0.65;
+}
+.ribbon-aura {
+  stroke: var(--lane);
+  stroke-width: calc(var(--ribbon-width) + 6px);
+  filter: blur(3px);
+}
 .ribbon-rim {
-  stroke: #f5fffd;
-  stroke-width: 13px;
+  stroke: #edfffd;
+  stroke-width: var(--ribbon-width);
 }
 .ribbon-color {
   stroke: var(--lane);
-  stroke-width: 10px;
+  stroke-width: calc(var(--ribbon-width) - 3px);
 }
 .ribbon-light {
-  stroke: #ffffff50;
-  stroke-width: 1px;
+  stroke: #ffffff70;
+  stroke-width: calc(var(--ribbon-width) - 6px);
+}
+.practice .player-hold.active .ribbon-bloom {
+  opacity: calc(0.65 + var(--sustain-pulse) * 0.3);
 }
 .practice .hold-head {
   right: calc(var(--note-size) / -2);
   background: none;
   border: 0;
   box-shadow: none;
-  filter: drop-shadow(0 0 3px var(--lane));
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 7px var(--lane));
 }
 .practice .play-lane[data-lane='step'] .hold-head {
   background: var(--lane);
@@ -444,7 +474,71 @@ body:has(.practice-app) {
 .practice .is-sway .hit-target,
 .practice .play-lane[data-lane='step'] .hit-target.holding {
   background: var(--lane);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--lane), transparent 40%);
+  background-image: radial-gradient(circle, #ffffff50, transparent 70%);
+  box-shadow:
+    inset 0 0 12px #ffffff80,
+    0 0 7px #ffffffb0,
+    0 0 22px var(--lane);
+  transform: translate(-50%, -50%) scale(calc(1 + var(--sustain-pulse) * 0.08));
+}
+.practice .hit-target.holding::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 1px solid var(--lane);
+  border-radius: 50%;
+  opacity: calc(var(--sustain-pulse) * 0.8);
+  transform: scale(calc(1.1 - var(--sustain-pulse) * 0.1));
+  box-shadow: 0 0 8px var(--lane);
+}
+.practice .note-impact .impact-ring {
+  border-width: 2px;
+  box-shadow:
+    0 0 5px #fff,
+    0 0 16px var(--lane),
+    inset 0 0 10px var(--lane);
+}
+.practice .note-impact .impact-halo {
+  width: calc(var(--target-size) * 2.5);
+  height: calc(var(--target-size) * 1.65);
+  background: radial-gradient(ellipse, #ffffffd9, var(--lane) 25%, transparent 70%);
+  mix-blend-mode: screen;
+}
+.practice .note-impact .impact-core {
+  background: #faffff;
+  color: var(--lane);
+  box-shadow:
+    0 0 12px #fff,
+    0 0 28px var(--lane);
+}
+.practice .impact-particle {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  box-shadow:
+    0 0 4px #fff,
+    0 0 10px var(--lane);
+}
+.practice .impact-particle.spark {
+  width: 8px;
+  height: 8px;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+.practice .impact-flare {
+  position: absolute;
+  width: calc(var(--target-size) * 2.1);
+  height: 5px;
+  background: linear-gradient(90deg, transparent, #fff 40% 60%, transparent);
+  box-shadow: 0 0 12px var(--lane);
+}
+.practice .impact-flare::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 68px;
+  left: calc(50% - 2px);
+  top: -32px;
+  background: linear-gradient(transparent, #fff, transparent);
 }
 .practice .hit-target > span {
   display: none;
@@ -645,7 +739,7 @@ body:has(.practice-app) {
 @media (min-width: 1800px) and (min-height: 1250px) {
   .album-workspace.practice,
   .album-workspace.practice:fullscreen {
-    --album-height: 58dvh;
+    --album-height: 62dvh;
   }
   .practice-cover {
     height: clamp(148px, 12.2vh, 220px);
@@ -694,6 +788,7 @@ body:has(.practice-app) {
     font-size: 12px;
   }
   .practice .player-lanes {
+    --ribbon-width: 24px;
     --note-size: 68px;
     --target-size: 80px;
     --glyph-size: 46px;
@@ -715,12 +810,6 @@ body:has(.practice-app) {
   .practice .play-lane[data-lane='step'] .player-hold.sway {
     height: 70px;
   }
-  .ribbon-rim {
-    stroke-width: 17px;
-  }
-  .ribbon-color {
-    stroke-width: 13px;
-  }
   .practice .stage-left {
     padding-bottom: 14px;
   }
@@ -737,7 +826,7 @@ body:has(.practice-app) {
     min-height: 72px;
   }
   .studio-bottle {
-    width: 128px;
+    width: 116px;
   }
   .mat-lettering-pink {
     font-size: 72px;
@@ -768,6 +857,7 @@ body:has(.practice-app) {
 
 @media (min-width: 1000px) and (max-height: 960px) {
   .practice .player-lanes {
+    --ribbon-width: 17px;
     --note-size: clamp(44px, 5.2vh, 50px);
     --target-size: clamp(54px, 6.3vh, 60px);
     --glyph-size: clamp(32px, 3.8vh, 36px);
@@ -816,6 +906,16 @@ body:has(.practice-app) {
   .practice .special-slot {
     height: 22px;
     bottom: calc(100% + 2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practice .impact-flare,
+  .practice .hit-target.holding::after {
+    display: none;
+  }
+  .practice .player-hold.active .ribbon-bloom {
+    opacity: 0.65;
   }
 }
 

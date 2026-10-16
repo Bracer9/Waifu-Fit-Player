@@ -1,4 +1,5 @@
 import { Heart, Sparkles, Star } from 'lucide-react';
+import { useMemo } from 'react';
 import { type Chart, LANES, noteColor, noteSymbol, noteAction, specialMoveLabel } from '../model';
 import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
@@ -7,6 +8,7 @@ import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
+import { createBeatMap, sustainPulseAt } from '../combo';
 const PREVIEW_MS = 3600;
 export function Player({
   chart,
@@ -18,6 +20,7 @@ export function Player({
   showGuide?: boolean;
 }) {
   const time = useTime(media);
+  const beats = useMemo(() => createBeatMap(chart.tempoSegments), [chart.tempoSegments]);
   const special = specialAt(chart, time);
   const specialVisuals = specialVisualsAt(chart, time);
   const SpecialIcon =
@@ -61,6 +64,7 @@ export function Player({
           const elapsed = impact && impactTime !== undefined ? time - impactTime : IMPACT_MS;
           const flash = 1 - elapsed / IMPACT_MS;
           const sway = holding?.kind === 'hold' && holding.modifier === 'sway';
+          const sustainPulse = sustainPulseAt(holding, time, beats);
           return (
             <div
               className={`play-lane ${holding ? 'is-holding' : ''} ${sway ? 'is-sway' : ''}`}
@@ -69,6 +73,7 @@ export function Player({
                   '--lane': lane.color,
                   '--flash': flash,
                   '--impact-pulse': flash ** 2,
+                  '--sustain-pulse': sustainPulse,
                 } as React.CSSProperties
               }
               key={lane.id}
