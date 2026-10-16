@@ -23,7 +23,7 @@ npm run dev
 
 主要英文字体随应用打包，封面和手写装饰使用系统字体回退；运行界面不依赖远程字体或在线服务。视频音轨是唯一音乐来源，旁边的 MP3 不会被额外播放。
 
-## 跟练画面与本次 UI 回退
+## 跟练画面
 
 跟练采用参考图中的折页专辑构图：左页为五条动作轨道，右页为视频，中央书脊、独立透视、纸板厚度与地面阴影形成开合感。粉色／青色背景、粗体封面和手写标题延续参考图风格。SPECIAL 出现时临时使用曲名栏，不额外占用轨道空间。
 
@@ -37,36 +37,17 @@ HOLD 为直线荧光带，SWAY 为连续 SVG 波浪带，尾端是白色实心�
 
 SPECIAL 的白芯荧光、五轨飞入、爆发与持续提示使用本地预烘焙纹理；播放过程中不再为碎片、光环和符号计算实时模糊／阴影。爆发按媒体进度选取 50 帧纹理中的当前帧，暂停冻结、回拖重现，漏帧后直接显示最新位置。渲染通知上限为 60 Hz，视频和音频按原速度播放；所有谱面时间仍直接读取 `video.currentTime`，没有按帧累加的游戏时钟。
 
-性能修改前的回退点：`ae537b3` / `checkpoint/pre-special-performance-20261016`。需要改动效果素材时运行 `node scripts/bake-special-sprites.mjs` 重新烘焙；这只在开发时运行，不占用游戏播放时间。
+需要改动效果素材时运行 `node scripts/bake-special-sprites.mjs` 重新烘焙；这只在开发时运行，不占用游戏播放时间。
 
-SPECIAL HOLD 由白芯符号、粉色荧光长带和白芯尾圆连接，青色细边作为强调。长度对应真实持续时间；符号到框停留，尾端继续前进，结束时汇合并使用既有释放演出。两张共享小纹理替换原倒计时圆环及 HOLD 的装饰彗尾／碎星，不新增实时滤镜或粒子。超长条只绘制可见部分；减少动态效果仍保留表示时长的长带。该修改的回退点为 `f4d2e2d` / `checkpoint/pre-special-hold-ribbon-20261016`，可用 `node scripts/bake-special-sprites.mjs --hold-only` 单独生成长带素材。
+SPECIAL HOLD 由白芯符号、粉色荧光长带和白芯尾圆连接，青色细边作为强调。长度对应真实持续时间；符号到框停留，尾端继续前进，结束时汇合并使用既有释放演出。两张共享小纹理替换原倒计时圆环及 HOLD 的装饰彗尾／碎星，不新增实时滤镜或粒子。超长条只绘制可见部分；减少动态效果仍保留表示时长的长带。可用 `node scripts/bake-special-sprites.mjs --hold-only` 单独生成长带素材。
 
 对照负载可在开发服务运行时执行 `node scripts/measure-special-hold.mjs 对照名称`，每组采集三轮真实 1080p 播放，结果保存到 `artifacts/对照名称.json`。测量时停止其他自动化浏览器任务；该压力场景同时包含五轨超长音符和重叠 SPECIAL，不能当作普通谱面的平均性能。
 
 右页视频窗口固定为 **16:9**，播放控制收在其下方；Chrome 全屏也保持相同比例。视频始终完整显示，不裁切人物或拉伸画面。较窄的竖屏会将两页上下排列。工作台保持平面布局，切换时保留同一个视频元素、进度与播放速度。
 
-项目远程仓库为 [Bracer9/Waifu-Fit-Player](https://github.com/Bracer9/Waifu-Fit-Player)。首次上传时，`main` 与 `ui/album-stage` 均指向已验证的最新版，后者保留折页 UI 的开发分支。修改前版本 `91f3630` 保存在固定标签 `checkpoint/pre-album-ui-20261016`，不再依赖会继续更新的 `main`。工作区干净时，以下操作可切换版本，之后刷新浏览器：
+跟练长条的光带与箭头／自由摇摆符号共用整体外轮廓，连接处不单独描边，白色实心动作符号仍保留。返回工作台会退出游戏全屏，保留视频进度。
 
-```powershell
-git switch --detach checkpoint/pre-album-ui-20261016  # 回到折页 UI 改动前
-git switch main                                      # 回到主分支最新版
-```
-
-切换只涉及程序代码，不修改本地视频、已导出的谱面或浏览器保存的视频关联。
-
-第一版折页 UI 另有固定记录 `693afe7` / `checkpoint/album-pass1-20261016`。如只想退回该版，可在干净工作区执行 `git switch --detach checkpoint/album-pass1-20261016`；回到最新版仍用 `git switch ui/album-stage`。
-
-本轮 V 形透视与波浪音符之前的版本为 `76d6ea2` / `checkpoint/pre-vfold-notes-20261016`。可用 `git switch --detach checkpoint/pre-vfold-notes-20261016` 单独回退本轮修改。
-
-荧光音符、判定爆发、专辑放大与长条连击这一轮的修改前版本为 `e541cf9` / `checkpoint/pre-neon-combo-20261016`，可用 `git switch --detach checkpoint/pre-neon-combo-20261016` 回到该版。
-
-箭头符号、空心尾环与 C 重绘之前的版本为 `7a3765f` / `checkpoint/pre-arrow-notes-20261016`。可用 `git switch --detach checkpoint/pre-arrow-notes-20261016` 单独回退这一轮视觉修改。
-
-本次白芯荧光音符与重叠显示修正前的版本为 `0f7bba4` / `checkpoint/pre-note-collisions-20261016`。测试覆盖真实游戏全屏中的相邻长条、长条上叠加 TAP、重叠 HOLD、同拍交接、短长条与 C SWAY。返回工作台会退出游戏全屏，保留视频进度。
-
-跟练长条的光带与箭头／自由摇摆符号共用整体外轮廓，连接处不单独描边，白色实心动作符号仍保留。此项修正前的回退点为 `cb8c934` / `checkpoint/pre-seamless-holds-20261016`。
-
-统一 STEP 菜单并移除全部旧 C 动作前的回退点为 `fa1b59c` / `checkpoint/pre-unified-step-20261016`。
+项目远程仓库为 [Bracer9/Waifu-Fit-Player](https://github.com/Bracer9/Waifu-Fit-Player)，`main` 是当前开发与发布的主分支。提交本地修改后可直接运行 `git push` 同步。
 
 ## 完成一首谱面
 
