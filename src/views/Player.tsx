@@ -9,7 +9,7 @@ import {
   specialMoveLabel,
 } from '../model';
 import { MediaController, useTime } from '../media';
-import { noteX, specialAt } from '../timing';
+import { chartTimeAt, noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
@@ -27,7 +27,7 @@ export function Player({
   media: MediaController;
   showGuide?: boolean;
 }) {
-  const time = useTime(media);
+  const time = chartTimeAt(chart, useTime(media));
   const tracks = useRef<HTMLElement>(null);
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {

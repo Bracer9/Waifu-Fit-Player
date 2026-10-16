@@ -1,6 +1,11 @@
 import type { Chart, Note, Snap, TempoSegment } from './model';
 export const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
+/** Positive offset delays video relative to the chart; the media clock stays authoritative. */
+export const chartTimeAt = (chart: Pick<Chart, 'videoOffsetMs'>, videoTimeMs: number) =>
+  videoTimeMs + (chart.videoOffsetMs ?? 0);
+export const videoTimeAt = (chart: Pick<Chart, 'videoOffsetMs'>, chartTimeMs: number) =>
+  chartTimeMs - (chart.videoOffsetMs ?? 0);
 export function segmentAt(segments: TempoSegment[], timeMs: number): TempoSegment | undefined {
   return segments.filter((s) => s.anchorMs <= timeMs).sort((a, b) => b.anchorMs - a.anchorMs)[0];
 }

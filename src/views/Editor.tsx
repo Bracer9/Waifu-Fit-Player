@@ -47,7 +47,15 @@ import {
   type ArmHand,
 } from '../model';
 import { MediaController, useMediaStatus, useTime } from '../media';
-import { formatTime, gridLines, nextGrid, segmentAt, snapTime } from '../timing';
+import {
+  chartTimeAt,
+  videoTimeAt,
+  formatTime,
+  gridLines,
+  nextGrid,
+  segmentAt,
+  snapTime,
+} from '../timing';
 import {
   deleteEvents,
   extendTap,
@@ -175,9 +183,15 @@ export function Editor({
   canRedo,
   notify,
 }: Props) {
-  const time = useTime(media),
+  const time = chartTimeAt(chart, useTime(media)),
     status = useMediaStatus(media);
   const duration = status.durationMs || chart.videoHint.durationMs || 180000;
+  const cursorTime = () => Math.max(0, Math.min(duration, chartTimeAt(chart, media.getTime())));
+  const setVideoOffset = (offset: number) => {
+    const next: Chart = { ...chart, videoOffsetMs: Math.round(offset) };
+    if (next.videoOffsetMs === 0) delete next.videoOffsetMs;
+    onChange(next);
+  };
   const [lane, setLane] = useState<Lane>('squat');
   const [direction, setDirection] = useState<Direction>('down');
   const [drawArmAction, setDrawArmAction] = useState<ArmAction>('reach');
@@ -277,7 +291,7 @@ export function Editor({
       chart,
       clipboard.current.notes,
       clipboard.current.specials,
-      snapAt(media.getTime()),
+      snapAt(cursorTime()),
       duration,
     );
     onChange(result.chart);
@@ -420,7 +434,7 @@ export function Editor({
     });
   };
   const addSegment = () => {
-    const anchorMs = Math.round(media.getTime());
+    const anchorMs = Math.round(cursorTime());
     if (chart.tempoSegments.some((s) => s.anchorMs === anchorMs)) {
       notify('当前位置已有节拍段；请先移动播放位置。');
       return;
@@ -445,7 +459,7 @@ export function Editor({
     if (x < LABEL) return;
     const t = snapAt((x - LABEL) / px);
     if (y < RULER) {
-      media.seek(t);
+      media.seek(videoTimeAt(chart, t));
       return;
     }
     const row = Math.floor((y - RULER) / ROW);
@@ -1308,7 +1322,7 @@ export function Editor({
                 />
                 <button
                   className="text-action"
-                  onClick={() => changeSegment({ anchorMs: Math.round(media.getTime()) })}
+                  onClick={() => changeSegment({ anchorMs: Math.round(cursorTime()) })}
                 >
                   <Crosshair size={13} />
                   当前位置设为第一拍
@@ -1342,6 +1356,22 @@ export function Editor({
                   value={chart.title}
                   onCommit={(title) => onChange({ ...chart, title })}
                 />
+                <NumberField
+                  label="视频偏移 / ms"
+                  value={chart.videoOffsetMs ?? 0}
+                  min={-1000}
+                  max={1000}
+                  step={1}
+                  onCommit={setVideoOffset}
+                />
+                <div className="inspector-actions">
+                  <button disabled={!chart.videoOffsetMs} onClick={() => setVideoOffset(0)}>
+                    视频偏移归零
+                  </button>
+                </div>
+                <p className="inspector-tip">
+                  正值延后视频，负值提前视频（含声音）。范围 ±1000 ms，随谱面保存；音符时间不变。
+                </p>
                 <label className="check-label inspector-check">
                   <input
                     type="checkbox"
@@ -1437,7 +1467,7 @@ export function Editor({
                   onClick={() => {
                     setSelected([issue.noteId]);
                     setTab('note');
-                    media.seek(issue.timeMs);
+                    media.seek(videoTimeAt(chart, issue.timeMs));
                     if (scrollRef.current)
                       scrollRef.current.scrollLeft = Math.max(0, issue.timeMs * px - 150);
                   }}

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { type Chart } from '../model';
 import { MediaController, useTime } from '../media';
 import { comboAt, createComboIndex } from '../combo';
+import { chartTimeAt } from '../timing';
 
 export function PracticeBackdrop() {
   return (
@@ -34,7 +35,7 @@ export function PracticeForeground() {
 }
 
 function PracticeStats({ chart, media }: { chart: Chart; media: MediaController }) {
-  const time = useTime(media);
+  const time = chartTimeAt(chart, useTime(media));
   const index = useMemo(() => createComboIndex(chart), [chart.notes, chart.tempoSegments]);
   const combo = comboAt(index, time);
   return (

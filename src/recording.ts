@@ -12,7 +12,7 @@ import {
   type ArmHand,
 } from './model';
 import { MediaController } from './media';
-import { nextGrid, snapTime } from './timing';
+import { chartTimeAt, nextGrid, snapTime } from './timing';
 export const isTextEntry = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   !!target.closest(
@@ -43,6 +43,7 @@ export function useRecording(options: Options) {
     direction: Direction;
     timeMs: number;
     pressedAt: number;
+    videoOffsetMs: number;
     modifier: 'none' | 'sway';
     distance?: StepDistance;
     follow?: true;
@@ -132,8 +133,13 @@ export function useRecording(options: Options) {
         o.notify('当前轨道不支持这个方向。');
         return;
       }
+      const chartTime = chartTimeAt(o.chart, o.media.element!.currentTime * 1000);
+      if (chartTime < 0 || chartTime >= o.media.getStatus().durationMs) {
+        o.notify('当前视频位置超出谱面可录入范围，请稍后录入或调整视频偏移。');
+        return;
+      }
       const timeMs = snapTime(
-        o.media.element!.currentTime * 1000,
+        chartTime,
         o.chart.tempoSegments,
         o.snap,
         o.media.getStatus().durationMs,
@@ -144,6 +150,7 @@ export function useRecording(options: Options) {
         direction: dir,
         timeMs,
         pressedAt: performance.now(),
+        videoOffsetMs: o.chart.videoOffsetMs ?? 0,
         modifier: e.ctrlKey || dir === 'free' ? 'sway' : 'none',
         ...(follow ? { follow: true } : {}),
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
@@ -159,6 +166,7 @@ export function useRecording(options: Options) {
       pending.current = null;
       if (
         !o.enabled ||
+        p.videoOffsetMs !== (o.chart.videoOffsetMs ?? 0) ||
         !o.media.getStatus().playing ||
         !o.media.element ||
         o.media.element.paused ||
@@ -183,7 +191,7 @@ export function useRecording(options: Options) {
       }
       const duration = o.media.getStatus().durationMs;
       let endTimeMs = snapTime(
-        o.media.element!.currentTime * 1000,
+        chartTimeAt(o.chart, o.media.element!.currentTime * 1000),
         o.chart.tempoSegments,
         o.snap,
         duration,
