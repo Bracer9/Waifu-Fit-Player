@@ -16,6 +16,13 @@
 
 ## 本次 UX 修订验证
 
+### SPECIAL 与白芯荧光音符统一（2026-10-16）
+
+- 回退基线：`413ee6e` / `checkpoint/pre-neon-special-20261016`。移除 SPECIAL 的金边渐变方块，心形、星形和星芒直接使用白色实心与粉色荧光轮廓；配合青色小闪光及粉青拖尾，保留五轨同步飞入。
+- 命中和释放使用横向闪光、双层扩散光环和粉／青／白碎光，持续动作显示青色剩余进度弧。提示条改为与轨道一致的深底、白字和粉青强调色。编辑预览共用图标；谱面字段、事件时序、五轨位置和暂停／跳转行为不变。
+- 已查看实际游戏 1920×1080、1280×720 的飞入、命中、持续、临近判定与释放画面。截图：`artifacts/special-flight-1920.png`、`artifacts/special-burst-1920.png`、`artifacts/special-hold.png`、`artifacts/special-sparkles-fullscreen.png`、`artifacts/special-approach-fullscreen.png`、`artifacts/special-release-fullscreen.png`。
+- 英文兼容及 SPECIAL 浏览器回归 2 项通过；覆盖三种图标、普通音符共存、连续事件、暂停冻结、回拖重现、减弱动态效果与全屏。4 项 SPECIAL 时序测试、生产构建、格式检查通过。本轮复用原有开发服务，测试浏览器结束后退出。
+
 ### 专辑放大至画面两侧（2026-10-16）
 
 - 回退基线：`a84ecfe` / `checkpoint/pre-edge-to-edge-album-20261016`。解除专辑宽度的高度上限，调整透视后的水平居中，外框延伸至左右画面边缘；保留原有折页角度、书脊与底边厚度。移除左下角保温瓶及其样式。

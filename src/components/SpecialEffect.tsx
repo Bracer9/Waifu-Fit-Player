@@ -6,7 +6,7 @@ import type { SpecialVisual } from '../special';
 type IconName = NonNullable<Chart['specialMove']>['icon'];
 export function SpecialGlyph({ icon }: { icon: IconName }) {
   const Icon = icon === 'star' ? Star : icon === 'sparkles' ? Sparkles : Heart;
-  return <Icon className="special-glyph" fill="currentColor" strokeWidth={1.6} />;
+  return <Icon className="special-glyph" strokeWidth={3.6} />;
 }
 
 /** All motion comes from media progress; no independent CSS animation or wall-clock timers. */
@@ -62,15 +62,15 @@ export function SpecialEffect({
             <div
               className="special-wave"
               style={{
-                opacity: fade * 0.65,
+                opacity: fade * 0.55,
                 transform: `translate(-100%, -50%) scaleX(${0.3 + ease * 0.7})`,
               }}
             />
             <div
               className="special-flare"
               style={{
-                opacity: fade * 0.8,
-                transform: `translate(-50%, -50%) scale(${0.6 + ease * 1.8}) rotate(${row * 9 + ease * 40}deg)`,
+                opacity: fade,
+                transform: `translate(-50%, -50%) scale(${0.6 + ease * 1.8}, ${1 - p * 0.5})`,
               }}
             />
             {[0, 1].map((ring) => (
@@ -79,7 +79,7 @@ export function SpecialEffect({
                 className={`special-shockwave ring-${ring}`}
                 style={{
                   opacity: fade * (ring ? 0.65 : 1),
-                  transform: `translate(-50%, -50%) scale(${0.7 + ease * (ring ? 1.6 : 1.1)}, ${0.55 + ease * 0.45})`,
+                  transform: `translate(-50%, -50%) scale(${0.7 + ease * (ring ? 1.6 : 1.1)}, ${0.55 + ease * 0.45}) rotate(${ring ? -18 : 18}deg)`,
                 }}
               />
             ))}
@@ -101,12 +101,7 @@ export function SpecialEffect({
                   className={`special-shard ${i % 3 === 0 ? 'star' : 'streak'}`}
                   style={
                     {
-                      '--shard-color': [
-                        'var(--special-gold)',
-                        'var(--pink)',
-                        'var(--cyan)',
-                        '#fff8fc',
-                      ][i % 4],
+                      '--shard-color': ['#faffff', 'var(--pink)', 'var(--cyan)', '#faffff'][i % 4],
                       opacity: fade,
                       transform: `translate(-50%, -50%) translate(calc(var(--special-size) * ${Math.cos(angle) * distance}), calc(var(--special-size) * ${Math.sin(angle) * (0.12 + ease * 0.4)})) rotate(${(angle * 180) / Math.PI + ease * 90}deg) scale(${1 - p * 0.5})`,
                     } as CSSProperties

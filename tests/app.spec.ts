@@ -310,9 +310,14 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   expect((await exportChart(page)).specialEvents).toEqual(chart.specialEvents);
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
   await expect(page.getByRole('status')).not.toBeVisible();
+  await page.setViewportSize({ width: 1920, height: 1080 });
   await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   await expect(flying).toHaveCount(5);
   await page.screenshot({ path: 'artifacts/special-sparkles-fullscreen.png', fullPage: true });
+  await seek(page, 4.85);
+  await page.screenshot({ path: 'artifacts/special-approach-fullscreen.png', fullPage: true });
+  await seek(page, 10.1);
+  await page.screenshot({ path: 'artifacts/special-release-fullscreen.png', fullPage: true });
 });
 
 test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往返', async ({ page }) => {

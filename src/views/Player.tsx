@@ -1,4 +1,3 @@
-import { Heart, Sparkles, Star } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   type Chart,
@@ -14,7 +13,7 @@ import { noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
-import { SpecialEffect } from '../components/SpecialEffect';
+import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { createBeatMap, sustainPulseAt } from '../combo';
 const PREVIEW_MS = 3600;
@@ -75,12 +74,6 @@ export function Player({
   const beats = useMemo(() => createBeatMap(chart.tempoSegments), [chart.tempoSegments]);
   const special = specialAt(chart, time);
   const specialVisuals = specialVisualsAt(chart, time);
-  const SpecialIcon =
-    chart.specialMove?.icon === 'star'
-      ? Star
-      : chart.specialMove?.icon === 'sparkles'
-        ? Sparkles
-        : Heart;
   return (
     <section
       ref={tracks}
@@ -315,7 +308,7 @@ export function Player({
       >
         {special && chart.specialMove ? (
           <>
-            <SpecialIcon size={29} fill={special.active ? 'currentColor' : 'none'} />
+            <SpecialGlyph icon={chart.specialMove.icon} />
             <div>
               <small>{special.active ? 'SPECIAL!' : 'GET READY'}</small>
               <strong>{specialMoveLabel(chart.specialMove)}</strong>

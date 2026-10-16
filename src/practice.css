@@ -645,13 +645,58 @@ body:has(.practice-app) {
   height: 32px;
   margin: 0;
   border: 0;
-  background: #34273d;
-  color: #f1d7ff;
+  border-left: 3px solid var(--pink);
+  background: #252128;
+  color: #faffff;
+  box-shadow: inset 0 1px 0 #f64e9340;
+  gap: 10px;
   z-index: 6;
 }
+.practice .special-slot > .special-glyph {
+  width: 21px;
+  height: 21px;
+  flex: none;
+}
+.practice .special-slot > div:not(.special-progress) {
+  min-width: 0;
+  gap: 12px;
+}
+.practice .special-slot small {
+  color: var(--pink);
+  padding: 3px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.practice .special-slot strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  font-style: italic;
+  letter-spacing: 1px;
+}
+.practice .special-count {
+  color: var(--cyan);
+  font-size: 24px;
+  font-style: italic;
+  line-height: 1;
+  padding-left: 12px;
+  border-left: 1px solid #ffffff30;
+  text-shadow: 0 0 8px #35c9db70;
+}
 .practice .special-slot.active {
-  background: #e8c6ff;
-  color: #452256;
+  background: #252128;
+  color: #faffff;
+  border-left-color: var(--cyan);
+}
+.practice .special-slot.active small {
+  background: var(--pink);
+  color: #fff;
+}
+.practice .special-progress {
+  height: 2px;
+  box-shadow: 0 0 6px var(--cyan);
 }
 .practice .stage-left:has(.special-slot.visible) .practice-track-info {
   visibility: hidden;
@@ -982,6 +1027,20 @@ body:has(.practice-app) {
   .practice .special-slot {
     height: 22px;
     bottom: calc(100% + 2px);
+  }
+  .practice .special-slot > .special-glyph {
+    width: 16px;
+    height: 16px;
+  }
+  .practice .special-slot small {
+    padding: 1px 4px;
+    font-size: 8px;
+  }
+  .practice .special-slot strong {
+    font-size: 14px;
+  }
+  .practice .special-count {
+    font-size: 18px;
   }
 }
 
