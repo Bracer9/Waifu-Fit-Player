@@ -17,6 +17,7 @@ import {
   Pencil,
   Plus,
   Redo2,
+  Repeat2,
   Trash2,
   Undo2,
   ZoomIn,
@@ -47,7 +48,8 @@ import {
   type ArmHand,
   type StepFoot,
 } from '../model';
-import { MediaController, useMediaStatus, useTime } from '../media';
+import { MediaController, useMediaStatus, useTime, type LoopRange } from '../media';
+import { TimelineLoop } from '../components/TimelineLoop';
 import {
   chartTimeAt,
   videoTimeAt,
@@ -189,6 +191,27 @@ export function Editor({
   const time = chartTimeAt(chart, useTime(media)),
     status = useMediaStatus(media);
   const duration = status.durationMs || chart.videoHint.durationMs || 180000;
+  const loopMin = Math.max(0, chart.videoOffsetMs ?? 0);
+  const loopMax = duration + Math.min(0, chart.videoOffsetMs ?? 0);
+  const [loopEnabled, setLoopEnabled] = useState(false);
+  const [loopSelection, setLoopSelection] = useState<LoopRange>(() => {
+    const startMs = Math.max(loopMin, Math.min(loopMax - 100, time));
+    return { startMs, endMs: Math.min(loopMax, startMs + 4000) };
+  });
+  const loopEnd = Math.max(loopMin + 100, Math.min(loopMax, loopSelection.endMs));
+  const loopStart = Math.max(loopMin, Math.min(loopEnd - 100, loopSelection.startMs));
+  const loopDragging = useRef(false);
+  useEffect(() => {
+    media.setLoopRange(
+      loopEnabled
+        ? {
+            startMs: videoTimeAt(chart, loopStart),
+            endMs: videoTimeAt(chart, loopEnd),
+          }
+        : null,
+    );
+  }, [media, loopEnabled, loopStart, loopEnd, chart.videoOffsetMs]);
+  useEffect(() => () => media.setLoopRange(null), [media]);
   const cursorTime = () => Math.max(0, Math.min(duration, chartTimeAt(chart, media.getTime())));
   const setVideoOffset = (offset: number) => {
     const next: Chart = { ...chart, videoOffsetMs: Math.round(offset) };
@@ -262,7 +285,7 @@ export function Editor({
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    if (!follow || !status.playing || drag.current) return;
+    if (!follow || !status.playing || drag.current || loopDragging.current) return;
     const element = scrollRef.current;
     if (
       element &&
@@ -896,6 +919,20 @@ export function Editor({
         </button>
         <span className="editor-position">{formatTime(time, true)}</span>
       </div>
+      <div className="loop-toolbar">
+        <button
+          className={`tool-button loop-toggle ${loopEnabled ? 'active' : ''}`}
+          aria-label="区间循环"
+          aria-pressed={loopEnabled}
+          onClick={() => setLoopEnabled(!loopEnabled)}
+        >
+          <Repeat2 size={16} /> 区间循环
+        </button>
+        <span className="loop-readout">
+          A {formatTime(loopStart, true)} — B {formatTime(loopEnd, true)}
+        </span>
+        <span className="loop-help">拖动上沿 A / 下沿 B 选择范围 · Alt 不吸附</span>
+      </div>
       <div className="record-toolbar">
         <button
           className={`record-button ${recording ? 'armed' : ''}`}
@@ -1077,6 +1114,27 @@ export function Editor({
               <div className="playhead" style={{ left: LABEL + time * px }}>
                 <span />
               </div>
+              <TimelineLoop
+                range={{ startMs: loopStart, endMs: loopEnd }}
+                enabled={loopEnabled}
+                px={px}
+                labelWidth={LABEL}
+                scrollRef={scrollRef}
+                onDragging={(value) => {
+                  loopDragging.current = value;
+                }}
+                onChange={(edge, value, unsnapped) => {
+                  const t = unsnapped ? Math.round(value) : snapAt(value);
+                  setLoopSelection(
+                    edge === 'startMs'
+                      ? { startMs: Math.max(loopMin, Math.min(loopEnd - 100, t)), endMs: loopEnd }
+                      : {
+                          startMs: loopStart,
+                          endMs: Math.min(loopMax, Math.max(loopStart + 100, t)),
+                        },
+                  );
+                }}
+              />
               {marquee && (
                 <div
                   className="marquee"

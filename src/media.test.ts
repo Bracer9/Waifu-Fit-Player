@@ -6,11 +6,21 @@ class Video extends EventTarget {
   readyState = 4;
   paused = false;
   ended = false;
+  seeking = false;
   duration = 60;
   playbackRate = 1;
   muted = false;
   volume = 0.7;
   error = null;
+  play = async () => {
+    this.paused = false;
+    this.ended = false;
+    this.dispatchEvent(new Event('play'));
+  };
+  pause = () => {
+    this.paused = true;
+    this.dispatchEvent(new Event('pause'));
+  };
 }
 let callbacks: Map<number, FrameRequestCallback>;
 beforeEach(() => {
@@ -21,6 +31,48 @@ beforeEach(() => {
     return id;
   });
   vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id));
+});
+
+describe('工作台区间循环', () => {
+  it('跨过终点直接重定位视频，暂停时可以自由定位，重新播放从范围内开始', async () => {
+    const media = new MediaController(),
+      video = new Video();
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setLoopRange({ startMs: 2000, endMs: 4000 });
+    video.currentTime = 4.15;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(video.currentTime).toBe(2);
+    expect(media.getTime()).toBe(2000);
+    media.pause();
+    media.seek(8000);
+    expect(media.getTime()).toBe(8000);
+    await media.toggle();
+    expect(video.currentTime).toBe(2);
+    expect(media.getStatus().playing).toBe(true);
+    media.setLoopRange(null);
+    video.currentTime = 4.2;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(media.getTime()).toBe(4200);
+    media.attach(null);
+  });
+  it('终点位于视频结尾时仍可循环，卸载后不再自动播放', () => {
+    const media = new MediaController(),
+      video = new Video();
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setLoopRange({ startMs: 58000, endMs: 60000 });
+    video.currentTime = 60;
+    video.ended = true;
+    video.paused = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(video.currentTime).toBe(58);
+    expect(video.paused).toBe(false);
+    media.attach(null);
+    video.currentTime = 60;
+    video.paused = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(video.paused).toBe(true);
+    expect(callbacks.size).toBe(0);
+  });
 });
 afterEach(() => vi.unstubAllGlobals());
 let frameTime = 0;
