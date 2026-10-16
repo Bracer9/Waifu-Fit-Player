@@ -1,0 +1,81 @@
+import { ARM_DIRECTIONS, ARM_HANDS, arrow, noteColor, type ArmHand } from '../model';
+import { NoteGlyph } from './Glyph';
+
+export function ArmActionPicker({
+  value,
+  hand,
+  onChange,
+  label,
+}: {
+  value: string;
+  hand: ArmHand;
+  onChange: (value: string) => void;
+  label: string;
+}) {
+  return (
+    <div className="arms-action-picker" role="group" aria-label={label}>
+      <div className="arms-compass">
+        {ARM_DIRECTIONS.map((direction, index) => (
+          <button
+            key={direction}
+            aria-label={`${label} ${arrow[direction]}`}
+            aria-pressed={value === direction}
+            title={arrow[direction]}
+            style={
+              {
+                '--lane': noteColor('punch', direction, hand, 'reach'),
+                gridArea: `${Math.floor((index < 4 ? index : index + 1) / 3) + 1} / ${((index < 4 ? index : index + 1) % 3) + 1}`,
+              } as React.CSSProperties
+            }
+            onClick={() => onChange(direction)}
+          >
+            <NoteGlyph lane="punch" direction={direction} armAction="reach" size={22} />
+          </button>
+        ))}
+        <span className="compass-center" aria-hidden="true">
+          ✧
+        </span>
+      </div>
+      <div className="arms-gloves">
+        {(['left', 'right'] as const).map((direction) => (
+          <button
+            key={direction}
+            aria-label={`${label} PUNCH ${direction === 'left' ? 'L' : 'R'}`}
+            aria-pressed={value === `punch-${direction}`}
+            title={`${direction === 'left' ? 'J' : 'K'} · PUNCH ${direction === 'left' ? 'L' : 'R'}`}
+            style={{ '--lane': noteColor('punch', direction) } as React.CSSProperties}
+            onClick={() => onChange(`punch-${direction}`)}
+          >
+            <NoteGlyph lane="punch" direction={direction} armAction="punch" size={30} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ArmHandPicker({
+  value,
+  onChange,
+  label,
+}: {
+  value: ArmHand;
+  onChange: (hand: ArmHand) => void;
+  label: string;
+}) {
+  return (
+    <div className="arm-hands" role="group" aria-label={label}>
+      {ARM_HANDS.map((hand) => (
+        <button
+          key={hand.value}
+          aria-label={`${label} ${hand.label}`}
+          aria-pressed={value === hand.value}
+          style={{ '--hand': hand.color } as React.CSSProperties}
+          onClick={() => onChange(hand.value)}
+        >
+          {hand.label}
+        </button>
+      ))}
+    </div>
+  );
+}

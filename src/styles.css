@@ -8,6 +8,8 @@
   --cyan: #35c9db;
   --miku: #39c5bb;
   --step-free: #73ded1;
+  --arms-any: #e7edf2;
+  --arms-both: #b58aee;
   --ink: #242329;
   --cream: #faf6ed;
   --line: #dedbd3;
@@ -790,6 +792,80 @@ nav button.active:after {
 .note-glyph {
   display: block;
   overflow: visible;
+}
+.glove-letter {
+  fill: #fff;
+  stroke: none;
+  font:
+    900 17px 'Barlow Condensed',
+    sans-serif;
+  pointer-events: none;
+}
+.arms-action-picker {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.arms-compass {
+  display: grid;
+  grid-template-columns: repeat(3, 26px);
+  grid-template-rows: repeat(3, 26px);
+  gap: 2px;
+}
+.arms-action-picker button {
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  background: #302b36;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  color: var(--lane);
+}
+.arms-action-picker button[aria-pressed='true'] {
+  border-color: var(--lane);
+  box-shadow: 0 0 0 1px #242329;
+}
+.compass-center {
+  grid-area: 2 / 2;
+  display: grid;
+  place-items: center;
+  color: #817783;
+}
+.arms-gloves {
+  display: flex;
+  gap: 4px;
+}
+.arms-gloves button {
+  width: 38px;
+  height: 42px;
+}
+.arm-hands {
+  display: flex;
+  gap: 4px;
+}
+.arm-hands button {
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: var(--hand);
+  color: #242329;
+  font:
+    700 13px 'Barlow Condensed',
+    sans-serif;
+  min-width: 29px;
+  padding: 5px;
+}
+.arm-hands button[aria-pressed='true'] {
+  border-color: #242329;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+.arm-inspector {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.arm-inspector > span {
+  color: #817783;
+  font-size: 12px;
 }
 .shoe-print,
 .hold-ribbon .shoe-print {
@@ -1945,7 +2021,8 @@ nav button.active:after {
 .timeline-event[data-direction='free'] .event-glyph {
   color: var(--ink);
 }
-.timeline-event[data-lane='step'].sway {
+.timeline-event[data-lane='step'].sway,
+.timeline-event[data-lane='punch'].sway {
   background: repeating-linear-gradient(
     -45deg,
     var(--lane),
@@ -1954,6 +2031,12 @@ nav button.active:after {
     color-mix(in srgb, var(--lane), #23212b 25%) 12px
   );
   border-color: color-mix(in srgb, var(--lane), white 40%);
+}
+.timeline-event[data-lane='punch'] {
+  background-color: color-mix(in srgb, var(--lane), #23212b 28%);
+}
+.timeline-event[data-lane='punch'] .glove-letter {
+  fill: var(--lane);
 }
 .timeline-event.selected {
   outline: 2px solid #fff;
@@ -2119,6 +2202,7 @@ nav button.active:after {
   padding: 0 12px;
   gap: 8px;
   position: relative;
+  white-space: nowrap;
 }
 .sticky-labels > button:before {
   content: '';

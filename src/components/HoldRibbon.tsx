@@ -1,7 +1,8 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
-import { noteColor, type Note } from '../model';
-import { noteGlyphShape, PalmPrint, ShoePrint } from './Glyph';
+import { noteColor } from '../model';
+import { GlyphLabel, noteGlyphShape, PalmPrint, PunchPair, ShoePrint } from './Glyph';
+import type { DisplayNote } from '../armDisplay';
 
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
 export function HoldRibbon({
@@ -20,10 +21,10 @@ export function HoldRibbon({
   fullWidth: number;
   visibleFraction: number;
   size: number;
-  note: Note;
+  note: DisplayNote;
   headOpacity: number;
   joinedTail: boolean;
-  releaseNote?: Extract<Note, { kind: 'tap' }>;
+  releaseNote?: Extract<DisplayNote, { kind: 'tap' }>;
   gaps: number[];
   sway: boolean;
 }) {
@@ -35,9 +36,14 @@ export function HoldRibbon({
   const connected = headOpacity > 0;
   // Meet the left junction of the free-sway loop without filling its open centres.
   const headGap = connected ? (note.direction === 'free' ? size * 0.4 : 0) : size * 0.32;
-  const glyph = noteGlyphShape(note.lane, note.direction, note.distance);
+  const glyph = noteGlyphShape(note.lane, note.direction, note.distance, note.armAction);
   const releaseGlyph = releaseNote
-    ? noteGlyphShape(releaseNote.lane, releaseNote.direction, releaseNote.distance)
+    ? noteGlyphShape(
+        releaseNote.lane,
+        releaseNote.direction,
+        releaseNote.distance,
+        releaseNote.armAction,
+      )
     : undefined;
   const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
@@ -47,7 +53,7 @@ export function HoldRibbon({
   const showCue =
     (note.lane === 'step' || note.lane === 'punch') &&
     sway &&
-    (note.direction === 'left' || note.direction === 'right') &&
+    (note.lane === 'punch' || note.direction === 'left' || note.direction === 'right') &&
     cueX > size * 0.75;
   const path = useMemo(
     () =>
@@ -134,11 +140,22 @@ export function HoldRibbon({
                   opacity={headOpacity}
                   transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                 >
-                  <path
-                    d={glyph.path}
-                    fillRule="evenodd"
-                    transform={`rotate(${glyph.angle} 20 20)`}
-                  />
+                  {note.pairedPunch ? (
+                    <PunchPair ribbon />
+                  ) : (
+                    <>
+                      <path
+                        d={glyph.path}
+                        fillRule="evenodd"
+                        transform={`rotate(${glyph.angle} 20 20)`}
+                      />
+                      <GlyphLabel
+                        lane={note.lane}
+                        direction={note.direction}
+                        armAction={note.armAction}
+                      />
+                    </>
+                  )}
                 </g>
               )}
               {releaseNote && releaseGlyph && (
@@ -147,15 +164,31 @@ export function HoldRibbon({
                   transform={`translate(${-size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                   style={
                     {
-                      '--lane': noteColor(releaseNote.lane, releaseNote.direction),
+                      '--lane': noteColor(
+                        releaseNote.lane,
+                        releaseNote.direction,
+                        releaseNote.hand,
+                        releaseNote.armAction,
+                      ),
                     } as React.CSSProperties
                   }
                 >
-                  <path
-                    d={releaseGlyph.path}
-                    fillRule="evenodd"
-                    transform={`rotate(${releaseGlyph.angle} 20 20)`}
-                  />
+                  {releaseNote.pairedPunch ? (
+                    <PunchPair ribbon />
+                  ) : (
+                    <>
+                      <path
+                        d={releaseGlyph.path}
+                        fillRule="evenodd"
+                        transform={`rotate(${releaseGlyph.angle} 20 20)`}
+                      />
+                      <GlyphLabel
+                        lane={releaseNote.lane}
+                        direction={releaseNote.direction}
+                        armAction={releaseNote.armAction}
+                      />
+                    </>
+                  )}
                 </g>
               )}
             </g>

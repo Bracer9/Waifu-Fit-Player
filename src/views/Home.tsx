@@ -120,7 +120,7 @@ export function Home({
       <div className="home-footer">
         <span>01 — SQUAT</span>
         <span>02 — CALF RAISE</span>
-        <span>03 — PUNCH</span>
+        <span>03 — ARMS</span>
         <span>04 — SIDE CRUNCH</span>
         <b>MADE FOR YOUR HAPPY PLACE. ♡</b>
       </div>

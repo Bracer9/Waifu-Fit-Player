@@ -274,19 +274,25 @@ describe('编辑与历史', () => {
     );
     expect(historyReducer(state, { type: 'undo' }).present).toEqual(chart);
   });
-  it('跨轨移动只接受同轴，保留全部音符属性，往返不损失数据', () => {
+  it('跨轨移动接受目标支持的方向，ARMS 支持上下，保留时长与行距', () => {
     const chart = fixture();
     const moved = shiftNoteLanes(chart, ['hold'], 'squat', 'calf_raise');
     expect(moved.notes[0]).toEqual({ ...hold, lane: 'calf_raise' });
     expect(shiftNoteLanes(moved, ['hold'], 'calf_raise', 'squat')).toEqual(chart);
-    expect(shiftNoteLanes(chart, ['hold'], 'squat', 'punch')).toEqual(chart);
+    expect(shiftNoteLanes(chart, ['hold'], 'squat', 'punch').notes[0]).toEqual({
+      ...hold,
+      lane: 'punch',
+      armAction: 'reach',
+    });
     chart.notes.push({ id: 'tap', kind: 'tap', lane: 'punch', direction: 'left', timeMs: 1000 });
     expect(shiftNoteLanes(chart, ['tap'], 'punch', 'side_crunch').notes[1].lane).toBe(
       'side_crunch',
     );
-    // Multi-selection preserves row spacing; an incompatible group stays on its original rows.
+    // ARMS now accepts vertical arrows as well; multi-selection still preserves row spacing.
     chart.notes.push({ ...hold, id: 'other', lane: 'calf_raise' });
-    expect(shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'calf_raise')).toEqual(chart);
+    const group = shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'calf_raise');
+    expect(group.notes[0].lane).toBe('calf_raise');
+    expect(group.notes[2]).toMatchObject({ lane: 'punch', armAction: 'reach', direction: 'down' });
   });
   it('左右三轨支持 STEP，批量移动保留行距并拒绝越出方向组', () => {
     const chart = fixture();
@@ -299,7 +305,10 @@ describe('编辑与历史', () => {
       { ...chart.notes[0], lane: 'step' },
       { ...chart.notes[1], lane: 'side_crunch' },
     ]);
-    expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'punch')).toEqual(chart);
+    expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'punch').notes).toEqual([
+      { ...chart.notes[0], armAction: 'reach' },
+      chart.notes[1],
+    ]);
     expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'side_crunch')).toEqual(moved);
     expect(shiftNoteLanes(chart, ['s'], 'step', 'calf_raise')).toEqual(chart);
     expect(flipNotes(moved, ['p']).notes[0]).toEqual({ ...moved.notes[0], direction: 'right' });

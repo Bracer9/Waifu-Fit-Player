@@ -1,4 +1,11 @@
-import { noteSymbol, type Direction, type Lane, type StepDistance } from '../model';
+import {
+  isPunchAction,
+  noteSymbol,
+  type ArmAction,
+  type Direction,
+  type Lane,
+  type StepDistance,
+} from '../model';
 export function LaneGlyph({ lane }: { lane: Lane }) {
   const paths: Record<Lane, string> = {
     squat: 'M21 20L14 31L28 34L20 48M21 22L35 25L43 25M14 31L8 43L24 48',
@@ -27,16 +34,87 @@ export function LaneGlyph({ lane }: { lane: Lane }) {
     </svg>
   );
 }
-export function noteGlyphShape(lane: Lane, direction: Direction, distance: StepDistance = 1) {
-  const shape = lane !== 'step' ? 'arrow' : direction === 'free' ? 'free' : 'step';
-  const angle = { up: 0, right: 90, down: 180, left: 270, free: 0 }[direction];
+export function noteGlyphShape(
+  lane: Lane,
+  direction: Direction,
+  distance: StepDistance = 1,
+  action?: ArmAction,
+) {
+  const shape = isPunchAction(lane, direction, action)
+    ? 'glove'
+    : lane !== 'step'
+      ? 'arrow'
+      : direction === 'free'
+        ? 'free'
+        : 'step';
+  const angle =
+    shape === 'glove'
+      ? 0
+      : {
+          up: 0,
+          up_right: 45,
+          right: 90,
+          down_right: 135,
+          down: 180,
+          down_left: 225,
+          left: 270,
+          up_left: 315,
+          free: 0,
+        }[direction];
   const path =
-    shape === 'free'
-      ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
-      : shape === 'step' && distance === 2
-        ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
-        : 'M20 4L34 18H26V35H14V18H6Z';
+    shape === 'glove'
+      ? 'M13 5Q20 1 29 5Q34 7 34 14V22Q34 26 29 29L28 36H13L12 29Q5 28 4 22V18Q4 14 8 14Q11 14 12 18V11Q12 7 13 5Z'
+      : shape === 'free'
+        ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
+        : shape === 'step' && distance === 2
+          ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
+          : 'M20 4L34 18H26V35H14V18H6Z';
   return { shape, angle, path };
+}
+
+export function GlyphLabel({
+  lane,
+  direction,
+  armAction,
+}: {
+  lane: Lane;
+  direction: Direction;
+  armAction?: ArmAction;
+}) {
+  return isPunchAction(lane, direction, armAction) ? (
+    <text className="glove-letter" x="23" y="23" textAnchor="middle">
+      {direction === 'left' ? 'L' : 'R'}
+    </text>
+  ) : null;
+}
+
+export function PunchPair({
+  joined = false,
+  ribbon = false,
+}: {
+  joined?: boolean;
+  ribbon?: boolean;
+}) {
+  const path = noteGlyphShape('punch', 'left').path;
+  return (
+    <g className="punch-pair">
+      {(['left', 'right'] as const).map((direction, i) => (
+        <g
+          key={direction}
+          transform={`translate(${i ? 19 : -13} 4) scale(0.8)`}
+          style={
+            {
+              '--lane': direction === 'left' ? 'var(--cyan)' : 'var(--pink)',
+            } as React.CSSProperties
+          }
+        >
+          {!joined && !ribbon && <path className="glyph-edge" d={path} />}
+          <path className={ribbon ? 'ribbon-pair-body' : 'glyph-body'} d={path} />
+          <GlyphLabel lane="punch" direction={direction} armAction="punch" />
+        </g>
+      ))}
+    </g>
+  );
 }
 
 /** A shoe-sole print with a rounded toe, tread grooves and a separate heel. */
@@ -67,6 +145,8 @@ export function NoteGlyph({
   variant = 'tap',
   joined = false,
   follow = false,
+  armAction,
+  pairedPunch = false,
 }: {
   lane: Lane;
   direction: Direction;
@@ -75,19 +155,23 @@ export function NoteGlyph({
   variant?: 'tap' | 'tip';
   joined?: boolean;
   follow?: boolean;
+  armAction?: ArmAction;
+  pairedPunch?: boolean;
 }) {
-  const { shape, angle, path } = noteGlyphShape(lane, direction, distance);
+  const { shape, angle, path } = noteGlyphShape(lane, direction, distance, armAction);
   return (
     <svg
       className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}${follow ? ' glyph--follow' : ''}`}
-      data-symbol={`${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance)}`}
+      data-symbol={`${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`}
       width={size}
       height={size}
       viewBox="0 0 40 40"
       aria-hidden="true"
     >
-      <g transform={shape === 'free' ? undefined : `rotate(${angle} 20 20)`}>
-        {follow ? (
+      <g transform={shape === 'free' || shape === 'glove' ? undefined : `rotate(${angle} 20 20)`}>
+        {pairedPunch ? (
+          <PunchPair joined={joined} />
+        ) : follow ? (
           // Keep the arrow tip intact; only the hollow stem is broken into clear segments.
           ['follow-edge', 'follow-color', 'follow-core'].map((className) => (
             <path
@@ -100,6 +184,7 @@ export function NoteGlyph({
           <>
             {!joined && <path className="glyph-edge" fillRule="evenodd" d={path} />}
             <path className="glyph-body" fillRule="evenodd" d={path} />
+            <GlyphLabel lane={lane} direction={direction} armAction={armAction} />
           </>
         )}
       </g>

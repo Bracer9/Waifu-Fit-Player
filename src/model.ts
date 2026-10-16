@@ -1,3 +1,21 @@
+export const ARM_DIRECTIONS = [
+  'up_left',
+  'up',
+  'up_right',
+  'left',
+  'right',
+  'down_left',
+  'down',
+  'down_right',
+] as const;
+export type ArmAction = 'reach' | 'punch';
+export type ArmHand = 'any' | 'left' | 'right' | 'both';
+export const ARM_HANDS = [
+  { value: 'any', label: 'ANY', color: 'var(--arms-any)' },
+  { value: 'left', label: 'L', color: 'var(--cyan)' },
+  { value: 'right', label: 'R', color: 'var(--pink)' },
+  { value: 'both', label: 'BOTH', color: 'var(--arms-both)' },
+] as const;
 export const LANES = [
   { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: 'var(--pink)' },
   {
@@ -9,9 +27,9 @@ export const LANES = [
   },
   {
     id: 'punch',
-    name: '出拳',
-    english: 'PUNCH',
-    directions: ['left', 'right'],
+    name: '手臂',
+    english: 'ARMS',
+    directions: ARM_DIRECTIONS,
     color: 'var(--pink)',
   },
   {
@@ -30,7 +48,7 @@ export const LANES = [
   },
 ] as const;
 export type Lane = (typeof LANES)[number]['id'];
-export type Direction = 'up' | 'down' | 'left' | 'right' | 'free';
+export type Direction = (typeof ARM_DIRECTIONS)[number] | 'free';
 export type StepDistance = 1 | 2;
 export type NoteType = 'tap' | 'hold' | 'sway' | 'follow';
 export const STEP_VARIANTS = [
@@ -53,6 +71,8 @@ export type Note = {
   timeMs: number;
   distance?: StepDistance;
   follow?: true;
+  armAction?: ArmAction;
+  hand?: ArmHand;
 } & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
 export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '4/4' | '3/4' };
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
@@ -73,21 +93,47 @@ export const arrow: Record<Direction, string> = {
   left: '←',
   right: '→',
   free: 'FREE',
+  up_left: '↖',
+  up_right: '↗',
+  down_left: '↙',
+  down_right: '↘',
 };
-export const noteSymbol = (lane: Lane, direction: Direction, distance: StepDistance = 1) =>
-  lane === 'step'
-    ? direction === 'free'
-      ? 'FREE'
-      : `${direction === 'left' ? 'L' : 'R'}${distance === 2 ? '2' : ''}`
-    : arrow[direction];
-export const noteColor = (lane: Lane, direction: Direction) =>
-  lane === 'step'
-    ? direction === 'free'
-      ? 'var(--step-free)'
-      : direction === 'left'
-        ? 'var(--cyan)'
-        : 'var(--pink)'
-    : LANES.find((item) => item.id === lane)!.color;
+// Legacy charts used left/right on the punch lane for frontal punches.
+export const isPunchAction = (lane: Lane, direction: Direction, action?: ArmAction) =>
+  lane === 'punch' && action !== 'reach' && (direction === 'left' || direction === 'right');
+export const armHand = (note: Pick<Note, 'lane' | 'direction' | 'armAction' | 'hand'>): ArmHand =>
+  isPunchAction(note.lane, note.direction, note.armAction)
+    ? (note.direction as 'left' | 'right')
+    : (note.hand ?? 'any');
+export const armActionValue = (note: Pick<Note, 'lane' | 'direction' | 'armAction'>) =>
+  isPunchAction(note.lane, note.direction, note.armAction)
+    ? `punch-${note.direction}`
+    : note.direction;
+export const noteSymbol = (
+  lane: Lane,
+  direction: Direction,
+  distance: StepDistance = 1,
+  action?: ArmAction,
+) =>
+  isPunchAction(lane, direction, action)
+    ? `PUNCH ${direction === 'left' ? 'L' : 'R'}`
+    : lane === 'step'
+      ? direction === 'free'
+        ? 'FREE'
+        : `${direction === 'left' ? 'L' : 'R'}${distance === 2 ? '2' : ''}`
+      : arrow[direction];
+export const noteColor = (lane: Lane, direction: Direction, hand?: ArmHand, action?: ArmAction) =>
+  lane === 'punch'
+    ? ARM_HANDS.find(
+        (item) => item.value === armHand({ lane, direction, hand, armAction: action }),
+      )!.color
+    : lane === 'step'
+      ? direction === 'free'
+        ? 'var(--step-free)'
+        : direction === 'left'
+          ? 'var(--cyan)'
+          : 'var(--pink)'
+      : LANES.find((item) => item.id === lane)!.color;
 export const isFollowStep = (note: Note) =>
   note.lane === 'step' && note.kind === 'tap' && note.follow === true;
 export const isStepMove = (note: Note) =>
@@ -233,6 +279,24 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
       const lane = LANES.find((l) => l.id === note.lane);
       if (!lane || !(lane.directions as readonly unknown[]).includes(note.direction))
         errors.push(`${label}：轨道或方向不匹配。`);
+      if (
+        note.armAction !== undefined &&
+        (note.lane !== 'punch' ||
+          !['reach', 'punch'].includes(String(note.armAction)) ||
+          (note.armAction === 'punch' && !['left', 'right'].includes(String(note.direction))))
+      )
+        errors.push(`${label}：ARMS 拳套仅支持左手或右手，其他方向使用箭头。`);
+      if (
+        note.hand !== undefined &&
+        (note.lane !== 'punch' ||
+          !ARM_HANDS.some((h) => h.value === note.hand) ||
+          isPunchAction(
+            note.lane as Lane,
+            note.direction as Direction,
+            note.armAction as ArmAction,
+          ))
+      )
+        errors.push(`${label}：用手颜色仅适用于 ARMS 箭头，拳套的左右手由 L/R 决定。`);
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
       if (

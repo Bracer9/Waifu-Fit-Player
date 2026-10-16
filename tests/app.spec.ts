@@ -341,8 +341,8 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
 
 test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往返', async ({ page }) => {
   await emptyEditor(page);
-  await page.getByRole('button', { name: '3 出拳', exact: true }).click();
-  await page.getByRole('button', { name: '放置方向→', exact: true }).click();
+  await page.getByRole('button', { name: '3 手臂', exact: true }).click();
+  await page.getByRole('button', { name: '绘制手臂动作 →', exact: true }).click();
   await draw(page, 3000, 2);
   await expect(page.getByTestId('editor-note')).toHaveCount(1);
   let chart = await exportChart(page);
@@ -614,7 +614,10 @@ test('方向翻转按钮和 F、多选撤销、同轴跨轨拖动与长条属性
   await dragLane(page.getByTestId('editor-note').first(), -1);
   expect((await exportChart(page)).notes[0].lane).toBe('squat');
   await dragLane(page.getByTestId('editor-note').first(), 2);
-  expect((await exportChart(page)).notes[0].lane).toBe('squat');
+  expect((await exportChart(page)).notes[0]).toMatchObject({ lane: 'punch', armAction: 'reach' });
+  await dragLane(page.getByTestId('editor-note').first(), -2);
+  await page.locator('.lane-picks [data-lane="punch"]').click();
+  await page.getByRole('button', { name: '绘制手臂动作 ←', exact: true }).click();
   await draw(page, 3000, 2);
   await dragLane(page.getByTestId('editor-note').last(), 2);
   expect((await exportChart(page)).notes[1].lane).toBe('side_crunch');
@@ -667,7 +670,7 @@ test('跟随默认锁定，编辑与空格暂停不取消，解锁后可手动�
   for (const [key, label] of [
     ['1', '1 蹲起'],
     ['2', '2 提踵'],
-    ['3', '3 出拳'],
+    ['3', '3 手臂'],
     ['4', '4 踏步'],
     ['5', '5 侧收腹'],
   ]) {

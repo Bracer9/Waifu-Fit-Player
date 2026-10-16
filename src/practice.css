@@ -417,6 +417,14 @@ body:has(.practice-app) {
 .practice .note-glyph.glyph--joined .glyph-body {
   stroke: none;
 }
+.practice .note-glyph .glove-letter,
+.preview-lanes .note-glyph .glove-letter {
+  fill: var(--lane);
+}
+.ribbon-pair-body {
+  stroke: var(--lane);
+  stroke-width: 6px;
+}
 .preview-lanes .player-hold.sway {
   background: color-mix(in srgb, var(--lane), transparent 20%);
   box-shadow: 0 0 8px var(--lane);

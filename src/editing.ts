@@ -2,6 +2,9 @@ import {
   LANES,
   isStepMove,
   isFollowStep,
+  isPunchAction,
+  ARM_HANDS,
+  type ArmHand,
   type Chart,
   type Direction,
   type Lane,
@@ -71,6 +74,10 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
     left: 'right',
     right: 'left',
     free: 'free',
+    up_left: 'down_right',
+    up_right: 'down_left',
+    down_left: 'up_right',
+    down_right: 'up_left',
   };
   return {
     ...chart,
@@ -78,6 +85,36 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
       selected.includes(n.id) ? { ...n, direction: opposite[n.direction] } : n,
     ),
   };
+}
+export const nextArmHand = (hand: ArmHand = 'any'): ArmHand =>
+  ARM_HANDS[(ARM_HANDS.findIndex((item) => item.value === hand) + 1) % ARM_HANDS.length].value;
+/** Change hand without changing direction, timing, or sustain form. */
+export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Chart {
+  return {
+    ...chart,
+    notes: chart.notes.map((note) => {
+      if (
+        !selected.includes(note.id) ||
+        note.lane !== 'punch' ||
+        isPunchAction(note.lane, note.direction, note.armAction)
+      )
+        return note;
+      const next: Note = { ...note, hand: hand ?? nextArmHand(note.hand) };
+      if (next.hand === 'any') delete next.hand;
+      return next;
+    }),
+  };
+}
+export function changeArmAction(note: Note, value: string): Note {
+  if (note.lane !== 'punch') return note;
+  const punch = value.startsWith('punch-');
+  const next: Note = {
+    ...note,
+    armAction: punch ? 'punch' : 'reach',
+    direction: (punch ? value.slice(6) : value) as Direction,
+  };
+  if (punch) delete next.hand;
+  return next;
 }
 export function setStepDistance(chart: Chart, selected: string[], distance?: StepDistance): Chart {
   return {
@@ -104,6 +141,7 @@ export function changeNoteForm(
     lane: note.lane,
     direction,
     timeMs: note.timeMs,
+    ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
     ...(note.lane === 'step' && direction !== 'free' && type !== 'follow' && note.distance
       ? { distance: note.distance }
       : {}),
@@ -142,6 +180,10 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
       if (!selected.includes(n.id)) return n;
       const next = { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id };
       if (next.lane !== 'step') delete next.distance;
+      if (next.lane !== 'punch') {
+        delete next.armAction;
+        delete next.hand;
+      } else if (n.lane !== 'punch') next.armAction = 'reach';
       return next;
     }),
   };

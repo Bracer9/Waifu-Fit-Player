@@ -8,6 +8,8 @@ import {
   type Note,
   type Snap,
   type StepDistance,
+  type ArmAction,
+  type ArmHand,
 } from './model';
 import { MediaController } from './media';
 import { nextGrid, snapTime } from './timing';
@@ -29,6 +31,8 @@ type Options = {
   onLane: (lane: Lane) => void;
   onNote: (note: Note) => void;
   notify: (message: string) => void;
+  hand: ArmHand;
+  onHand: () => void;
 };
 export function useRecording(options: Options) {
   const opts = useRef(options);
@@ -42,6 +46,8 @@ export function useRecording(options: Options) {
     modifier: 'none' | 'sway';
     distance?: StepDistance;
     follow?: true;
+    armAction?: ArmAction;
+    hand?: ArmHand;
   } | null>(null);
   useEffect(() => {
     const cancel = () => {
@@ -53,7 +59,9 @@ export function useRecording(options: Options) {
     const keydown = (e: KeyboardEvent) => {
       const o = opts.current;
       const follow = o.lane === 'step' && e.altKey && ['ArrowLeft', 'ArrowRight'].includes(e.key);
-      if (!o.enabled || isTextEntry(e.target) || e.metaKey || (e.altKey && !follow)) return;
+      const armDiagonal = o.lane === 'punch' && ['ArrowLeft', 'ArrowRight'].includes(e.key);
+      if (!o.enabled || isTextEntry(e.target) || e.metaKey || (e.altKey && !follow && !armDiagonal))
+        return;
       // Armed recording owns transport / movement keys even when a closed select retains focus.
       if (e.code === 'Space' && e.target instanceof HTMLSelectElement) {
         e.preventDefault();
@@ -62,7 +70,11 @@ export function useRecording(options: Options) {
         if (!e.repeat) void o.media.toggle().catch(() => o.notify('请点击播放后继续录谱。'));
         return;
       }
-      if (!e.ctrlKey && LANES.some((_, i) => e.key === String(i + 1))) {
+      if (
+        !e.ctrlKey &&
+        !e.code.startsWith('Numpad') &&
+        LANES.some((_, i) => e.key === String(i + 1))
+      ) {
         e.preventDefault();
         e.stopPropagation();
         if (e.target instanceof HTMLSelectElement) e.target.blur();
@@ -73,12 +85,43 @@ export function useRecording(options: Options) {
         }
         return;
       }
+      if (o.lane === 'punch' && e.code === 'KeyH' && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.target instanceof HTMLSelectElement) e.target.blur();
+        if (!e.repeat) o.onHand();
+        return;
+      }
       let dir = (
         { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' } as Record<
           string,
           Direction
         >
       )[e.key];
+      let armAction: ArmAction | undefined;
+      if (o.lane === 'punch') {
+        const numpad = (
+          {
+            Numpad7: 'up_left',
+            Numpad8: 'up',
+            Numpad9: 'up_right',
+            Numpad4: 'left',
+            Numpad6: 'right',
+            Numpad1: 'down_left',
+            Numpad2: 'down',
+            Numpad3: 'down_right',
+          } as Record<string, Direction>
+        )[e.code];
+        if (numpad) dir = numpad;
+        if (e.code === 'KeyJ' || e.code === 'KeyK') {
+          dir = e.code === 'KeyJ' ? 'left' : 'right';
+          armAction = 'punch';
+        } else if (dir) {
+          armAction = 'reach';
+          if (armDiagonal && (e.shiftKey || e.altKey))
+            dir = `${e.altKey ? 'down' : 'up'}_${dir}` as Direction;
+        }
+      }
       if (o.lane === 'step' && dir === 'down') dir = 'free';
       if (!dir) return;
       e.preventDefault();
@@ -96,7 +139,7 @@ export function useRecording(options: Options) {
         o.media.getStatus().durationMs,
       );
       pending.current = {
-        key: e.key,
+        key: e.code || e.key,
         lane: o.lane,
         direction: dir,
         timeMs,
@@ -104,12 +147,14 @@ export function useRecording(options: Options) {
         modifier: e.ctrlKey || dir === 'free' ? 'sway' : 'none',
         ...(follow ? { follow: true } : {}),
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
+        ...(armAction ? { armAction } : {}),
+        ...(armAction === 'reach' && o.hand !== 'any' ? { hand: o.hand } : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {
       const p = pending.current,
         o = opts.current;
-      if (!p || e.key !== p.key) return;
+      if (!p || (e.code || e.key) !== p.key) return;
       e.preventDefault();
       pending.current = null;
       if (
@@ -131,6 +176,8 @@ export function useRecording(options: Options) {
           timeMs: p.timeMs,
           ...(p.distance ? { distance: p.distance } : {}),
           ...(p.follow ? { follow: true } : {}),
+          ...(p.armAction ? { armAction: p.armAction } : {}),
+          ...(p.hand ? { hand: p.hand } : {}),
         });
         return;
       }
@@ -155,6 +202,8 @@ export function useRecording(options: Options) {
           modifier: p.modifier,
           endTimeMs,
           ...(p.distance ? { distance: p.distance } : {}),
+          ...(p.armAction ? { armAction: p.armAction } : {}),
+          ...(p.hand ? { hand: p.hand } : {}),
         });
     };
     window.addEventListener('keydown', keydown, true);

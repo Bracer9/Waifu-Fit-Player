@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
-import { noteColor, type Note } from '../model';
+import { noteColor } from '../model';
+import type { DisplayNote } from '../armDisplay';
 
 export const IMPACT_MS = 520;
 
@@ -9,14 +10,16 @@ export function NoteImpact({
   elapsed,
   release,
 }: {
-  note: Note;
+  note: DisplayNote;
   elapsed: number;
   release: boolean;
 }) {
   const progress = Math.min(1, Math.max(0, elapsed / IMPACT_MS));
   const ease = 1 - (1 - progress) ** 3;
   const fade = (1 - progress) ** 1.35;
-  const color = noteColor(note.lane, note.direction);
+  const color = note.pairedPunch
+    ? 'var(--arms-both)'
+    : noteColor(note.lane, note.direction, note.hand, note.armAction);
   return (
     <div
       className={`note-impact ${release ? 'release' : 'arrival'}`}

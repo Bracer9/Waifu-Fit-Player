@@ -1,7 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   type Chart,
-  type Note,
   LANES,
   noteColor,
   noteSymbol,
@@ -17,6 +16,7 @@ import { specialVisualsAt } from '../special';
 import { SpecialEffect, SpecialGlyph, preloadSpecialTextures } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { createBeatMap, sustainPulseAt } from '../combo';
+import { armDisplayNotes, type DisplayNote } from '../armDisplay';
 const PREVIEW_MS = 3600;
 export function Player({
   chart,
@@ -52,15 +52,16 @@ export function Player({
     observer.observe(probe);
     return () => observer.disconnect();
   }, []);
+  const displayNotes = useMemo(() => armDisplayNotes(chart.notes), [chart.notes]);
   const { joinedTails, joinedTaps } = useMemo(() => {
-    const starts = new Map<string, Note>();
-    for (const note of chart.notes) {
+    const starts = new Map<string, DisplayNote>();
+    for (const note of displayNotes) {
       const key = `${note.lane}:${note.timeMs}`;
       if (!starts.has(key)) starts.set(key, note);
     }
-    const joinedTails = new Map<string, Note>();
+    const joinedTails = new Map<string, DisplayNote>();
     const joinedTaps = new Set<string>();
-    for (const note of chart.notes) {
+    for (const note of displayNotes) {
       if (note.kind !== 'hold') continue;
       const next = starts.get(`${note.lane}:${note.endTimeMs}`);
       if (!next || next.id === note.id) continue;
@@ -68,10 +69,12 @@ export function Player({
       if (next.kind === 'tap' && !isFollowStep(next)) joinedTaps.add(next.id);
     }
     return { joinedTails, joinedTaps };
-  }, [chart.notes]);
-  const noteStyle = (note: Note): React.CSSProperties => {
+  }, [displayNotes]);
+  const noteStyle = (note: DisplayNote): React.CSSProperties => {
     return {
-      '--lane': noteColor(note.lane, note.direction),
+      '--lane': note.pairedPunch
+        ? 'var(--arms-both)'
+        : noteColor(note.lane, note.direction, note.hand, note.armAction),
     } as React.CSSProperties;
   };
   const beats = useMemo(() => createBeatMap(chart.tempoSegments), [chart.tempoSegments]);
@@ -92,7 +95,7 @@ export function Player({
       </div>
       <div className="lanes-stack">
         {LANES.map((lane, i) => {
-          const visible = chart.notes.filter(
+          const visible = displayNotes.filter(
             (n) =>
               n.lane === lane.id &&
               n.timeMs <= time + PREVIEW_MS + 300 &&
@@ -113,7 +116,7 @@ export function Player({
             Math.max(0, (nextHeadDistance / metrics.marker - 0.85) / 0.3),
           );
           const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
-          const release = chart.notes
+          const release = displayNotes
             .filter(
               (n) =>
                 n.lane === lane.id &&
@@ -171,13 +174,15 @@ export function Player({
                         data-direction={note.direction}
                         data-note-id={note.id}
                         data-action={noteAction(note)}
-                        aria-label={`${lane.english} ${isFollowStep(note) ? noteAction(note) : noteSymbol(note.lane, note.direction, note.distance)}`}
+                        aria-label={`${lane.english} ${isFollowStep(note) ? noteAction(note) : noteSymbol(note.lane, note.direction, note.distance, note.armAction)}`}
                       >
                         <NoteGlyph
                           joined={!showGuide && joinedTaps.has(note.id)}
                           follow={isFollowStep(note)}
                           lane={note.lane}
                           direction={note.direction}
+                          armAction={note.armAction}
+                          pairedPunch={note.pairedPunch}
                           distance={note.distance}
                         />
                       </div>
@@ -209,7 +214,7 @@ export function Player({
                       className={`player-hold ${note.modifier === 'sway' ? 'sway' : ''} ${time >= note.timeMs ? 'active' : ''}`}
                       data-direction={note.direction}
                       data-note-id={note.id}
-                      aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)} ${noteAction(note)}`}
+                      aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance, note.armAction)} ${noteAction(note)}`}
                       style={
                         {
                           left: `${tail}%`,
@@ -244,7 +249,9 @@ export function Player({
                         {showGuide &&
                           (note.lane === 'step' || note.lane === 'punch') &&
                           note.modifier === 'sway' &&
-                          (note.direction === 'left' || note.direction === 'right') && (
+                          (note.lane === 'punch' ||
+                            note.direction === 'left' ||
+                            note.direction === 'right') && (
                             <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
                               {note.lane === 'punch' ? <PalmPrint /> : <ShoePrint />}
                             </svg>
@@ -257,6 +264,8 @@ export function Player({
                           joined={!showGuide}
                           lane={note.lane}
                           direction={note.direction}
+                          armAction={note.armAction}
+                          pairedPunch={note.pairedPunch}
                           distance={note.distance}
                         />
                       </div>
@@ -271,7 +280,7 @@ export function Player({
                   data-direction={holding?.direction}
                   aria-label={
                     holding
-                      ? `${lane.english} ${noteSymbol(holding.lane, holding.direction, holding.distance)} ${noteAction(holding)}`
+                      ? `${lane.english} ${noteSymbol(holding.lane, holding.direction, holding.distance, holding.armAction)} ${noteAction(holding)}`
                       : `${lane.english} target`
                   }
                   style={{ opacity: cueOpacity, ...(holding ? noteStyle(holding) : {}) }}
@@ -288,6 +297,8 @@ export function Player({
                         joined={!showGuide}
                         lane={holding.lane}
                         direction={holding.direction}
+                        armAction={holding.armAction}
+                        pairedPunch={holding.pairedPunch}
                         distance={holding.distance}
                         size={29}
                       />
