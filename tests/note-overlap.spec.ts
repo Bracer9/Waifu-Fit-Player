@@ -2,6 +2,108 @@ import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { LANES, type Chart, type Note } from '../src/model';
 
+test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP 保持独立', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() =>
+    Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true }),
+  );
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto('/');
+  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
+  const chart: Chart = JSON.parse(await readFile((await (await downloading).path())!, 'utf8'));
+  chart.title = 'HOLD AND RETURN';
+  chart.specialEvents = [];
+  chart.notes = LANES.flatMap((lane) =>
+    [0, 200, -200].flatMap((gap, group) => {
+      const start = 3000 + group * 10000;
+      return [
+        {
+          id: `${lane.id}-${group}-hold`,
+          lane: lane.id,
+          direction: lane.directions[0],
+          timeMs: start,
+          endTimeMs: start + 2000,
+          kind: 'hold',
+          modifier: lane.id === 'punch' || lane.id === 'side_crunch' ? 'sway' : 'none',
+        },
+        {
+          id: `${lane.id}-${group}-return`,
+          lane: lane.id,
+          direction: lane.directions[1],
+          timeMs: start + 2000 + gap,
+          kind: 'tap',
+        },
+      ] satisfies Note[];
+    }),
+  );
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'hold-and-return.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
+  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+  const video = page.locator('video');
+  const seek = async (seconds: number) => {
+    await video.evaluate((v: HTMLVideoElement, time) => {
+      v.currentTime = time;
+    }, seconds);
+    await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.seeking)).toBe(false);
+  };
+  const holds = (group: number) =>
+    page.locator(`.practice .player-hold[data-note-id$="-${group}-hold"]`);
+  const taps = (group: number) =>
+    page.locator(`.practice .player-note[data-note-id$="-${group}-return"]`);
+  await seek(2.75);
+  await page.screenshot({ path: 'artifacts/hold-return-fullscreen-1920.png' });
+  await page.getByTestId('lane-squat').screenshot({ path: 'artifacts/hold-return-squat-1920.png' });
+  await expect(holds(0).locator('.ribbon-release-shape')).toHaveCount(5);
+  await expect(holds(0).locator('mask ellipse')).toHaveCount(0);
+  await expect(holds(0).locator('.hold-tail')).toHaveCount(0);
+  await expect(taps(0).locator('.glyph--joined')).toHaveCount(5);
+  await expect(taps(0).locator('.glyph-edge')).toHaveCount(0);
+  const step = page.getByTestId('lane-step');
+  await expect(step.locator('.ribbon-color')).toHaveCSS('fill', 'rgb(53, 201, 219)');
+  await expect(step.locator('.ribbon-release-shape path')).toHaveCSS('fill', 'rgb(246, 78, 147)');
+  for (const viewport of [
+    { width: 1280, height: 720 },
+    { width: 2560, height: 1440 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const arrow of await taps(0).all()) await expect(arrow).toBeVisible();
+    await page.screenshot({ path: `artifacts/hold-return-${viewport.width}.png` });
+  }
+  await seek(4.7);
+  await expect(holds(0).locator('.ribbon-release-shape')).toHaveCount(5);
+  await page.screenshot({ path: 'artifacts/hold-return-before-release.png' });
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect
+    .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
+    .toBeGreaterThan(5.05);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(holds(0)).toHaveCount(0);
+  await expect(taps(0)).toHaveCount(0);
+  for (const [group, seconds] of [
+    [1, 12.75],
+    [2, 22.75],
+  ]) {
+    await seek(seconds);
+    await expect(holds(group).locator('.hold-tail')).toHaveCount(5);
+    await expect(holds(group).locator('.ribbon-release-shape')).toHaveCount(0);
+    await expect(taps(group).locator('.glyph-edge')).toHaveCount(5);
+  }
+  await seek(2.75);
+  await expect(holds(0).locator('.ribbon-release-shape')).toHaveCount(5);
+  expect(errors).toEqual([]);
+});
+
 test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相接才共用连接点', async ({ page }) => {
   await page.addInitScript(() =>
     Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true }),

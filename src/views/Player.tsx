@@ -51,22 +51,23 @@ export function Player({
     observer.observe(probe);
     return () => observer.disconnect();
   }, []);
-  const joinedTails = useMemo(
-    () =>
-      new Set(
-        chart.notes
-          .filter(
-            (note) =>
-              note.kind === 'hold' &&
-              chart.notes.some(
-                (next) =>
-                  next.id !== note.id && next.lane === note.lane && next.timeMs === note.endTimeMs,
-              ),
-          )
-          .map((note) => note.id),
-      ),
-    [chart.notes],
-  );
+  const { joinedTails, joinedTaps } = useMemo(() => {
+    const starts = new Map<string, Note>();
+    for (const note of chart.notes) {
+      const key = `${note.lane}:${note.timeMs}`;
+      if (!starts.has(key)) starts.set(key, note);
+    }
+    const joinedTails = new Map<string, Note>();
+    const joinedTaps = new Set<string>();
+    for (const note of chart.notes) {
+      if (note.kind !== 'hold') continue;
+      const next = starts.get(`${note.lane}:${note.endTimeMs}`);
+      if (!next || next.id === note.id) continue;
+      joinedTails.set(note.id, next);
+      if (next.kind === 'tap') joinedTaps.add(next.id);
+    }
+    return { joinedTails, joinedTaps };
+  }, [chart.notes]);
   const noteStyle = (note: Note): React.CSSProperties => {
     return {
       '--lane': noteColor(note.lane, note.direction),
@@ -171,6 +172,7 @@ export function Player({
                         aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance)}`}
                       >
                         <NoteGlyph
+                          joined={!showGuide && joinedTaps.has(note.id)}
                           lane={note.lane}
                           direction={note.direction}
                           distance={note.distance}
@@ -180,8 +182,15 @@ export function Player({
                   const tail = noteX(note.endTimeMs, time, 88, PREVIEW_MS);
                   const right = Math.min(head, 88);
                   const remainingPx = (Math.max(0, right - tail) * metrics.width) / 100;
+                  const next = joinedTails.get(note.id);
+                  // A TAP at the release time becomes the ribbon's end arrow, sharing
+                  // its outline rather than cutting a marker-sized hole in the body.
+                  const releaseNote = next?.kind === 'tap' ? next : undefined;
                   const gaps = visible
-                    .filter((other) => other.id !== note.id && other.timeMs > time)
+                    .filter(
+                      (other) =>
+                        other.id !== note.id && other.id !== releaseNote?.id && other.timeMs > time,
+                    )
                     .map(
                       (other) =>
                         ((noteX(other.timeMs, time, 88, PREVIEW_MS) - tail) * metrics.width) / 100,
@@ -222,6 +231,7 @@ export function Player({
                             time < note.timeMs ? 1 : holding?.id === note.id ? cueOpacity : 0
                           }
                           joinedTail={joinedTail}
+                          releaseNote={releaseNote}
                           gaps={gaps}
                           sway={note.modifier === 'sway'}
                         />

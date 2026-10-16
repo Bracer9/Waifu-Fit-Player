@@ -495,7 +495,8 @@ body:has(.practice-app) {
 .ribbon-color {
   stroke: none;
 }
-.ribbon-head-shape path {
+.ribbon-head-shape path,
+.ribbon-release-shape path {
   stroke: var(--lane);
   stroke-width: 6px;
 }

@@ -1,6 +1,6 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
-import type { Note } from '../model';
+import { noteColor, type Note } from '../model';
 import { noteGlyphShape } from './Glyph';
 
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
@@ -12,6 +12,7 @@ export function HoldRibbon({
   note,
   headOpacity,
   joinedTail,
+  releaseNote,
   gaps,
   sway,
 }: {
@@ -22,6 +23,7 @@ export function HoldRibbon({
   note: Note;
   headOpacity: number;
   joinedTail: boolean;
+  releaseNote?: Extract<Note, { kind: 'tap' }>;
   gaps: number[];
   sway: boolean;
 }) {
@@ -33,6 +35,10 @@ export function HoldRibbon({
   // Meet the left junction of the free-sway loop without filling its open centres.
   const headGap = connected ? (note.direction === 'free' ? size * 0.4 : 0) : size * 0.32;
   const glyph = noteGlyphShape(note.lane, note.direction, note.distance);
+  const releaseGlyph = releaseNote
+    ? noteGlyphShape(releaseNote.lane, releaseNote.direction, releaseNote.distance)
+    : undefined;
+  const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   const path = useMemo(
     () =>
       ribbonOutline({
@@ -42,11 +48,11 @@ export function HoldRibbon({
         height,
         bandWidth: size * 0.32,
         headGap,
-        tailGap: joinedTail ? size * 0.5 : 0,
+        tailGap,
         sway,
         connected,
       }),
-    [durationMs, fullWidth, width, height, size, headGap, joinedTail, sway, connected],
+    [durationMs, fullWidth, width, height, size, headGap, tailGap, sway, connected],
   );
   return (
     <>
@@ -117,6 +123,23 @@ export function HoldRibbon({
                     d={glyph.path}
                     fillRule="evenodd"
                     transform={`rotate(${glyph.angle} 20 20)`}
+                  />
+                </g>
+              )}
+              {releaseNote && releaseGlyph && (
+                <g
+                  className="ribbon-release-shape"
+                  transform={`translate(${-size / 2} ${(height - size) / 2}) scale(${size / 40})`}
+                  style={
+                    {
+                      '--lane': noteColor(releaseNote.lane, releaseNote.direction),
+                    } as React.CSSProperties
+                  }
+                >
+                  <path
+                    d={releaseGlyph.path}
+                    fillRule="evenodd"
+                    transform={`rotate(${releaseGlyph.angle} 20 20)`}
                   />
                 </g>
               )}
