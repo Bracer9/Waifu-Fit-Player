@@ -21,6 +21,7 @@ export class MediaController {
   private timeListeners = new Set<() => void>();
   private statusListeners = new Set<() => void>();
   private frame = 0;
+  private nextFrameAt = 0;
   private cleanup?: () => void;
   subscribeTime = (listener: () => void) => {
     this.timeListeners.add(listener);
@@ -62,8 +63,15 @@ export class MediaController {
     cancelAnimationFrame(this.frame);
     if (next.playing) this.frame = requestAnimationFrame(this.tick);
   };
-  private tick = () => {
-    this.readTime();
+  private tick = (timestamp: number) => {
+    // High-refresh displays must not rebuild all SVG tracks 120/144 times per second.
+    // Only rendering is capped; every published time is read fresh from the video.
+    const frameMs = 1000 / 60;
+    if (timestamp + 0.5 >= this.nextFrameAt) {
+      this.readTime();
+      this.nextFrameAt +=
+        (Math.floor(Math.max(0, timestamp - this.nextFrameAt) / frameMs) + 1) * frameMs;
+    }
     if (this.element && !this.element.paused) this.frame = requestAnimationFrame(this.tick);
   };
   attach = (video: HTMLVideoElement | null) => {

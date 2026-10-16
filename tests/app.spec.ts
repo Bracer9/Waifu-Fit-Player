@@ -236,9 +236,15 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await expect(flying).toHaveCount(0);
   await seek(page, 3.5);
   await expect(flying).toHaveCount(5);
-  expect(
-    await flying.evaluateAll((els) => els.map((el) => (el as HTMLElement).style.left)),
-  ).toEqual(Array(5).fill('22%'));
+  const positions = await flying.evaluateAll((els) =>
+    els.map((el) => {
+      const token = el as HTMLElement;
+      const x =
+        new DOMMatrixReadOnly(getComputedStyle(token).transform).m41 + token.offsetWidth / 2;
+      return x / token.closest<HTMLElement>('.note-highway')!.clientWidth;
+    }),
+  );
+  for (const position of positions) expect(position).toBeCloseTo(0.22, 3);
   await seek(page, 4.2);
   await expect(page.locator('.special-token .lucide-heart')).toHaveCount(5);
   for (const viewport of [
@@ -260,13 +266,19 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await seek(page, 5.14);
   await expect(flying).toHaveCount(0);
   await expect(bursts).toHaveCount(5);
-  await expect(bursts.locator('.special-shard')).toHaveCount(70);
+  await expect(bursts.locator('.special-burst-sprite')).toHaveCount(5);
+  await expect(bursts.locator('.special-shard')).toHaveCount(0);
   for (const lane of LANES)
     await expect(page.getByTestId(`lane-${lane.id}`).getByTestId('special-burst')).toHaveCount(1);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'holding');
-  const frozenFrame = await bursts.evaluateAll((els) => els.map((el) => el.innerHTML));
+  const burstFrames = () =>
+    bursts
+      .locator('.special-burst-sprite')
+      .evaluateAll((els) => els.map((el) => (el as HTMLElement).style.cssText));
+  const frozenFrame = await burstFrames();
+  expect(frozenFrame).toHaveLength(5);
   await page.waitForTimeout(180);
-  expect(await bursts.evaluateAll((els) => els.map((el) => el.innerHTML))).toEqual(frozenFrame);
+  expect(await burstFrames()).toEqual(frozenFrame);
   await page.screenshot({ path: 'artifacts/special-burst-1920.png', fullPage: true });
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.screenshot({ path: 'artifacts/special-burst-1280.png', fullPage: true });
@@ -291,11 +303,12 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await seek(page, 11.3);
   await expect(page.locator('.special-lane-effect')).toHaveCount(0);
   await seek(page, 5.14);
-  expect(await bursts.evaluateAll((els) => els.map((el) => el.innerHTML))).toEqual(frozenFrame);
+  expect(await burstFrames()).toEqual(frozenFrame);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(bursts.locator('.special-shard').first()).not.toBeVisible();
-  await expect(bursts.locator('.special-flare').first()).not.toBeVisible();
-  await expect(bursts.locator('.special-echo').first()).toBeVisible();
+  await expect(bursts.locator('.special-reduced-echo')).toHaveCount(5);
+  await expect(bursts.locator('.special-burst-sprite')).toHaveCount(0);
+  await expect(bursts.locator('.special-wave').first()).not.toBeVisible();
+  expect(await burstFrames()).not.toEqual(frozenFrame);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await seek(page, 2);
   await expect(page.locator('.special-lane-effect')).toHaveCount(0);

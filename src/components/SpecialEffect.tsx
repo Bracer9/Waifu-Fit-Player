@@ -1,23 +1,47 @@
-import type { CSSProperties } from 'react';
-import { Heart, Sparkles, Star } from 'lucide-react';
+import { memo, useSyncExternalStore } from 'react';
 import type { Chart } from '../model';
 import type { SpecialVisual } from '../special';
 
 type IconName = NonNullable<Chart['specialMove']>['icon'];
-export function SpecialGlyph({ icon }: { icon: IconName }) {
-  const Icon = icon === 'star' ? Star : icon === 'sparkles' ? Sparkles : Heart;
-  return <Icon className="special-glyph" strokeWidth={3.6} />;
+const textures = new Map<string, HTMLImageElement>();
+/** Load the small baked textures when entering the player, before the first cue. */
+export function preloadSpecialTextures() {
+  if (textures.size) return;
+  const names = [
+    'heart',
+    'star',
+    'sparkles',
+    'star-white',
+    'star-cyan',
+    'burst-heart',
+    'burst-star',
+    'burst-sparkles',
+  ];
+  names.forEach((name) => {
+    const image = new Image();
+    image.src = `/art/special/${name}.png`;
+    // Downloading alone can defer PNG decoding until the first burst's critical frame.
+    void image.decode().catch(() => {});
+    textures.set(name, image);
+  });
 }
+export const SpecialGlyph = memo(function SpecialGlyph({ icon }: { icon: IconName }) {
+  return (
+    <svg className={`special-glyph lucide-${icon}`} viewBox="0 0 24 24" aria-hidden="true">
+      <image href={`/art/special/${icon}.png`} x="-12" y="-12" width="48" height="48" />
+    </svg>
+  );
+});
 
 /** All motion comes from media progress; no independent CSS animation or wall-clock timers. */
 export function SpecialEffect({
   visual,
   icon,
-  row,
+  width,
 }: {
   visual: SpecialVisual;
   icon: IconName;
-  row: number;
+  width: number;
 }) {
   const { event, phase, progress, remaining } = visual;
   return (
@@ -26,7 +50,9 @@ export function SpecialEffect({
         <div
           className={`special-token ${phase}`}
           data-testid={`special-${phase}`}
-          style={{ left: `${progress * 88}%` }}
+          style={{
+            transform: `translate3d(${progress * 0.88 * width}px, -50%, 0) translateX(-50%)`,
+          }}
         >
           {phase === 'flying' && <span className="special-comet" />}
           <div
@@ -49,69 +75,56 @@ export function SpecialEffect({
           )}
         </div>
       )}
-      {visual.bursts.map(({ kind, progress: p }) => {
-        const ease = 1 - (1 - p) ** 3;
-        const fade = (1 - p) ** 1.5;
-        return (
-          <div
-            className={`special-burst ${kind}`}
-            key={kind}
-            data-testid="special-burst"
-            data-kind={kind}
-          >
-            <div
-              className="special-wave"
-              style={{
-                opacity: fade * 0.55,
-                transform: `translate(-100%, -50%) scaleX(${0.3 + ease * 0.7})`,
-              }}
-            />
-            <div
-              className="special-flare"
-              style={{
-                opacity: fade,
-                transform: `translate(-50%, -50%) scale(${0.6 + ease * 1.8}, ${1 - p * 0.5})`,
-              }}
-            />
-            {[0, 1].map((ring) => (
-              <div
-                key={ring}
-                className={`special-shockwave ring-${ring}`}
-                style={{
-                  opacity: fade * (ring ? 0.65 : 1),
-                  transform: `translate(-50%, -50%) scale(${0.7 + ease * (ring ? 1.6 : 1.1)}, ${0.55 + ease * 0.45}) rotate(${ring ? -18 : 18}deg)`,
-                }}
-              />
-            ))}
-            <div
-              className="special-echo"
-              style={{
-                opacity: fade,
-                transform: `translate(-50%, -50%) scale(${1 + ease * 0.65}) rotate(${(row % 2 ? 1 : -1) * ease * 16}deg)`,
-              }}
-            >
-              <SpecialGlyph icon={icon} />
-            </div>
-            {Array.from({ length: 14 }, (_, i) => {
-              const angle = (i / 14) * Math.PI * 2 + row * 0.17;
-              const distance = 0.3 + ease * (i % 2 ? 1.9 : 1.4);
-              return (
-                <i
-                  key={i}
-                  className={`special-shard ${i % 3 === 0 ? 'star' : 'streak'}`}
-                  style={
-                    {
-                      '--shard-color': ['#faffff', 'var(--pink)', 'var(--cyan)', '#faffff'][i % 4],
-                      opacity: fade,
-                      transform: `translate(-50%, -50%) translate(calc(var(--special-size) * ${Math.cos(angle) * distance}), calc(var(--special-size) * ${Math.sin(angle) * (0.12 + ease * 0.4)})) rotate(${(angle * 180) / Math.PI + ease * 90}deg) scale(${1 - p * 0.5})`,
-                    } as CSSProperties
-                  }
-                />
-              );
-            })}
-          </div>
-        );
-      })}
+      {visual.bursts.map(({ kind, progress: p }) => (
+        <SpecialBurst key={kind} kind={kind} progress={p} icon={icon} />
+      ))}
+    </div>
+  );
+}
+
+const reducedSnapshot = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const subscribeReduced = (listener: () => void) => {
+  const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+  query.addEventListener('change', listener);
+  return () => query.removeEventListener('change', listener);
+};
+
+/** Select a baked frame directly from media progress; missed frames are never queued. */
+function SpecialBurst({
+  kind,
+  progress: p,
+  icon,
+}: {
+  kind: 'arrival' | 'release';
+  progress: number;
+  icon: IconName;
+}) {
+  const reduced = useSyncExternalStore(subscribeReduced, reducedSnapshot);
+  const frame = Math.min(49, Math.floor(p * 50));
+  return (
+    <div className={`special-burst ${kind}`} data-testid="special-burst" data-kind={kind}>
+      <div
+        className="special-wave"
+        hidden={reduced}
+        style={{
+          opacity: (1 - p) ** 1.5 * 0.55,
+          transform: `translate(-100%, -50%) scaleX(${0.3 + (1 - (1 - p) ** 3) * 0.7})`,
+        }}
+      />
+      {reduced ? (
+        <div className="special-reduced-echo" style={{ opacity: (1 - p) ** 1.5 }}>
+          <SpecialGlyph icon={icon} />
+        </div>
+      ) : (
+        <div
+          className="special-burst-sprite"
+          data-frame={frame}
+          style={{
+            backgroundImage: `url(/art/special/burst-${icon}.png)`,
+            backgroundPosition: `${((frame % 10) / 9) * 100}% ${(Math.floor(frame / 10) / 4) * 100}%`,
+          }}
+        />
+      )}
     </div>
   );
 }

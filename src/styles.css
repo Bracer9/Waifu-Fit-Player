@@ -1010,10 +1010,12 @@ nav button.active:after {
 }
 .special-token {
   position: absolute;
+  left: 0;
   top: 50%;
   width: var(--special-size);
   height: var(--special-size);
   transform: translate(-50%, -50%);
+  will-change: transform;
 }
 .special-token-face {
   position: relative;
@@ -1026,37 +1028,26 @@ nav button.active:after {
   width: 88%;
   height: 88%;
   overflow: visible;
-  fill: #faffff;
-  stroke: var(--pink);
-  stroke-linejoin: round;
-  paint-order: stroke fill;
-  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px var(--pink)) drop-shadow(0 0 8px #f64e9390);
-}
-.special-glyph.lucide-sparkles > path:not(:first-child) {
-  stroke: var(--cyan);
-  stroke-width: 1.3;
-  fill: none;
+  /* Glow is in the cached texture, not a live filter in the 3D/video compositor. */
 }
 .special-token-face::before,
 .special-token-face::after {
   content: '';
   position: absolute;
-  width: 13%;
-  height: 13%;
-  background: #faffff;
-  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-  filter: drop-shadow(0 0 3px var(--cyan));
+  width: 42%;
+  height: 42%;
+  background: url('/art/special/star-white.png') center / contain no-repeat;
 }
 .special-token-face::before {
-  left: -10%;
-  top: 8%;
+  left: -25%;
+  top: -7%;
 }
 .special-token-face::after {
-  right: -8%;
-  bottom: 6%;
-  width: 9%;
-  height: 9%;
-  background: var(--cyan);
+  right: -19%;
+  bottom: -5%;
+  width: 30%;
+  height: 30%;
+  background-image: url('/art/special/star-cyan.png');
 }
 .special-comet {
   position: absolute;
@@ -1077,14 +1068,12 @@ nav button.active:after {
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--pink) 65%, #faffff);
   top: 44%;
-  box-shadow: 0 0 5px var(--pink);
 }
 .special-comet::after {
   width: 54%;
   height: 1px;
   top: 72%;
   background: linear-gradient(90deg, transparent, var(--cyan));
-  box-shadow: 0 0 4px var(--cyan);
 }
 .special-hold-ring {
   position: absolute;
@@ -1096,7 +1085,6 @@ nav button.active:after {
   stroke: var(--cyan);
   stroke-width: 2.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 3px var(--cyan));
 }
 .special-burst {
   position: absolute;
@@ -1105,81 +1093,32 @@ nav button.active:after {
   width: 0;
   height: 0;
 }
-.special-wave,
-.special-flare,
-.special-shockwave,
-.special-echo,
-.special-shard {
-  position: absolute;
-}
 .special-wave {
+  position: absolute;
   width: calc(var(--special-size) * 4.5);
   height: calc(var(--special-size) * 0.8);
   background: linear-gradient(90deg, transparent, #35c9db14 30%, #f64e9370 80%, #faffff90);
   clip-path: polygon(0 50%, 100% 0, 100% 100%);
   transform-origin: right center;
 }
-.special-flare {
-  width: calc(var(--special-size) * 2);
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #faffff 42% 58%, transparent);
-  box-shadow: 0 0 12px var(--pink);
-}
-.special-flare::after {
-  content: '';
+.special-burst-sprite {
   position: absolute;
-  width: 3px;
-  height: calc(var(--special-size) * 1.1);
-  left: calc(50% - 1.5px);
-  top: calc(var(--special-size) * -0.55);
-  background: linear-gradient(transparent, #faffff, transparent);
-  box-shadow: 0 0 8px var(--cyan);
+  width: calc(var(--special-size) * 5);
+  height: calc(var(--special-size) * 2.40625);
+  background-size: 1000% 500%;
+  background-repeat: no-repeat;
+  transform: translate(-50%, -50%);
 }
-.special-shockwave {
-  width: var(--special-size);
-  height: var(--special-size);
-  border: 2px solid #faffff;
-  border-radius: 50%;
-  box-shadow:
-    0 0 6px var(--pink),
-    inset 0 0 6px var(--pink);
-}
-.special-shockwave.ring-1 {
-  border-color: var(--cyan);
-  border-width: 1.5px;
-  box-shadow: 0 0 7px var(--cyan);
-}
-.special-echo {
+.special-reduced-echo {
+  position: absolute;
   width: var(--special-size);
   height: var(--special-size);
   display: grid;
   place-items: center;
-}
-.special-echo .special-glyph {
-  fill: #faffffcc;
-  stroke-width: 2;
-}
-.special-shard {
-  background: var(--shard-color);
-  box-shadow:
-    0 0 3px #fff,
-    0 0 8px var(--shard-color);
-}
-.special-shard.streak {
-  width: calc(var(--special-size) * 0.25);
-  height: calc(var(--special-size) * 0.035);
-  border-radius: 2px;
-}
-.special-shard.star {
-  width: calc(var(--special-size) * 0.14);
-  height: calc(var(--special-size) * 0.14);
-  clip-path: polygon(50% 0, 63% 37%, 100% 50%, 63% 63%, 50% 100%, 37% 63%, 0 50%, 37% 37%);
+  transform: translate(-50%, -50%);
 }
 .editing .special-lane-effect {
   --special-size: 27px;
-}
-.editing .special-shard {
-  display: none;
 }
 .practice .special-lane-effect {
   --special-size: calc(var(--note-size) * 1.25);
@@ -2709,17 +2648,11 @@ nav button.active:after {
 }
 @media (prefers-reduced-motion: reduce) {
   .special-comet,
-  .special-shard,
-  .special-flare,
   .special-wave {
     display: none;
   }
   .special-token-face {
     transform: none !important;
-  }
-  .special-shockwave,
-  .special-echo {
-    transform: translate(-50%, -50%) !important;
   }
   .impact-particle,
   .impact-halo {

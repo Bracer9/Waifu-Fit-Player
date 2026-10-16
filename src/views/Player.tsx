@@ -13,7 +13,7 @@ import { noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
-import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
+import { SpecialEffect, SpecialGlyph, preloadSpecialTextures } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { createBeatMap, sustainPulseAt } from '../combo';
 const PREVIEW_MS = 3600;
@@ -30,6 +30,7 @@ export function Player({
   const tracks = useRef<HTMLElement>(null);
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {
+    preloadSpecialTextures();
     const root = tracks.current!;
     const highway = root.querySelector<HTMLElement>('.note-highway')!;
     const probe = root.querySelector<HTMLElement>('.note-metrics')!;
@@ -288,7 +289,7 @@ export function Player({
                       key={visual.event.id}
                       visual={visual}
                       icon={chart.specialMove!.icon}
-                      row={i}
+                      width={metrics.width}
                     />
                   ))}
               </div>
