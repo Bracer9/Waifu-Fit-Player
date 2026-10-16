@@ -29,6 +29,7 @@ export function HoldRibbon({
 }) {
   const mask = useId();
   const outline = useId();
+  const shoeClip = useId();
   const width = Math.max(1, fullWidth * visibleFraction);
   const height = size * 1.08;
   const connected = headOpacity > 0;
@@ -47,9 +48,7 @@ export function HoldRibbon({
     note.lane === 'step' &&
     sway &&
     (note.direction === 'left' || note.direction === 'right') &&
-    shoeX > size * 0.65 &&
-    shoeX < width - size * 0.75 &&
-    !gaps.some((x) => Math.abs(x - shoeX) < size * 0.85);
+    shoeX > size * 0.75;
   const path = useMemo(
     () =>
       ribbonOutline({
@@ -75,6 +74,11 @@ export function HoldRibbon({
           data-visible-fraction={visibleFraction}
         >
           <defs>
+            {showShoe && (
+              <clipPath id={shoeClip} clipPathUnits="userSpaceOnUse">
+                <rect x={-size} y={-size} width={width + size} height={height + size * 2} />
+              </clipPath>
+            )}
             <filter
               id={outline}
               filterUnits="userSpaceOnUse"
@@ -155,15 +159,19 @@ export function HoldRibbon({
                 </g>
               )}
             </g>
-            {showShoe && (note.direction === 'left' || note.direction === 'right') && (
+          </g>
+          {/* Clip at the judgment line as the ribbon is consumed, without hiding
+              the entire shoe early or cutting it with another note's gap mask. */}
+          {showShoe && (
+            <g clipPath={`url(#${shoeClip})`}>
               <g
                 className="ribbon-slide-cue"
                 transform={`translate(${shoeX - shoeSize / 2} ${(height - shoeSize) / 2}) scale(${shoeSize / 40})`}
               >
                 <ShoePrint />
               </g>
-            )}
-          </g>
+            </g>
+          )}
         </svg>
       </span>
       {!joinedTail && <span className="hold-tail" aria-hidden="true" />}
