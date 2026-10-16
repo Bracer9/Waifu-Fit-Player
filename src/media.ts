@@ -39,16 +39,31 @@ export class MediaController {
   };
   getTime = () => this.timeMs;
   getStatus = () => this.status;
+  private positionInLoop = (timeMs: number) => {
+    const range = this.loopRange;
+    return range && (timeMs < range.startMs || timeMs >= range.endMs) ? range.startMs : timeMs;
+  };
   setLoopRange = (range: LoopRange | null) => {
-    this.loopRange = range && range.endMs > range.startMs ? range : null;
+    const next = range && range.endMs > range.startMs ? range : null;
+    if (next?.startMs === this.loopRange?.startMs && next?.endMs === this.loopRange?.endMs) return;
+    this.loopRange = next;
+    // A changed range is a user command: enter it once, rather than continually
+    // correcting the decoded playhead near its lower boundary.
+    if (next && this.element && !this.element.paused) {
+      const current = this.element.currentTime * 1000;
+      const target = this.positionInLoop(current);
+      if (target !== current) this.seek(target);
+    }
   };
   private readTime = () => {
     const video = this.element;
     const range = this.loopRange;
     // Seek the actual video (and its audio), never rewind a separate chart clock.
     if (video && range && !video.paused && !video.seeking && !video.ended) {
-      const timeMs = video.currentTime * 1000;
-      if (timeMs >= range.endMs || timeMs < range.startMs) video.currentTime = range.startMs / 1000;
+      // Playback only watches the END boundary. A seek may land just before the
+      // requested start due to browser precision; seeked/canplay must let it
+      // advance instead of reissuing the same seek and starving the decoder.
+      if (video.currentTime * 1000 >= range.endMs) video.currentTime = range.startMs / 1000;
     }
     const time = (this.element?.currentTime ?? 0) * 1000;
     if (time !== this.timeMs) {
@@ -123,16 +138,17 @@ export class MediaController {
   };
   seek = (timeMs: number) => {
     if (this.element && this.status.ready) {
-      this.element.currentTime = Math.max(0, Math.min(this.status.durationMs, timeMs)) / 1000;
+      const target = this.element.paused ? timeMs : this.positionInLoop(timeMs);
+      this.element.currentTime = Math.max(0, Math.min(this.status.durationMs, target)) / 1000;
       this.readTime();
     }
   };
   toggle = async () => {
     if (!this.element || !this.status.ready) return;
     if (this.element.paused) {
-      const range = this.loopRange;
       const timeMs = this.element.currentTime * 1000;
-      if (range && (timeMs < range.startMs || timeMs >= range.endMs)) this.seek(range.startMs);
+      const target = this.positionInLoop(timeMs);
+      if (target !== timeMs) this.seek(target);
       await this.element.play();
     } else this.element.pause();
   };

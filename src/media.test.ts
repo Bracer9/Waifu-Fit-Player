@@ -34,6 +34,41 @@ beforeEach(() => {
 });
 
 describe('工作台区间循环', () => {
+  it.each([
+    [65725, 73833, 0.000001],
+    [12345, 22345, 0.002],
+    [91000, 95500, 0.02],
+  ])('回跳 %i–%i ms 后读数向下取整 %f s，不重复 seek', async (startMs, endMs, rounding) => {
+    const media = new MediaController(),
+      video = new Video();
+    video.duration = 120;
+    let actual = (endMs + 1) / 1000,
+      writes = 0;
+    Object.defineProperty(video, 'currentTime', {
+      get: () => actual,
+      set: (target: number) => {
+        actual = target - rounding;
+        writes++;
+      },
+    });
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setLoopRange({ startMs, endMs });
+    video.dispatchEvent(new Event('timeupdate'));
+    for (let i = 0; i < 10; i++) {
+      video.dispatchEvent(new Event('seeked'));
+      video.dispatchEvent(new Event('canplay'));
+      video.dispatchEvent(new Event('timeupdate'));
+    }
+    expect(writes).toBe(1);
+    expect(media.getTime()).toBeCloseTo(startMs - rounding * 1000, 3);
+    actual = (startMs + 500) / 1000;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(media.getTime()).toBe(startMs + 500);
+    media.pause();
+    await media.toggle();
+    expect(writes).toBe(1);
+    media.attach(null);
+  });
   it('跨过终点直接重定位视频，暂停时可以自由定位，重新播放从范围内开始', async () => {
     const media = new MediaController(),
       video = new Video();
@@ -49,6 +84,10 @@ describe('工作台区间循环', () => {
     await media.toggle();
     expect(video.currentTime).toBe(2);
     expect(media.getStatus().playing).toBe(true);
+    media.seek(1000);
+    expect(video.currentTime).toBe(2);
+    media.setLoopRange({ startMs: 5000, endMs: 7000 });
+    expect(video.currentTime).toBe(5);
     media.setLoopRange(null);
     video.currentTime = 4.2;
     video.dispatchEvent(new Event('timeupdate'));
