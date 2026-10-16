@@ -650,7 +650,7 @@ export function Editor({
               n.lane === 'step' &&
               (n.direction === 'left' || n.direction === 'right') && (
                 <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                  <ShoePrint direction={n.direction} />
+                  <ShoePrint />
                 </svg>
               )}
             {!isSpecial && n.lane === 'step'

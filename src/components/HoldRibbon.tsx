@@ -41,7 +41,8 @@ export function HoldRibbon({
   const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
   const shoeX = fullWidth / 2;
-  const shoeSize = size * 0.82;
+  // Notes are 1.25× larger; the shoe keeps its previous dimensions.
+  const shoeSize = (size / 1.25) * 0.82;
   const showShoe =
     note.lane === 'step' &&
     sway &&
@@ -159,7 +160,7 @@ export function HoldRibbon({
                 className="ribbon-slide-cue"
                 transform={`translate(${shoeX - shoeSize / 2} ${(height - shoeSize) / 2}) scale(${shoeSize / 40})`}
               >
-                <ShoePrint direction={note.direction} />
+                <ShoePrint />
               </g>
             )}
           </g>

@@ -246,7 +246,7 @@ export function Player({
                           note.modifier === 'sway' &&
                           (note.direction === 'left' || note.direction === 'right') && (
                             <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                              <ShoePrint direction={note.direction} />
+                              <ShoePrint />
                             </svg>
                           )}
                         {noteAction(note)}

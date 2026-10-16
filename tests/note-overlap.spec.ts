@@ -271,7 +271,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   await seek(3.35);
   const heads = page.locator('.practice .hold-head, .practice .player-note');
   for (const item of await heads.all()) {
-    await expect(item).toHaveCSS('width', '52px');
+    await expect(item).toHaveCSS('width', '65px');
     const position = await item.evaluate((el) => {
       const parent = el.parentElement!;
       return Math.abs(parseFloat(getComputedStyle(el).top) - parent.clientHeight / 2);
@@ -309,7 +309,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   await page.screenshot({ path: 'artifacts/notes-free-sway-fullscreen-1920.png' });
   await seek(3.35);
   await page.setViewportSize({ width: 2560, height: 1440 });
-  await expect(heads.first()).toHaveCSS('width', '68px');
+  await expect(heads.first()).toHaveCSS('width', '85px');
   await page.screenshot({ path: 'artifacts/notes-overlap-fullscreen-2560.png' });
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.screenshot({ path: 'artifacts/notes-overlap-fullscreen-1280.png' });
