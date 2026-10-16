@@ -6,6 +6,7 @@ import { NoteGlyph, LaneGlyph } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect } from '../components/SpecialEffect';
+import { HoldRibbon } from '../components/HoldRibbon';
 const PREVIEW_MS = 3600;
 export function Player({
   chart,
@@ -119,12 +120,19 @@ export function Player({
                         {
                           left: `${tail}%`,
                           width: `${Math.max(0, right - tail)}%`,
-                          ...(note.lane === 'step'
+                          ...(!showGuide || note.lane === 'step'
                             ? { '--lane': noteColor(note.lane, note.direction) }
                             : {}),
                         } as React.CSSProperties
                       }
                     >
+                      {!showGuide && (
+                        <HoldRibbon
+                          durationMs={note.endTimeMs - note.timeMs}
+                          visibleFraction={Math.max(0, right - tail) / (head - tail)}
+                          sway={note.modifier === 'sway'}
+                        />
+                      )}
                       <span className="hold-caption">{noteAction(note)}</span>
                       <div className="hold-head">
                         <NoteGlyph
@@ -184,6 +192,7 @@ export function Player({
             </div>
           );
         })}
+        {!showGuide && <div className="judgement-line" aria-hidden="true" />}
       </div>
       <div
         className={`special-slot ${special ? 'visible' : ''} ${special?.active ? 'active' : ''}`}

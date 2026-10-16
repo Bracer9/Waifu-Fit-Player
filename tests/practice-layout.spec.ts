@@ -18,6 +18,7 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
     [1280, 720],
     [1920, 1080],
     [2560, 1080],
+    [2560, 1440],
   ]) {
     await page.setViewportSize({ width, height });
     await page.evaluate(() => document.fonts.ready);
@@ -62,13 +63,41 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
         expect(box.x + box.width).toBeLessThanOrEqual(width);
         expect(box.y + box.height).toBeLessThanOrEqual(height);
       }
+      // Measure actual transformed corners, rather than inferring a fold from shadows or CSS angles.
+      const corners = await page.locator('.stage-left, .stage-right').evaluateAll((leaves) =>
+        leaves.map((leaf) =>
+          ['0', '100%'].map((left) => {
+            const probe = document.createElement('i');
+            Object.assign(probe.style, {
+              position: 'absolute',
+              left,
+              top: '100%',
+              width: '0',
+              height: '0',
+              pointerEvents: 'none',
+            });
+            leaf.appendChild(probe);
+            const { x, y } = probe.getBoundingClientRect();
+            probe.remove();
+            return { x, y };
+          }),
+        ),
+      );
+      const [[outerLeft, spineLeft], [spineRight, outerRight]] = corners;
+      expect(outerLeft.y - spineLeft.y).toBeGreaterThan(height * 0.03);
+      expect(outerRight.y - spineRight.y).toBeGreaterThan(height * 0.03);
+      expect(Math.abs(spineLeft.x - spineRight.x)).toBeLessThan(2);
+      expect(Math.abs(spineLeft.y - spineRight.y)).toBeLessThan(2);
+      if (width === 1920)
+        console.info('Album bottom corners at 1920×1080:', JSON.stringify(corners));
     };
     await checkLayout();
-    await page.screenshot({ path: `artifacts/album-window-${width}.png`, fullPage: true });
+    const size = height === 1440 ? `${width}-${height}` : `${width}`;
+    await page.screenshot({ path: `artifacts/album-window-${size}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
     await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
     await checkLayout();
-    await page.screenshot({ path: `artifacts/album-fullscreen-${width}.png`, fullPage: true });
+    await page.screenshot({ path: `artifacts/album-fullscreen-${size}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   }
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -100,6 +129,7 @@ test('较窄与较矮窗口保留音符，竖屏可滚动且视频保持比例',
   for (const [width, height] of [
     [1024, 768],
     [1280, 640],
+    [1440, 900],
     [390, 844],
   ]) {
     await page.setViewportSize({ width, height });
@@ -113,6 +143,11 @@ test('较窄与较矮窗口保留音符，竖屏可滚动且视频保持比例',
       });
       expect(fits).toBe(true);
     }
+    expect(
+      await page
+        .locator('.lanes-stack')
+        .evaluate((stack) => stack.scrollHeight <= stack.clientHeight + 1),
+    ).toBe(true);
     expect(
       await page.locator('video').evaluate((element) => element.clientWidth / element.clientHeight),
     ).toBeCloseTo(16 / 9, 2);

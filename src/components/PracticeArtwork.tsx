@@ -1,9 +1,11 @@
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Flame, Heart } from 'lucide-react';
+import { type Chart } from '../model';
+import { MediaController, useTime } from '../media';
 
 export function PracticeBackdrop() {
   return (
     <div className="practice-backdrop" aria-hidden="true">
-      <img className="studio-scene" src="/art/studio-scene-v2.png" alt="" />
+      <img className="studio-scene" src="/art/studio-scene-v3.png" alt="" />
     </div>
   );
 }
@@ -112,7 +114,36 @@ export function PracticeForeground() {
   );
 }
 
-export function PracticeCover({ title }: { title: string }) {
+function PracticeStats({ chart, media }: { chart: Chart; media: MediaController }) {
+  const time = useTime(media);
+  // Follow-along has no input judgement. Derive its full combo from media time, including seeks.
+  const combo = chart.notes.reduce((count, note) => count + Number(note.timeMs <= time), 0);
+  return (
+    <div className="practice-stats">
+      <div className="calorie-stat" aria-label="Calories calculation coming soon">
+        <Flame aria-hidden="true" />
+        <div>
+          <span className="stat-label">CALORIES</span>
+          <strong>
+            — <small>KCAL</small>
+          </strong>
+        </div>
+      </div>
+      <span className="keep-going" aria-hidden="true">
+        KEEP
+        <br />
+        GOING!
+        <i />
+      </span>
+      <div className="combo-stat" aria-label={`Full combo ${combo}`}>
+        <span className="stat-label">FULL COMBO</span>
+        <strong>{String(combo).padStart(3, '0')}</strong>
+      </div>
+    </div>
+  );
+}
+
+export function PracticeCover({ chart, media }: { chart: Chart; media: MediaController }) {
   return (
     <>
       <div className="practice-cover" aria-hidden="true">
@@ -131,11 +162,12 @@ export function PracticeCover({ title }: { title: string }) {
           YOU <i />
         </span>
       </div>
+      <PracticeStats chart={chart} media={media} />
       <div className="practice-track-info">
         <span className="record-mark" aria-hidden="true">
           <i />
         </span>
-        <h1 title={title}>{title}</h1>
+        <h1 title={chart.title}>{chart.title}</h1>
         <span className="track-status">NOW PLAYING</span>
       </div>
     </>

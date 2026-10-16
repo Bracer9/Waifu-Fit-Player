@@ -519,7 +519,7 @@ export default function App() {
           </div>
           <div className="stage-grid">
             <div className="stage-left">
-              {mode === 'player' && <PracticeCover title={chart.title} />}
+              {mode === 'player' && <PracticeCover chart={chart} media={media} />}
               {mode !== 'home' && (
                 <Player chart={chart} media={media} showGuide={mode === 'editor'} />
               )}
