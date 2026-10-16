@@ -791,6 +791,19 @@ nav button.active:after {
   display: block;
   overflow: visible;
 }
+.shoe-print,
+.hold-ribbon .shoe-print {
+  fill: #faffff;
+  stroke: none;
+}
+.slide-cue-icon {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
 .note-glyph.glyph--follow path {
   fill: none;
   stroke-linejoin: round;

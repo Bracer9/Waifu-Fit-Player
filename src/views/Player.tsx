@@ -11,7 +11,7 @@ import {
 } from '../model';
 import { MediaController, useTime } from '../media';
 import { noteX, specialAt } from '../timing';
-import { NoteGlyph, LaneGlyph } from '../components/Glyph';
+import { NoteGlyph, LaneGlyph, ShoePrint } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect, SpecialGlyph, preloadSpecialTextures } from '../components/SpecialEffect';
@@ -240,7 +240,17 @@ export function Player({
                           sway={note.modifier === 'sway'}
                         />
                       )}
-                      <span className="hold-caption">{noteAction(note)}</span>
+                      <span className="hold-caption">
+                        {showGuide &&
+                          note.lane === 'step' &&
+                          note.modifier === 'sway' &&
+                          (note.direction === 'left' || note.direction === 'right') && (
+                            <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
+                              <ShoePrint direction={note.direction} />
+                            </svg>
+                          )}
+                        {noteAction(note)}
+                      </span>
                       <div className="hold-head">
                         <NoteGlyph
                           variant="tip"

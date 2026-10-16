@@ -38,6 +38,18 @@ export function noteGlyphShape(lane: Lane, direction: Direction, distance: StepD
         : 'M20 4L34 18H26V35H14V18H6Z';
   return { shape, angle, path };
 }
+
+/** A shoe-sole print with a rounded toe, tread grooves and a separate heel. */
+export function ShoePrint({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <path
+      className="shoe-print"
+      fillRule="evenodd"
+      transform={`rotate(${direction === 'left' ? -90 : 90} 20 20)`}
+      d="M19 2C11 2 7 8 7 15C7 20 10 23 13 25C15 27 15 28 15 29H25C24 25 26 21 28 17C31 9 26 2 19 2ZM11 10Q18 7 25 10L24.5 12Q18 9 11.5 12ZM10.5 16L24 18L23.5 20L11 18ZM15 32H25V35C25 41 14 41 14 35Z"
+    />
+  );
+}
 export function NoteGlyph({
   lane,
   direction,

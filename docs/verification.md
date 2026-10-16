@@ -17,6 +17,12 @@
 
 ## 本次 UX 修订验证
 
+### STEP SWAY 鞋印提示（2026-10-16）
+
+- 左右 STEP SWAY 的原始光带中点加入白色鞋底印，包含鞋头、底纹和分离鞋跟，方向随左右变化；工作台时间轴与预览复用图形。短条、临近头部或与其他标记相邻时避让，FREE SWAY 和 HOLD 不加鞋印。
+- 仅新增静态 SVG 路径，复用媒体时间移动；没有新增滤镜、动画或数据字段。TypeScript 与一次针对性浏览器检查通过，检查左右鞋印、编辑器、实际视频播放和 FREE SWAY／HOLD 区分。
+- 已查看实际跟练全屏与轨道近景：`artifacts/step-sway-shoe-game.png`、`artifacts/step-sway-shoe-lane.png`。测试浏览器退出；未跑完整回归或性能测试。
+
 ### STEP FOLLOW 并步 TAP（2026-10-16）
 
 - 增加 `L · FOLLOW` / `R · FOLLOW`：可独立放在任意拍点，与其他 STEP 类型互换、反向、保存重开。仅为 TAP，不支持跨度、直接延长或跨轨；快速录谱使用 Alt + ← / →，按住仍只生成单次 TAP。
