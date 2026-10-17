@@ -67,6 +67,7 @@ export function recordVideo(
     let started = 0;
     let leadMs = 0;
     let duration = 0;
+    let frameCallback = 0;
     let failure: Error | undefined;
     let tailTimer: ReturnType<typeof setTimeout> | undefined;
     const clean = () => {
@@ -75,6 +76,7 @@ export function recordVideo(
       video.removeEventListener('ended', ended);
       video.removeEventListener('error', error);
       video.removeEventListener('playing', playing);
+      video.cancelVideoFrameCallback(frameCallback);
     };
     const stop = () => {
       if (recorder.state !== 'inactive') {
@@ -92,6 +94,15 @@ export function recordVideo(
     const playing = () => {
       // Offset only the brief recorder-to-playback startup, never the BPM/grid anchor.
       leadMs = Math.max(0, performance.now() - started - video.currentTime * 1000);
+    };
+    const alignToPicture: VideoFrameRequestCallback = (_now, frame) => {
+      // `playing` can precede the actual advancing picture/audio clock. Sample
+      // once it is moving, using the displayed frame's media and presentation times.
+      if (frame.mediaTime < 0.1) {
+        frameCallback = video.requestVideoFrameCallback(alignToPicture);
+        return;
+      }
+      leadMs = Math.max(0, frame.expectedDisplayTime - started - frame.mediaTime * 1000);
     };
     // Let the capture pipeline receive the final painted frame before closing the file.
     const ended = () => {
@@ -113,12 +124,12 @@ export function recordVideo(
     video.addEventListener('error', error, { once: true });
     video.addEventListener('playing', playing, { once: true });
     recorder.onstart = () => {
-      started = performance.now();
       if (signal.aborted) {
         abort();
         return;
       }
       // A silent screen track produces frames even while the song is paused.
+      frameCallback = video.requestVideoFrameCallback(alignToPicture);
       void video
         .play()
         .catch((reason: unknown) =>
@@ -127,6 +138,9 @@ export function recordVideo(
     };
     try {
       signal.throwIfAborted();
+      // The first frame is recorded before the asynchronous `start` event arrives.
+      // Include encoder startup in the audio lead-in; using onstart loses that time.
+      started = performance.now();
       recorder.start(1000);
     } catch (reason) {
       clean();
