@@ -2653,6 +2653,20 @@ nav button.active:after {
 .video-export-modal .export-error {
   color: #d73378;
 }
+.export-audio {
+  margin: 20px 0;
+}
+.export-audio input {
+  max-width: 100%;
+}
+.video-export-modal .export-audio-name {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.export-progress {
+  width: 100%;
+  accent-color: var(--pink);
+}
 .is-exporting .practice {
   pointer-events: none;
 }

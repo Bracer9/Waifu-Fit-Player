@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { MediaController } from '../media';
 import { prepareVideoFrame } from '../usePlayerPreparation';
-import { EXPORT_PRESETS, exportSize, mp4RecordingType, recordVideo } from '../video-export';
+import {
+  EXPORT_PRESETS,
+  exportSize,
+  findExportAudio,
+  mp4RecordingType,
+  muxRecording,
+  recordVideo,
+  type ExportAudio,
+} from '../video-export';
 import { ModalBackdrop } from './ModalBackdrop';
 
 type CaptureDevices = MediaDevices & {
@@ -32,21 +40,29 @@ async function waitForCaptureLayout(signal: AbortSignal) {
 export function VideoExport({
   media,
   title,
+  videoFileName,
   onModeChange,
   onClose,
   notify,
 }: {
   media: MediaController;
   title: string;
+  videoFileName: string;
   onModeChange: (mode: 'player' | 'editor') => void;
   onClose: () => void;
   notify: (message: string) => void;
 }) {
   const [quality, setQuality] = useState(2);
-  const [phase, setPhase] = useState<'settings' | 'authorizing' | 'ready' | 'recording'>(
+  const [phase, setPhase] = useState<'settings' | 'authorizing' | 'ready' | 'recording' | 'muxing'>(
     'settings',
   );
   const [error, setError] = useState('');
+  const [defaultAudio, setDefaultAudio] = useState<ExportAudio | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [checking, setChecking] = useState(true);
+  const [serviceReady, setServiceReady] = useState(false);
+  const audio = audioFile ?? defaultAudio;
+  const audioInput = useRef<HTMLInputElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const controller = useRef<AbortController | null>(null);
   const mounted = useRef(true);
@@ -65,6 +81,24 @@ export function VideoExport({
       releaseCapture();
     };
   }, []);
+  useEffect(() => {
+    const abort = new AbortController();
+    void findExportAudio(videoFileName, abort.signal)
+      .then((found) => {
+        if (!abort.signal.aborted) {
+          setDefaultAudio(found);
+          setServiceReady(true);
+        }
+      })
+      .catch((reason: unknown) => {
+        if (!abort.signal.aborted)
+          setError(reason instanceof Error ? reason.message : '无法准备导出。');
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) setChecking(false);
+      });
+    return () => abort.abort();
+  }, [videoFileName]);
 
   const chooseTab = async () => {
     setError('');
@@ -88,15 +122,7 @@ export function VideoExport({
           height: { ideal: size.height },
           frameRate: { ideal: 60, max: 60 },
         },
-        audio: {
-          suppressLocalAudioPlayback: false,
-          // Capture music without speech processing or automatic gain changes.
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          channelCount: 2,
-          sampleRate: 48_000,
-        },
+        audio: false,
         preferCurrentTab: true,
         selfBrowserSurface: 'include',
         surfaceSwitching: 'exclude',
@@ -114,9 +140,6 @@ export function VideoExport({
         (devices.setCaptureHandleConfig && track.getCaptureHandle?.()?.handle !== handle)
       ) {
         throw new Error('请选择这个 Waifu Fit Player 标签页。');
-      }
-      if (!captured.getAudioTracks().length) {
-        throw new Error('没有捕获到声音，请重新选择当前标签页并勾选「分享标签页音频」。');
       }
       captured.getTracks().forEach((item) =>
         item.addEventListener(
@@ -148,11 +171,7 @@ export function VideoExport({
     const captured = stream.current;
     const video = media.element;
     const mimeType = mp4RecordingType();
-    if (!captured || !video || !mimeType || controller.current) return;
-    if (!media.getStatus().volume) {
-      setError('当前视频已静音，请取消导出、开启声音后再试。');
-      return;
-    }
+    if (!captured || !video || !mimeType || !audio || controller.current) return;
     const abort = new AbortController();
     controller.current = abort;
     const previous = { time: media.getTime(), rate: media.getStatus().rate };
@@ -197,7 +216,12 @@ export function VideoExport({
       if (actual.frameRate !== undefined && actual.frameRate < 59) {
         throw new Error('浏览器未提供 60 fps 录制，请尝试较低画质后重新导出。');
       }
-      const blob = await recordVideo(captured, video, mimeType, preset.bitrate, abort.signal);
+      const recording = await recordVideo(captured, video, mimeType, preset.bitrate, abort.signal);
+      releaseCapture();
+      document.removeEventListener('keydown', cancel, true);
+      document.removeEventListener('visibilitychange', hidden);
+      if (mounted.current) setPhase('muxing');
+      const blob = await muxRecording(recording, audio, abort.signal);
       abort.signal.throwIfAborted();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -210,7 +234,7 @@ export function VideoExport({
       if (mounted.current) {
         setError(
           reason instanceof DOMException && reason.name === 'AbortError'
-            ? '录制已取消，未保存不完整视频。'
+            ? '导出已取消，未保存不完整视频。'
             : reason instanceof Error
               ? reason.message
               : '导出失败，请重试。',
@@ -236,6 +260,26 @@ export function VideoExport({
   };
 
   if (phase === 'recording') return null;
+  if (phase === 'muxing')
+    return (
+      <ModalBackdrop onClose={() => controller.current?.abort()}>
+        <section
+          className="modal video-export-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="video-export-title"
+        >
+          <h2 id="video-export-title">正在合成 MP3 音轨…</h2>
+          <progress className="export-progress" aria-label="合成音轨" />
+          <p>合成完成后自动下载 MP4。</p>
+          <div className="modal-actions">
+            <button className="button light" onClick={() => controller.current?.abort()}>
+              取消
+            </button>
+          </div>
+        </section>
+      </ModalBackdrop>
+    );
   return (
     <ModalBackdrop onClose={onClose}>
       <section
@@ -262,10 +306,53 @@ export function VideoExport({
         <p>
           {size.width} × {size.height} · 60 fps · 保留当前画面比例
         </p>
+        <div className="export-audio">
+          <div className="field">
+            <span id="export-audio-label">MP3 音轨</span>
+            <input
+              ref={audioInput}
+              type="file"
+              hidden
+              aria-labelledby="export-audio-label"
+              accept=".mp3,audio/mpeg"
+              disabled={phase === 'authorizing'}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) setAudioFile(file);
+              }}
+            />
+            <button
+              className="button light"
+              disabled={phase === 'authorizing'}
+              onClick={() => audioInput.current?.click()}
+            >
+              选择 MP3 文件
+            </button>
+          </div>
+          <p className="export-audio-name">
+            {checking
+              ? '正在查找视频同目录的 MP3…'
+              : audio
+                ? `已选：${audio.name}`
+                : '未找到对应 MP3，请选择与视频同源的 MP3。'}
+          </p>
+          {audioFile && defaultAudio && (
+            <button
+              className="button light"
+              disabled={phase === 'authorizing'}
+              onClick={() => {
+                setAudioFile(null);
+                if (audioInput.current) audioInput.current.value = '';
+              }}
+            >
+              使用同目录 MP3
+            </button>
+          )}
+        </div>
         <p>
-          请先按 F11
-          全屏，再选择当前标签页并勾选「分享标签页音频」。开始导出后会播放并录制整首歌，结束后自动下载。录制期间保持此页面在前台，按
-          Esc 可取消。
+          请先按 F11 全屏，再选择当前标签页。录制画面后自动合入原始
+          MP3，不采集标签页声音，导出音量不受系统或游戏音量影响。 录制期间保持此页面在前台，按 Esc
+          可取消。
         </p>
         {error && (
           <p className="export-error" role="alert">
@@ -278,7 +365,7 @@ export function VideoExport({
           </button>
           <button
             className="button primary"
-            disabled={phase === 'authorizing'}
+            disabled={phase === 'authorizing' || checking || !serviceReady || !audio}
             onClick={() => void (phase === 'ready' ? start() : chooseTab())}
           >
             {phase === 'ready'

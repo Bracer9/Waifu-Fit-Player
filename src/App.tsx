@@ -733,6 +733,7 @@ export default function App() {
         <VideoExport
           media={media}
           title={chart.title}
+          videoFileName={chart.videoHint.fileName}
           onModeChange={setMode}
           onClose={() => setExportOpen(false)}
           notify={notify}
