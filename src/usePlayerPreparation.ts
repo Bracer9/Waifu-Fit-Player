@@ -23,7 +23,7 @@ export function playerAssets(chart: Chart): AssetManifest {
   };
 }
 
-function prepareVideoFrame(video: HTMLVideoElement, signal: AbortSignal): Promise<void> {
+export function prepareVideoFrame(video: HTMLVideoElement, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const events = ['loadeddata', 'canplay', 'seeked', 'error'];
     const finish = (error?: Error) => {
