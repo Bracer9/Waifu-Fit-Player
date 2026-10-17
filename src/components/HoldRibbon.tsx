@@ -14,7 +14,6 @@ export function HoldRibbon({
   headOpacity,
   joinedTail,
   releaseNote,
-  gaps,
   sway,
 }: {
   durationMs: number;
@@ -25,13 +24,10 @@ export function HoldRibbon({
   headOpacity: number;
   joinedTail: boolean;
   releaseNote?: Extract<DisplayNote, { kind: 'tap' }>;
-  gaps: number[];
   sway: boolean;
 }) {
-  const mask = useId();
   const outline = useId();
   const cueClip = useId();
-  const markerClip = useId();
   const width = Math.max(1, fullWidth * visibleFraction);
   const height = size * 1.08;
   const connected = headOpacity > 0;
@@ -104,42 +100,73 @@ export function HoldRibbon({
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <mask
-              id={mask}
-              maskUnits="userSpaceOnUse"
-              x={-size}
-              y={-size}
-              width={width + size * 2}
-              height={height + size * 2}
-            >
-              <rect
-                x={-size}
-                y={-size}
-                width={width + size * 2}
-                height={height + size * 2}
-                fill="white"
-              />
-              {gaps.map((x, index) => (
-                <ellipse
-                  key={index}
-                  cx={x}
-                  cy={height / 2}
-                  rx={size * 0.53}
-                  ry={size * 0.6}
-                  fill="black"
-                />
-              ))}
-            </mask>
           </defs>
-          <g mask={`url(#${mask})`}>
+          <g>
             <path className="ribbon-bloom" d={path} />
             <path className="ribbon-aura" d={path} />
             <g className="ribbon-outline" filter={`url(#${outline})`}>
               <path className="ribbon-color" d={path} />
+              {connected && (
+                <g
+                  className="ribbon-head-shape"
+                  opacity={headOpacity}
+                  transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
+                >
+                  {note.pairedPunch ? (
+                    <PunchPair ribbon />
+                  ) : (
+                    <>
+                      <path
+                        d={glyph.path}
+                        fillRule="evenodd"
+                        transform={`rotate(${glyph.angle} 20 20)`}
+                      />
+                      <GlyphLabel
+                        lane={note.lane}
+                        direction={note.direction}
+                        armAction={note.armAction}
+                      />
+                    </>
+                  )}
+                </g>
+              )}
+              {releaseNote && releaseGlyph && (
+                <g
+                  className="ribbon-release-shape"
+                  transform={`translate(${-size / 2} ${(height - size) / 2}) scale(${size / 40})`}
+                  style={
+                    {
+                      '--lane': noteColor(
+                        releaseNote.lane,
+                        releaseNote.direction,
+                        releaseNote.hand,
+                        releaseNote.armAction,
+                        releaseNote.foot,
+                      ),
+                    } as React.CSSProperties
+                  }
+                >
+                  {releaseNote.pairedPunch ? (
+                    <PunchPair ribbon />
+                  ) : (
+                    <>
+                      <path
+                        d={releaseGlyph.path}
+                        fillRule="evenodd"
+                        transform={`rotate(${releaseGlyph.angle} 20 20)`}
+                      />
+                      <GlyphLabel
+                        lane={releaseNote.lane}
+                        direction={releaseNote.direction}
+                        armAction={releaseNote.armAction}
+                      />
+                    </>
+                  )}
+                </g>
+              )}
             </g>
           </g>
-          {/* Clip at the judgment line as the ribbon is consumed, without hiding
-              the entire cue early or cutting it with another note's gap mask. */}
+          {/* Consume the cue at the judgment line along with the ribbon. */}
           {showCue && (
             <g clipPath={`url(#${cueClip})`}>
               <g
@@ -159,88 +186,6 @@ export function HoldRibbon({
         </svg>
       </span>
       {!joinedTail && <span className="hold-tail" aria-hidden="true" />}
-      {(connected || releaseNote) && (
-        <span className="hold-marker-outline" aria-hidden="true">
-          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-            <defs>
-              <clipPath id={markerClip} clipPathUnits="userSpaceOnUse">
-                {connected && (
-                  <rect x={width - size} y={-size / 2} width={size * 2} height={height + size} />
-                )}
-                {releaseNote && (
-                  <rect x={-size} y={-size / 2} width={size * 2} height={height + size} />
-                )}
-              </clipPath>
-            </defs>
-            {/* Paint the marker and its ribbon junction directly on this layer.
-                SVG use instances do not reliably preserve ancestor-dependent
-                paint rules; no cloned/shadow contour is involved here. */}
-            <g clipPath={`url(#${markerClip})`}>
-              <g className="ribbon-outline" fill="var(--lane)" filter={`url(#${outline})`}>
-                <path className="ribbon-marker-join" d={path} />
-                {connected && (
-                  <g
-                    className="ribbon-head-shape"
-                    opacity={headOpacity}
-                    transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
-                  >
-                    {note.pairedPunch ? (
-                      <PunchPair ribbon />
-                    ) : (
-                      <>
-                        <path
-                          d={glyph.path}
-                          fillRule="evenodd"
-                          transform={`rotate(${glyph.angle} 20 20)`}
-                        />
-                        <GlyphLabel
-                          lane={note.lane}
-                          direction={note.direction}
-                          armAction={note.armAction}
-                        />
-                      </>
-                    )}
-                  </g>
-                )}
-                {releaseNote && releaseGlyph && (
-                  <g
-                    className="ribbon-release-shape"
-                    transform={`translate(${-size / 2} ${(height - size) / 2}) scale(${size / 40})`}
-                    style={
-                      {
-                        '--lane': noteColor(
-                          releaseNote.lane,
-                          releaseNote.direction,
-                          releaseNote.hand,
-                          releaseNote.armAction,
-                          releaseNote.foot,
-                        ),
-                      } as React.CSSProperties
-                    }
-                  >
-                    {releaseNote.pairedPunch ? (
-                      <PunchPair ribbon />
-                    ) : (
-                      <>
-                        <path
-                          d={releaseGlyph.path}
-                          fillRule="evenodd"
-                          transform={`rotate(${releaseGlyph.angle} 20 20)`}
-                        />
-                        <GlyphLabel
-                          lane={releaseNote.lane}
-                          direction={releaseNote.direction}
-                          armAction={releaseNote.armAction}
-                        />
-                      </>
-                    )}
-                  </g>
-                )}
-              </g>
-            </g>
-          </svg>
-        </span>
-      )}
     </>
   );
 }

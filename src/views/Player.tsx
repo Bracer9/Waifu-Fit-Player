@@ -51,7 +51,12 @@ export function Player({
     observer.observe(probe);
     return () => observer.disconnect();
   }, []);
-  const displayNotes = useMemo(() => armDisplayNotes(chart.notes), [chart.notes]);
+  // Equal stacking levels follow this stable DOM order: later notes cover
+  // earlier notes as a whole, including their tails and active heads.
+  const displayNotes = useMemo(
+    () => armDisplayNotes(chart.notes).sort((a, b) => a.timeMs - b.timeMs),
+    [chart.notes],
+  );
   const { joinedTails, joinedTaps } = useMemo(() => {
     const starts = new Map<string, DisplayNote>();
     for (const note of displayNotes) {
@@ -202,22 +207,13 @@ export function Player({
                     ) : null;
                   const tail = noteX(note.endTimeMs, time, 88, PREVIEW_MS);
                   const right = Math.min(head, 88);
-                  const remainingPx = (Math.max(0, right - tail) * metrics.width) / 100;
                   const next = joinedTails.get(note.id);
                   // A TAP at the release time becomes the ribbon's end arrow, sharing
                   // its outline rather than cutting a marker-sized hole in the body.
                   const releaseNote =
                     next?.kind === 'tap' && !isFollowStep(next) ? next : undefined;
-                  const gaps = visible
-                    .filter(
-                      (other) =>
-                        other.id !== note.id && other.id !== releaseNote?.id && other.timeMs > time,
-                    )
-                    .map(
-                      (other) =>
-                        ((noteX(other.timeMs, time, 88, PREVIEW_MS) - tail) * metrics.width) / 100,
-                    )
-                    .filter((x) => x > -metrics.marker && x < remainingPx + metrics.marker);
+                  const headOpacity =
+                    time < note.timeMs ? 1 : holding?.id === note.id ? cueOpacity : 0;
                   // Only a temporal handoff (within 1 ms rounding) shares a marker. Pixel proximity
                   // must not erase a separate note's release point or shorten its body.
                   const joinedTail = joinedTails.has(note.id);
@@ -245,12 +241,9 @@ export function Player({
                           visibleFraction={Math.max(0, right - tail) / (head - tail)}
                           size={metrics.marker}
                           note={note}
-                          headOpacity={
-                            time < note.timeMs ? 1 : holding?.id === note.id ? cueOpacity : 0
-                          }
+                          headOpacity={headOpacity}
                           joinedTail={joinedTail}
                           releaseNote={releaseNote}
-                          gaps={gaps}
                           sway={note.modifier === 'sway'}
                         />
                       )}
@@ -274,7 +267,10 @@ export function Player({
                           )}
                         {noteAction(note)}
                       </span>
-                      <div className="hold-head">
+                      <div
+                        className={`hold-head${!showGuide && time >= note.timeMs ? ' holding-cue' : ''}`}
+                        style={!showGuide ? { opacity: headOpacity } : undefined}
+                      >
                         <NoteGlyph
                           variant="tip"
                           joined={!showGuide}
@@ -301,7 +297,7 @@ export function Player({
                   }
                   style={holding ? noteStyle(holding) : undefined}
                 >
-                  {holding ? (
+                  {showGuide && holding ? (
                     <span
                       className="holding-cue"
                       data-note-id={holding.id}

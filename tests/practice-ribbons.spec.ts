@@ -148,7 +148,8 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
     Number(await sway.locator('.hold-ribbon svg').getAttribute('data-visible-fraction')),
   ).toBeLessThan(1);
   const activePath = await path.getAttribute('d');
-  await expect(sway.locator('.hold-head')).toBeHidden();
+  await expect(sway.locator('.hold-head')).toBeVisible();
+  await expect(sway.locator('.hold-head')).toHaveCSS('opacity', '1');
   await expect(page.locator('.combo-stat strong')).toHaveText('014');
   const paused = await sway.getAttribute('style');
   await page.waitForTimeout(200);
@@ -195,7 +196,9 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await page.screenshot({ path: 'artifacts/arrow-free-short-hold-1920.png', fullPage: true });
   await seek(16.1);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
-  await expect(page.getByTestId('target-step').locator('.glyph--free')).toBeVisible();
+  await expect(
+    page.locator('.player-hold[data-note-id="step-free"] .holding-cue .glyph--free'),
+  ).toBeVisible();
   await page.screenshot({ path: 'artifacts/arrow-free-sway-1920.png', fullPage: true });
   await seek(2.12);
   await expect(path).toHaveAttribute('d', d!);

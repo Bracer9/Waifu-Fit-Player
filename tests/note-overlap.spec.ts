@@ -175,7 +175,29 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   };
   const firstNotes = (group: number) =>
     page.locator(`.practice .player-hold[data-note-id$="-${group}-first"]`);
+  const expectStableOrder = async () => {
+    for (const first of await firstNotes(0).all()) {
+      await expect(first).toHaveCSS('z-index', '1');
+      const id = (await first.getAttribute('data-note-id'))!;
+      const next = page.locator(`.player-hold[data-note-id="${id.replace('-first', '-next')}"]`);
+      await expect(next).toHaveCSS('z-index', '1');
+      expect(
+        await first.evaluate(
+          (element, nextId) => {
+            const next = element.parentElement!.querySelector(`[data-note-id="${nextId}"]`)!;
+            return !!(element.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING);
+          },
+          id.replace('-first', '-next'),
+        ),
+      ).toBe(true);
+      // The body and contour are painted once in the note's own layer.
+      await expect(first.locator('.ribbon-outline')).toHaveCount(1);
+      await expect(first.locator('.ribbon-color')).toHaveCount(1);
+      await expect(first.locator('.hold-marker-outline, .ribbon-marker-join')).toHaveCount(0);
+    }
+  };
   await seek(2.85);
+  await expectStableOrder();
   await page.screenshot({ path: 'artifacts/adjacent-sway-fullscreen-1920.png' });
   await page
     .getByTestId('lane-punch')
@@ -193,6 +215,7 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
     }
   }
   await seek(3.5);
+  await expectStableOrder();
   await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
@@ -202,11 +225,10 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
   // Even in the final 50 ms, the endpoint stays alive on the same layer below arrows.
   await seek(4.25);
+  await expectStableOrder();
   for (const tail of await firstNotes(0).locator('.hold-tail').all()) {
     await expect(tail).toHaveCSS('opacity', '1');
     await expect(tail).toHaveCSS('z-index', '2');
-    const marker = tail.locator('..').locator('.hold-marker-outline');
-    if (await marker.count()) await expect(marker).toHaveCSS('z-index', '3');
   }
   await page.screenshot({ path: 'artifacts/sustain-tails-before-judgment.png' });
   await seek(4.3);
@@ -302,7 +324,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   const first = page.locator('.player-hold[data-note-id="step-first"]');
   await expect(first.locator('.hold-tail')).toHaveCount(0);
   await expect(page.locator('.player-hold[data-note-id="step-free"] .hold-head')).toBeVisible();
-  await expect(page.locator('.player-hold[data-note-id="squat-hold"] mask ellipse')).toHaveCount(2);
+  await expect(page.locator('.player-hold[data-note-id="squat-hold"] mask')).toHaveCount(0);
   await expect(page.locator('.practice .note-impact .note-glyph')).toHaveCount(0);
   const tail = page.locator('.player-hold[data-note-id="punch-overlap"] .hold-tail');
   await expect(tail).toHaveCSS('background-color', 'rgb(246, 78, 147)');
@@ -335,10 +357,9 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   await seek(4.4);
   for (const lane of ['punch', 'squat']) {
     await expect(page.getByTestId(`target-${lane}`)).toHaveCSS('opacity', '1');
-    await expect(page.getByTestId(`target-${lane}`).locator('.holding-cue')).toHaveCSS(
-      'opacity',
-      '0',
-    );
+    await expect(
+      page.getByTestId(`lane-${lane}`).locator('.player-hold.active .hold-head'),
+    ).toHaveCSS('opacity', '0');
     await expect(page.getByTestId(`lane-${lane}`).locator('.judgement-ring')).toHaveCSS(
       'opacity',
       '1',
@@ -356,7 +377,10 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   await page.screenshot({ path: 'artifacts/notes-junction-fullscreen-1920.png' });
   await seek(5.04);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-direction', 'free');
-  await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveCount(1);
+  await expect(
+    page.locator('.player-hold[data-note-id="step-free"] .holding-cue .note-glyph'),
+  ).toHaveCount(1);
+  await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveCount(0);
   await expect(page.getByTestId('impact-step').locator('.note-glyph')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/notes-handoff-fullscreen-1920.png' });
   await seek(7.7);

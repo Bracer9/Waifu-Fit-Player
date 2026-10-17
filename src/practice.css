@@ -385,8 +385,10 @@ body:has(.practice-app) {
   visibility: hidden;
   pointer-events: none;
 }
-.practice .player-note {
-  z-index: 3;
+.practice .player-note,
+.practice .player-hold {
+  /* One stacking context per note. Later notes in DOM order cover earlier ones. */
+  z-index: 1;
 }
 .practice .player-note svg,
 .practice .hold-head svg,
@@ -440,7 +442,6 @@ body:has(.practice-app) {
 .practice .play-lane[data-lane='step'] .player-hold.sway {
   height: calc(var(--note-size) * 1.08);
   top: calc(50% - var(--note-size) * 0.54);
-  /* Keep every ribbon below every marker, including markers owned by other notes. */
   transform: none;
   background: none;
   border: 0;
@@ -448,8 +449,7 @@ body:has(.practice-app) {
   box-shadow: none;
   filter: none;
 }
-.hold-ribbon,
-.hold-marker-outline {
+.hold-ribbon {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -470,11 +470,6 @@ body:has(.practice-app) {
     0 0 4px var(--lane),
     0 0 9px color-mix(in srgb, var(--lane), transparent 40%);
 }
-/* Marker contours and their white cores always sit above tails, before and
-   during a sustain. A tail remains alive until release but may be occluded. */
-.hold-marker-outline {
-  z-index: 3;
-}
 .hold-tail::after {
   content: '';
   position: absolute;
@@ -483,16 +478,14 @@ body:has(.practice-app) {
   background: #faffff;
   box-shadow: 0 0 3px #fff9;
 }
-.hold-ribbon svg,
-.hold-marker-outline svg {
+.hold-ribbon svg {
   display: block;
   width: 100%;
   height: 100%;
   max-width: none;
   overflow: visible;
 }
-.hold-ribbon path,
-.hold-marker-outline path {
+.hold-ribbon path {
   fill: var(--lane);
   stroke-linejoin: round;
 }
@@ -507,8 +500,7 @@ body:has(.practice-app) {
   stroke-width: 4px;
   filter: blur(2px);
 }
-.ribbon-color,
-.ribbon-marker-join {
+.ribbon-color {
   stroke: none;
 }
 .ribbon-head-shape path,
@@ -525,7 +517,6 @@ body:has(.practice-app) {
   right: calc(var(--hold-head-size) / -2);
   z-index: 3;
 }
-.practice .player-hold.active .hold-head,
 .practice .hold-caption {
   visibility: hidden;
 }
