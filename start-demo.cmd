@@ -14,7 +14,12 @@ if not exist "node_modules\vite\bin\vite.js" (
     exit /b 1
   )
 )
-echo Opening Waifu Fit Player at http://127.0.0.1:5173/
+echo Building the latest optimized version, then opening http://127.0.0.1:5173/
 echo Keep this window open while using the app. Press Ctrl+C to stop.
-call npm run dev -- --open
-if errorlevel 1 pause
+call npm start -- --open
+if errorlevel 1 (
+  echo Startup failed. See the error above.
+  echo If port 5173 is in use, close the previous server window and try again.
+  pause
+  exit /b 1
+)
