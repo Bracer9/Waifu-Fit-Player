@@ -26,7 +26,7 @@ export function Transport({
       <button
         className="play-button"
         aria-label={status.playing ? 'Pause' : 'Play'}
-        disabled={!status.ready}
+        disabled={!status.ready || status.preparing}
         onClick={() =>
           media.toggle().catch(() => notify('Unable to start. Press Play to try again.'))
         }

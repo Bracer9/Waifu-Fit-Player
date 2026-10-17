@@ -12,9 +12,8 @@ import { MediaController, useTime } from '../media';
 import { chartTimeAt, noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
-import { preloadCrunchTextures } from '../components/CrunchImpact';
 import { specialVisualsAt } from '../special';
-import { SpecialEffect, SpecialGlyph, preloadSpecialTextures } from '../components/SpecialEffect';
+import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
@@ -32,8 +31,6 @@ export function Player({
   const tracks = useRef<HTMLElement>(null);
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {
-    preloadSpecialTextures();
-    preloadCrunchTextures();
     const root = tracks.current!;
     const highway = root.querySelector<HTMLElement>('.note-highway')!;
     const probe = root.querySelector<HTMLElement>('.note-metrics')!;

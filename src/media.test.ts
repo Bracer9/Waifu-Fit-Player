@@ -34,6 +34,20 @@ beforeEach(() => {
 });
 
 describe('工作台区间循环', () => {
+  it('资源准备中所有播放入口共用同一个拦截，准备完成后正常播放', async () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.paused = true;
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setPreparing(true);
+    video.dispatchEvent(new Event('canplay'));
+    await media.toggle();
+    expect(video.paused).toBe(true);
+    media.setPreparing(false);
+    await media.toggle();
+    expect(video.paused).toBe(false);
+    media.attach(null);
+  });
   it.each([
     [65725, 73833, 0.000001],
     [12345, 22345, 0.002],

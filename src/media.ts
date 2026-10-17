@@ -6,6 +6,7 @@ export type MediaStatus = {
   rate: number;
   volume: number;
   error: string;
+  preparing: boolean;
 };
 export type LoopRange = { startMs: number; endMs: number };
 export class MediaController {
@@ -18,6 +19,7 @@ export class MediaController {
     rate: 1,
     volume: 0.7,
     error: '',
+    preparing: false,
   };
   private timeListeners = new Set<() => void>();
   private statusListeners = new Set<() => void>();
@@ -39,6 +41,11 @@ export class MediaController {
   };
   getTime = () => this.timeMs;
   getStatus = () => this.status;
+  setPreparing = (preparing: boolean) => {
+    if (this.status.preparing === preparing) return;
+    this.status = { ...this.status, preparing };
+    this.statusListeners.forEach((fn) => fn());
+  };
   private positionInLoop = (timeMs: number) => {
     const range = this.loopRange;
     return range && (timeMs < range.startMs || timeMs >= range.endMs) ? range.startMs : timeMs;
@@ -86,6 +93,7 @@ export class MediaController {
       rate: v.playbackRate,
       volume: v.muted ? 0 : v.volume,
       error: v.error ? '视频无法播放。请尝试 H.264 视频 + AAC 音频的 MP4 文件。' : '',
+      preparing: this.status.preparing,
     };
     if (JSON.stringify(next) !== JSON.stringify(this.status)) {
       this.status = next;
@@ -146,6 +154,7 @@ export class MediaController {
   toggle = async () => {
     if (!this.element || !this.status.ready) return;
     if (this.element.paused) {
+      if (this.status.preparing) return;
       const timeMs = this.element.currentTime * 1000;
       const target = this.positionInLoop(timeMs);
       if (target !== timeMs) this.seek(target);

@@ -15,6 +15,7 @@ import {
 import { blankChart, parseChart, serializeChart, type Chart } from './model';
 import { historyReducer } from './editing';
 import { MediaController, useMediaStatus } from './media';
+import { usePlayerPreparation } from './usePlayerPreparation';
 import { isTyping } from './recording';
 import { demoChart } from './demo';
 import { Player } from './views/Player';
@@ -72,6 +73,7 @@ export default function App() {
   const [media] = useState(() => new MediaController());
   const status = useMediaStatus(media);
   const [source, setSource] = useState('');
+  const preparation = usePlayerPreparation(media, source, chart);
   const objectUrl = useRef<string | null>(null),
     fileHandle = useRef<SaveHandle | null>(null);
   const activeVideo = useRef<PreparedVideo | null>(null);
@@ -327,7 +329,7 @@ export default function App() {
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (pending || help || binding || busy) return;
+      if (pending || help || binding || busy || preparation.pending) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mode === 'editor' && mod && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -550,7 +552,7 @@ export default function App() {
                   <video
                     ref={media.attach}
                     src={source || undefined}
-                    preload="metadata"
+                    preload="auto"
                     playsInline
                     onDoubleClick={() => media.toggle().catch(() => {})}
                   />
@@ -615,6 +617,35 @@ export default function App() {
           </div>
         </div>
       </main>
+      {mode !== 'home' &&
+        preparation.pending &&
+        createPortal(
+          <div className="playback-preparation" aria-busy={!preparation.error}>
+            {preparation.error ? (
+              <div className="preparation-error" role="alert">
+                <p>{preparation.error}</p>
+                <button className="button primary small" onClick={preparation.retry}>
+                  重试
+                </button>
+                <button className="button light small" onClick={() => setMode('home')}>
+                  返回
+                </button>
+              </div>
+            ) : (
+              <div
+                className="preparation-track"
+                role="progressbar"
+                aria-label="准备播放资源"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(preparation.progress * 100)}
+              >
+                <span style={{ transform: `scaleX(${preparation.progress})` }} />
+              </div>
+            )}
+          </div>,
+          document.fullscreenElement || document.body,
+        )}
       <input
         hidden
         ref={chartInput}

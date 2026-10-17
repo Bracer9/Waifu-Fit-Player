@@ -2,16 +2,6 @@ import type { CSSProperties } from 'react';
 
 const FRAMES = 32;
 const COLUMNS = 8;
-let preloaded = false;
-export function preloadCrunchTextures() {
-  if (preloaded) return;
-  preloaded = true;
-  for (const name of ['impact', 'trail']) {
-    const image = new Image();
-    image.src = `${import.meta.env.BASE_URL}art/crunch/${name}.png`;
-    void image.decode().catch(() => undefined);
-  }
-}
 
 /** One bounded sprite replaces the normal burst; frames come only from media time. */
 export function CrunchImpact({

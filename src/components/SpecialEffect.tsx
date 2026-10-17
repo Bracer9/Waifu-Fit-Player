@@ -3,30 +3,6 @@ import type { Chart } from '../model';
 import type { SpecialVisual } from '../special';
 
 type IconName = NonNullable<Chart['specialMove']>['icon'];
-const textures = new Map<string, HTMLImageElement>();
-/** Load the small baked textures when entering the player, before the first cue. */
-export function preloadSpecialTextures() {
-  if (textures.size) return;
-  const names = [
-    'heart',
-    'star',
-    'sparkles',
-    'star-white',
-    'star-cyan',
-    'hold-strip',
-    'hold-tail',
-    'burst-heart',
-    'burst-star',
-    'burst-sparkles',
-  ];
-  names.forEach((name) => {
-    const image = new Image();
-    image.src = `/art/special/${name}.png`;
-    // Downloading alone can defer PNG decoding until the first burst's critical frame.
-    void image.decode().catch(() => {});
-    textures.set(name, image);
-  });
-}
 export const SpecialGlyph = memo(function SpecialGlyph({ icon }: { icon: IconName }) {
   return (
     <svg className={`special-glyph lucide-${icon}`} viewBox="0 0 24 24" aria-hidden="true">

@@ -21,6 +21,40 @@ body {
   margin: 0;
   min-width: 1000px;
 }
+.playback-preparation {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: #f7f4ed;
+}
+.preparation-track {
+  width: min(280px, 60vw);
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #e5dfd7;
+}
+.preparation-track > span {
+  display: block;
+  height: 100%;
+  background: var(--pink);
+  transform-origin: left;
+  transition: transform 120ms ease-out;
+}
+.preparation-error {
+  text-align: center;
+  font-size: 13px;
+}
+.preparation-error button {
+  margin: 0 5px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .preparation-track > span {
+    transition: none;
+  }
+}
 button,
 input,
 select {
