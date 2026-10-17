@@ -31,6 +31,8 @@ export function HoldRibbon({
   const mask = useId();
   const outline = useId();
   const cueClip = useId();
+  const silhouette = useId();
+  const markerClip = useId();
   const width = Math.max(1, fullWidth * visibleFraction);
   const height = size * 1.08;
   const connected = headOpacity > 0;
@@ -133,7 +135,7 @@ export function HoldRibbon({
           <g mask={`url(#${mask})`}>
             <path className="ribbon-bloom" d={path} />
             <path className="ribbon-aura" d={path} />
-            <g className="ribbon-outline" filter={`url(#${outline})`}>
+            <g id={silhouette} className="ribbon-outline" filter={`url(#${outline})`}>
               <path className="ribbon-color" d={path} />
               {connected && (
                 <g
@@ -215,11 +217,28 @@ export function HoldRibbon({
           )}
         </svg>
       </span>
-      {!joinedTail && (
-        <span
-          className={`hold-tail${visibleFraction < 1 && width < size ? ' at-target' : ''}`}
-          aria-hidden="true"
-        />
+      {!joinedTail && <span className="hold-tail" aria-hidden="true" />}
+      {(connected || releaseNote) && (
+        <span className="hold-marker-outline" aria-hidden="true">
+          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+            <defs>
+              <clipPath id={markerClip} clipPathUnits="userSpaceOnUse">
+                {connected && (
+                  <rect x={width - size} y={-size / 2} width={size * 2} height={height + size} />
+                )}
+                {releaseNote && (
+                  <rect x={-size} y={-size / 2} width={size * 2} height={height + size} />
+                )}
+              </clipPath>
+            </defs>
+            {/* Reuse the joined contour at marker level, above all tails. This
+                keeps the entire arrow edge visible without drawing a seam at
+                its ribbon junction or changing layers near the target. */}
+            <g clipPath={`url(#${markerClip})`}>
+              <use href={`#${silhouette}`} />
+            </g>
+          </svg>
+        </span>
       )}
     </>
   );
