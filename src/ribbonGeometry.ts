@@ -25,7 +25,6 @@ export function ribbonOutline({
   height,
   bandWidth,
   headGap,
-  tailGap,
   sway,
   connected = false,
 }: {
@@ -35,11 +34,11 @@ export function ribbonOutline({
   height: number;
   bandWidth: number;
   headGap: number;
-  tailGap: number;
   sway: boolean;
   connected?: boolean;
 }): string {
-  const start = tailGap;
+  // Reach the release point; a following note's head covers this junction.
+  const start = 0;
   const end = Math.max(start, visibleWidth - headGap);
   if (end - start < 1) return '';
   const taper = Math.min(bandWidth * 1.4, (end - start) * 0.4);

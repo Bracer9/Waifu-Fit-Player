@@ -129,10 +129,11 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   chart.specialEvents = [];
   chart.notes = LANES.flatMap((lane) =>
     // Reproduce the same-direction PUNCH SWAY pair from the report, plus HOLD
-    // and reversed/free STEP actions. Only the final pair shares an endpoint.
-    [200, -200, 0].flatMap((gap, group) => {
+    // and reversed/free STEP actions. Also cover an upward ARMS SWAY -> HOLD:
+    // its narrower head exposes any artificial gap at the shared endpoint.
+    [200, -200, 0, 0].flatMap((gap, group) => {
       const start = 3000 + group * 10000;
-      const direction = lane.directions[0];
+      const direction = lane.id === 'punch' && group === 3 ? 'up' : lane.directions[0];
       const modifier = lane.id === 'squat' || lane.id === 'calf_raise' ? 'none' : 'sway';
       return [
         {
@@ -152,7 +153,7 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
           timeMs: start + 1300 + gap,
           endTimeMs: start + 2600 + gap,
           kind: 'hold',
-          modifier,
+          modifier: lane.id === 'punch' && group === 3 ? 'none' : modifier,
         },
       ] satisfies Note[];
     }),
@@ -247,6 +248,16 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   await expect(
     page.locator('.practice .player-hold[data-note-id$="-2-next"] .hold-head'),
   ).toHaveCount(5);
+  for (const seconds of [32.85, 33.9, 34.25]) {
+    await seek(seconds);
+    const sway = page.locator('.practice .player-hold[data-note-id="punch-3-first"]');
+    await expect(sway.locator('.hold-tail')).toHaveCount(0);
+    expect(
+      await sway.locator('.ribbon-color').evaluate((path: SVGGraphicsElement) => path.getBBox().x),
+      'The SWAY body must reach the following HOLD head without a marker-sized gap',
+    ).toBe(0);
+    await page.screenshot({ path: `artifacts/arms-sway-hold-${seconds}.png` });
+  }
   await seek(2.85);
   await expect(firstNotes(0).locator('.hold-tail')).toHaveCount(5);
 });

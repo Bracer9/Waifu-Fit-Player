@@ -42,7 +42,6 @@ export function HoldRibbon({
         releaseNote.armAction,
       )
     : undefined;
-  const tailGap = joinedTail && !releaseNote ? size * 0.5 : 0;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
   const cueX = fullWidth / 2;
   // The wide squat arrowhead needs more horizontal presence than hand/foot cues.
@@ -62,11 +61,10 @@ export function HoldRibbon({
         height,
         bandWidth: size * 0.32,
         headGap,
-        tailGap,
         sway,
         connected,
       }),
-    [durationMs, fullWidth, width, height, size, headGap, tailGap, sway, connected],
+    [durationMs, fullWidth, width, height, size, headGap, sway, connected],
   );
   return (
     <>

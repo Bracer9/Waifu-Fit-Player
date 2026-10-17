@@ -8,7 +8,6 @@ const shape = {
   height: 56,
   bandWidth: 17,
   headGap: 17,
-  tailGap: 0,
   sway: true,
 };
 describe('long-note contours', () => {
@@ -27,7 +26,6 @@ describe('long-note contours', () => {
   });
   it('omits an exhausted body instead of making a backward or invalid shape', () => {
     expect(ribbonOutline({ ...shape, visibleWidth: 10 })).toBe('');
-    expect(ribbonOutline({ ...shape, visibleWidth: 30, tailGap: 26 })).toBe('');
     expect(ribbonOutline({ ...shape, visibleWidth: 40 })).not.toMatch(/NaN|Infinity/);
   });
 });
