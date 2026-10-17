@@ -164,44 +164,9 @@ npm run preview       # 预览构建产物，http://127.0.0.1:4173/
 
 `package-lock.json` 固定依赖解析结果。安装用 `npm ci`；升级依赖后重新执行检查、构建和相关浏览器测试。
 
-## 代码结构
+## 架构
 
-```text
-src/
-  App.tsx             工作区、文件入口、保存与恢复、页面切换
-  model.ts            谱面类型、JSON 校验与序列化
-  timing.ts           分段网格、吸附、音符与 SPECIAL 时间状态
-  combo.ts            分段拍数、长条半拍计分与持续脉冲
-  editing.ts          不可变编辑操作、撤销重做
-  media.ts            共享播放实例与时间订阅
-  local-media.ts      视频引用持久化、权限恢复、媒体预检与作品关联
-  recording.ts        录谱快捷键及未完成 HOLD 生命周期
-  stepping.ts         STEP 动作时间冲突检查
-  special.ts          SPECIAL 五轨飞入、持续与爆发的媒体时间状态
-  demo.ts             可修改的全曲功能演示谱
-  components/         箭头、动作图形、播放控制
-  views/              首页、跟练五轨、时间轴编辑器
-  styles.css          Pop Art 主题与桌面布局
-scripts/prepare-demo.mjs  准备本地示例视频
-scripts/bake-special-sprites.mjs  开发时烘焙 SPECIAL 荧光与爆发图集
-tests/                浏览器交互及完整歌曲播放测试
-```
-
-谱面使用 `schemaVersion: 1`；时间是非负整数毫秒。五轨依次为 `squat`、`calf_raise`、`punch`、`step`、`side_crunch`。ARMS 保留内部轨道 ID `punch`；`armAction: "reach"` 表示八方向箭头（含 `up_left`、`up_right`、`down_left`、`down_right`），可选 `hand: "any" | "left" | "right" | "both"`；`armAction: "punch"` 仅使用 `left/right`，拳套用手由方向决定。旧谱中缺少 `armAction` 的左右动作仍为拳套。STEP 支持 `left` / `right` / `free`；`distance: 1 | 2` 仅用于 L/R，缺省为 1。`free` 必须为 `kind: "hold", modifier: "sway"`，不能携带跨度。旧 `close` 的全部变体在读入时删除，不转换。SWAY 使用 HOLD 的 modifier；SPECIAL 使用曲目级定义与多个事件。未知版本、重复 ID、非法方向／跨度、无效长条和越界时间会明确报错。
-
-FOLLOW 使用 STEP 左右 TAP 上的可选 `follow: true`，不能携带 `distance`、`endTimeMs` 或 `modifier`。旧谱不含该字段时行为不变；计分沿用 TAP 的 +1，不引入新的时钟或特效。
-
-STEP 所有类型支持 `foot: "left" | "right"`，与方向、跨度和时长独立，保存时保留。旧谱没有此字段时左右方向沿用原来的蓝／红色；旧 FREE SWAY 默认左脚蓝色，可直接切换为右脚。跨到非 STEP 轨道时清除用脚字段。
-
-播放器与编辑器共享同一谱面和视频实例。动画只读取 `video.currentTime`，不积累第二个时钟，不用独立定时器触发音符。保持状态、命中闪光和 SPECIAL 在暂停和跳转后都由目标媒体时间计算。
-
-进入作品时，同背景白底和主题色进度条显示资源准备进度；图片解码、字体加载和当前视频达到可播放状态后才允许播放。普通动作素材统一准备，SPECIAL 只加载本曲配置的图案；普通写谱及工作台／跟练切换复用已完成的缓存。失败可以重试，视频仍由原播放实例按浏览器机制缓冲，不把整段视频解码进内存。
-
-`asset-cache.ts` 共用加载中的任务与成功结果，失败项不缓存；`usePlayerPreparation.ts` 提供当前曲目的资源清单并协调视频就绪。后续页面可提供各自的 `AssetManifest` 复用同一加载器，无需提前增加选曲或难度系统。解码缓存限当前页面会话，刷新后重新准备。
-
-音符到框与长条结束时显示约 520 ms 的局部反馈：亮芯收缩、扩散光圈、八枚碎光、短十字闪光与局部光晕；长条结束的光圈略大。效果仅在判定附近，没有额外音效或画面震动。暂停时冻结，跳转按目标媒体时间重算；系统启用减少动态效果时隐藏粒子、闪光与动态光晕，并关闭缩放和持续脉冲。
-
-SPECIAL 使用更醒目的独立演出：五轨各出现一个白芯荧光符号，按照该事件所在 BPM 与“预告 / 拍”同步到框；到框后显示约 820 ms 的双色光环、放射闪光、符号残影与彩色碎星。持续事件以连续长带和尾圆表示剩余时间，结束后再次爆发。效果限制在轨道内，不遮挡视频，也不增加音效或震屏。暂停、回拖、变速和连续事件均由视频时间决定；减少动态效果时保留符号、时长长带与静态淡出，隐藏装饰拖尾和碎星。
+模块边界、数据流、关键约束与后续扩展见 [HLD](docs/HLD.md)。架构说明集中维护在该文件；本 README 保留启动、使用与开发说明。普通功能修复无需同步修改架构文档。
 
 ## 当前范围
 
@@ -212,4 +177,4 @@ SPECIAL 使用更醒目的独立演出：五轨各出现一个白芯荧光符号
 - 1280×720 可用，编辑器在较矮窗口中需要页面向下滚动。1920×1080 可同时查看预览与编辑区。
 - 视频兼容性取决于浏览器解码器；应用不进行转码。
 
-详细行为依据保存在 `Waifu-Fit-Player_Codex_Handoff/CODEX_HANDOFF_UPDATED.md`。其中首轮“只规划”的限制已被用户明确授权实施替代。
+`docs/decisions.md`、`docs/verification.md` 与旧交接文件仅供历史追溯，不作为当前规范，也不要求随每次功能修改同步维护。
