@@ -310,6 +310,25 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
     'rgb(250, 255, 255)',
   );
   await page.screenshot({ path: 'artifacts/notes-overlap-fullscreen-1920.png' });
+  // Inspect rendered pixels: DOM styles on an SVG source do not prove that a
+  // referenced/shadow contour inherited its paint correctly.
+  const ribbonPixels = await page.locator('[data-note-id="squat-hold"].player-hold').screenshot();
+  const blackPixels = await page.evaluate(async (base64) => {
+    const bitmap = await createImageBitmap(
+      await (await fetch(`data:image/png;base64,${base64}`)).blob(),
+    );
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext('2d')!;
+    context.drawImage(bitmap, 0, 0);
+    const pixels = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+    let black = 0;
+    for (let i = 0; i < pixels.length; i += 4)
+      if (pixels[i] < 10 && pixels[i + 1] < 10 && pixels[i + 2] < 10 && pixels[i + 3] > 240)
+        black++;
+    bitmap.close();
+    return black;
+  }, ribbonPixels.toString('base64'));
+  expect(blackPixels, 'The colored sustain must not contain default-black SVG patches').toBe(0);
   await page
     .locator('.lanes-stack')
     .screenshot({ path: 'artifacts/notes-overlap-tracks-1920.png' });

@@ -507,7 +507,8 @@ body:has(.practice-app) {
   stroke-width: 4px;
   filter: blur(2px);
 }
-.ribbon-color {
+.ribbon-color,
+.ribbon-marker-join {
   stroke: none;
 }
 .ribbon-head-shape path,
