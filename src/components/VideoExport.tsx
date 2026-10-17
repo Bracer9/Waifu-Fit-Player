@@ -10,6 +10,25 @@ type CaptureDevices = MediaDevices & {
 };
 type CaptureTrack = MediaStreamTrack & { getCaptureHandle?: () => { handle: string } | null };
 
+async function waitForCaptureLayout(signal: AbortSignal) {
+  // Chrome's sharing bar appears asynchronously and changes the viewport height.
+  // Read the output aspect only after that transition, before starting the song.
+  const started = performance.now();
+  let unchangedSince = started;
+  let size = `${innerWidth}:${innerHeight}`;
+  while (performance.now() - started < 3000) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    signal.throwIfAborted();
+    const next = `${innerWidth}:${innerHeight}`;
+    if (next !== size) {
+      size = next;
+      unchangedSince = performance.now();
+    }
+    if (performance.now() - started >= 600 && performance.now() - unchangedSince >= 300) return;
+  }
+  throw new Error('窗口尺寸仍在变化，请保持 F11 全屏后重新导出。');
+}
+
 export function VideoExport({
   media,
   title,
@@ -32,7 +51,7 @@ export function VideoExport({
   const controller = useRef<AbortController | null>(null);
   const mounted = useRef(true);
   const preset = EXPORT_PRESETS[quality];
-  const size = exportSize(preset.width, screen.width / screen.height);
+  const size = exportSize(preset.width, innerWidth / innerHeight);
   const releaseCapture = () => {
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
@@ -49,6 +68,10 @@ export function VideoExport({
 
   const chooseTab = async () => {
     setError('');
+    if (document.fullscreenElement) {
+      setError('请先退出页面内的全屏，再用 F11 全屏后导出。');
+      return;
+    }
     if (!navigator.mediaDevices?.getDisplayMedia || !mp4RecordingType()) {
       setError('当前浏览器不支持 MP4 录制，请使用新版 Chrome 或 Edge。');
       return;
@@ -59,7 +82,12 @@ export function VideoExport({
       const handle = crypto.randomUUID();
       devices.setCaptureHandleConfig?.({ handle, permittedOrigins: [location.origin] });
       const captured = await devices.getDisplayMedia({
-        video: { displaySurface: 'browser', frameRate: { ideal: 60, max: 60 } },
+        video: {
+          displaySurface: 'browser',
+          width: { ideal: size.width },
+          height: { ideal: size.height },
+          frameRate: { ideal: 60, max: 60 },
+        },
         audio: { suppressLocalAudioPlayback: false },
         preferCurrentTab: true,
         selfBrowserSurface: 'include',
@@ -120,15 +148,11 @@ export function VideoExport({
     const abort = new AbortController();
     controller.current = abort;
     const previous = { time: media.getTime(), rate: media.getStatus().rate };
-    const enterFullscreen = !document.fullscreenElement;
     let completed = false;
     const cancel = (event: KeyboardEvent) => {
       event.preventDefault();
       event.stopImmediatePropagation();
       if (event.key === 'Escape') abort.abort();
-    };
-    const fullscreen = () => {
-      if (!document.fullscreenElement) abort.abort();
     };
     const hidden = () => {
       if (document.hidden) abort.abort();
@@ -141,24 +165,24 @@ export function VideoExport({
         onModeChange('player');
         setPhase('recording');
       });
-      // This second click supplies the user gesture fullscreen requires after capture consent.
-      if (enterFullscreen) await document.documentElement.requestFullscreen();
+      // Keep the F11 viewport. DOM fullscreen during tab capture lets Chrome
+      // resize the page to its capture-preferred size, changing the composition.
       abort.signal.throwIfAborted();
       document.addEventListener('keydown', cancel, true);
-      document.addEventListener('fullscreenchange', fullscreen);
       document.addEventListener('visibilitychange', hidden);
       media.setLoopRange(null);
       media.setRate(1);
       media.seek(0);
       await prepareVideoFrame(video, abort.signal);
+      await waitForCaptureLayout(abort.signal);
       const target = exportSize(preset.width, innerWidth / innerHeight);
       const track = captured.getVideoTracks()[0];
       await track.applyConstraints({
-        width: { ideal: target.width, max: target.width },
-        height: { ideal: target.height, max: target.height },
+        width: { exact: target.width },
+        height: { exact: target.height },
         frameRate: { ideal: 60, max: 60 },
       });
-      // Allow fullscreen layout and the capture stream to replace the settings dialog.
+      // Allow the game view to replace the settings dialog in the capture stream.
       await new Promise((resolve) => setTimeout(resolve, 200));
       abort.signal.throwIfAborted();
       const actual = track.getSettings();
@@ -186,14 +210,11 @@ export function VideoExport({
       }
     } finally {
       document.removeEventListener('keydown', cancel, true);
-      document.removeEventListener('fullscreenchange', fullscreen);
       document.removeEventListener('visibilitychange', hidden);
       releaseCapture();
       media.pause();
       media.setRate(previous.rate);
       media.seek(previous.time);
-      if (enterFullscreen && document.fullscreenElement)
-        await document.exitFullscreen().catch(() => {});
       controller.current = null;
       if (mounted.current) {
         onModeChange('editor');
@@ -231,10 +252,11 @@ export function VideoExport({
           ))}
         </div>
         <p>
-          {size.width} × {size.height} · 60 fps · 保留全屏画面比例
+          {size.width} × {size.height} · 60 fps · 保留当前画面比例
         </p>
         <p>
-          选择当前标签页并勾选「分享标签页音频」，然后开始导出。将全屏播放并录制整首歌，结束后自动下载。录制期间保持此页面在前台，按
+          请先按 F11
+          全屏，再选择当前标签页并勾选「分享标签页音频」。开始导出后会播放并录制整首歌，结束后自动下载。录制期间保持此页面在前台，按
           Esc 可取消。
         </p>
         {error && (
