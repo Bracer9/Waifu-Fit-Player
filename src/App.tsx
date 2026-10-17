@@ -571,9 +571,7 @@ export default function App() {
                   )}
                   {status.error && (
                     <div className="video-error">
-                      {mode === 'player'
-                        ? 'Video unavailable. Select the video again.'
-                        : status.error}
+                      {status.error}
                       <button onClick={openVideo}>
                         {mode === 'player' ? 'Select video' : '重新选择视频'}
                       </button>

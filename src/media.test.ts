@@ -1,5 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaController } from './media';
+import { MediaController, mediaErrorMessage } from './media';
+
+it('音频输出故障不误报为视频格式错误', () => {
+  expect(
+    mediaErrorMessage({
+      code: 3,
+      message: 'PipelineStatus::AUDIO_RENDERER_ERROR: audio render error',
+    }),
+  ).toContain('音频无法播放');
+  expect(mediaErrorMessage({ code: 3, message: 'PIPELINE_ERROR_DECODE' })).toContain(
+    '视频解码失败',
+  );
+  expect(mediaErrorMessage({ code: 2, message: '' })).toContain('视频读取中断');
+  expect(mediaErrorMessage({ code: 4, message: '' })).toContain('视频格式不受支持');
+  expect(mediaErrorMessage(null)).toBe('');
+});
 
 class Video extends EventTarget {
   currentTime = 0;

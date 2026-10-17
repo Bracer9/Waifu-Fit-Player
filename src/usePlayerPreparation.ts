@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 import type { Chart } from './model';
-import { MediaController } from './media';
+import { MediaController, mediaErrorMessage } from './media';
 import { prepareAssets, type AssetManifest } from './asset-cache';
 
 export function playerAssets(chart: Chart): AssetManifest {
@@ -35,7 +35,7 @@ function prepareVideoFrame(video: HTMLVideoElement, signal: AbortSignal): Promis
     };
     const abort = () => finish(new DOMException('Preparation cancelled', 'AbortError'));
     const check = () => {
-      if (video.error) finish(new Error('视频未能准备好，请重试或重新选择视频。'));
+      if (video.error) finish(new Error(mediaErrorMessage(video.error)));
       else if (video.currentSrc === video.src && video.readyState >= 3 && !video.seeking) finish();
     };
     const timer = setTimeout(() => finish(new Error('视频准备超时，请重试。')), 15000);
