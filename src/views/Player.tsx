@@ -62,7 +62,11 @@ export function Player({
     const joinedTaps = new Set<string>();
     for (const note of displayNotes) {
       if (note.kind !== 'hold') continue;
-      const next = starts.get(`${note.lane}:${note.endTimeMs}`);
+      // Independently rounded grid positions/durations can differ by 1 ms.
+      // Treat only that rounding boundary as one junction, never pixel proximity.
+      const next = [0, 1, -1]
+        .map((delta) => starts.get(`${note.lane}:${note.endTimeMs + delta}`))
+        .find((candidate) => candidate && candidate.id !== note.id);
       if (!next || next.id === note.id) continue;
       joinedTails.set(note.id, next);
       if (next.kind === 'tap' && !isFollowStep(next)) joinedTaps.add(next.id);
@@ -166,6 +170,7 @@ export function Player({
               <div className="note-highway">
                 <div className="highway-line" />
                 <div className="highway-grid" />
+                {!showGuide && <div className="judgement-ring" aria-hidden="true" />}
                 {visible.map((note) => {
                   const head = noteX(note.timeMs, time, 88, PREVIEW_MS);
                   if (note.kind === 'tap')
@@ -213,7 +218,7 @@ export function Player({
                         ((noteX(other.timeMs, time, 88, PREVIEW_MS) - tail) * metrics.width) / 100,
                     )
                     .filter((x) => x > -metrics.marker && x < remainingPx + metrics.marker);
-                  // Only an exact temporal handoff shares a marker. Pixel proximity
+                  // Only a temporal handoff (within 1 ms rounding) shares a marker. Pixel proximity
                   // must not erase a separate note's release point or shorten its body.
                   const joinedTail = joinedTails.has(note.id);
                   return (
@@ -294,14 +299,14 @@ export function Player({
                       ? `${lane.english} ${noteSymbol(holding.lane, holding.direction, holding.distance, holding.armAction)} ${noteAction(holding)}`
                       : `${lane.english} target`
                   }
-                  style={{ opacity: cueOpacity, ...(holding ? noteStyle(holding) : {}) }}
+                  style={holding ? noteStyle(holding) : undefined}
                 >
                   {holding ? (
                     <span
                       className="holding-cue"
                       data-note-id={holding.id}
                       data-direction={holding.direction}
-                      style={noteStyle(holding)}
+                      style={{ ...noteStyle(holding), opacity: cueOpacity }}
                     >
                       <NoteGlyph
                         variant="tip"

@@ -19,7 +19,7 @@ test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP �
   chart.title = 'HOLD AND RETURN';
   chart.specialEvents = [];
   chart.notes = LANES.flatMap((lane) =>
-    [0, 200, -200].flatMap((gap, group) => {
+    [0, 200, -200, 1, -1].flatMap((gap, group) => {
       const start = 3000 + group * 10000;
       return [
         {
@@ -98,6 +98,15 @@ test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP �
     await expect(holds(group).locator('.hold-tail')).toHaveCount(5);
     await expect(holds(group).locator('.ribbon-release-shape')).toHaveCount(0);
     await expect(taps(group).locator('.glyph-edge')).toHaveCount(5);
+  }
+  for (const [group, seconds] of [
+    [3, 32.75],
+    [4, 42.75],
+  ]) {
+    await seek(seconds);
+    await expect(holds(group).locator('.ribbon-release-shape')).toHaveCount(5);
+    await expect(holds(group).locator('.hold-tail')).toHaveCount(0);
+    await expect(taps(group).locator('.glyph--joined')).toHaveCount(5);
   }
   await seek(2.75);
   await expect(holds(0).locator('.ribbon-release-shape')).toHaveCount(5);
@@ -303,8 +312,25 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
     .locator('.lanes-stack')
     .screenshot({ path: 'artifacts/notes-overlap-tracks-1920.png' });
   await seek(4.4);
-  await expect(page.getByTestId('target-punch')).toHaveCSS('opacity', '0');
-  await expect(page.getByTestId('target-squat')).toHaveCSS('opacity', '0');
+  for (const lane of ['punch', 'squat']) {
+    await expect(page.getByTestId(`target-${lane}`)).toHaveCSS('opacity', '1');
+    await expect(page.getByTestId(`target-${lane}`).locator('.holding-cue')).toHaveCSS(
+      'opacity',
+      '0',
+    );
+    await expect(page.getByTestId(`lane-${lane}`).locator('.judgement-ring')).toHaveCSS(
+      'opacity',
+      '1',
+    );
+    await expect(page.getByTestId(`lane-${lane}`).locator('.judgement-ring')).toHaveCSS(
+      'z-index',
+      '0',
+    );
+    await expect(page.getByTestId(`lane-${lane}`).locator('.judgement-ring')).toHaveCSS(
+      'border-top-width',
+      '1px',
+    );
+  }
   await expect(tail).toHaveCSS('z-index', '2');
   await page.screenshot({ path: 'artifacts/notes-junction-fullscreen-1920.png' });
   await seek(5.04);

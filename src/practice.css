@@ -524,12 +524,26 @@ body:has(.practice-app) {
 .practice .hold-caption {
   visibility: hidden;
 }
-.practice .hit-target {
+.practice .judgement-ring {
+  position: absolute;
+  left: 88%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: var(--target-size);
   height: var(--target-size);
   border: 1px solid #fff5f180;
+  border-radius: 50%;
   background: none;
   box-shadow: 0 0 5px #ffffff18;
+  pointer-events: none;
+  z-index: 0;
+}
+.practice .hit-target {
+  width: var(--target-size);
+  height: var(--target-size);
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 .practice .hit-target svg {
   width: var(--hold-head-size);
