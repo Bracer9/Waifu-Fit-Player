@@ -27,7 +27,7 @@ export function recordVideo(
     const recorder = new MediaRecorder(stream, {
       mimeType,
       videoBitsPerSecond: bitrate,
-      audioBitsPerSecond: 192_000,
+      audioBitsPerSecond: 320_000,
     });
     const chunks: Blob[] = [];
     let failure: Error | undefined;

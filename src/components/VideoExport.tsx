@@ -88,7 +88,15 @@ export function VideoExport({
           height: { ideal: size.height },
           frameRate: { ideal: 60, max: 60 },
         },
-        audio: { suppressLocalAudioPlayback: false },
+        audio: {
+          suppressLocalAudioPlayback: false,
+          // Capture music without speech processing or automatic gain changes.
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 2,
+          sampleRate: 48_000,
+        },
         preferCurrentTab: true,
         selfBrowserSurface: 'include',
         surfaceSwitching: 'exclude',
