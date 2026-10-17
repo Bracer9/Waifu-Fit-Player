@@ -647,6 +647,9 @@ body:has(.practice-app) {
 }
 /* SIDE CRUNCH: a pre-baked accent, bounded to the existing one-impact-per-lane slot. */
 .practice .play-lane[data-lane='side_crunch'] .player-note {
+  height: min(calc(var(--note-size) * 1.1), calc(100% - 12px));
+  width: auto;
+  aspect-ratio: 1;
   filter: none;
 }
 .practice .play-lane[data-lane='side_crunch'] .player-note > .note-glyph {
