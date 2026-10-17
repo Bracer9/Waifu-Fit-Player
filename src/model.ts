@@ -136,7 +136,11 @@ export const noteColor = (
       ? stepFoot({ direction, foot }) === 'left'
         ? 'var(--cyan)'
         : 'var(--pink)'
-      : LANES.find((item) => item.id === lane)!.color;
+      : lane === 'side_crunch'
+        ? direction === 'left'
+          ? 'var(--cyan)'
+          : 'var(--pink)'
+        : LANES.find((item) => item.id === lane)!.color;
 export const isFollowStep = (note: Note) =>
   note.lane === 'step' && note.kind === 'tap' && note.follow === true;
 export const isStepMove = (note: Note) =>

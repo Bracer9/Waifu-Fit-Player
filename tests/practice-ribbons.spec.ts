@@ -104,7 +104,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   const sway = page.getByTestId('lane-side_crunch').locator('.player-hold.sway');
   const path = sway.locator('.ribbon-color');
   await expect(path).toHaveAttribute('d', / C /);
-  await expect(path).toHaveCSS('fill', 'rgb(57, 197, 187)');
+  await expect(path).toHaveCSS('fill', 'rgb(246, 78, 147)');
   await expect(page.getByTestId('lane-calf_raise').locator('.ribbon-color')).toHaveAttribute(
     'd',
     / C /,
