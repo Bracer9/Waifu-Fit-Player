@@ -1,13 +1,9 @@
 import { useSyncExternalStore } from 'react';
 
-export function mediaErrorMessage(error: Pick<MediaError, 'code' | 'message'> | null): string {
-  if (!error) return '';
-  if (/AUDIO_RENDERER_ERROR\b|audio render error/i.test(error.message))
-    return '音频无法播放：无法使用当前音频输出设备，请检查设备连接及其他程序占用。';
-  if (error.code === 2) return '视频读取中断，请重试或重新选择视频。';
-  if (error.code === 3) return '视频解码失败，请重试；如果同一位置反复失败，请检查视频文件。';
-  if (error.code === 4) return '视频格式不受支持。请使用 H.264 视频 + AAC 音频的 MP4 文件。';
-  return '视频加载已中断，请重试。';
+export function audioOutputErrorMessage(error: Pick<MediaError, 'message'> | null): string {
+  return error && /AUDIO_RENDERER_ERROR\b|audio render error/i.test(error.message)
+    ? '音频无法播放：无法使用当前音频输出设备，请检查设备连接及其他程序占用。'
+    : '';
 }
 
 export type MediaStatus = {
@@ -103,7 +99,10 @@ export class MediaController {
       durationMs: Number.isFinite(v.duration) ? Math.round(v.duration * 1000) : 0,
       rate: v.playbackRate,
       volume: v.muted ? 0 : v.volume,
-      error: mediaErrorMessage(v.error),
+      error: v.error
+        ? audioOutputErrorMessage(v.error) ||
+          '视频无法播放。请尝试 H.264 视频 + AAC 音频的 MP4 文件。'
+        : '',
       preparing: this.status.preparing,
     };
     if (JSON.stringify(next) !== JSON.stringify(this.status)) {

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { blankChart, parseChart, serializeChart, type Chart } from './model';
 import { historyReducer } from './editing';
-import { MediaController, useMediaStatus } from './media';
+import { MediaController, audioOutputErrorMessage, useMediaStatus } from './media';
 import { usePlayerPreparation } from './usePlayerPreparation';
 import { isTyping } from './recording';
 import { demoChart } from './demo';
@@ -571,7 +571,10 @@ export default function App() {
                   )}
                   {status.error && (
                     <div className="video-error">
-                      {status.error}
+                      {mode === 'player'
+                        ? audioOutputErrorMessage(media.element?.error ?? null) ||
+                          'Video unavailable. Select the video again.'
+                        : status.error}
                       <button onClick={openVideo}>
                         {mode === 'player' ? 'Select video' : '重新选择视频'}
                       </button>
