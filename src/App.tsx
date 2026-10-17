@@ -8,8 +8,10 @@ import {
   FolderOpen,
   Heart,
   HelpCircle,
+  Moon,
   Plus,
   Save,
+  Sun,
   X,
 } from 'lucide-react';
 import { blankChart, parseChart, serializeChart, type Chart } from './model';
@@ -51,6 +53,7 @@ type SaveHandle = {
 };
 type SaveWindow = Window & { showSaveFilePicker?: (options: unknown) => Promise<SaveHandle> };
 const DRAFT_KEY = 'waifu-fit-player-draft-v1';
+const WORKBENCH_THEME_KEY = 'waifu-fit-player-workbench-theme';
 const fileTitle = (name: string) => name.replace(/\.[^.]+$/, '');
 type VideoRequest = {
   kind: 'new' | 'open' | 'replace';
@@ -82,6 +85,22 @@ export default function App() {
   const [busy, setBusy] = useState('');
   const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'player' | 'editor'>('home');
+  const [workbenchDark, setWorkbenchDark] = useState(() => {
+    try {
+      return localStorage.getItem(WORKBENCH_THEME_KEY) === 'dark';
+    } catch {
+      return false;
+    }
+  });
+  const toggleWorkbenchTheme = () => {
+    const next = !workbenchDark;
+    setWorkbenchDark(next);
+    try {
+      localStorage.setItem(WORKBENCH_THEME_KEY, next ? 'dark' : 'light');
+    } catch {
+      // The current session can still switch themes when storage is unavailable.
+    }
+  };
   const [notice, setNotice] = useState(''),
     [help, setHelp] = useState(false),
     [demo, setDemo] = useState(false);
@@ -384,7 +403,10 @@ export default function App() {
   };
 
   return (
-    <div className={`app ${mode === 'player' ? 'practice-app' : ''}`}>
+    <div
+      className={`app ${mode === 'player' ? 'practice-app' : ''}`}
+      data-workbench-theme={mode !== 'player' && workbenchDark ? 'dark' : undefined}
+    >
       <div className="ambient-shape pink" />
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
@@ -429,6 +451,17 @@ export default function App() {
           </button>
         </nav>
         <div className="header-right">
+          {mode !== 'player' && (
+            <button
+              className="icon-button"
+              aria-label="切换日夜主题"
+              aria-pressed={workbenchDark}
+              title={`切换${workbenchDark ? '白天' : '黑夜'}模式（工作台 / 谱面编辑）`}
+              onClick={toggleWorkbenchTheme}
+            >
+              {workbenchDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
           <span className="local-badge">
             <i />
             LOCAL ONLY
@@ -807,9 +840,9 @@ export default function App() {
                 <strong>写下动作</strong>
                 <p>
                   点击时间轴放置，拖动空白处创建 HOLD。选中单个普通音符后，可拖动右侧手柄直接拉长。
-                  绘制类型可直接选 TAP / HOLD / SWAY；选中音符后，也能在右侧“类型”中转换。
-                  选择工具支持框选，长条两端可以拉伸。可拖往支持相应方向的轨道；选中后按 F
-                  或“反向”翻转方向，ARMS 拳套用 F 互换 L/R。
+                  绘制类型可直接选 TAP / HOLD / SWAY；选中音符后，也能在右侧“类型”中转换。 S
+                  切换选择工具，E 切换编辑工具。选择工具支持框选，长条两端可以拉伸。
+                  可拖往支持相应方向的轨道；选中后按 F 或“反向”翻转方向，ARMS 拳套用 F 互换 L/R。
                 </p>
               </li>
               <li>

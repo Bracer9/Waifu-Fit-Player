@@ -359,7 +359,7 @@ export function Editor({
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (isTyping(e.target)) return;
+      if (isTyping(e.target) || e.isComposing || e.defaultPrevented) return;
       const modifier = e.ctrlKey || e.metaKey;
       if (modifier && ['a', 'c', 'v', 'x', 'd'].includes(e.key.toLowerCase())) {
         e.preventDefault();
@@ -381,6 +381,9 @@ export function Editor({
             duplicate();
             break;
         }
+      } else if (!modifier && !e.altKey && ['s', 'e'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        if (!e.repeat && !drag.current) setTool(e.key.toLowerCase() === 's' ? 'select' : 'draw');
       } else if (!modifier && !e.altKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         if (!e.repeat) flip();
@@ -793,19 +796,25 @@ export function Editor({
         <div className="tool-group">
           <button
             className={`tool-button ${tool === 'select' ? 'active' : ''}`}
-            title="选择 / 框选"
+            title="选择 / 框选（S）"
             aria-label="选择工具"
+            aria-keyshortcuts="S"
+            aria-pressed={tool === 'select'}
             onClick={() => setTool('select')}
           >
             <MousePointer2 size={17} />
+            <kbd>S</kbd>
           </button>
           <button
             className={`tool-button ${tool === 'draw' ? 'active' : ''}`}
-            title="点击放置，拖动创建长条"
+            title="编辑（E）：点击放置，拖动创建长条"
             aria-label="绘制工具"
+            aria-keyshortcuts="E"
+            aria-pressed={tool === 'draw'}
             onClick={() => setTool('draw')}
           >
             <Pencil size={17} />
+            <kbd>E</kbd>
           </button>
         </div>
         <div className="tool-group">

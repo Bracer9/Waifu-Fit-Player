@@ -1788,6 +1788,16 @@ nav button.active:after {
 .tool-button.active {
   box-shadow: 0 1px 3px #2c1c2017;
 }
+.tool-button[aria-keyshortcuts] {
+  display: flex;
+  gap: 5px;
+  width: auto;
+  padding: 0 7px;
+}
+.tool-button[aria-keyshortcuts] kbd {
+  font-size: 10px;
+  opacity: 0.75;
+}
 .inline-field {
   display: flex;
   align-items: center;
@@ -2939,6 +2949,195 @@ nav button.active:after {
   display: inline;
   color: #795668;
   font-size: 10px;
+}
+/* Home/editor theme only. Keep game and note palette tokens intact. */
+.app[data-workbench-theme='dark'],
+body:has(.app[data-workbench-theme='dark']) .modal-backdrop {
+  --wb-surface: #24232b;
+  --wb-raised: #2d2b35;
+  --wb-input: #34313d;
+  --wb-border: #4c4755;
+  --wb-text: #e4e0e6;
+  --wb-muted: #b4aab9;
+  color: var(--wb-text);
+  color-scheme: dark;
+}
+.app[data-workbench-theme='dark'] {
+  background: #1c1b22;
+}
+.app[data-workbench-theme='dark'] :is(.ambient-shape, .ambient-dots) {
+  display: none;
+}
+.app[data-workbench-theme='dark'] :is(.album-workspace, .editor, .inspector, .workspace-card) {
+  background: var(--wb-surface);
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark'] .album-workspace {
+  box-shadow: 6px 7px 0 #11101680;
+}
+.app[data-workbench-theme='dark'] .album-workspace::before {
+  background: var(--wb-raised);
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark'] :is(.app-header, .home-footer) {
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark'] .album-workspace::after {
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark'] .album-spine i {
+  background: var(--wb-border);
+}
+.app[data-workbench-theme='dark']
+  :is(.editor-toolbar, .record-toolbar, .loop-toolbar, .timeline-footer, .transport) {
+  background: var(--wb-raised);
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark'] :is(.tool-group, .inspector-tabs, .rate-select) {
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark']
+  :is(
+    .eyebrow,
+    .workspace-title p,
+    .album-spine,
+    nav button,
+    .tool-button,
+    .inline-field,
+    .zoom-control,
+    .check-label,
+    .record-hint,
+    .loop-toolbar,
+    .timeline-footer,
+    .inspector-tabs button,
+    .field,
+    .inspector-title,
+    .inspector-check,
+    .inspector-tip,
+    .inspector-empty,
+    .file-hint,
+    .arm-inspector > span,
+    .workspace-bottom,
+    .lane-legend,
+    .tiny-label,
+    .direction-hint,
+    .flip-button kbd,
+    .time-readout.total,
+    .home-hero p,
+    .hero-meta,
+    .workspace-card p,
+    .home-footer
+  ) {
+  color: var(--wb-muted);
+}
+.app[data-workbench-theme='dark']
+  :is(
+    nav button.active,
+    .editor-position,
+    .loop-readout,
+    .time-readout,
+    .rate-select,
+    .workspace-bottom button,
+    .inspector-tabs button.active,
+    .direction-hint > span,
+    .home-footer b
+  ) {
+  color: var(--wb-text);
+}
+.app[data-workbench-theme='dark']
+  :is(
+    .field input,
+    .field select,
+    .inline-field select,
+    .record-toolbar select,
+    .loop-position-input,
+    .button.ghost,
+    .button.light,
+    .button.dark,
+    .record-button:not(.armed),
+    .direction-picks button:not(.active):not([data-lane='step']),
+    .inspector-actions button,
+    .text-action
+  ) {
+  background: var(--wb-input);
+  border-color: var(--wb-border);
+  color: var(--wb-text);
+}
+.app[data-workbench-theme='dark']
+  :is(.tool-button:hover, .tool-button.active, .button.ghost:hover, .icon-button:hover) {
+  background: #49404f;
+  color: #fff4fa;
+}
+.app[data-workbench-theme='dark'] .tool-button.active {
+  box-shadow: inset 0 -2px var(--pink);
+}
+.app[data-workbench-theme='dark'] .lane-picks button {
+  color: var(--wb-muted);
+}
+.app[data-workbench-theme='dark'] .lane-picks button.active {
+  background: color-mix(in srgb, var(--lane), var(--wb-surface) 82%);
+  color: var(--wb-text);
+}
+.app[data-workbench-theme='dark'] .direction-picks button.active:not([data-lane='step']) {
+  background: #57465f;
+  border-color: #c5afd1;
+}
+.app[data-workbench-theme='dark'] .direction-picks button[data-lane='step'].active {
+  outline-color: var(--wb-text);
+}
+.app[data-workbench-theme='dark'] .arm-hands button[aria-pressed='true'] {
+  outline: 1px solid var(--wb-text);
+  outline-offset: 2px;
+}
+.app[data-workbench-theme='dark'] .special-slot:not(.visible):not(.active) {
+  background: var(--wb-raised);
+  border-color: var(--wb-border);
+  color: var(--wb-muted);
+}
+.app[data-workbench-theme='dark'] .seek {
+  background: linear-gradient(to right, var(--pink) var(--progress), #504956 var(--progress));
+}
+.app[data-workbench-theme='dark'] .step-checks {
+  background: #263633;
+  color: #b2d6ca;
+  border-color: var(--wb-border);
+}
+.app[data-workbench-theme='dark'] .step-checks.has-issues {
+  background: #3b3227;
+  color: #e6c190;
+}
+.app[data-workbench-theme='dark'] .workspace-card.accent {
+  background: #263635;
+}
+.app[data-workbench-theme='dark'] .workspace-card:hover {
+  background: var(--wb-input);
+}
+.app[data-workbench-theme='dark'] .record-art {
+  color: var(--ink);
+}
+.app[data-workbench-theme='dark'] .album-back {
+  background: #5a5260;
+}
+.app[data-workbench-theme='dark'] :is(.album-sticker, .vinyl-label) {
+  background: #c6bfae;
+}
+/* Portalled dialogs follow the same home/editor scope. */
+body:has(.app[data-workbench-theme='dark']) .modal {
+  background: var(--wb-surface);
+  border-color: var(--wb-border);
+}
+body:has(.app[data-workbench-theme='dark']) .modal :is(p, .eyebrow, .help-note) {
+  color: var(--wb-muted);
+}
+body:has(.app[data-workbench-theme='dark']) .help-modal li strong {
+  color: var(--wb-text);
+}
+body:has(.app[data-workbench-theme='dark']) .help-note {
+  background: var(--wb-raised);
+}
+body:has(.app[data-workbench-theme='dark']) .modal .button.light {
+  background: var(--wb-input);
+  border-color: var(--wb-border);
 }
 @media (prefers-reduced-motion: reduce) {
   .special-comet,
