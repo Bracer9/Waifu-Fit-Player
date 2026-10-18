@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { blankChart, type Chart } from '../src/model';
@@ -11,6 +12,7 @@ test.beforeEach(async ({ page }) => {
     }),
   );
   await page.goto('/');
+  await page.getByRole('button', { name: /创作模式/ }).click();
 });
 async function open(page: Page, chart: Chart) {
   await page.getByLabel('导入谱面文件').setInputFiles({
@@ -40,7 +42,7 @@ async function note(page: Page) {
 }
 
 test('保存作品后刷新再打开，自动恢复真实视频；同名但不同关联不能误配', async ({ page }) => {
-  await selectVideo(page, '创建新谱面');
+  await selectVideo(page, '新建');
   await ready(page, 'demo');
   await note(page);
   const chart = await exported(page);
@@ -76,7 +78,7 @@ test('保存作品后刷新再打开，自动恢复真实视频；同名但不�
 });
 
 test('旧谱一次定位后保存关联，失败与取消保留当前作品，全屏也能定位', async ({ page }) => {
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const original = await exported(page);
   const legacy = blankChart('旧版作品');
@@ -109,19 +111,18 @@ test('旧谱一次定位后保存关联，失败与取消保留当前作品，�
 
 test('新建取消、无法记住视频时不进入半成品工作区', async ({ page }) => {
   const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: '创建新谱面', exact: true }).click();
+  await page.getByRole('button', { name: '新建', exact: true }).click();
   await (await chooser).setFiles([]);
-  await expect(page.getByRole('button', { name: '谱面编辑', exact: true })).toBeDisabled();
-  await expect(page.getByRole('button', { name: '跟练模式', exact: true })).toBeDisabled();
+  await expect(page.locator('video')).not.toHaveAttribute('src', /blob:/);
+  await expect(page.getByRole('button', { name: '试玩谱面', exact: true })).toBeDisabled();
   await page.evaluate(() => {
     indexedDB.open = () => {
       throw new DOMException('storage unavailable', 'QuotaExceededError');
     };
   });
-  await selectVideo(page, '创建新谱面');
+  await selectVideo(page, '新建');
   await expect(page.getByRole('status')).toContainText('无法记住视频');
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page.getByRole('button', { name: '谱面编辑', exact: true })).toBeDisabled();
   await expect(page.locator('video')).not.toHaveAttribute('src', /blob:/);
 });
 
@@ -138,7 +139,7 @@ test('真实文件句柄持久化、刷新恢复、权限重新授权与文件�
       configurable: true,
     });
   });
-  await page.getByRole('button', { name: '创建新谱面', exact: true }).click();
+  await page.getByRole('button', { name: '新建', exact: true }).click();
   await ready(page, 'handle-video');
   const chart = await exported(page);
   const stored = await page.evaluate(
@@ -181,7 +182,7 @@ test('真实文件句柄持久化、刷新恢复、权限重新授权与文件�
   await expect(page.getByRole('dialog')).toContainText('允许读取关联视频');
   await page.getByRole('button', { name: '允许读取视频', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('尚未允许读取');
-  await expect(page.getByRole('button', { name: '谱面编辑', exact: true })).toBeDisabled();
+  await expect(page.locator('video')).not.toHaveAttribute('src', /blob:/);
   await page.getByRole('button', { name: '允许读取视频', exact: true }).click();
   await ready(page, 'handle-video');
   await page.evaluate(async () => {

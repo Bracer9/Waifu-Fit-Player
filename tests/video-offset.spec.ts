@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -11,7 +12,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
     Object.defineProperty(window, 'showOpenFilePicker', { value: undefined, configurable: true }),
   );
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const exportChart = async (): Promise<Chart> => {
     const download = page.waitForEvent('download');
@@ -19,13 +20,11 @@ test('video/audio offset saves, seeks and records consistently without altering 
     return JSON.parse(await readFile((await (await download).path())!, 'utf8'));
   };
   const load = async (chart: Chart) => {
-    await page
-      .getByLabel('导入谱面文件')
-      .setInputFiles({
-        name: 'offset-check.wfp.json',
-        mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(chart)),
-      });
+    await page.getByLabel('导入谱面文件').setInputFiles({
+      name: 'offset-check.wfp.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(chart)),
+    });
     await expect(page.getByRole('heading', { name: chart.title, exact: true })).toBeVisible();
   };
   const seek = async (time: number) => {
@@ -69,7 +68,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   expect(saved.notes).toEqual(chart.notes);
   expect(saved.tempoSegments).toEqual(chart.tempoSegments);
   expect(saved.specialEvents).toEqual(chart.specialEvents);
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await seek(2.4);
   await expect(page.locator('.combo-stat strong')).toHaveText('000');
   await seek(2.5);
@@ -108,7 +107,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   expect(saved.notes[2].timeMs).toBeGreaterThanOrEqual(7500);
   expect(saved.notes[2].timeMs).toBeLessThan(8000);
   expect(saved.notes[3].kind).toBe('hold');
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await seek(3);
   await expect(page.locator('.combo-stat strong')).toHaveText('000');
   await seek(3.5);

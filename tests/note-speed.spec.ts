@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
@@ -7,7 +8,7 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const download = page.waitForEvent('download');
@@ -65,7 +66,7 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   expect(88 - (await geometry()).tap).toBeCloseTo(((88 - original.tap) * 10) / 3);
   await page.screenshot({ path: 'artifacts/note-speed-settings.png', fullPage: true });
   await page.getByRole('button', { name: '完成', exact: true }).click();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   expect((await geometry()).hold).toBeCloseTo((original.hold * 10) / 3);
   await expect(page.locator('[data-note-id="speed-future"]')).toHaveCount(0);
   expect(
@@ -90,7 +91,7 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   expect(88 - (await geometry()).tap).toBeCloseTo((88 - original.tap) / 6);
   await page.screenshot({ path: 'artifacts/note-speed-settings-dark.png', fullPage: true });
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(page.locator('[data-note-id="speed-future"]')).toHaveCount(1);
   await seek(2);
   await expect(page.locator('.player-note[data-note-id="speed-tap"]')).toHaveCount(0);

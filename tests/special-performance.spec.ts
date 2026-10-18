@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { LANES, type Chart } from '../src/model';
@@ -14,7 +15,7 @@ test('1080p 连续 SPECIAL 与五轨长条播放：视频帧、媒体时钟和�
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
@@ -43,7 +44,7 @@ test('1080p 连续 SPECIAL 与五轨长条播放：视频帧、媒体时钟和�
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(chart)),
   });
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   // Include a normal lead-in; avoid treating decoder startup as a SPECIAL regression.
   const samples = await page.evaluate(async () => {

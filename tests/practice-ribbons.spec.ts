@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { type Chart } from '../src/model';
@@ -10,7 +11,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const download = page.waitForEvent('download');
@@ -91,7 +92,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   const video = page.locator('video');
   const node = (await video.elementHandle())!;
   const seek = async (seconds: number) => {

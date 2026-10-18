@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import {
   ArrowLeftRight,
@@ -89,6 +90,7 @@ type Props = {
   canUndo: boolean;
   canRedo: boolean;
   notify: (text: string) => void;
+  publication?: ReactNode;
 };
 type Drag = {
   mode: 'move' | 'start' | 'end' | 'extend' | 'draw' | 'marquee';
@@ -187,6 +189,7 @@ export function Editor({
   canUndo,
   canRedo,
   notify,
+  publication,
 }: Props) {
   const time = chartTimeAt(chart, useTime(media)),
     status = useMediaStatus(media);
@@ -1549,6 +1552,7 @@ export function Editor({
                   value={chart.title}
                   onCommit={(title) => onChange({ ...chart, title })}
                 />
+                {publication}
                 <NumberField
                   label="视频偏移 / ms"
                   value={chart.videoOffsetMs ?? 0}

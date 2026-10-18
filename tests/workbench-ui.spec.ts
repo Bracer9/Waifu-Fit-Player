@@ -1,6 +1,7 @@
+import { openDemo } from './helpers/project';
 import { expect, test } from '@playwright/test';
 
-test('editor tool shortcuts respect inputs; day/night covers home and editor only', async ({
+test('editor tool shortcuts respect inputs; day/night remains local to the editor', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -9,7 +10,7 @@ test('editor tool shortcuts respect inputs; day/night covers home and editor onl
     Object.defineProperty(window, 'showSaveFilePicker', { value: undefined, configurable: true }),
   );
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   const gamePaint = () =>
     page.locator('.practice').evaluate((root) =>
@@ -44,9 +45,8 @@ test('editor tool shortcuts respect inputs; day/night covers home and editor onl
   await snap.blur();
   await page.keyboard.press('e');
   await expect(draw).toHaveAttribute('aria-pressed', 'true');
-  const download = page.waitForEvent('download');
   await page.keyboard.press('Control+s');
-  await download;
+  await expect(page.getByRole('status')).toContainText('草稿已保存');
   await expect(draw).toHaveAttribute('aria-pressed', 'true');
 
   const theme = page.getByRole('button', { name: '切换日夜主题', exact: true });
@@ -54,15 +54,15 @@ test('editor tool shortcuts respect inputs; day/night covers home and editor onl
   await expect(theme).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.app')).toHaveAttribute('data-workbench-theme', 'dark');
   await page.screenshot({ path: 'artifacts/workbench-editor-night.png', fullPage: true });
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(page.locator('.app')).not.toHaveAttribute('data-workbench-theme');
   expect(await gamePaint()).toEqual(originalGamePaint);
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   await expect(theme).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '返回主页', exact: true }).click();
-  await expect(page.locator('.app')).toHaveAttribute('data-workbench-theme', 'dark');
-  await page.screenshot({ path: 'artifacts/workbench-home-night.png', fullPage: true });
+  await expect(page.locator('.app')).not.toHaveAttribute('data-workbench-theme');
   await page.reload();
+  await page.getByRole('button', { name: /创作模式/ }).click();
   await expect(theme).toHaveAttribute('aria-pressed', 'true');
   await theme.click();
   await expect(page.locator('.app')).not.toHaveAttribute('data-workbench-theme');

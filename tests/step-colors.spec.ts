@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -12,7 +13,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const save = async (): Promise<Chart> => {
     const download = page.waitForEvent('download');
@@ -141,7 +142,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
   await page.getByTestId('editor-note').first().click();
   await page.screenshot({ path: 'artifacts/step-colors-editor.png', fullPage: true });
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   const lane = page.getByTestId('lane-step');
   await seek(2.5);

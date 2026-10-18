@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { LANES, type Chart, type Note } from '../src/model';
@@ -10,7 +11,7 @@ test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP �
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const downloading = page.waitForEvent('download');
@@ -47,7 +48,7 @@ test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP �
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   const video = page.locator('video');
   const seek = async (seconds: number) => {
@@ -119,7 +120,7 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const downloading = page.waitForEvent('download');
@@ -164,7 +165,7 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   const seek = async (seconds: number) => {
     await page.locator('video').evaluate((v: HTMLVideoElement, time) => {
@@ -270,7 +271,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   const video = page.locator('video');
   const seek = async (seconds: number) => {
@@ -319,7 +320,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   await seek(3.35);
   const heads = page.locator('.practice .hold-head, .practice .player-note');

@@ -1,4 +1,5 @@
-﻿import { test, expect, type Page } from '@playwright/test';
+import { lastDraft, openDemo } from './helpers/project';
+import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { blankChart, LANES, type Chart } from '../src/model';
 const errors: string[] = [];
@@ -38,7 +39,7 @@ test.beforeEach(async ({ page }) => {
 });
 test.afterEach(() => expect(errors).toEqual([]));
 async function demo(page: Page) {
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await expect
     .poll(() => page.locator('video').evaluate((v) => (v as HTMLVideoElement).readyState))
@@ -86,7 +87,7 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   await demo(page);
   await expect(page.locator('video')).toHaveCount(1);
   const videoNode = (await page.locator('video').elementHandle())!;
-  for (const name of ['新建', '打开作品', '更换视频', '保存', '导出 JSON', '操作帮助'])
+  for (const name of ['新建', '打开作品', '更换视频', '保存草稿', '导出 JSON', '操作帮助'])
     await expect(page.getByRole('button', { name, exact: true })).not.toBeVisible();
   await expect(page.getByRole('navigation')).not.toBeVisible();
   await expect(page.getByTestId('special-cue')).toHaveText('');
@@ -128,7 +129,7 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   expect(await page.locator('video').evaluate((v) => (v as HTMLVideoElement).playbackRate)).toBe(
     0.5,
   );
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await seek(page, 23.5);
   await expect(page.getByTestId('special-cue')).toContainText('GET READY');
   await seek(page, 24.4);
@@ -181,7 +182,7 @@ test('音符与跟练统一英文，兼容旧 SPECIAL 名称并保持大小屏�
   expect((await exportChart(page)).specialMove?.name).toBe('比心 / HEART POSE');
   for (const caption of await page.locator('.event-caption').allTextContents())
     expect(caption).not.toMatch(/\p{Script=Han}/u);
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await seek(page, 3.5);
   await expect(page.locator('.hold-caption')).toHaveText([
     'HOLD',
@@ -254,7 +255,7 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   const flying = page.getByTestId('special-flying');
   const bursts = page.getByTestId('special-burst');
   await seek(page, 2.9);
@@ -354,7 +355,7 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
     await expect(page.locator(`.special-token .lucide-${icon}`)).toHaveCount(5);
   }
   expect((await exportChart(page)).specialEvents).toEqual(chart.specialEvents);
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(page.getByRole('status')).not.toBeVisible();
   await page.setViewportSize({ width: 1920, height: 1080 });
 
@@ -725,9 +726,7 @@ test('非法谱面不丢编辑、未保存保护、自动草稿、720p 和 1080p
   });
   await expect(page.getByRole('status')).toContainText('不支持此谱面版本');
   await expect(page.getByTestId('editor-note')).toHaveCount(1);
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem('waifu-fit-player-draft-v1')))
-    .not.toBeNull();
+  await expect.poll(async () => (await lastDraft(page))?.notes.length).toBe(1);
   for (const viewport of [
     { width: 1280, height: 720 },
     { width: 1920, height: 1080 },
@@ -739,7 +738,7 @@ test('非法谱面不丢编辑、未保存保护、自动草稿、720p 和 1080p
     await expect(page.locator('.timeline-scroll')).toBeVisible();
     await page.screenshot({ path: `artifacts/editor-${viewport.width}.png`, fullPage: true });
   }
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(page.getByRole('status')).not.toBeVisible();
   for (const viewport of [
     { width: 1280, height: 720 },
@@ -783,18 +782,10 @@ test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({
   expect(chart.notes).toHaveLength(4);
   await page.getByLabel('BPM', { exact: true }).fill('133');
   await page.getByLabel('BPM', { exact: true }).press('Tab');
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          JSON.parse(localStorage.getItem('waifu-fit-player-draft-v1') || '{}').tempoSegments?.[0]
-            ?.bpm,
-      ),
-    )
-    .toBe(133);
+  await expect.poll(async () => (await lastDraft(page))?.tempoSegments[0]?.bpm).toBe(133);
   page.on('dialog', (dialog) => dialog.accept());
   await page.reload();
-  await page.getByRole('button', { name: /恢复上次的本地草稿/ }).click();
+  await page.getByRole('button', { name: /创作模式/ }).click();
   await expect(page.getByRole('heading', { name: '浏览器测试作品' })).toBeVisible();
   chart = await exportChart(page);
   expect(chart.notes).toHaveLength(4);
@@ -875,7 +866,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await expect(
     page.locator('.timeline-event[data-lane="step"][data-direction="right"] .event-glyph'),
   ).toHaveCSS('background-color', 'rgb(246, 78, 147)');
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   const lanes = page.locator('.play-lane');
   if (await page.getByRole('button', { name: '关闭提示', exact: true }).isVisible())
     await page.getByRole('button', { name: '关闭提示', exact: true }).click();
@@ -1042,7 +1033,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   await page.getByTestId('editor-note').last().click();
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
   await page.screenshot({ path: 'artifacts/unified-step-editor.png', fullPage: true });
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await page.setViewportSize({ width: 1920, height: 1080 });
   await seek(page, 4.5);
   const target = page.getByTestId('target-step');
@@ -1109,7 +1100,7 @@ test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显
   });
   expect((await exportChart(page)).notes).toEqual(chart.notes);
   await page.screenshot({ path: 'artifacts/follow-editor.png' });
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await page.setViewportSize({ width: 1920, height: 1080 });
 
   await seek(page, 1.2);
@@ -1237,7 +1228,7 @@ test('导入旧谱彻底删除 C 三种形式，独立 FREE SWAY 和左右不受
   expect(JSON.stringify(saved)).not.toContain('close');
   await page.getByRole('button', { name: '4 踏步', exact: true }).click();
   await expect(page.getByLabel('绘制类型').locator('option')).not.toContainText(['CLOSE']);
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   for (const time of [2, 3.2, 4.2]) {
     await seek(page, time);
     await expect(page.locator('[data-direction="close"], .glyph--close')).toHaveCount(0);
@@ -1317,8 +1308,9 @@ test('STEP 独立自由 SWAY、Shift 两格、Ctrl+Shift 摇摆，组合键与�
 });
 
 test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async ({ page }) => {
+  await page.getByRole('button', { name: /创作模式/ }).click();
   const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: '创建新谱面', exact: true }).click();
+  await page.getByRole('button', { name: '新建', exact: true }).click();
   await (await chooser).setFiles('public/demo.mp4');
   await expect(page.getByRole('heading', { name: 'demo', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
@@ -1326,7 +1318,7 @@ test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async 
   const chart = await exportChart(page);
   expect(chart.notes).toHaveLength(1);
   expect(chart.videoHint.fileName).toBe('demo.mp4');
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   await expect(page.getByLabel('Movement tracks')).toBeVisible();
   await expect(page.getByLabel('Video', { exact: true })).toBeVisible();

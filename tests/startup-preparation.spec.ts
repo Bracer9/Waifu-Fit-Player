@@ -1,3 +1,4 @@
+import { importDemo } from './helpers/project';
 import { expect, test } from '@playwright/test';
 
 test('首次等待图片解码，白底进度条完成后可玩，普通编辑不重新加载', async ({ page }) => {
@@ -14,7 +15,7 @@ test('首次等待图片解码，白底进度条完成后可玩，普通编辑�
     await route.continue();
   });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await importDemo(page);
   const progress = page.getByRole('progressbar', { name: '准备播放资源' });
   await expect(progress).toBeVisible();
   await expect(page.locator('.playback-preparation')).toHaveCSS(
@@ -32,7 +33,6 @@ test('首次等待图片解码，白底进度条完成后可玩，普通编辑�
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   expect(requests.some((url) => /burst-(star|sparkles)\.png/.test(url))).toBe(false);
   await page.screenshot({ path: 'artifacts/startup-ready.png' });
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const count = requests.length;
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -42,7 +42,7 @@ test('首次等待图片解码，白底进度条完成后可玩，普通编辑�
   await expect(progress).toHaveCount(0);
   expect(requests.length).toBe(count);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(progress).toHaveCount(0);
   expect(requests.length).toBe(count);
 });
@@ -54,7 +54,7 @@ test('资源失败显示重试，重试后正常进入', async ({ page }) => {
     else await route.continue();
   });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await importDemo(page);
   await expect(page.getByRole('alert')).toContainText('图片资源未能加载');
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: '重试', exact: true }).click();

@@ -1,10 +1,11 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 
 test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   const video = page.locator('video');
   const videoNode = (await video.elementHandle())!;
@@ -138,7 +139,7 @@ test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿',
     2,
   );
   await expect(page.getByRole('button', { name: '打开作品', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.playbackRate)).toBe(0.75);
   expect(await videoNode.evaluate((element) => element.isConnected)).toBe(true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -148,7 +149,7 @@ test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿',
 
 test('较窄与较矮窗口保留音符，竖屏可滚动且视频保持比例', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   for (const [width, height] of [
     [1024, 768],

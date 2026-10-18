@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -12,7 +13,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
   );
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
@@ -45,7 +46,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
   await expect(page.locator('.timeline-footer')).toContainText('4 SPECIAL');
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
   const video = page.locator('video');
   const seek = async (seconds: number) => {
@@ -141,7 +142,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
     await page.getByLabel('SPECIAL 图标').selectOption(icon);
     await seek(4.9);
     await expect(page.locator('.editing .special-hold-strip')).toHaveCount(5);
-    await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+    await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 
     await expect(effects('first').locator(`.lucide-${icon}`)).toHaveCount(5);
     await page.screenshot({ path: `artifacts/special-hold-${icon}-1920.png` });

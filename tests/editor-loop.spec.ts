@@ -1,3 +1,4 @@
+import { openDemo } from './helpers/project';
 import { expect, test } from '@playwright/test';
 
 test('workbench loop funnels drag independently and loop the actual offset video', async ({
@@ -6,7 +7,7 @@ test('workbench loop funnels drag independently and loop the actual offset video
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
+  await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
@@ -93,7 +94,7 @@ test('workbench loop funnels drag independently and loop the actual offset video
     .toBeGreaterThan(4.5);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await toggle.click();
-  await page.getByRole('button', { name: '跟练模式', exact: true }).click();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await video.evaluate((v: HTMLVideoElement) => {
     v.currentTime = 4.3;
   });

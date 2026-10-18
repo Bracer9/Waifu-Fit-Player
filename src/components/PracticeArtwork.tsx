@@ -64,7 +64,15 @@ export function PracticeCover({ chart, media }: { chart: Chart; media: MediaCont
   );
 }
 
-export function PracticeMasthead({ title, onReturn }: { title: string; onReturn: () => void }) {
+export function PracticeMasthead({
+  title,
+  onReturn,
+  returnLabel = 'WORKBENCH',
+}: {
+  title: string;
+  onReturn: () => void;
+  returnLabel?: string;
+}) {
   return (
     <div className="practice-masthead">
       <div className="practice-track-info">
@@ -78,7 +86,7 @@ export function PracticeMasthead({ title, onReturn }: { title: string; onReturn:
       </div>
       <button className="return-workspace" onClick={onReturn}>
         <ArrowLeft aria-hidden="true" strokeWidth={4} />
-        <span>WORKBENCH</span>
+        <span>{returnLabel}</span>
       </button>
     </div>
   );
