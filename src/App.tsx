@@ -42,6 +42,7 @@ import {
   PublishDialog,
   SongManager,
 } from './components/LibraryControls';
+import { MenuMusicSettings, useMenuMusic } from './components/MenuMusic';
 import { Player } from './views/Player';
 import { Editor } from './views/Editor';
 import { Home } from './views/Home';
@@ -152,6 +153,10 @@ export default function App() {
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
   const startReleased = useRef(false);
+  const menuMusic = useMenuMusic(
+    mode === 'home' ? 'home' : mode === 'albums' || mode === 'songs' ? 'library' : null,
+    notify,
+  );
   const difficulty = chart.difficulty ?? 'hard';
   const persistDraft = useCallback(async () => {
     if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
@@ -1149,6 +1154,7 @@ export default function App() {
               </div>
             </div>
             <p>默认 {DEFAULT_NOTE_SPEED.toFixed(1)}。所有曲目共用，自动记住你的选择。</p>
+            <MenuMusicSettings music={menuMusic} />
             <div className="modal-actions">
               <button className="button light" onClick={() => changeNoteSpeed(DEFAULT_NOTE_SPEED)}>
                 恢复默认

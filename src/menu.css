@@ -702,6 +702,43 @@
 .publish-preview p {
   margin: 10px 0 0;
 }
+.menu-music-settings {
+  border-top: 1px solid #d4ccc0;
+  margin-top: 24px;
+  padding-top: 14px;
+}
+.menu-music-settings h3 {
+  font-size: 14px;
+  margin: 0 0 15px;
+}
+.music-file-setting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.music-file-setting > div {
+  flex: 1;
+  min-width: 0;
+}
+.music-file-setting strong,
+.music-file-setting small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.music-file-setting small {
+  color: #8d837c;
+  margin-top: 4px;
+}
+.music-file-setting > button {
+  font-size: 11px;
+}
+.menu-music-settings .field {
+  margin-top: 20px;
+}
 @media (max-height: 850px) {
   .title-menu {
     padding-top: 30px;
