@@ -53,8 +53,13 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
   await expect.poll(async () => (await sound()).time).toBeGreaterThan(0);
   const theme = (await sound()).src;
   await page.getByRole('button', { name: '关闭主界面音乐' }).click();
-  await expect.poll(async () => (await sound()).time).toBeGreaterThan(1.5);
+  await expect.poll(async () => (await sound()).time).toBeGreaterThan(2.5);
   await page.screenshot({ path: 'artifacts/menu-music-real-track.png', animations: 'disabled' });
+  await page.waitForTimeout(350);
+  await page.screenshot({
+    path: 'artifacts/menu-music-real-track-later.png',
+    animations: 'disabled',
+  });
   await page.getByRole('button', { name: /音游模式/ }).click();
   for (let i = 0; i < 6; i++) {
     await page.locator('.collection-album').first().click();

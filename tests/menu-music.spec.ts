@@ -95,8 +95,8 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
         probe.menuContexts.push(this);
       }
     };
-    const read = AnalyserNode.prototype.getByteFrequencyData;
-    AnalyserNode.prototype.getByteFrequencyData = function (data) {
+    const read = AnalyserNode.prototype.getByteTimeDomainData;
+    AnalyserNode.prototype.getByteTimeDomainData = function (data) {
       probe.spectrumReads++;
       read.call(this, data);
     };
@@ -132,6 +132,27 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(async () => (await sound(page)).src).toContain('__qa_theme_a');
   await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0.5');
   await expect.poll(async () => (await sound(page)).volume).toBe(0.5);
+  const waveHeights = () =>
+    page.locator('.music-pulse').evaluate((node: HTMLCanvasElement) => {
+      const ratio = node.width / node.clientWidth;
+      const pixels = node.getContext('2d')!.getImageData(0, 0, node.width, node.height).data;
+      return Array.from({ length: 56 }, (_, i) => {
+        const offset = 54 + (i * (node.clientWidth / 2 - 55.5)) / 55;
+        const x = Math.floor((node.clientWidth / 2 - offset) * ratio);
+        let height = 0;
+        for (let y = 0; y < node.height; y++)
+          if (pixels[(y * node.width + x) * 4 + 3] > 40) height++;
+        return height / ratio;
+      });
+    });
+  await expect.poll(async () => (await waveHeights()).at(-1)!).toBeGreaterThan(5);
+  const waveBefore = await waveHeights();
+  await page.waitForTimeout(250);
+  const waveAfter = await waveHeights();
+  expect(
+    waveAfter.slice(28).filter((height, i) => Math.abs(height - waveBefore[i + 28]) >= 2).length,
+  ).toBeGreaterThan(10);
+  expect(Math.max(...waveAfter) - Math.min(...waveAfter)).toBeGreaterThan(4);
   await page.getByRole('button', { name: '暂停菜单 BGM', exact: true }).click();
   await expect.poll(async () => (await sound(page)).paused).toBe(true);
   const pausedAt = (await sound(page)).time;
@@ -176,6 +197,7 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
     (window as Probes).menuAudio[0].currentTime = 2;
   });
   await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.getByRole('region', { name: '选择专辑' })).toBeVisible();
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(2);
   const reads = (await sound(page)).reads;
   await page.waitForTimeout(150);

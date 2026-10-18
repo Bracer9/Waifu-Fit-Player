@@ -126,8 +126,6 @@ export function useMenuMusic(
           const source = context.createMediaElementSource(bgm);
           const meter = context.createAnalyser();
           meter.fftSize = 512;
-          meter.maxDecibels = -10;
-          meter.smoothingTimeConstant = 0.86;
           source.connect(meter);
           meter.connect(context.destination);
           graph.current = { context, source };
