@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Disc3, Pencil } from 'lucide-react';
 import { editionsIn, type Album, type Difficulty, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
+import { CoverTrace } from '../components/CoverTrace';
 import { ModalBackdrop } from '../components/ModalBackdrop';
 import { MenuControls } from '../components/MenuControls';
 import { formatTime } from '../timing';
@@ -9,20 +10,6 @@ import { createCalorieIndex } from '../calories';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const rating = (value: number | undefined) => (value === undefined ? '—' : String(value));
-
-function CoverTrace() {
-  return (
-    <svg
-      className="cover-trace"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <rect x="1" y="1" width="98" height="98" pathLength="100" />
-      <rect x="1" y="1" width="98" height="98" pathLength="100" />
-    </svg>
-  );
-}
 
 function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   const center = horizontal
@@ -190,12 +177,13 @@ export function LibraryMenu(props: Props) {
       if (
         document.querySelector('.menu-curtain') ||
         document.querySelector('[role="dialog"]') ||
-        /INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName)
+        /INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName) ||
+        (e.target as HTMLElement).isContentEditable
       )
         return;
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.key === 'Backspace') {
         e.preventDefault();
-        props.onBack();
+        if (!e.repeat) props.onBack();
       } else if (e.key === (page === 'albums' ? 'ArrowDown' : 'ArrowRight')) {
         e.preventDefault();
         move(1);

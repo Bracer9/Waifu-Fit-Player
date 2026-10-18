@@ -35,6 +35,12 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   const enterGuide = page.locator('.menu-control-enter');
   const guideBounds = [await selectGuide.boundingBox(), await enterGuide.boundingBox()];
   await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveCount(0);
+  await page.locator('.play-mode').hover();
+  await expect(page.locator('.play-mode .cover-trace')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.play-mode .cover-trace rect').first()).toHaveCSS(
+    'animation-name',
+    'cover-orbit',
+  );
   await page.screenshot({ path: 'artifacts/menu-gear-home.png' });
   await gear.click();
   await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.5');
@@ -195,12 +201,35 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await expect(page.locator('.title-menu')).toBeVisible();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('.create-mode')).toBeFocused();
+  await expect(page.locator('.create-mode .cover-trace')).toHaveCSS('opacity', '1');
   await page.keyboard.press('ArrowLeft');
   await expect(page.locator('.play-mode')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   await page.getByRole('button', { name: 'Back', exact: true }).focus();
   await page.keyboard.press('Enter');
+  await expect(page.locator('.title-menu')).toBeVisible();
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  const wideGuides = [await selectGuide.boundingBox(), await enterGuide.boundingBox()];
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.music-menu.albums')).toBeVisible();
+  const shelf = (await page.locator('.album-shelf').boundingBox())!;
+  const arrows = (await page.locator('.menu-control-symbols').boundingBox())!;
+  expect(arrows.x).toBeCloseTo(shelf.x + shelf.width, 0);
+  await page.mouse.move(10, 10);
+  expect((await page.locator('.menu-control-back svg').boundingBox())!.x).toBe(
+    (await page.locator('.menu-back svg').boundingBox())!.x,
+  );
+  expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(wideGuides);
+  await page.screenshot({ path: 'artifacts/menu-controls-albums-2560.png' });
+  await page.locator('.collection-album').first().click();
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(wideGuides);
+  await page.screenshot({ path: 'artifacts/menu-controls-songs-2560.png' });
+  await page.keyboard.press('Backspace');
+  await expect(page.locator('.music-menu.albums')).toBeVisible();
+  await page.keyboard.press('Backspace');
   await expect(page.locator('.title-menu')).toBeVisible();
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('Enter');

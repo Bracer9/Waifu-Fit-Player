@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { ArrowUpRight, Disc3, PencilLine } from 'lucide-react';
 import { MenuMusicConsole } from '../components/MenuMusic';
 import { MenuControls } from '../components/MenuControls';
+import { CoverTrace } from '../components/CoverTrace';
 import type { MenuMusic } from '../useMenuMusic';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
@@ -66,6 +67,7 @@ export function Home({
               <small>LET'S MOVE</small>
               <ArrowUpRight />
             </span>
+            <CoverTrace />
           </span>
         </button>
         <button className="mode-record create-mode" onClick={onCreate}>
@@ -77,6 +79,7 @@ export function Home({
               <small>MAKE YOUR RHYTHM</small>
               <ArrowUpRight />
             </span>
+            <CoverTrace />
           </span>
         </button>
       </div>

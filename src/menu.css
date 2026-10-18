@@ -1,4 +1,5 @@
 .menu-app {
+  --album-shelf-width: min(940px, 74vw);
   overflow: clip;
   padding: 0;
   height: 100dvh;
@@ -434,18 +435,32 @@
   transform-origin: left center;
 }
 .menu-controls {
+  --control-size: clamp(29px, 2.295vw, 37.4px);
+  position: relative;
   display: flex;
   flex: none;
   align-items: center;
-  justify-content: flex-end;
-  gap: clamp(24px, 2.6vw, 52px);
-  margin-left: var(--title-inset);
+  margin-left: 8px;
   padding-bottom: clamp(20px, 2.8vh, 40px);
   color: var(--ink);
+}
+.menu-controls::before {
+  content: '';
+  /* Align SELECT with the shelf's right edge; yield space on narrower screens. */
+  flex: 0 1 calc(45vw + var(--album-shelf-width) / 2 - 8px);
+}
+.menu-controls-actions {
+  display: flex;
+  flex: none;
+  gap: clamp(20px, 2.21vw, 44px);
+}
+.menu-control-label {
+  font-size: var(--control-size);
 }
 .title-menu .menu-controls {
   position: fixed;
   bottom: 0;
+  left: calc(5vw + 8px);
   right: 5vw;
   margin-left: 0;
 }
@@ -455,11 +470,13 @@
   align-items: center;
 }
 .menu-control {
-  gap: 10px;
+  gap: 8px;
 }
 .menu-control-back {
+  position: absolute;
+  left: 0;
+  top: 0;
   padding: 0;
-  margin-right: auto;
 }
 .menu-control-back svg {
   transition: transform 150ms;
@@ -468,8 +485,8 @@
   transform: translateX(-4px);
 }
 .menu-control svg {
-  width: clamp(34px, 2.7vw, 44px);
-  height: clamp(34px, 2.7vw, 44px);
+  width: var(--control-size);
+  height: var(--control-size);
   stroke-width: 3;
   flex: none;
 }
@@ -498,7 +515,7 @@
   transform: translateX(-4px) scale(0.94);
 }
 .album-shelf {
-  width: min(940px, 74vw);
+  width: var(--album-shelf-width);
   margin: 0 auto;
   flex: 1;
   min-height: 0;
@@ -773,13 +790,17 @@
   transform: rotate(180deg);
   transform-origin: center;
 }
-:is(.record-card, .collection-album):is(:hover, :focus-visible, :has(:focus-visible)) .cover-trace {
+:is(.record-card, .collection-album, .mode-record):is(:hover, :focus-visible, :has(:focus-visible))
+  .cover-trace {
   opacity: 1;
 }
-:is(.record-card, .collection-album):is(:hover, :focus-visible, :has(:focus-visible))
+:is(.record-card, .collection-album, .mode-record):is(:hover, :focus-visible, :has(:focus-visible))
   .cover-trace
   rect {
   animation: cover-orbit 1.8s linear infinite;
+}
+.mode-record .cover-trace {
+  z-index: 2;
 }
 @keyframes cover-orbit {
   to {
@@ -1245,7 +1266,11 @@
   .theme-track {
     transition: none;
   }
-  :is(.record-card, .collection-album):is(:hover, :focus-visible, :has(:focus-visible))
+  :is(.record-card, .collection-album, .mode-record):is(
+      :hover,
+      :focus-visible,
+      :has(:focus-visible)
+    )
     .cover-trace
     rect,
   .mode-record-face,
