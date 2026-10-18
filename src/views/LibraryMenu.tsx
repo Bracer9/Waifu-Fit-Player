@@ -9,6 +9,20 @@ import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const rating = (value: number | undefined) => (value === undefined ? '—' : String(value));
 
+function CoverTrace() {
+  return (
+    <svg
+      className="cover-trace"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <rect x="1" y="1" width="98" height="98" pathLength="100" />
+      <rect x="1" y="1" width="98" height="98" pathLength="100" />
+    </svg>
+  );
+}
+
 type Props = {
   page: 'albums' | 'songs';
   albums: Album[];
@@ -230,6 +244,7 @@ export function LibraryMenu(props: Props) {
                   </span>
                   <ArrowRight />
                 </span>
+                <CoverTrace />
               </button>
             ))}
           </div>
@@ -280,10 +295,7 @@ export function LibraryMenu(props: Props) {
                   </span>
                   <span className="record-jacket">
                     <CoverArt src={release.cover} eager={song.id === selected.id} />
-                    <svg className="cover-trace" viewBox="0 0 100 100" aria-hidden="true">
-                      <rect x="1" y="1" width="98" height="98" pathLength="100" />
-                      <rect x="1" y="1" width="98" height="98" pathLength="100" />
-                    </svg>
+                    <CoverTrace />
                   </span>
                   <span className="record-caption">
                     <span className="record-title">

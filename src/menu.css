@@ -696,10 +696,10 @@
   transform: rotate(180deg);
   transform-origin: center;
 }
-.record-card:is(:hover, :focus-visible) .cover-trace {
+:is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace {
   opacity: 1;
 }
-.record-card:is(:hover, :focus-visible) .cover-trace rect {
+:is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace rect {
   animation: cover-orbit 1.8s linear infinite;
 }
 @keyframes cover-orbit {
@@ -1135,7 +1135,7 @@
   .theme-track {
     transition: none;
   }
-  .record-card:is(:hover, :focus-visible) .cover-trace rect,
+  :is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace rect,
   .start-confirmation,
   .theme-music-dialog,
   .countdown-card strong {
