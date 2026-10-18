@@ -95,7 +95,7 @@
   background: var(--mode-color);
   border: 5px solid #1d1c21;
   box-shadow: 7px 8px 0 #1d1c21;
-  animation: mode-float 5.6s ease-in-out infinite;
+  animation: mode-float 4.308s ease-in-out infinite;
   overflow: hidden;
   text-align: left;
   padding: 24px;
@@ -115,7 +115,7 @@
   --mode-color: var(--cyan);
 }
 .create-mode .mode-record-face {
-  animation-delay: -2.8s;
+  animation-delay: -2.154s;
 }
 @keyframes mode-float {
   0%,
