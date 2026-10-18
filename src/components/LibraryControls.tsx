@@ -289,7 +289,6 @@ export function PublishDialog({
   updating,
   onPublish,
   onDifficulty,
-  onAlbum,
   onClose,
 }: {
   edition: Edition;
@@ -298,7 +297,6 @@ export function PublishDialog({
   updating: boolean;
   onPublish: () => Promise<void>;
   onDifficulty: (difficulty: Difficulty) => Promise<void>;
-  onAlbum: (albumId: string) => void;
   onClose: () => void;
 }) {
   const [working, setWorking] = useState(false);
@@ -342,26 +340,6 @@ export function PublishDialog({
             <option value="hard">HARD</option>
           </select>
         </label>
-        <label className="field">
-          <span>专辑 / CATEGORY</span>
-          <select
-            aria-label="发布专辑"
-            value={edition.albumId}
-            disabled={working}
-            onChange={(e) => onAlbum(e.target.value)}
-          >
-            <option value="" disabled>
-              请选择专辑
-            </option>
-            {albums
-              .filter((a) => a.id !== 'all')
-              .map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-          </select>
-        </label>
         <p>
           {updating
             ? `将替换已发布的 ${difficulty.toUpperCase()} 谱面。`
@@ -374,7 +352,7 @@ export function PublishDialog({
           </button>
           <button
             className="button primary"
-            disabled={working || !albums.some((a) => a.id !== 'all' && a.id === edition.albumId)}
+            disabled={working}
             onClick={async () => {
               setWorking(true);
               try {

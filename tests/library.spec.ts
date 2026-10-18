@@ -22,9 +22,10 @@ async function songs(page: Page): Promise<Song[]> {
   );
 }
 async function publish(page: Page) {
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  if (!(await page.getByLabel('所属专辑').inputValue()))
+    await page.getByLabel('所属专辑').selectOption('touhou');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
-  if (!(await page.getByLabel('发布专辑').inputValue()))
-    await page.getByLabel('发布专辑').selectOption('touhou');
   await page.getByRole('button', { name: /确认(发布|更新发布)/ }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
@@ -45,9 +46,12 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByLabel('草稿难度')).toHaveValue('hard');
   await expect(page.getByLabel('所属专辑')).toHaveValue('');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
-  await expect(page.getByLabel('发布专辑')).toHaveValue('');
-  await expect(page.getByRole('button', { name: '确认发布', exact: true })).toBeDisabled();
-  await page.getByLabel('发布专辑').selectOption('anime');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText('曲目 → 所属专辑');
+  await page.getByLabel('所属专辑').selectOption('anime');
+  await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Anime');
+  await expect(page.getByLabel('发布专辑')).toHaveCount(0);
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const hard = (await songs(page))[0].released.hard!;
@@ -56,9 +60,9 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await page.getByLabel('草稿难度').selectOption('normal');
   await expect(page.getByLabel('草稿难度')).toHaveValue('normal');
   await page.getByLabel('作品名称').fill('Sunlight NORMAL');
+  await page.getByLabel('所属专辑').selectOption('pop');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
-  await expect(page.getByLabel('发布专辑')).toHaveValue('anime');
-  await page.getByLabel('发布专辑').selectOption('pop');
+  await expect(page.getByRole('dialog')).toContainText('流行');
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   let stored = (await songs(page))[0];

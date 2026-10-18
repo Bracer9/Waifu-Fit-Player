@@ -640,6 +640,10 @@ export default function App() {
   };
   const beginPublish = () => {
     media.pause();
+    if (!library.albums.some((a) => a.id !== 'all' && a.id === draftMeta.albumId)) {
+      notify('请先在“曲目 → 所属专辑”选择分类。');
+      return;
+    }
     if (!draftMeta.cover && media.element) {
       try {
         setDraftMeta((old) => ({ ...old, cover: coverFromVideo(media.element!) }));
@@ -1192,7 +1196,6 @@ export default function App() {
           onClose={() => setPublishing(false)}
           onPublish={publish}
           onDifficulty={(difficulty) => updatePublication({ difficulty })}
-          onAlbum={(albumId) => void updatePublication({ albumId })}
         />
       )}
       {help && (
