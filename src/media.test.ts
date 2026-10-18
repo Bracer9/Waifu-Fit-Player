@@ -43,6 +43,27 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id));
 });
 
+it('游戏音量可在加载视频前设置，播放器改音量后下次仍沿用', () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const media = new MediaController();
+  const changed = vi.fn();
+  media.subscribeStatus(changed);
+  media.setVolume(0.25);
+  expect(media.getStatus().volume).toBe(0.25);
+  expect(changed).toHaveBeenCalledOnce();
+  const video = new Video();
+  media.attach(video as unknown as HTMLVideoElement);
+  expect(video.volume).toBe(0.25);
+  media.setVolume(0.2);
+  expect(video.volume).toBe(0.2);
+  expect(new MediaController().getStatus().volume).toBe(0.2);
+  media.attach(null);
+});
+
 describe('工作台区间循环', () => {
   it('资源准备中所有播放入口共用同一个拦截，准备完成后正常播放', async () => {
     const media = new MediaController(),

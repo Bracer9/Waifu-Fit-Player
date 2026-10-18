@@ -32,6 +32,16 @@ export class MediaController {
   private nextFrameAt = 0;
   private cleanup?: () => void;
   private loopRange: LoopRange | null = null;
+  constructor() {
+    try {
+      const saved = localStorage.getItem('waifu-video-volume');
+      const volume = Number(saved);
+      if (saved !== null && Number.isFinite(volume) && volume >= 0 && volume <= 1)
+        this.status.volume = volume;
+    } catch {
+      /* Keep the initial video volume when storage is unavailable. */
+    }
+  }
   subscribeTime = (listener: () => void) => {
     this.timeListeners.add(listener);
     return () => {
@@ -169,9 +179,18 @@ export class MediaController {
   };
   pause = () => this.element?.pause();
   setVolume = (volume: number) => {
+    try {
+      localStorage.setItem('waifu-video-volume', String(volume));
+    } catch {
+      /* Session setting still works. */
+    }
     if (this.element) {
       this.element.muted = false;
       this.element.volume = volume;
+      this.readStatus();
+    } else {
+      this.status = { ...this.status, volume };
+      this.statusListeners.forEach((fn) => fn());
     }
   };
 }

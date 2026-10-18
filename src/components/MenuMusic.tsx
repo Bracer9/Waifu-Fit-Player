@@ -76,18 +76,28 @@ const orders = [
   { id: 'repeat', label: '单曲循环', Icon: Repeat1 },
 ] as const;
 
-export function MenuMusicSettings({ music }: { music: MenuMusic }) {
+export function AudioVolumeControl({
+  label,
+  volume,
+  onChange,
+}: {
+  label: string;
+  volume: number;
+  onChange: (volume: number) => void;
+}) {
   return (
     <label className="field menu-music-volume">
-      <span>菜单音乐音量 · {Math.round(music.volume * 100)}%</span>
+      <span>
+        {label} · {Math.round(volume * 100)}%
+      </span>
       <input
-        aria-label="菜单音乐音量"
+        aria-label={label}
         type="range"
         min="0"
         max="1"
         step="0.01"
-        value={music.volume}
-        onChange={(e) => music.setVolume(Number(e.target.value))}
+        value={volume}
+        onChange={(e) => onChange(Number(e.target.value))}
       />
     </label>
   );
@@ -156,7 +166,11 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
                 <p className="music-empty">还没有主题音乐</p>
               )}
             </div>
-            <MenuMusicSettings music={music} />
+            <AudioVolumeControl
+              label="菜单 BGM 音量"
+              volume={music.volume}
+              onChange={music.setVolume}
+            />
           </section>
         </ModalBackdrop>
       )}

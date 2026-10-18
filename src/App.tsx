@@ -42,7 +42,7 @@ import {
   PublishDialog,
   SongManager,
 } from './components/LibraryControls';
-import { MenuMusicSettings } from './components/MenuMusic';
+import { AudioVolumeControl } from './components/MenuMusic';
 import { useMenuMusic } from './useMenuMusic';
 import { Player } from './views/Player';
 import { Editor } from './views/Editor';
@@ -160,6 +160,7 @@ export default function App() {
     mode === 'home' || mode === 'albums' ? 'theme' : mode === 'songs' ? 'preview' : null,
     previewAsset,
     notify,
+    status.volume,
   );
   const difficulty = chart.difficulty ?? 'hard';
   const persistDraft = useCallback(async () => {
@@ -972,16 +973,21 @@ export default function App() {
           </div>
         </div>
       </main>
-      {mode === 'player' && startPending && !busy && !preparation.pending && status.ready && (
-        <GameStartCountdown
-          key={projectRevision}
-          onComplete={completeCountdown}
-          onCancel={() => {
-            setStartPending(false);
-            setMode('songs');
-          }}
-        />
-      )}
+      {mode === 'player' &&
+        startPending &&
+        menuMusic.quiet &&
+        !busy &&
+        !preparation.pending &&
+        status.ready && (
+          <GameStartCountdown
+            key={projectRevision}
+            onComplete={completeCountdown}
+            onCancel={() => {
+              setStartPending(false);
+              setMode('songs');
+            }}
+          />
+        )}
       {(mode === 'editor' || mode === 'player') &&
         preparation.pending &&
         createPortal(
@@ -1175,7 +1181,16 @@ export default function App() {
               </div>
             </div>
             <p>默认 {DEFAULT_NOTE_SPEED.toFixed(1)}。所有曲目共用，自动记住你的选择。</p>
-            <MenuMusicSettings music={menuMusic} />
+            <AudioVolumeControl
+              label="菜单 BGM 音量"
+              volume={menuMusic.volume}
+              onChange={menuMusic.setVolume}
+            />
+            <AudioVolumeControl
+              label="游戏／视频音量"
+              volume={status.volume}
+              onChange={media.setVolume}
+            />
             <div className="modal-actions">
               <button className="button light" onClick={() => changeNoteSpeed(DEFAULT_NOTE_SPEED)}>
                 恢复默认
