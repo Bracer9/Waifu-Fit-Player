@@ -186,9 +186,12 @@ export function LibraryMenu(props: Props) {
       aria-label={page === 'albums' ? '选择专辑' : '选择单曲'}
     >
       <header className="music-menu-header">
-        <button className="menu-back" onClick={props.onBack}>
-          <ArrowLeft />
-          {page === 'albums' ? '主菜单' : '选择专辑'}
+        <button
+          className="menu-back"
+          aria-label={page === 'albums' ? '主菜单' : '选择专辑'}
+          onClick={props.onBack}
+        >
+          <ArrowLeft viewBox="3 3 18 18" />
         </button>
         <div>
           <span className="eyebrow">WAIFU FIT PLAYER / MUSIC COLLECTION</span>

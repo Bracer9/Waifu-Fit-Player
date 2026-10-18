@@ -379,24 +379,44 @@
   align-items: center;
   gap: 32px;
   border-bottom: 2px solid var(--ink);
-  padding-right: 128px;
+  padding: 12px 128px 0 144px;
 }
 .music-menu-header h1 {
   margin: 5px 0 0;
-  font-size: 28px;
-  font-weight: 900;
+}
+.music-menu-header h1,
+.collection-label strong {
+  font:
+    900 clamp(34px, 2.7vw, 44px)/1.12 'Arial Black',
+    'Microsoft YaHei',
+    sans-serif;
+  letter-spacing: 1px;
+  transform: skewX(-5deg);
+  transform-origin: left center;
 }
 .menu-back {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 15px 22px 15px 0;
-  font-size: 14px;
-  font-weight: 800;
-  border-right: 1px solid #cfc8bd;
+  position: absolute;
+  top: 28px;
+  left: 5vw;
+  width: 112px;
+  height: 112px;
+  justify-content: center;
+  padding: 8px;
+  border: 0;
 }
 .menu-back svg {
-  stroke-width: 3;
+  width: 96px;
+  height: 96px;
+  stroke-width: 2;
+  transition: transform 180ms ease-out;
+}
+.menu-back:hover svg {
+  transform: translateX(-4px);
+}
+.menu-back:active svg {
+  transform: translateX(-4px) scale(0.94);
 }
 .album-shelf {
   width: min(940px, 74vw);
@@ -408,11 +428,31 @@
   position: relative;
   scroll-snap-type: y mandatory;
   scrollbar-width: thin;
-  scrollbar-color: #b6aea4 transparent;
+  scrollbar-color: var(--ink) transparent;
+}
+@supports selector(::-webkit-scrollbar) {
+  .album-shelf {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  .album-shelf::-webkit-scrollbar {
+    width: 5px;
+  }
+  .album-shelf::-webkit-scrollbar-thumb {
+    background: var(--ink);
+  }
+  .album-shelf::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .album-shelf::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 .collection-album {
   width: 100%;
-  height: clamp(245px, 37vh, 410px);
+  height: clamp(164px, 24.667vh, 274px);
   flex: none;
   display: block;
   overflow: hidden;
@@ -501,18 +541,16 @@
   left: 29px;
   right: 0;
   bottom: 0;
-  min-height: 91px;
+  min-height: 84px;
   display: flex;
   align-items: center;
   gap: 28px;
-  padding: 15px 24px;
+  padding: 10px 24px;
   background: #fff3e7;
   border-top: 4px solid #1d1c21;
 }
 .collection-label strong {
   display: block;
-  font-size: clamp(25px, 2vw, 34px);
-  font-weight: 900;
   margin-top: 4px;
 }
 .collection-label small {
@@ -1085,6 +1123,7 @@
     animation-delay: 0ms;
   }
   .menu-settings svg,
+  .menu-back svg,
   .mode-record,
   .collection-album,
   .record-card,
