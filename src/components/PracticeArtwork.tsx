@@ -49,12 +49,6 @@ function PracticeStats({ chart, media }: { chart: Chart; media: MediaController 
           </strong>
         </div>
       </div>
-      <span className="keep-going" aria-hidden="true">
-        KEEP
-        <br />
-        GOING!
-        <i />
-      </span>
       <div className="combo-stat" aria-label={`Full combo ${combo}`}>
         <span className="stat-label">FULL COMBO</span>
         <strong>{String(combo).padStart(3, '0')}</strong>
@@ -65,36 +59,20 @@ function PracticeStats({ chart, media }: { chart: Chart; media: MediaController 
 
 export function PracticeCover({ chart, media }: { chart: Chart; media: MediaController }) {
   return (
-    <>
+    <header className="practice-heading">
       <div className="practice-cover" aria-hidden="true">
         <div className="cover-wordmark">
-          <span>WAIFU</span>
           <span>
-            <b>FIT</b> PLAYER
+            WAIFU <b>FIT</b> PLAYER
           </span>
         </div>
-        <span className="cover-edition">
-          RHYTHM
-          <br />
-          MOVES
-          <br />A BRIGHTER
-          <br />
-          YOU <i />
-        </span>
       </div>
       <PracticeStats chart={chart} media={media} />
-      <div className="practice-track-info">
-        <span className="record-mark" aria-hidden="true">
-          <i />
-        </span>
-        <h1 title={chart.title}>{chart.title}</h1>
-        <span className="track-status">NOW PLAYING</span>
-      </div>
-    </>
+    </header>
   );
 }
 
-export function PracticeMasthead({ onReturn }: { onReturn: () => void }) {
+export function PracticeMasthead({ title, onReturn }: { title: string; onReturn: () => void }) {
   return (
     <div className="practice-masthead">
       <div className="move-lettering" aria-hidden="true">
@@ -102,6 +80,13 @@ export function PracticeMasthead({ onReturn }: { onReturn: () => void }) {
         <br />
         <span>Move!</span>
         <Heart />
+      </div>
+      <div className="practice-track-info">
+        <span className="record-mark" aria-hidden="true">
+          <i />
+        </span>
+        <span className="track-status">NOW PLAYING</span>
+        <h1 title={title}>{title}</h1>
       </div>
       <button className="return-workspace" onClick={onReturn}>
         <ArrowLeft size={15} /> WORKBENCH

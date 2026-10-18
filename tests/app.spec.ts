@@ -264,8 +264,10 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   const positions = await flying.evaluateAll((els) =>
     els.map((el) => {
       const token = el as HTMLElement;
+      // Glyph sizes may be fractional; offsetWidth rounds them to whole pixels.
       const x =
-        new DOMMatrixReadOnly(getComputedStyle(token).transform).m41 + token.offsetWidth / 2;
+        new DOMMatrixReadOnly(getComputedStyle(token).transform).m41 +
+        parseFloat(getComputedStyle(token).width) / 2;
       return x / token.closest<HTMLElement>('.note-highway')!.clientWidth;
     }),
   );

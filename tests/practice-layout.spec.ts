@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放控制', async ({ page }) => {
+test('折页专辑全屏画布对齐五轨与视频，保留透视和真实播放控制', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
@@ -28,6 +28,29 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
       ).toBeCloseTo(16 / 9, 2);
       await expect(video).toHaveCSS('object-fit', 'contain');
       await expect(page.locator('.play-lane')).toHaveCount(5);
+      await expect(page.locator('.stage-right .practice-track-info h1')).toBeVisible();
+      await expect(page.locator('.cover-edition, .keep-going')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Fullscreen', exact: true })).toHaveCount(0);
+      await expect(page.getByLabel('Playback speed', { exact: true })).toHaveCount(0);
+      const topEdges = await page.evaluate(() => {
+        return ['.play-lane', '.video-viewport'].map((selector, index) => {
+          const element = document.querySelector(selector)!;
+          const probe = document.createElement('i');
+          Object.assign(probe.style, {
+            position: 'absolute',
+            left: index ? '0' : '100%',
+            top: '0',
+            width: '0',
+            height: '0',
+            pointerEvents: 'none',
+          });
+          element.appendChild(probe);
+          const y = probe.getBoundingClientRect().y;
+          probe.remove();
+          return y;
+        });
+      });
+      expect(Math.abs(topEdges[0] - topEdges[1])).toBeLessThan(4);
       await expect
         .poll(() =>
           page

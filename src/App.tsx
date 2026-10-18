@@ -554,6 +554,7 @@ export default function App() {
             <div className="stage-right">
               {mode === 'player' && (
                 <PracticeMasthead
+                  title={chart.title}
                   onReturn={() => {
                     media.pause();
                     setMode('editor');

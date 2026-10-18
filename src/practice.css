@@ -22,7 +22,7 @@ body:has(.practice-app) {
   --album-ink: #1d1c21;
   --album-paper: #fff1e6;
   --leaf-split: 44%;
-  --album-height: 64dvh;
+  --album-height: 64.6dvh;
   --album-width: 88.6vw;
   display: grid;
   place-items: center;
@@ -101,6 +101,8 @@ body:has(.practice-app) {
   position: relative;
   display: grid;
   grid-template-columns: var(--leaf-split) minmax(0, 1fr);
+  /* The shared lower row aligns the five lanes with the real video frame. */
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 0;
   flex: none;
   width: var(--album-width);
@@ -110,8 +112,9 @@ body:has(.practice-app) {
   transform-style: preserve-3d;
 }
 .practice .stage-left {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-row: 1 / span 2;
+  grid-template-rows: subgrid;
   min-height: 0;
   position: relative;
   padding: 0 0 10px;
@@ -144,13 +147,18 @@ body:has(.practice-app) {
   width: 28px;
   background: linear-gradient(90deg, transparent, #00000038);
 }
+.practice-heading {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 .practice-cover {
-  height: clamp(88px, 12.2vh, 132px);
-  flex-shrink: 0;
+  container-type: size;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 26px 12px 20px;
+  padding: 2px 20px;
   color: var(--album-ink);
   background: var(--album-paper);
   overflow: hidden;
@@ -158,76 +166,64 @@ body:has(.practice-app) {
 .cover-wordmark {
   font-family: 'Arial Black', 'Barlow Condensed', sans-serif;
   font-weight: 900;
-  letter-spacing: -3px;
-  line-height: 0.8;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  white-space: nowrap;
   transform: skewX(-4deg);
 }
 .cover-wordmark > span {
   display: block;
-  font-size: clamp(44px, 4vw, 76px);
-}
-.cover-wordmark > span + span {
-  font-size: clamp(34px, 3vw, 56px);
-  margin-top: 4px;
-  white-space: nowrap;
+  font-size: min(2.85vw, 100cqh);
 }
 .cover-wordmark b {
   color: var(--pink);
   font-weight: 900;
 }
-.cover-edition {
-  font:
-    600 clamp(9px, 0.7vw, 13px)/1.4 'Barlow Condensed',
-    sans-serif;
-  letter-spacing: 1.6px;
-  margin-left: 16px;
-}
-.cover-edition i {
-  display: block;
-  width: 44px;
-  height: 2px;
-  margin-top: 8px;
-  background: var(--album-ink);
-}
 .practice-track-info {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 28px;
-  flex-shrink: 0;
-  padding: 0 16px;
-  color: #fff5ec;
+  gap: 10px;
+  height: 24px;
+  min-width: 0;
+  color: var(--album-ink);
 }
 .practice-stats {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 24px;
   flex: none;
-  height: 76px;
-  padding: 6px 18px 0;
+  height: clamp(36px, 4.2vh, 56px);
+  padding: 0 18px;
   color: #fff9f3;
   font-family: 'Barlow Condensed', sans-serif;
 }
 .stat-label {
-  display: block;
-  font-size: 13px;
+  font-size: clamp(11px, 0.8vw, 16px);
   font-weight: 600;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 .practice-stats strong {
-  display: block;
-  font-size: 44px;
-  line-height: 0.95;
+  font-size: clamp(26px, 2vw, 42px);
+  line-height: 1;
   font-weight: 800;
+  white-space: nowrap;
 }
-.calorie-stat {
+.calorie-stat,
+.calorie-stat > div,
+.combo-stat {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 9px;
 }
 .calorie-stat > svg {
-  width: 32px;
-  height: 36px;
+  width: clamp(22px, 1.6vw, 32px);
+  height: 28px;
   fill: #fff8f5;
   stroke: #fff8f5;
   filter: drop-shadow(0 0 5px #f64e9360);
@@ -237,28 +233,15 @@ body:has(.practice-app) {
   font-weight: 600;
   letter-spacing: 1px;
 }
-.keep-going {
-  color: #f883b1;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-.keep-going i {
-  display: block;
-  height: 2px;
-  background: currentColor;
-  margin-top: 8px;
-}
 .combo-stat {
   margin-left: auto;
   text-align: right;
 }
 .combo-stat strong {
   color: #ff80b6;
-  font-size: 48px;
 }
 .practice-track-info h1 {
-  font-size: clamp(11px, 0.9vw, 16px);
+  font-size: clamp(13px, 1vw, 20px);
   font-weight: 600;
   margin: 0;
   overflow: hidden;
@@ -281,19 +264,18 @@ body:has(.practice-app) {
   border-radius: 50%;
 }
 .track-status {
-  margin-left: auto;
   white-space: nowrap;
   font:
-    700 10px 'Barlow Condensed',
+    700 11px 'Barlow Condensed',
     sans-serif;
   letter-spacing: 1.3px;
-  color: #f58eb8;
+  color: #b5366a;
 }
 .practice .player-lanes {
-  --ribbon-width: 18px;
-  --note-size: 65px;
-  --target-size: 62px;
-  --glyph-size: 36px;
+  --ribbon-width: 21.6px;
+  --note-size: 78px;
+  --target-size: 74.4px;
+  --glyph-size: 43.2px;
   --hold-head-size: var(--note-size);
   --tail-size: calc(var(--note-size) * 0.58);
   --lane-label-width: clamp(120px, 8.5vw, 158px);
@@ -301,7 +283,7 @@ body:has(.practice-app) {
   flex: 1;
   min-height: 0;
   position: relative;
-  padding: 0 12px;
+  padding: 7px 12px 0;
 }
 .practice .lanes-stack {
   position: relative;
@@ -719,8 +701,8 @@ body:has(.practice-app) {
 .practice .special-slot {
   position: absolute;
   bottom: calc(100% + 3px);
-  left: 12px;
-  right: 12px;
+  left: 32%;
+  right: 25%;
   height: 32px;
   margin: 0;
   border: 0;
@@ -777,13 +759,11 @@ body:has(.practice-app) {
   height: 2px;
   box-shadow: 0 0 6px var(--cyan);
 }
-.practice .stage-left:has(.special-slot.visible) .practice-track-info {
-  visibility: hidden;
-}
 .practice .stage-right {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-row: 1 / span 2;
+  grid-template-rows: subgrid;
   min-width: 0;
   min-height: 0;
   padding: 0 12px 12px;
@@ -802,8 +782,9 @@ body:has(.practice-app) {
   container-type: size;
   position: relative;
   flex: 1;
-  min-height: 70px;
+  min-height: 0;
   margin: 0 -12px;
+  padding-bottom: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -938,59 +919,13 @@ body:has(.practice-app) {
 }
 
 @media (min-width: 1800px) and (min-height: 1250px) {
-  .practice-cover {
-    height: clamp(148px, 12.2vh, 220px);
-  }
-  .cover-wordmark > span {
-    font-size: clamp(80px, 4vw, 120px);
-  }
-  .cover-wordmark > span + span {
-    font-size: clamp(60px, 3vw, 90px);
-  }
-  .cover-edition {
-    font-size: 16px;
-  }
-  .practice-stats {
-    height: clamp(92px, 7vh, 126px);
-    padding-inline: 24px;
-    gap: 32px;
-  }
-  .stat-label {
-    font-size: 17px;
-  }
-  .practice-stats strong {
-    font-size: 58px;
-  }
-  .combo-stat strong {
-    font-size: 64px;
-  }
-  .calorie-stat > svg {
-    width: 42px;
-    height: 48px;
-  }
-  .calorie-stat small {
-    font-size: 20px;
-  }
-  .keep-going {
-    font-size: 21px;
-  }
-  .practice-track-info {
-    height: 36px;
-    padding-inline: 20px;
-  }
-  .practice-track-info h1 {
-    font-size: 18px;
-  }
-  .track-status {
-    font-size: 12px;
-  }
   .practice .player-lanes {
-    --ribbon-width: 24px;
-    --note-size: 85px;
-    --target-size: 80px;
-    --glyph-size: 46px;
+    --ribbon-width: 28.8px;
+    --note-size: 102px;
+    --target-size: 96px;
+    --glyph-size: 55.2px;
     --lane-label-width: clamp(180px, 8.5vw, 240px);
-    padding-inline: 16px;
+    padding: 8px 16px 0;
   }
   .practice .lanes-stack {
     gap: 8px;
@@ -1040,53 +975,14 @@ body:has(.practice-app) {
   .practice .transport .volume {
     display: none;
   }
-  .cover-edition {
-    letter-spacing: 0.8px;
-    margin-left: 10px;
-  }
-  .track-status {
-    font-size: 8px;
-  }
 }
 
 @media (min-width: 1000px) and (max-height: 960px) {
   .practice .player-lanes {
-    --ribbon-width: 17px;
-    --note-size: clamp(55px, 6.5vh, 62.5px);
-    --target-size: clamp(54px, 6.3vh, 60px);
-    --glyph-size: clamp(32px, 3.8vh, 36px);
-  }
-  .practice-cover {
-    height: clamp(74px, 9.25vh, 88px);
-    padding: 6px 16px;
-  }
-  .cover-wordmark > span {
-    font-size: clamp(42px, 5.25vh, 50px);
-  }
-  .cover-wordmark > span + span {
-    font-size: clamp(32px, 4vh, 38px);
-  }
-  .practice-track-info {
-    height: 24px;
-  }
-  .practice-stats {
-    height: clamp(48px, 6vh, 58px);
-    gap: 14px;
-    padding: 3px 14px 0;
-  }
-  .practice-stats strong,
-  .combo-stat strong {
-    font-size: 30px;
-  }
-  .stat-label {
-    font-size: 10px;
-  }
-  .keep-going {
-    font-size: 12px;
-  }
-  .calorie-stat > svg {
-    width: 24px;
-    height: 28px;
+    --ribbon-width: 20.4px;
+    --note-size: clamp(66px, 7.8vh, 75px);
+    --target-size: clamp(64.8px, 7.56vh, 72px);
+    --glyph-size: clamp(38.4px, 4.56vh, 43.2px);
   }
   .practice .stage-left {
     padding-bottom: 8px;
@@ -1154,21 +1050,6 @@ body:has(.practice-app) {
   }
   .practice .player-lanes {
     --target-size: 50px;
-  }
-  .practice-cover {
-    height: 60px;
-  }
-  .cover-wordmark > span {
-    font-size: 34px;
-  }
-  .cover-wordmark > span + span {
-    font-size: 26px;
-  }
-  .practice-track-info {
-    height: 20px;
-  }
-  .practice-stats {
-    height: 42px;
   }
   .practice .play-lane {
     min-height: 52px;
@@ -1243,10 +1124,6 @@ body:has(.practice-app) {
 }
 
 @media (max-width: 600px) {
-  .cover-edition,
-  .track-status {
-    display: none;
-  }
   .practice .lane-label {
     padding-inline: 5px;
     gap: 5px;
