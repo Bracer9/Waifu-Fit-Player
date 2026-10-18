@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('折页专辑全屏画布对齐五轨与视频，保留透视和真实播放控制', async ({ page }) => {
+test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
@@ -32,14 +32,24 @@ test('折页专辑全屏画布对齐五轨与视频，保留透视和真实播�
       await expect(page.locator('.cover-edition, .keep-going')).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Fullscreen', exact: true })).toHaveCount(0);
       await expect(page.getByLabel('Playback speed', { exact: true })).toHaveCount(0);
-      const topEdges = await page.evaluate(() => {
-        return ['.play-lane', '.video-viewport'].map((selector, index) => {
-          const element = document.querySelector(selector)!;
+      const contentEdges = await page.evaluate(() => {
+        return [
+          ['.practice-stats', '100%', '0'],
+          ['.video-panel', '0', '0'],
+          ['.play-lane[data-lane="side_crunch"]', '100%', '100%'],
+          ['.video-panel', '0', '100%'],
+        ].map(([selector, left, top]) => {
+          const element = document.querySelector<HTMLElement>(selector)!;
+          const position = element.style.position;
+          const style = getComputedStyle(element);
+          if (style.position === 'static') element.style.position = 'relative';
           const probe = document.createElement('i');
           Object.assign(probe.style, {
             position: 'absolute',
-            left: index ? '0' : '100%',
-            top: '0',
+            left:
+              left === '0' ? `-${style.borderLeftWidth}` : `calc(100% + ${style.borderRightWidth})`,
+            top:
+              top === '0' ? `-${style.borderTopWidth}` : `calc(100% + ${style.borderBottomWidth})`,
             width: '0',
             height: '0',
             pointerEvents: 'none',
@@ -47,10 +57,12 @@ test('折页专辑全屏画布对齐五轨与视频，保留透视和真实播�
           element.appendChild(probe);
           const y = probe.getBoundingClientRect().y;
           probe.remove();
+          element.style.position = position;
           return y;
         });
       });
-      expect(Math.abs(topEdges[0] - topEdges[1])).toBeLessThan(4);
+      expect(Math.abs(contentEdges[0] - contentEdges[1])).toBeLessThan(4);
+      expect(Math.abs(contentEdges[2] - contentEdges[3])).toBeLessThan(4);
       await expect
         .poll(() =>
           page

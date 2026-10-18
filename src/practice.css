@@ -101,8 +101,8 @@ body:has(.practice-app) {
   position: relative;
   display: grid;
   grid-template-columns: var(--leaf-split) minmax(0, 1fr);
-  /* The shared lower row aligns the five lanes with the real video frame. */
-  grid-template-rows: minmax(0, 1fr) auto;
+  /* The video and controls span the same rows as the stats and all five lanes. */
+  grid-template-rows: minmax(0, 1fr) clamp(36px, 4.2vh, 56px) auto;
   gap: 0;
   flex: none;
   width: var(--album-width);
@@ -113,11 +113,11 @@ body:has(.practice-app) {
 }
 .practice .stage-left {
   display: grid;
-  grid-row: 1 / span 2;
+  grid-row: 1 / span 3;
   grid-template-rows: subgrid;
   min-height: 0;
   position: relative;
-  padding: 0 0 10px;
+  padding: 0 0 12px;
   background: var(--album-ink);
   transform-origin: right center;
   transform: rotateY(35deg);
@@ -149,8 +149,9 @@ body:has(.practice-app) {
 }
 .practice-heading {
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-row: 1 / span 2;
+  grid-template-rows: subgrid;
 }
 .practice-cover {
   container-type: size;
@@ -197,7 +198,7 @@ body:has(.practice-app) {
   justify-content: space-between;
   gap: 24px;
   flex: none;
-  height: clamp(36px, 4.2vh, 56px);
+  min-height: 0;
   padding: 0 18px;
   color: #fff9f3;
   font-family: 'Barlow Condensed', sans-serif;
@@ -762,7 +763,7 @@ body:has(.practice-app) {
 .practice .stage-right {
   position: relative;
   display: grid;
-  grid-row: 1 / span 2;
+  grid-row: 1 / span 3;
   grid-template-rows: subgrid;
   min-width: 0;
   min-height: 0;
@@ -846,6 +847,7 @@ body:has(.practice-app) {
   background: white;
 }
 .practice .video-panel {
+  grid-row: 2 / span 2;
   flex: none;
   align-self: auto;
   width: 100%;
@@ -943,7 +945,7 @@ body:has(.practice-app) {
     height: calc(var(--note-size) * 1.08);
   }
   .practice .stage-left {
-    padding-bottom: 14px;
+    padding-bottom: 16px;
   }
   .practice .stage-right {
     padding: 0 16px 16px;
@@ -983,9 +985,6 @@ body:has(.practice-app) {
     --note-size: clamp(66px, 7.8vh, 75px);
     --target-size: clamp(64.8px, 7.56vh, 72px);
     --glyph-size: clamp(38.4px, 4.56vh, 43.2px);
-  }
-  .practice .stage-left {
-    padding-bottom: 8px;
   }
   .practice .lanes-stack {
     gap: 4px;
