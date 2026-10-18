@@ -113,19 +113,21 @@ function NumberField({
   label,
   value,
   onCommit,
+  onClear,
   min = 0,
   max,
   step = 1,
 }: {
   label: string;
-  value: number;
+  value: number | undefined;
   onCommit: (n: number) => void;
+  onClear?: () => void;
   min?: number;
   max?: number;
   step?: number;
 }) {
-  const [draft, setDraft] = useState(String(value));
-  useEffect(() => setDraft(String(value)), [value]);
+  const [draft, setDraft] = useState(String(value ?? ''));
+  useEffect(() => setDraft(String(value ?? '')), [value]);
   return (
     <label className="field">
       <span>{label}</span>
@@ -139,9 +141,15 @@ function NumberField({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
           const n = Number(draft);
-          if (draft.trim() && Number.isFinite(n) && n >= min && (max === undefined || n <= max))
+          if (!draft.trim() && onClear) onClear();
+          else if (
+            draft.trim() &&
+            Number.isFinite(n) &&
+            n >= min &&
+            (max === undefined || n <= max)
+          )
             onCommit(n);
-          else setDraft(String(value));
+          else setDraft(String(value ?? ''));
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.currentTarget.blur();
@@ -1553,6 +1561,13 @@ export function Editor({
                   onCommit={(title) => onChange({ ...chart, title })}
                 />
                 {publication}
+                <NumberField
+                  label="难度系数"
+                  value={chart.difficultyRating}
+                  step={0.1}
+                  onCommit={(difficultyRating) => onChange({ ...chart, difficultyRating })}
+                  onClear={() => onChange({ ...chart, difficultyRating: undefined })}
+                />
                 <NumberField
                   label="视频偏移 / ms"
                   value={chart.videoOffsetMs ?? 0}

@@ -393,11 +393,12 @@
   gap: 36px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 30px calc(50% - var(--card-width) / 2);
+  padding: 50px calc(50% - var(--card-width) / 2) 30px;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
 }
 .record-card {
+  position: relative;
   flex: 0 0 var(--card-width);
   min-width: 0;
   padding: 0;
@@ -423,8 +424,49 @@
   border-bottom: 4px solid #1d1c21;
 }
 .record-caption {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 17px;
+}
+.record-title {
+  min-width: 0;
+}
+.record-timing {
+  display: grid;
+  gap: 8px;
+  flex-shrink: 0;
+  text-align: right;
+  font:
+    600 17px 'Barlow Condensed',
+    sans-serif;
+}
+.record-timing small {
+  color: #706860;
+  font-size: 10px;
+  margin-right: 4px;
+}
+.record-overline {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  font:
+    700 22px 'Barlow Condensed',
+    sans-serif;
+}
+.record-overline > span {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.record-overline small {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #706860;
 }
 .record-caption strong {
   display: block;
@@ -433,7 +475,7 @@
   white-space: nowrap;
   font-size: 17px;
 }
-.record-caption > span {
+.record-difficulties {
   display: flex;
   gap: 7px;
   margin-top: 10px;
@@ -493,17 +535,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.selection-title p {
-  font:
-    600 18px 'Barlow Condensed',
-    sans-serif;
-  margin: 0;
-  color: #706860;
-}
-.selection-title p span {
-  padding: 0 12px;
-  color: #aaa;
-}
 .difficulty-choice {
   display: flex;
   gap: 10px;
@@ -520,7 +551,7 @@
 .difficulty-choice button small {
   display: block;
   font:
-    10px 'Microsoft YaHei',
+    600 18px 'Barlow Condensed',
     sans-serif;
   margin-top: 5px;
 }
@@ -757,7 +788,7 @@
   }
   .song-carousel {
     --card-width: min(29vh, 300px);
-    padding-top: 20px;
+    padding-top: 45px;
     padding-bottom: 20px;
   }
   .selection-details {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blankChart } from './model';
+import { blankChart, parseChart, serializeChart } from './model';
 import { editionsIn, publishSong, unpublishSong, videoIds, type Song } from './library';
 
 function fixture(): Song {
@@ -19,12 +19,25 @@ function fixture(): Song {
 
 describe('local drafts and released difficulties', () => {
   it('publishes an independent snapshot; later draft edits cannot change it', () => {
-    const song = publishSong(fixture(), 'hard');
+    const draft = fixture();
+    draft.drafts.hard!.chart.difficultyRating = 8.5;
+    const song = publishSong(draft, 'hard');
     song.drafts.hard!.chart.notes[0].timeMs = 2000;
+    song.drafts.hard!.chart.difficultyRating = 5;
     song.drafts.hard!.cover = 'new cover';
     expect(song.released.hard!.chart.notes[0].timeMs).toBe(1000);
     expect(song.released.hard!.cover).toBe('cover');
     expect(song.released.hard!.chart.difficulty).toBe('hard');
+    expect(song.released.hard!.chart.difficultyRating).toBe(8.5);
+    expect(parseChart(JSON.parse(serializeChart(song.released.hard!.chart))).difficultyRating).toBe(
+      8.5,
+    );
+  });
+  it('accepts older charts without a rating and rejects invalid ratings', () => {
+    const chart = fixture().drafts.hard!.chart;
+    expect(parseChart(chart).difficultyRating).toBeUndefined();
+    for (const difficultyRating of [-1, NaN, Infinity, '8.5'])
+      expect(() => parseChart({ ...chart, difficultyRating })).toThrow('难度系数');
   });
   it('publishing a changed draft as Normal leaves Hard intact, including its offset', () => {
     const song = publishSong(fixture(), 'hard');

@@ -44,6 +44,8 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await expect(page.getByLabel('草稿难度')).toHaveValue('hard');
+  await page.getByLabel('难度系数').fill('8.5');
+  await page.getByLabel('难度系数').press('Enter');
   await expect(page.getByLabel('所属专辑')).toHaveValue('');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -56,10 +58,13 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const hard = (await songs(page))[0].released.hard!;
   expect(hard.albumId).toBe('anime');
+  expect(hard.chart.difficultyRating).toBe(8.5);
   expect(hard.cover.startsWith('data:image/webp')).toBe(true);
   await page.getByLabel('草稿难度').selectOption('normal');
   await expect(page.getByLabel('草稿难度')).toHaveValue('normal');
   await page.getByLabel('作品名称').fill('Sunlight NORMAL');
+  await page.getByLabel('难度系数').fill('4.5');
+  await page.getByLabel('难度系数').press('Enter');
   await page.getByLabel('所属专辑').selectOption('pop');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('流行');
@@ -69,16 +74,22 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   expect(stored.released.hard).toEqual(hard);
   expect(stored.released.normal!.albumId).toBe('pop');
   expect(stored.released.normal!.chart.title).toBe('Sunlight NORMAL');
+  expect(stored.released.normal!.chart.difficultyRating).toBe(4.5);
   await page.getByLabel('作品名称').fill('未发布修改');
+  await page.getByLabel('难度系数').fill('9');
+  await page.getByLabel('难度系数').press('Enter');
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   await expect(page.locator('.collection-album').first()).toContainText('全部曲目');
   await page.screenshot({ path: 'artifacts/menu-albums.png' });
   await page.locator('.collection-album').first().click();
-  await expect(page.getByRole('button', { name: 'HARD 已发布' })).toBeEnabled();
-  await page.getByRole('button', { name: 'NORMAL 已发布' }).click();
+  await expect(page.getByRole('button', { name: 'HARD', exact: true })).toContainText('8.5');
+  await expect(page.getByRole('button', { name: 'NORMAL', exact: true })).toContainText('4.5');
+  await page.getByRole('button', { name: 'NORMAL', exact: true }).click();
   await expect(page.locator('.selection-title h2')).toHaveText('Sunlight NORMAL');
+  await expect(page.locator('.record-overline')).toContainText('4.5');
+  await expect(page.locator('.record-timing')).toContainText('BPM');
   await page.screenshot({ path: 'artifacts/menu-songs.png' });
-  await page.getByRole('button', { name: 'HARD 已发布' }).click();
+  await page.getByRole('button', { name: 'HARD', exact: true }).click();
   await page.getByRole('button', { name: /开始 LET'S MOVE/ }).click();
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
   await expect(page.locator('.play-lane')).toHaveCount(5);
@@ -86,7 +97,7 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
     .poll(() => page.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime))
     .toBeGreaterThan(0);
   await page.getByRole('button', { name: 'SELECT MUSIC', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'HARD 已发布' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'HARD', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );

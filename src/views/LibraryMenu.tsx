@@ -12,6 +12,9 @@ import {
 import { editionsIn, type Album, type Difficulty, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
 import { formatTime } from '../timing';
+import { createCalorieIndex } from '../calories';
+
+const rating = (value: number | undefined) => (value === undefined ? '—' : String(value));
 
 type Props = {
   page: 'albums' | 'songs';
@@ -49,6 +52,18 @@ export function LibraryMenu(props: Props) {
     [songs, albumId],
   );
   const selected = inAlbum.find((s) => s.id === songId) ?? inAlbum[0];
+  // Compile each released chart once when the library changes, never during playback/scroll.
+  const totalCalories = useMemo(
+    () =>
+      new Map(
+        songs.flatMap((song) =>
+          Object.values(song.released).map(
+            ({ chart }) => [chart, createCalorieIndex(chart.notes).at(-1)?.kcal ?? 0] as const,
+          ),
+        ),
+      ),
+    [songs],
+  );
   const available = selected ? editionsIn(selected, albumId) : [];
   const selectedDifficulty = available.includes(difficulty) ? difficulty : available.at(-1);
   const edition =
@@ -239,17 +254,37 @@ export function LibraryMenu(props: Props) {
                   onClick={() => select(song.id)}
                   aria-label={`选择 ${release.chart.title}`}
                 >
+                  <span className="record-overline">
+                    <span>
+                      <small>LEVEL</small>
+                      <b>{rating(release.chart.difficultyRating)}</b>
+                    </span>
+                    <span>
+                      <b>{totalCalories.get(release.chart)?.toFixed(1)}</b>
+                      <small>KCAL</small>
+                    </span>
+                  </span>
                   <span className="record-jacket">
                     <CoverArt src={release.cover} eager={song.id === selected.id} />
                   </span>
                   <span className="record-caption">
-                    <strong>{release.chart.title}</strong>
-                    <span>
-                      {ds.map((level) => (
-                        <i className={`difficulty-tag ${level}`} key={level}>
-                          {level.toUpperCase()}
-                        </i>
-                      ))}
+                    <span className="record-title">
+                      <strong>{release.chart.title}</strong>
+                      <span className="record-difficulties">
+                        {ds.map((level) => (
+                          <i className={`difficulty-tag ${level}`} key={level}>
+                            {level.toUpperCase()}
+                          </i>
+                        ))}
+                      </span>
+                    </span>
+                    <span className="record-timing">
+                      <span>
+                        <small>BPM</small> {release.chart.tempoSegments[0]?.bpm ?? '—'}
+                      </span>
+                      <span>
+                        <small>TIME</small> {formatTime(release.chart.videoHint.durationMs)}
+                      </span>
                     </span>
                   </span>
                 </button>
@@ -276,23 +311,25 @@ export function LibraryMenu(props: Props) {
             <div className="selection-title">
               <span className="eyebrow">SELECTED TRACK</span>
               <h2>{edition?.chart.title}</h2>
-              <p>
-                {formatTime(edition?.chart.videoHint.durationMs ?? 0)}
-                <span> / </span>
-                {edition?.chart.tempoSegments[0]?.bpm ?? '—'} BPM
-              </p>
             </div>
             <div className="difficulty-choice" aria-label="游玩难度">
               {(['normal', 'hard'] as const).map((d) => (
                 <button
                   key={d}
+                  aria-label={d.toUpperCase()}
                   disabled={!available.includes(d)}
                   aria-pressed={selectedDifficulty === d}
                   className={d}
                   onClick={() => onDifficulty(d)}
                 >
                   {d.toUpperCase()}
-                  <small>{available.includes(d) ? '已发布' : '未发布'}</small>
+                  <small>
+                    {rating(
+                      available.includes(d)
+                        ? selected.released[d]?.chart.difficultyRating
+                        : undefined,
+                    )}
+                  </small>
                 </button>
               ))}
             </div>

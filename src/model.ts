@@ -76,6 +76,7 @@ export type Chart = {
   schemaVersion: 1;
   songId?: string;
   difficulty?: 'normal' | 'hard';
+  difficultyRating?: number;
   title: string;
   videoOffsetMs?: number;
   videoHint: { fileName: string; durationMs: number; assetId?: string };
@@ -236,6 +237,13 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     errors.push('曲目 ID 无效。');
   if (input.difficulty !== undefined && !['normal', 'hard'].includes(String(input.difficulty)))
     errors.push('难度必须为 normal 或 hard。');
+  if (
+    input.difficultyRating !== undefined &&
+    (typeof input.difficultyRating !== 'number' ||
+      !Number.isFinite(input.difficultyRating) ||
+      input.difficultyRating < 0)
+  )
+    errors.push('难度系数必须为不小于 0 的数字。');
   if (
     input.videoOffsetMs !== undefined &&
     (!Number.isInteger(input.videoOffsetMs) || Math.abs(Number(input.videoOffsetMs)) > 1000)
