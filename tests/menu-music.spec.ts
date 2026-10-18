@@ -132,6 +132,18 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(async () => (await sound(page)).src).toContain('__qa_theme_a');
   await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0.5');
   await expect.poll(async () => (await sound(page)).volume).toBe(0.5);
+  await page.getByRole('button', { name: '暂停菜单 BGM', exact: true }).click();
+  await expect.poll(async () => (await sound(page)).paused).toBe(true);
+  const pausedAt = (await sound(page)).time;
+  await page.getByRole('button', { name: '单曲循环', exact: true }).click();
+  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
+  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
+  expect((await sound(page)).paused).toBe(true);
+  expect((await sound(page)).time).toBe(pausedAt);
+  expect((await sound(page)).context).toBe('suspended');
+  await page.getByRole('button', { name: '播放菜单 BGM', exact: true }).click();
+  await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(pausedAt + 0.1);
+  expect((await sound(page)).context).toBe('running');
   await page.screenshot({ path: 'artifacts/menu-music-popup.png' });
   await page.getByRole('button', { name: '关闭主界面音乐' }).click();
   await page.screenshot({ path: 'artifacts/menu-music-home.png' });

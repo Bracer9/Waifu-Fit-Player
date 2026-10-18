@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Headphones, ListMusic, Repeat1, Shuffle, X } from 'lucide-react';
+import { Check, Headphones, ListMusic, Pause, Play, Repeat1, Shuffle, X } from 'lucide-react';
 import type { MenuMusic } from '../useMenuMusic';
 import { ModalBackdrop } from './ModalBackdrop';
 
@@ -151,16 +151,27 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
             <div className="theme-track-list">
               {music.tracks.length ? (
                 music.tracks.map((track, index) => (
-                  <button
-                    key={track.id}
-                    className="theme-track"
-                    aria-pressed={music.track?.id === track.id}
-                    onClick={() => music.select(track.id)}
-                  >
-                    <small>{String(index + 1).padStart(2, '0')}</small>
-                    <span>{track.title}</span>
-                    {music.track?.id === track.id && <Check size={17} />}
-                  </button>
+                  <div className="theme-track-row" key={track.id}>
+                    <button
+                      className="theme-track"
+                      aria-pressed={music.track?.id === track.id}
+                      onClick={() => music.select(track.id)}
+                    >
+                      <small>{String(index + 1).padStart(2, '0')}</small>
+                      <span>{track.title}</span>
+                      {music.track?.id === track.id && <Check size={17} />}
+                    </button>
+                    {music.track?.id === track.id && (
+                      <button
+                        className="theme-track-toggle"
+                        aria-label={music.playing ? '暂停菜单 BGM' : '播放菜单 BGM'}
+                        title={music.playing ? '暂停' : '播放'}
+                        onClick={music.toggle}
+                      >
+                        {music.playing ? <Pause size={18} /> : <Play size={18} />}
+                      </button>
+                    )}
+                  </div>
                 ))
               ) : (
                 <p className="music-empty">还没有主题音乐</p>

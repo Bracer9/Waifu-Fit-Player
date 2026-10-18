@@ -246,6 +246,26 @@
   max-height: min(31vh, 300px);
   overflow-y: auto;
 }
+.theme-track-row {
+  position: relative;
+}
+.theme-track-toggle {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+}
+.theme-track-toggle:hover {
+  background: #1d1c2114;
+}
+.theme-track[aria-pressed='true'] span {
+  padding-right: 32px;
+}
 .theme-track {
   width: 100%;
   display: flex;

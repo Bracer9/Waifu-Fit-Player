@@ -53,6 +53,7 @@ export function useMenuMusic(
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const graph = useRef<{ context: AudioContext; source: MediaElementAudioSourceNode } | null>(null);
   const active = useRef<HTMLAudioElement | null>(null);
+  const manuallyPaused = useRef(false);
   const previewUrl = useRef<string | undefined>(undefined);
   const levels = useRef({ volume, videoVolume });
   levels.current = { volume, videoVolume };
@@ -107,7 +108,7 @@ export function useMenuMusic(
   }, [preview]);
   const play = useCallback(() => {
     const audio = active.current;
-    if (!audio?.getAttribute('src')) return;
+    if (!audio?.getAttribute('src') || (audio === bgm && manuallyPaused.current)) return;
     if (audio === bgm && graph.current?.context.state === 'suspended')
       void graph.current.context.resume().catch(() => {});
     if (audio.paused)
@@ -118,6 +119,7 @@ export function useMenuMusic(
 
   useEffect(() => {
     const unlock = () => {
+      if (active.current === bgm && manuallyPaused.current) return;
       if (active.current === bgm && !graph.current && bgm.getAttribute('src')) {
         const context = new AudioContext();
         try {
@@ -252,7 +254,18 @@ export function useMenuMusic(
     setOrder,
     volume,
     setVolume,
-    select: setSelected,
+    select: (id: string) => {
+      if (id !== track?.id) manuallyPaused.current = false;
+      setSelected(id);
+    },
+    toggle: () => {
+      if (active.current !== bgm) return;
+      manuallyPaused.current = !bgm.paused;
+      if (manuallyPaused.current) {
+        bgm.pause();
+        void graph.current?.context.suspend().catch(() => {});
+      } else play();
+    },
     playing,
     analyser,
     quiet,
