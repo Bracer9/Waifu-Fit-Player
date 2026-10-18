@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { type Chart } from '../model';
 import { MediaController, useTime } from '../media';
 import { comboAt, createComboIndex } from '../combo';
+import { caloriesAt, createCalorieIndex } from '../calories';
 import { chartTimeAt } from '../timing';
 
 export function PracticeBackdrop() {
@@ -20,14 +21,23 @@ function PracticeStats({ chart, media }: { chart: Chart; media: MediaController 
   const time = chartTimeAt(chart, useTime(media));
   const index = useMemo(() => createComboIndex(chart), [chart.notes, chart.tempoSegments]);
   const combo = comboAt(index, time);
+  const calorieIndex = useMemo(() => createCalorieIndex(chart.notes), [chart.notes]);
+  const calories = caloriesAt(calorieIndex, time).toFixed(1);
   return (
     <div className="practice-stats">
-      <div className="calorie-stat" aria-label="Calories calculation coming soon">
+      <div
+        className="calorie-stat"
+        aria-label={`Estimated calories ${calories} kcal`}
+        title="按谱面动作估算，仅供参考"
+      >
         <Flame aria-hidden="true" />
         <div>
           <span className="stat-label">CALORIES</span>
           <strong>
-            — <small>KCAL</small>
+            <span className="calorie-value" key={calories}>
+              {calories}
+            </span>{' '}
+            <small>KCAL</small>
           </strong>
         </div>
       </div>

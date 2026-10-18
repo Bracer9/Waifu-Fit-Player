@@ -206,6 +206,28 @@ body:has(.practice-app) {
   font-weight: 600;
   letter-spacing: 1px;
 }
+.calorie-value {
+  display: inline-block;
+  min-width: 3.5ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  animation: calorie-update 160ms ease-out;
+}
+@keyframes calorie-update {
+  from {
+    opacity: 0.65;
+    transform: translateY(0.06em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .calorie-value {
+    animation: none;
+  }
+}
 .combo-stat {
   margin-left: auto;
   text-align: right;
