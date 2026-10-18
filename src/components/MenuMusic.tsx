@@ -9,7 +9,9 @@ function MusicPulse({ music }: { music: MenuMusic }) {
     const node = canvas.current!;
     const ctx = node.getContext('2d')!;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 128);
+    const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 256);
+    const count = 56;
+    const smooth = new Float32Array(count);
     let frame = 0,
       last = 0,
       width = 0,
@@ -18,15 +20,19 @@ function MusicPulse({ music }: { music: MenuMusic }) {
       if (animate) music.analyser?.getByteFrequencyData(bins);
       else bins.fill(0);
       ctx.clearRect(0, 0, width, height);
-      for (let i = 0; i < 24; i++) {
-        const level = bins[1 + Math.floor(i * 1.7)] / 255;
-        const amplitude = 2 + level * (height * 0.42) * (1 - i / 32);
-        const offset = 54 + (i * (width / 2 - 62)) / 24;
-        ctx.globalAlpha = 1 - i / 34;
-        ctx.fillStyle = '#35c9db';
-        ctx.fillRect(width / 2 - offset - 3, height / 2 - amplitude, 3, amplitude * 2);
+      for (let i = 0; i < count; i++) {
+        const bin = 1 + Math.floor(i * 1.5);
+        const level = Math.pow((bins[bin] + bins[bin + 1] + bins[bin + 2]) / (3 * 255), 1.6);
+        smooth[i] = animate
+          ? smooth[i] + (level - smooth[i]) * (level > smooth[i] ? 0.2 : 0.09)
+          : 0;
+        const amplitude = 2 + smooth[i] * height * 0.34 * (1 - i / (count * 1.4));
+        const offset = 54 + (i * (width / 2 - 55.5)) / (count - 1);
+        ctx.globalAlpha = 1 - i / (count * 1.5);
         ctx.fillStyle = '#f64e93';
-        ctx.fillRect(width / 2 + offset, height / 2 - amplitude, 3, amplitude * 2);
+        ctx.fillRect(width / 2 - offset - 1.5, height / 2 - amplitude, 3, amplitude * 2);
+        ctx.fillStyle = '#35c9db';
+        ctx.fillRect(width / 2 + offset - 1.5, height / 2 - amplitude, 3, amplitude * 2);
       }
     };
     const tick = (now: number) => {
@@ -99,7 +105,7 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
           aria-expanded={open}
           onClick={() => setOpen(true)}
         >
-          <Headphones size={30} strokeWidth={2.5} />
+          <Headphones size={60} strokeWidth={2.5} />
         </button>
       </div>
       <span className="music-console-title">{music.track?.title ?? 'MENU MUSIC'}</span>

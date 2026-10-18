@@ -15,6 +15,9 @@ export function Home({
 }) {
   return (
     <section className="title-menu" aria-label="主菜单">
+      <button className="icon-button title-settings" aria-label="全局设置" onClick={onSettings}>
+        <Settings size={48} />
+      </button>
       <div className="title-brand">
         <span className="eyebrow">YOUR MUSIC. YOUR MOVEMENT.</span>
         <h1>
@@ -43,10 +46,6 @@ export function Home({
           </span>
         </button>
       </div>
-      <button className="title-settings" onClick={onSettings}>
-        <Settings size={18} />
-        全局设置
-      </button>
       <MenuMusicConsole music={music} />
     </section>
   );

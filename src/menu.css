@@ -141,29 +141,26 @@
   stroke-width: 3;
 }
 .title-settings {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 4vh;
-  padding: 12px 25px;
-  border: 1px solid #cfc8bd;
-  font-size: 13px;
-  font-weight: 700;
-  background: #faf6ed;
+  position: absolute;
+  top: 28px;
+  right: 5vw;
+  padding: 8px;
 }
-.title-settings:hover {
-  border-color: var(--ink);
+.title-settings svg {
+  width: 48px;
+  height: 48px;
 }
 .music-console {
   margin-top: auto;
   padding: 18px 0 8px;
-  width: min(620px, 100%);
+  width: 100%;
+  margin-bottom: 60px;
   flex-shrink: 0;
   text-align: center;
 }
 .music-console-line {
   position: relative;
-  height: 72px;
+  height: 90px;
   display: grid;
   place-items: center;
 }
@@ -177,8 +174,8 @@
 .headphone-button {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   position: relative;
   color: var(--ink);
   transition: transform 160ms;
@@ -191,7 +188,7 @@
 }
 .music-console-title {
   display: block;
-  margin-top: 9px;
+  margin-top: 0;
   color: #756c68;
   font:
     600 12px 'Barlow Condensed',
@@ -204,7 +201,7 @@
 }
 .modal-backdrop:has(.theme-music-dialog) {
   align-items: flex-end;
-  padding-bottom: 150px;
+  padding-bottom: 210px;
   background: #24232945;
   backdrop-filter: none;
 }
