@@ -1215,7 +1215,7 @@ nav button.active:after {
   position: absolute;
   right: 56%;
   top: 50%;
-  width: calc(var(--special-size) * 2.7);
+  width: calc(var(--special-size) * 1.35);
   height: calc(var(--special-size) * 0.42);
   transform: translateY(-50%);
   background: linear-gradient(90deg, transparent, #f64e9310 30%, #f64e9360);
