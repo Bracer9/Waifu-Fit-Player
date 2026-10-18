@@ -74,6 +74,8 @@ export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
 export type Chart = {
   schemaVersion: 1;
+  songId?: string;
+  difficulty?: 'normal' | 'hard';
   title: string;
   videoOffsetMs?: number;
   videoHint: { fileName: string; durationMs: number; assetId?: string };
@@ -227,6 +229,13 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
   if (input.schemaVersion !== 1)
     throw new ChartError(['不支持此谱面版本，当前仅支持 schemaVersion: 1。']);
   if (typeof input.title !== 'string' || !input.title.trim()) errors.push('作品名称不能为空。');
+  if (
+    input.songId !== undefined &&
+    (typeof input.songId !== 'string' || !/^[a-f0-9-]{36}$/.test(input.songId))
+  )
+    errors.push('曲目 ID 无效。');
+  if (input.difficulty !== undefined && !['normal', 'hard'].includes(String(input.difficulty)))
+    errors.push('难度必须为 normal 或 hard。');
   if (
     input.videoOffsetMs !== undefined &&
     (!Number.isInteger(input.videoOffsetMs) || Math.abs(Number(input.videoOffsetMs)) > 1000)

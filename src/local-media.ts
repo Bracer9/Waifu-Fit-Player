@@ -73,6 +73,24 @@ async function storedVideo(id: string, value?: StoredVideo): Promise<StoredVideo
   });
 }
 
+/** Forget WAIFU's reference/cached File; never delete the original filesystem file. */
+export async function forgetVideo(id: string): Promise<void> {
+  if (id.startsWith('demo-')) return;
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('videos', 'readwrite');
+    tx.objectStore('videos').delete(id);
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onabort = tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+}
+
 export async function rememberVideo(asset: VideoAsset): Promise<void> {
   if (asset.kind === 'demo') return;
   const { file, handle, id } = asset;
