@@ -122,10 +122,11 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await page.getByRole('button', { name: '开始', exact: true }).click();
+  // Observing "3" can happen partway through its first second; time from the action.
+  const countdownStart = Date.now();
   await page.getByRole('button', { name: '开始游戏', exact: true }).click();
   const countdown = page.getByRole('timer');
   await expect(countdown).toHaveText('3');
-  const countdownStart = Date.now();
   await page.keyboard.press('Space');
   await page.screenshot({ path: 'artifacts/game-countdown.png' });
   expect(
