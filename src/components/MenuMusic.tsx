@@ -4,12 +4,12 @@ import type { MenuMusic } from '../useMenuMusic';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 import { ModalBackdrop } from './ModalBackdrop';
 
-function MusicPulse({ music }: { music: MenuMusic }) {
+export function MusicPulse({ music, waveform = true }: { music: MenuMusic; waveform?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const audible = music.volume > 0;
+  const audible = music.visualVolume > 0;
   useEffect(() => {
     const node = canvas.current!;
-    const ctx = node.getContext('2d')!;
+    const ctx = waveform ? node.getContext('2d') : null;
     const menu = node.closest<HTMLElement>('.menu-app');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 1024);
@@ -56,6 +56,7 @@ function MusicPulse({ music }: { music: MenuMusic }) {
         beat += (target - beat) * (target > beat ? 0.45 : 0.13);
       } else average = beat = 0;
       menu?.style.setProperty('--music-beat', beat.toFixed(3));
+      if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
         const { start, end } = bands[i];
@@ -85,27 +86,30 @@ function MusicPulse({ music }: { music: MenuMusic }) {
       if (music.playing && audible && music.analyser && !document.hidden && !reduced.matches)
         frame = requestAnimationFrame(tick);
     };
-    const resize = new ResizeObserver(() => {
-      width = node.clientWidth;
-      height = node.clientHeight;
-      const ratio = Math.min(devicePixelRatio, 2);
-      node.width = width * ratio;
-      node.height = height * ratio;
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      refresh();
-    });
-    resize.observe(node);
+    const resize = ctx
+      ? new ResizeObserver(() => {
+          width = node.clientWidth;
+          height = node.clientHeight;
+          const ratio = Math.min(devicePixelRatio, 2);
+          node.width = width * ratio;
+          node.height = height * ratio;
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+          refresh();
+        })
+      : null;
+    resize?.observe(node);
+    refresh();
     document.addEventListener('visibilitychange', refresh);
     reduced.addEventListener('change', refresh);
     return () => {
       cancelAnimationFrame(frame);
-      resize.disconnect();
+      resize?.disconnect();
       document.removeEventListener('visibilitychange', refresh);
       reduced.removeEventListener('change', refresh);
       menu?.style.removeProperty('--music-beat');
     };
-  }, [music.analyser, music.playing, audible]);
-  return <canvas className="music-pulse" ref={canvas} aria-hidden="true" />;
+  }, [music.analyser, music.playing, audible, waveform]);
+  return <canvas className="music-pulse" ref={canvas} hidden={!waveform} aria-hidden="true" />;
 }
 
 const orders = [

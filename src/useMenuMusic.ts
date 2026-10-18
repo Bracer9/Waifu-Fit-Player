@@ -50,7 +50,9 @@ export function useMenuMusic(
   const [playing, setPlaying] = useState(false);
   const [quiet, setQuiet] = useState(true);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
-  const graph = useRef<{ context: AudioContext; source: MediaElementAudioSourceNode } | null>(null);
+  const graph = useRef<{ context: AudioContext; sources: MediaElementAudioSourceNode[] } | null>(
+    null,
+  );
   const active = useRef<HTMLAudioElement | null>(null);
   const manuallyPaused = useRef(false);
   const previewUrl = useRef<string | undefined>(undefined);
@@ -109,7 +111,7 @@ export function useMenuMusic(
   const play = useCallback(() => {
     const audio = active.current;
     if (!audio?.getAttribute('src') || (audio === bgm && manuallyPaused.current)) return;
-    if (audio === bgm && graph.current?.context.state === 'suspended')
+    if (graph.current?.context.state === 'suspended')
       void graph.current.context.resume().catch(() => {});
     if (audio.paused)
       void audio.play().catch(() => {
@@ -120,17 +122,21 @@ export function useMenuMusic(
   useEffect(() => {
     const unlock = () => {
       if (active.current === bgm && manuallyPaused.current) return;
-      if (active.current === bgm && !graph.current && bgm.getAttribute('src')) {
+      if (!graph.current && active.current?.getAttribute('src')) {
         const context = new AudioContext();
         try {
-          const source = context.createMediaElementSource(bgm);
           const meter = context.createAnalyser();
           meter.fftSize = 2048;
           meter.maxDecibels = -10;
           meter.smoothingTimeConstant = 0.5;
-          source.connect(meter);
+          // Both menu sources share one meter/output; the fade keeps playback exclusive.
+          const sources = [bgm, preview].map((audio) => {
+            const source = context.createMediaElementSource(audio);
+            source.connect(meter);
+            return source;
+          });
           meter.connect(context.destination);
-          graph.current = { context, source };
+          graph.current = { context, sources };
           setAnalyser(meter);
         } catch {
           void context.close();
@@ -141,15 +147,20 @@ export function useMenuMusic(
     window.addEventListener('pointerdown', unlock, true);
     window.addEventListener('keydown', unlock, true);
     bgm.addEventListener('playing', unlock);
+    preview.addEventListener('playing', unlock);
     return () => {
       window.removeEventListener('pointerdown', unlock, true);
       window.removeEventListener('keydown', unlock, true);
       bgm.removeEventListener('playing', unlock);
+      preview.removeEventListener('playing', unlock);
     };
-  }, [bgm, play]);
+  }, [bgm, preview, play]);
 
   useEffect(() => {
-    const update = () => setPlaying(!bgm.paused && !bgm.ended && bgm.readyState >= 3);
+    const update = () => {
+      const audio = active.current;
+      setPlaying(!!audio && !audio.paused && !audio.ended && audio.readyState >= 3);
+    };
     const startFade = (event: Event) => {
       if (event.target === active.current && fadeIn.current) {
         fadeIn.current = false;
@@ -163,14 +174,14 @@ export function useMenuMusic(
         notify(audioOutputErrorMessage(audio.error) || '音乐无法播放，请检查音频或关联视频。');
     };
     const events = ['pause', 'waiting', 'ended'];
-    events.forEach((name) => bgm.addEventListener(name, update));
     for (const audio of [bgm, preview]) {
+      events.forEach((name) => audio.addEventListener(name, update));
       audio.addEventListener('playing', startFade);
       audio.addEventListener('error', error);
     }
     return () => {
-      events.forEach((name) => bgm.removeEventListener(name, update));
       for (const audio of [bgm, preview]) {
+        events.forEach((name) => audio.removeEventListener(name, update));
         audio.removeEventListener('playing', startFade);
         audio.removeEventListener('error', error);
       }
@@ -186,7 +197,8 @@ export function useMenuMusic(
       active.current?.pause();
       active.current = null;
       clearPreview();
-      if (scene !== 'theme' && graph.current) await graph.current.context.suspend().catch(() => {});
+      if (!themeUrl && !assetId && graph.current)
+        await graph.current.context.suspend().catch(() => {});
       if (cancelled) return;
       setQuiet(true);
       let next: HTMLAudioElement;
@@ -267,7 +279,7 @@ export function useMenuMusic(
       bgm.load();
       if (themeSource.current) URL.revokeObjectURL(themeSource.current.objectUrl);
       themeSource.current = null;
-      graph.current?.source.disconnect();
+      graph.current?.sources.forEach((source) => source.disconnect());
       void graph.current?.context.close();
     },
     [bgm, clearPreview, cancelFade],
@@ -292,6 +304,7 @@ export function useMenuMusic(
       } else play();
     },
     playing,
+    visualVolume: scene === 'preview' ? videoVolume : volume,
     analyser,
     quiet,
   };

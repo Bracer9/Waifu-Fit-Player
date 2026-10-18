@@ -248,14 +248,27 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect(page.getByRole('region', { name: '选择专辑' })).toBeVisible();
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(2);
   const reads = (await sound(page)).reads;
-  await page.waitForTimeout(150);
-  expect((await sound(page)).reads).toBe(reads);
+  await expect.poll(async () => (await sound(page)).reads).toBeGreaterThan(reads + 2);
+  const beat = () =>
+    page
+      .locator('.menu-app')
+      .evaluate((node) => Number((node as HTMLElement).style.getPropertyValue('--music-beat')));
+  await expect.poll(beat).toBeGreaterThan(0.05);
   const theme = await sound(page);
   await page.locator('.collection-album').first().click();
   await expect.poll(async () => (await sound(page)).src).toBe('/demo.mp4');
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(0);
   await expect.poll(async () => (await sound(page)).volume).toBe(0.25);
   expect((await sound(page)).count).toBe(2);
+  const previewReads = (await sound(page)).reads;
+  await expect.poll(async () => (await sound(page)).reads).toBeGreaterThan(previewReads + 2);
+  await expect.poll(beat).toBeGreaterThan(0.01);
+  // The same meter follows the preview, not the now-paused theme track.
+  await page.evaluate(() => (window as Probes).menuAudio[1].pause());
+  await expect.poll(beat).toBe(0);
+  await page.evaluate(() => (window as Probes).menuAudio[1].play());
+  await expect.poll(beat).toBeGreaterThan(0.01);
+  expect(await page.evaluate(() => (window as Probes).menuContexts.length)).toBe(1);
   await page.getByRole('button', { name: '选择专辑', exact: true }).click();
   await expect.poll(async () => (await sound(page)).src).toBe(theme.src);
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThanOrEqual(theme.time);

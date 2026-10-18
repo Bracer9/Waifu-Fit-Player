@@ -42,7 +42,7 @@ import {
   PublishDialog,
   SongManager,
 } from './components/LibraryControls';
-import { AudioVolumeControl } from './components/MenuMusic';
+import { AudioVolumeControl, MusicPulse } from './components/MenuMusic';
 import { useMenuMusic } from './useMenuMusic';
 import { useMenuSounds } from './useMenuSounds';
 import { Player } from './views/Player';
@@ -840,6 +840,9 @@ export default function App() {
                   enterEditor();
                 }}
               />
+            )}
+            {(mode === 'albums' || mode === 'songs') && (
+              <MusicPulse music={menuMusic} waveform={false} />
             )}
             {(mode === 'albums' || mode === 'songs') && (
               <LibraryMenu
