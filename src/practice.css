@@ -21,6 +21,7 @@ body:has(.practice-app) {
 .album-workspace.practice {
   --album-ink: #1d1c21;
   --album-paper: #fff1e6;
+  --album-heading-font: 'Arial Black', 'Barlow Condensed', sans-serif;
   --leaf-split: 44%;
   --album-height: 64.6dvh;
   --album-width: 88.6vw;
@@ -125,7 +126,7 @@ body:has(.practice-app) {
   overflow: hidden;
 }
 .cover-wordmark {
-  font-family: 'Arial Black', 'Barlow Condensed', sans-serif;
+  font-family: var(--album-heading-font);
   font-weight: 900;
   letter-spacing: -0.045em;
   line-height: 0.9;
@@ -141,16 +142,7 @@ body:has(.practice-app) {
   font-weight: 900;
 }
 .practice-track-info {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 24px;
-  min-width: 0;
-  color: var(--album-ink);
+  display: contents;
 }
 .practice-stats {
   display: flex;
@@ -202,8 +194,11 @@ body:has(.practice-app) {
   color: #ff80b6;
 }
 .practice-track-info h1 {
-  font-size: clamp(13px, 1vw, 20px);
-  font-weight: 600;
+  min-width: 0;
+  padding-inline: clamp(12px, 1.2vw, 30px);
+  font: inherit;
+  font-size: min(1.3vw, 40cqh);
+  line-height: 1.1;
   margin: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -212,24 +207,27 @@ body:has(.practice-app) {
 .record-mark {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 1px solid #f68eb6;
+  width: 1.35em;
+  height: 1.35em;
+  border: 2px solid currentColor;
   border-radius: 50%;
   flex-shrink: 0;
 }
 .record-mark i {
-  width: 6px;
-  height: 6px;
-  background: var(--pink);
+  width: 30%;
+  height: 30%;
+  background: currentColor;
   border-radius: 50%;
 }
 .track-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  min-width: 0;
   white-space: nowrap;
-  font:
-    700 11px 'Barlow Condensed',
-    sans-serif;
-  letter-spacing: 1.3px;
+  font-size: min(0.7vw, 25cqh);
+  letter-spacing: 0.02em;
   color: #b5366a;
 }
 .practice .player-lanes {
@@ -745,66 +743,45 @@ body:has(.practice-app) {
   flex: 1;
   min-height: 0;
   margin: 0 -12px;
-  padding-bottom: 32px;
+  display: grid;
+  grid-template-columns: 15% minmax(0, 1fr) 24%;
+  align-items: center;
+  overflow: hidden;
+  font-family: var(--album-heading-font);
+  font-weight: 900;
+  color: var(--album-ink);
+  background: linear-gradient(90deg, #32c6d3 0 15%, var(--album-paper) 15% 76%, #32c6d3 76%);
+}
+.practice .return-workspace {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background:
-    linear-gradient(120deg, transparent 72%, #21b3c1 72% 81%, transparent 81%),
-    linear-gradient(90deg, #32c6d3 0 15%, transparent 15% 82%, #32c6d3 82%);
+  gap: 0.3em;
+  min-width: 0;
+  margin-inline: 0.25em;
+  padding: 0;
+  color: #fffaf4;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: min(1.25vw, 40cqh);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  transition: text-shadow 140ms ease-out;
 }
-.move-lettering {
-  font-family: 'Segoe Print', 'Comic Sans MS', cursive;
-  font-style: italic;
-  font-size: clamp(22px, 36cqh, 54px);
-  line-height: 0.88;
-  font-weight: 700;
-  color: var(--pink);
-  transform: rotate(-9deg) translateX(-8%);
-  padding: 0 0 10px;
-  position: relative;
-}
-.move-lettering > span {
-  margin-left: 36px;
-}
-.move-lettering::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 60%;
-  height: 4px;
-  border-radius: 100%;
-  background: currentColor;
-  transform: rotate(-7deg);
-}
-.move-lettering svg {
-  position: absolute;
-  right: -36px;
-  bottom: 10px;
-  width: 26px;
-  height: 26px;
-  stroke-width: 3px;
-}
-.practice .return-workspace {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 9px;
-  color: #212329;
-  background: #fff5e9ed;
-  border: 1px solid #29232b30;
-  font:
-    700 11px 'Barlow Condensed',
-    sans-serif;
-  letter-spacing: 1px;
+.practice .return-workspace > svg {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  transition: filter 140ms ease-out;
 }
 .practice .return-workspace:hover {
-  background: white;
+  text-shadow:
+    0 3px 0 #167c8b50,
+    0 6px 10px #103f5360;
+}
+.practice .return-workspace:hover > svg {
+  filter: drop-shadow(0 4px 3px #103f5360);
 }
 .practice .video-panel {
   grid-row: 2 / span 2;

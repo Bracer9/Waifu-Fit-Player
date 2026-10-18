@@ -1,4 +1,4 @@
-import { ArrowLeft, Flame, Heart } from 'lucide-react';
+import { ArrowLeft, Flame } from 'lucide-react';
 import { useMemo } from 'react';
 import { type Chart } from '../model';
 import { MediaController, useTime } from '../media';
@@ -54,21 +54,18 @@ export function PracticeCover({ chart, media }: { chart: Chart; media: MediaCont
 export function PracticeMasthead({ title, onReturn }: { title: string; onReturn: () => void }) {
   return (
     <div className="practice-masthead">
-      <div className="move-lettering" aria-hidden="true">
-        Let's
-        <br />
-        <span>Move!</span>
-        <Heart />
-      </div>
       <div className="practice-track-info">
-        <span className="record-mark" aria-hidden="true">
-          <i />
-        </span>
-        <span className="track-status">NOW PLAYING</span>
+        <div className="track-status">
+          <span className="record-mark" aria-hidden="true">
+            <i />
+          </span>
+          <span>NOW PLAYING</span>
+        </div>
         <h1 title={title}>{title}</h1>
       </div>
       <button className="return-workspace" onClick={onReturn}>
-        <ArrowLeft size={15} /> WORKBENCH
+        <ArrowLeft aria-hidden="true" strokeWidth={4} />
+        <span>WORKBENCH</span>
       </button>
     </div>
   );
