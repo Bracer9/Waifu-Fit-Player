@@ -102,12 +102,24 @@ export default function App() {
   const [busy, setBusy] = useState('');
   const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
-  const [menuMotion, setMenuMotion] = useState<'forward' | 'back'>();
+  const [menuTransition, setMenuTransition] = useState<{
+    next: 'home' | 'albums' | 'songs';
+    direction: 'forward' | 'back';
+    phase: 'cover' | 'reveal';
+  } | null>(null);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
   const navigateMenu = (next: 'home' | 'albums' | 'songs') => {
+    if (menuTransition || next === mode) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setMode(next);
+      return;
+    }
     const pages = ['home', 'albums', 'songs'];
-    setMenuMotion(pages.indexOf(next) > pages.indexOf(mode) ? 'forward' : 'back');
-    setMode(next);
+    setMenuTransition({
+      next,
+      direction: pages.indexOf(next) > pages.indexOf(mode) ? 'forward' : 'back',
+      phase: 'cover',
+    });
   };
   const [settings, setSettings] = useState(false);
   const [noteSpeed, setNoteSpeed] = useState(() => {
@@ -693,13 +705,37 @@ export default function App() {
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
       {menuPage && (
-        <button className="icon-button menu-settings" aria-label="全局设置" onClick={openSettings}>
+        <button
+          className="icon-button menu-settings"
+          aria-label="全局设置"
+          inert={!!menuTransition}
+          onClick={openSettings}
+        >
           <Settings size={96} />
         </button>
       )}
-      {menuPage && menuMotion && (
-        <div key={mode} className={`menu-swipe ${menuMotion}`} aria-hidden="true" />
-      )}
+      {menuPage &&
+        menuTransition &&
+        createPortal(
+          <div
+            className="menu-curtain"
+            data-direction={menuTransition.direction}
+            data-phase={menuTransition.phase}
+            aria-hidden="true"
+          >
+            <div
+              className="menu-curtain-sheet"
+              onAnimationEnd={() => {
+                if (menuTransition.phase === 'cover') {
+                  // Switch only after the sheet has physically covered the whole viewport.
+                  setMode(menuTransition.next);
+                  setMenuTransition({ ...menuTransition, phase: 'reveal' });
+                } else setMenuTransition(null);
+              }}
+            />
+          </div>,
+          document.body,
+        )}
       <header className="app-header" hidden={mode !== 'editor'}>
         <button
           className="wordmark"
@@ -764,7 +800,7 @@ export default function App() {
       </header>
       <main>
         {menuPage && (
-          <div className="menu-scene" data-direction={menuMotion} key={mode}>
+          <div className="menu-scene" inert={!!menuTransition} key={mode}>
             {mode === 'home' && (
               <Home
                 music={menuMusic}

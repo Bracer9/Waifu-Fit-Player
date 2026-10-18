@@ -111,6 +111,7 @@ export function LibraryMenu(props: Props) {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
+        document.querySelector('.menu-curtain') ||
         document.querySelector('[role="dialog"]') ||
         /INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName)
       )

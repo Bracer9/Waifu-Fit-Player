@@ -166,54 +166,50 @@
 .menu-scene {
   height: 100%;
 }
-.menu-scene[data-direction] {
-  --enter-x: 42px;
-  animation: menu-pop-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.menu-scene[data-direction='back'] {
-  --enter-x: -42px;
-}
-@keyframes menu-pop-in {
-  from {
-    opacity: 0;
-    transform: translateX(var(--enter-x)) scale(0.985);
-  }
-  45% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.menu-swipe {
+.menu-curtain {
+  --curtain-from: -100%;
+  --curtain-to: 100%;
   position: fixed;
   inset: 0;
-  z-index: 8;
-  pointer-events: none;
+  z-index: 100;
   overflow: hidden;
 }
-.menu-swipe::before {
-  content: '';
+.menu-curtain[data-direction='back'] {
+  --curtain-from: 100%;
+  --curtain-to: -100%;
+}
+.menu-curtain-sheet {
   position: absolute;
-  top: -10%;
-  height: 120%;
-  width: 32vw;
+  top: -4px;
+  bottom: -4px;
+  left: -16vh;
+  width: calc(100% + 32vh);
   border-inline: 4px solid var(--ink);
-  background: linear-gradient(90deg, var(--pink) 0 65%, var(--cream) 65% 70%, var(--cyan) 70%);
-  transform: translateX(-50vw) skewX(-14deg);
-  animation: menu-color-swipe 380ms cubic-bezier(0.3, 0.5, 0.6, 1);
+  background: linear-gradient(90deg, var(--pink) 0 49%, var(--cream) 49% 51%, var(--cyan) 51%);
+  transform: translateX(0) skewX(-14deg);
+  animation: menu-curtain-cover 260ms cubic-bezier(0.65, 0, 0.35, 1) both;
 }
-.menu-swipe.back::before {
-  animation-direction: reverse;
-  background: linear-gradient(90deg, var(--cyan) 0 65%, var(--cream) 65% 70%, var(--pink) 70%);
+.menu-curtain[data-direction='back'] .menu-curtain-sheet {
+  background: linear-gradient(90deg, var(--cyan) 0 49%, var(--cream) 49% 51%, var(--pink) 51%);
 }
-@keyframes menu-color-swipe {
+.menu-curtain[data-phase='reveal'] .menu-curtain-sheet {
+  animation-name: menu-curtain-reveal;
+  animation-delay: 80ms;
+}
+@keyframes menu-curtain-cover {
   from {
-    transform: translateX(-50vw) skewX(-14deg);
+    transform: translateX(var(--curtain-from)) skewX(-14deg);
   }
   to {
-    transform: translateX(150vw) skewX(-14deg);
+    transform: translateX(0) skewX(-14deg);
+  }
+}
+@keyframes menu-curtain-reveal {
+  from {
+    transform: translateX(0) skewX(-14deg);
+  }
+  to {
+    transform: translateX(var(--curtain-to)) skewX(-14deg);
   }
 }
 .music-console {
@@ -1084,11 +1080,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .menu-swipe {
-    display: none;
-  }
-  .menu-scene[data-direction] {
-    animation: none;
+  .menu-curtain-sheet {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
   }
   .menu-settings svg,
   .mode-record,
