@@ -13,27 +13,6 @@ export function PracticeBackdrop() {
   );
 }
 
-export function PracticeForeground() {
-  return (
-    <div className="practice-foreground" aria-hidden="true">
-      <div className="mat-lettering mat-lettering-pink">
-        Sweat
-        <br />
-        <span>Beats</span>
-        <br />
-        <span>Smiles ♡</span>
-      </div>
-      <div className="mat-lettering mat-lettering-dark">
-        BETTER
-        <br />
-        STRONGER
-        <br />
-        CUTER ♡
-      </div>
-    </div>
-  );
-}
-
 function PracticeStats({ chart, media }: { chart: Chart; media: MediaController }) {
   const time = chartTimeAt(chart, useTime(media));
   const index = useMemo(() => createComboIndex(chart), [chart.notes, chart.tempoSegments]);

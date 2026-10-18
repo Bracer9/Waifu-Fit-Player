@@ -71,9 +71,6 @@ test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿',
         )
         .toBe(true);
       await expect(page.locator('.studio-bottle')).toHaveCount(0);
-      const foreground = (await page.locator('.practice-foreground').boundingBox())!;
-      expect(foreground.height).toBeGreaterThan(height * 0.2);
-      await expect(page.locator('.practice-foreground')).toHaveCSS('pointer-events', 'none');
       expect(
         await page.evaluate(() => ({
           x: document.documentElement.scrollWidth > innerWidth,

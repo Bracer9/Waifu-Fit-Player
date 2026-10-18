@@ -57,46 +57,6 @@ body:has(.practice-app) {
   /* This decorative stage plate follows the viewport: keep both lights and mats visible. */
   object-fit: fill;
 }
-.practice-foreground {
-  position: absolute;
-  inset: auto 0 0;
-  height: 24%;
-  z-index: 4;
-  pointer-events: none;
-  user-select: none;
-}
-.mat-lettering {
-  position: absolute;
-  text-align: center;
-  line-height: 0.94;
-  transform-origin: center bottom;
-}
-.mat-lettering-pink {
-  left: 13%;
-  bottom: 14%;
-  color: #722342;
-  opacity: 0.72;
-  mix-blend-mode: multiply;
-  font-family: 'Segoe Print', 'Comic Sans MS', cursive;
-  font-weight: 700;
-  font-style: italic;
-  font-size: clamp(24px, 3vw, 58px);
-  transform: perspective(700px) rotateX(48deg) rotateZ(-12deg) skewX(-22deg);
-}
-.mat-lettering-pink span {
-  margin-left: 40px;
-}
-.mat-lettering-dark {
-  right: 16%;
-  bottom: 11%;
-  color: #dfb6ce;
-  opacity: 0.8;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: clamp(14px, 1.65vw, 30px);
-  letter-spacing: 0.34em;
-  line-height: 1.2;
-  transform: perspective(700px) rotateX(52deg) rotateZ(-12deg) skewX(24deg);
-}
 .practice .stage-grid {
   position: relative;
   display: grid;
@@ -959,12 +919,6 @@ body:has(.practice-app) {
   .practice .transport {
     min-height: 72px;
   }
-  .mat-lettering-pink {
-    font-size: 72px;
-  }
-  .mat-lettering-dark {
-    font-size: 40px;
-  }
 }
 
 @media (max-width: 1350px) {
@@ -1075,9 +1029,6 @@ body:has(.practice-app) {
 @media (max-width: 999px) {
   .studio-scene {
     object-fit: cover;
-  }
-  .practice-foreground {
-    display: none;
   }
   .practice-app {
     height: auto;

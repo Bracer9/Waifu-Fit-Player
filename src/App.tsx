@@ -24,12 +24,7 @@ import { Player } from './views/Player';
 import { Editor } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
-import {
-  PracticeBackdrop,
-  PracticeCover,
-  PracticeForeground,
-  PracticeMasthead,
-} from './components/PracticeArtwork';
+import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import {
   demoVideo,
@@ -613,7 +608,6 @@ export default function App() {
             </div>
             {mode === 'player' && <div className="album-hinge" aria-hidden="true" />}
           </div>
-          {mode === 'player' && <PracticeForeground />}
           {mode !== 'player' && <Transport media={media} notify={notify} />}
           {mode === 'editor' && (
             <Editor
