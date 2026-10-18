@@ -180,22 +180,11 @@
   width: 64px;
   height: 64px;
   position: relative;
-  border: 3px solid var(--ink);
-  border-radius: 50%;
-  color: var(--cream);
-  background: var(--ink);
-  box-shadow:
-    -4px 2px 0 var(--cyan),
-    4px -2px 0 var(--pink);
-  transition:
-    transform 160ms,
-    box-shadow 160ms;
+  color: var(--ink);
+  transition: transform 160ms;
 }
 .headphone-button:hover {
   transform: translateY(-3px) rotate(-7deg);
-  box-shadow:
-    -5px 4px 0 var(--cyan),
-    5px -2px 0 var(--pink);
 }
 .headphone-button:active {
   transform: scale(0.94);
