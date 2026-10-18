@@ -17,21 +17,17 @@ const laneFigures: Record<Lane, React.ReactNode> = {
     </>
   ),
   calf_raise: (
-    <path d="M22 3H36L31 30Q30 34 33 40L38 47Q40 49 44 48Q48 47 48 50Q48 53 42 53Q35 54 29 48L19 39Q15 35 18 30Z" />
+    <path d="M19 3H35C35 11 33 18 30 24C28 29 28 33 30 37L35 45Q37 48 43 48H46Q50 48 50 51Q50 54 46 54H39Q35 54 32 51L24 44L17 40Q12 37 14 32L17 25C18 22 15 18 15 13Q15 7 19 3Z" />
   ),
   punch: (
     <>
       <circle cx="25" cy="8" r="6.5" />
-      <path
-        fillRule="evenodd"
-        d="M21 18Q25 17 28 19L45 16Q49 15 50 18Q51 21 47 22L29 25L27 32L20 36L13 32L15 25Q16 20 21 18ZM20 22L17 28L25 25L26 22Z"
-      />
-      <path
-        d="M19 33L16 41L11 49M24 33L31 39L35 49"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="7.5"
-      />
+      <g fill="none" stroke="currentColor">
+        <path d="M23 22L22 33" strokeWidth="9" />
+        <path d="M22 33L15 41L11 50M22 33L31 40L34 50" strokeWidth="7.5" />
+        <path d="M24 22L47 19" strokeWidth="7" />
+        <path d="M21 22L9 29L14 18" strokeWidth="6" />
+      </g>
     </>
   ),
   step: (
