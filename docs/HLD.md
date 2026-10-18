@@ -41,9 +41,9 @@ flowchart LR
 
 **曲库与发布**：`library.ts` 定义 Song、Edition、Album 及原子读改写；`useLibrary.ts` 持有菜单数据。每首 Song 有 Normal / Hard 两个独立草稿槽与两个发布槽，Edition 保存谱面、专辑归属、曲绘和更新时间。发布校验并深复制所选草稿，只替换该难度的发布槽；音游模式加载发布版，禁用草稿自动保存。撤下发布保留草稿；彻底删除清除整首记录及不再被其他谱面引用的视频关联，不操作磁盘原文件。
 
-`Home.tsx` / `LibraryMenu.tsx` 呈现主菜单、纵向专辑与横向单曲选择，`LibraryControls.tsx` 提供编辑器发布字段和管理弹窗。选曲状态由 App 保留。封面压缩为小图，未指定曲绘时取视频帧；专辑未指定封面时从成员曲绘选取，会话内稳定。菜单只显示静态封面，不播放曲目视频或挂载游戏轨道。IndexedDB `waifu-fit-player-library` 存 songs / albums / music，原视频库保持不变。
+`Home.tsx` / `LibraryMenu.tsx` 呈现主菜单、纵向专辑与横向单曲选择，`LibraryControls.tsx` 提供编辑器发布字段和管理弹窗。选曲状态由 App 保留。封面压缩为小图，未指定曲绘时取视频帧；专辑未指定封面时从成员曲绘选取，会话内稳定。菜单显示静态封面，不挂载游戏轨道。IndexedDB `waifu-fit-player-library` 存 songs / albums，原视频库保持不变。
 
-**菜单音乐**：`MenuMusic.tsx` 管理主菜单／选曲两种音频配置与独立音量，文件保存在本地曲库。只创建当前菜单的一份循环音频，切换场景时释放；专辑与单曲页共享同一首，进入编辑或游玩即停止。不接入游戏媒体时钟。
+**菜单音乐**：`useMenuMusic.ts` 用单个 Audio 元素播放菜单音频；主题曲由 Vite 枚举 `src/assets/menu-bgm/` 并随应用打包，曲目、循环方式与独立音量保存在 localStorage。主菜单到专辑列表不切源；进入单曲页后经短暂选择稳定延时，读取当前发布版的视频关联，直接试听 MP4 音轨，过期读取会被丢弃。返回专辑页恢复主题曲位置。进入编辑或游玩停止音频、释放临时 URL 并暂停菜单 AudioContext，不接入游戏媒体时钟。`MenuMusic.tsx` 提供耳机菜单；主界面的小画布从 AnalyserNode 读取频谱，最多 30 次／秒绘制，离开主界面、页面隐藏或暂停时停止更新，减少动态效果偏好下保持静态。
 
 **本地持久化**：JSON 保存谱面与视频关联 ID，不包含视频二进制。IndexedDB 优先保存视频文件句柄，不支持时保存 File；关联依赖当前浏览器资料及站点 origin，跨机器或清理存储后可能需要重新定位。页面会话中的对象 URL 仅用于播放。
 
