@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -6,11 +6,11 @@ import {
   ChevronRight,
   Disc3,
   Pencil,
-  Play,
   Settings,
 } from 'lucide-react';
 import { editionsIn, type Album, type Difficulty, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
+import { ModalBackdrop } from '../components/ModalBackdrop';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
 
@@ -39,6 +39,9 @@ export function LibraryMenu(props: Props) {
   const { page, albums, songs, albumId, songId, difficulty, seed, onAlbum, onSong, onDifficulty } =
     props;
   const scroller = useRef<HTMLDivElement>(null);
+  const [confirmStart, setConfirmStart] = useState<{ song: Song; difficulty: Difficulty } | null>(
+    null,
+  );
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
   const inAlbum = useMemo(
     () =>
@@ -129,7 +132,8 @@ export function LibraryMenu(props: Props) {
       ) {
         e.preventDefault();
         if (page === 'albums') onAlbum(album.id, true);
-        else if (selected && selectedDifficulty) props.onPlay(selected, selectedDifficulty);
+        else if (selected && selectedDifficulty)
+          setConfirmStart({ song: selected, difficulty: selectedDifficulty });
       }
     };
     window.addEventListener('keydown', key);
@@ -251,7 +255,10 @@ export function LibraryMenu(props: Props) {
                   key={song.id}
                   data-id={song.id}
                   aria-current={song.id === selected.id}
-                  onClick={() => select(song.id)}
+                  onClick={() => {
+                    select(song.id);
+                    setConfirmStart({ song, difficulty: d });
+                  }}
                   aria-label={`选择 ${release.chart.title}`}
                 >
                   <span className="record-overline">
@@ -266,6 +273,10 @@ export function LibraryMenu(props: Props) {
                   </span>
                   <span className="record-jacket">
                     <CoverArt src={release.cover} eager={song.id === selected.id} />
+                    <svg className="cover-trace" viewBox="0 0 100 100" aria-hidden="true">
+                      <rect x="1" y="1" width="98" height="98" pathLength="100" />
+                      <rect x="1" y="1" width="98" height="98" pathLength="100" />
+                    </svg>
                   </span>
                   <span className="record-caption">
                     <span className="record-title">
@@ -335,13 +346,12 @@ export function LibraryMenu(props: Props) {
             </div>
             <button
               className="start-track"
-              onClick={() => selectedDifficulty && props.onPlay(selected, selectedDifficulty)}
+              onClick={() =>
+                selectedDifficulty &&
+                setConfirmStart({ song: selected, difficulty: selectedDifficulty })
+              }
             >
-              <Play fill="currentColor" />
-              <span>
-                开始<small>LET'S MOVE</small>
-              </span>
-              <ArrowRight />
+              开始
             </button>
           </div>
           <footer className="menu-hints">
@@ -357,6 +367,38 @@ export function LibraryMenu(props: Props) {
             </div>
           </footer>
         </>
+      )}
+      {confirmStart && (
+        <ModalBackdrop onClose={() => setConfirmStart(null)}>
+          <section
+            className="modal start-confirmation"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="start-confirmation-title"
+          >
+            <span className="eyebrow">READY TO MOVE?</span>
+            <h2 id="start-confirmation-title">开始这首曲子？</h2>
+            <p>{confirmStart.song.released[confirmStart.difficulty]!.chart.title}</p>
+            <span className={`difficulty-tag ${confirmStart.difficulty}`}>
+              {confirmStart.difficulty.toUpperCase()} ·{' '}
+              {rating(confirmStart.song.released[confirmStart.difficulty]!.chart.difficultyRating)}
+            </span>
+            <div className="modal-actions">
+              <button className="button light" onClick={() => setConfirmStart(null)}>
+                取消
+              </button>
+              <button
+                className="button primary"
+                onClick={() => {
+                  props.onPlay(confirmStart.song, confirmStart.difficulty);
+                  setConfirmStart(null);
+                }}
+              >
+                开始游戏
+              </button>
+            </div>
+          </section>
+        </ModalBackdrop>
       )}
     </section>
   );

@@ -49,6 +49,7 @@ import { Home } from './views/Home';
 import { Transport } from './components/Transport';
 import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
 import { ModalBackdrop } from './components/ModalBackdrop';
+import { GameStartCountdown } from './components/GameStartCountdown';
 import {
   forgetVideo,
   prepareVideo,
@@ -152,7 +153,7 @@ export default function App() {
   const [manageAlbums, setManageAlbums] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
-  const startReleased = useRef(false);
+  const [startPending, setStartPending] = useState(false);
   const menuMusic = useMenuMusic(
     mode === 'home' ? 'home' : mode === 'albums' || mode === 'songs' ? 'library' : null,
     notify,
@@ -184,12 +185,10 @@ export default function App() {
   useEffect(() => {
     if (mode === 'player') setNotice('');
   }, [mode]);
-  useEffect(() => {
-    if (mode !== 'player' || preparation.pending || !status.ready || !startReleased.current) return;
-    startReleased.current = false;
-    media.seek(0);
+  const completeCountdown = useCallback(() => {
+    setStartPending(false);
     void media.toggle().catch(() => notify('请点击播放开始。'));
-  }, [mode, preparation.pending, status.ready, media, notify]);
+  }, [media, notify]);
   const edit = useCallback((next: Chart) => dispatch({ type: 'edit', chart: next }), []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []),
     redo = useCallback(() => dispatch({ type: 'redo' }), []);
@@ -304,7 +303,7 @@ export default function App() {
     deletedSongs.current.delete(paired.songId!);
     setDraftMeta(meta);
     setPlayOrigin(context?.play ? 'library' : 'editor');
-    startReleased.current = !!context?.play;
+    setStartPending(!!context?.play);
     if (!context?.play) {
       try {
         localStorage.setItem(
@@ -333,7 +332,8 @@ export default function App() {
     if ('asset' in result) {
       try {
         await installProject(next, result.asset, isSaved, false, context);
-        notify(isSaved ? '作品已打开，关联视频已自动载入。' : '草稿与关联视频已恢复。');
+        if (!context?.play)
+          notify(isSaved ? '作品已打开，关联视频已自动载入。' : '草稿与关联视频已恢复。');
       } catch (error) {
         setBinding({
           kind: 'open',
@@ -361,9 +361,10 @@ export default function App() {
       true,
       request.context,
     );
-    notify(
-      request.kind === 'new' ? '作品已创建，视频关联已记住。' : '视频关联已更新，请保存作品。',
-    );
+    if (!request.context?.play)
+      notify(
+        request.kind === 'new' ? '作品已创建，视频关联已记住。' : '视频关联已更新，请保存作品。',
+      );
   };
   const chooseVideo = (request: VideoRequest) => {
     videoIntent.current = request;
@@ -449,6 +450,7 @@ export default function App() {
         binding ||
         busy ||
         preparation.pending ||
+        (mode === 'player' && startPending) ||
         manageSongs ||
         manageAlbums ||
         publishing
@@ -965,6 +967,16 @@ export default function App() {
           </div>
         </div>
       </main>
+      {mode === 'player' && startPending && !busy && !preparation.pending && status.ready && (
+        <GameStartCountdown
+          key={projectRevision}
+          onComplete={completeCountdown}
+          onCancel={() => {
+            setStartPending(false);
+            setMode('songs');
+          }}
+        />
+      )}
       {(mode === 'editor' || mode === 'player') &&
         preparation.pending &&
         createPortal(

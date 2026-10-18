@@ -3,6 +3,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { Song } from '../src/library';
 import { importDemo } from './helpers/project';
+import { createCalorieIndex } from '../src/calories';
 
 async function songs(page: Page): Promise<Song[]> {
   return page.evaluate(
@@ -88,10 +89,56 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.locator('.selection-title h2')).toHaveText('Sunlight NORMAL');
   await expect(page.locator('.record-overline')).toContainText('4.5');
   await expect(page.locator('.record-timing')).toContainText('BPM');
+  const card = page.locator('.record-card[aria-current="true"]');
+  await card.hover();
+  await expect(card.locator('.cover-trace')).toHaveCSS('opacity', '1');
+  await expect(card.locator('.cover-trace rect').first()).toHaveCSS(
+    'animation-name',
+    'cover-orbit',
+  );
   await page.screenshot({ path: 'artifacts/menu-songs.png' });
+  expect(await page.locator('.menu-app').evaluate((el) => [el.scrollLeft, el.scrollTop])).toEqual([
+    0, 0,
+  ]);
   await page.getByRole('button', { name: 'HARD', exact: true }).click();
-  await page.getByRole('button', { name: /开始 LET'S MOVE/ }).click();
+  await expect(card.locator('.record-overline')).toContainText(
+    (createCalorieIndex(hard.chart.notes).at(-1)?.kcal ?? 0).toFixed(1),
+  );
+  await expect(card.locator('.record-timing')).toContainText(
+    String(hard.chart.tempoSegments[0].bpm),
+  );
+  expect(
+    await card.evaluate((el) => {
+      const caption = el.querySelector('.record-caption')!.getBoundingClientRect();
+      const title = el.querySelector('.record-title')!.getBoundingClientRect();
+      const timing = el.querySelector('.record-timing')!.getBoundingClientRect();
+      return (
+        timing.left > title.right && timing.bottom <= caption.bottom && timing.top >= caption.top
+      );
+    }),
+  ).toBe(true);
+  await card.click();
+  await expect(page.getByRole('dialog')).toContainText('开始这首曲子？');
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  await page.getByRole('button', { name: '开始', exact: true }).click();
+  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  const countdown = page.getByRole('timer');
+  await expect(countdown).toHaveText('3');
+  const countdownStart = Date.now();
+  await page.keyboard.press('Space');
+  await page.screenshot({ path: 'artifacts/game-countdown.png' });
+  expect(
+    await page.locator('video').evaluate((v: HTMLVideoElement) => [v.paused, v.currentTime]),
+  ).toEqual([true, 0]);
+  await expect(countdown).toHaveText('2');
+  await expect(countdown).toHaveText('1');
+  expect(
+    await page.locator('video').evaluate((v: HTMLVideoElement) => [v.paused, v.currentTime]),
+  ).toEqual([true, 0]);
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
+  expect(Date.now() - countdownStart).toBeGreaterThan(2800);
+  await expect(page.locator('.toast')).toHaveCount(0);
   await expect(page.locator('.play-lane')).toHaveCount(5);
   await expect
     .poll(() => page.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime))
@@ -101,6 +148,14 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
     'aria-pressed',
     'true',
   );
+  await card.click();
+  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await expect(countdown).toHaveText('3');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  // A cancelled countdown must not start audio three seconds later in the menu.
+  await page.waitForTimeout(3100);
+  expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   await page.getByRole('button', { name: '编辑此谱面', exact: true }).click();
   await expect(page.getByRole('button', { name: '保存草稿', exact: true })).toBeEnabled();
   expect((await songs(page))[0].released.hard).toEqual(hard);
@@ -203,4 +258,18 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
   await page.locator('.collection-album[aria-current="true"]').click();
   await expect(page.locator('.record-card[aria-current="true"]')).toContainText('Test song 3');
   await page.screenshot({ path: 'artifacts/menu-carousel.png' });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'artifacts/menu-carousel-720.png' });
+  expect(
+    await page.locator('.record-card[aria-current="true"] .record-overline').evaluate((el) => {
+      const stats = el.getBoundingClientRect();
+      const area = el.closest('.song-carousel')!.getBoundingClientRect();
+      return stats.top >= area.top && stats.bottom <= area.bottom;
+    }),
+  ).toBe(true);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('.record-card[aria-current="true"]').hover();
+  await expect(
+    page.locator('.record-card[aria-current="true"] .cover-trace rect').first(),
+  ).toHaveCSS('animation-name', 'none');
 });
