@@ -104,8 +104,7 @@
     transform 160ms,
     box-shadow 160ms;
 }
-.mode-record:hover .mode-record-face,
-.mode-record:focus-visible .mode-record-face {
+.mode-record[data-highlighted] .mode-record-face {
   transform: translateY(-7px);
   box-shadow: 8px 15px 0 #1d1c21;
 }
@@ -568,7 +567,7 @@
 .collection-album:last-child {
   margin-bottom: 0;
 }
-.collection-album:is(:hover, :focus-visible) {
+.collection-album[data-highlighted] {
   --album-lift: -3px;
 }
 .collection-album > .cover-art,
@@ -745,8 +744,7 @@
   --card-scale: 1;
   opacity: 1;
 }
-.record-card:hover,
-.record-card:has(:focus-visible) {
+.record-card[data-highlighted] {
   transform: translateY(-5px) scale(var(--card-scale));
   opacity: 1;
 }
@@ -774,6 +772,7 @@
   height: 100%;
   pointer-events: none;
   opacity: 0;
+  visibility: hidden;
   transition: opacity 150ms;
 }
 .cover-trace rect {
@@ -790,14 +789,17 @@
   transform: rotate(180deg);
   transform-origin: center;
 }
-:is(.record-card, .collection-album, .mode-record):is(:hover, :focus-visible, :has(:focus-visible))
-  .cover-trace {
+[data-highlighted] .cover-trace {
   opacity: 1;
+  visibility: visible;
 }
-:is(.record-card, .collection-album, .mode-record):is(:hover, :focus-visible, :has(:focus-visible))
-  .cover-trace
-  rect {
+[data-highlighted] .cover-trace rect {
   animation: cover-orbit 1.8s linear infinite;
+}
+.mode-record:not([data-highlighted]):focus-visible,
+.collection-album:not([data-highlighted]):focus-visible,
+.record-card:not([data-highlighted]) :focus-visible {
+  outline: none;
 }
 .mode-record .cover-trace {
   z-index: 2;
@@ -1269,13 +1271,7 @@
   .theme-track {
     transition: none;
   }
-  :is(.record-card, .collection-album, .mode-record):is(
-      :hover,
-      :focus-visible,
-      :has(:focus-visible)
-    )
-    .cover-trace
-    rect,
+  [data-highlighted] .cover-trace rect,
   .mode-record-face,
   .menu-scene[data-exit-to='songs'] .collection-album,
   .start-confirmation,

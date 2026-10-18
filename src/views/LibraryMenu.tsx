@@ -7,6 +7,7 @@ import { ModalBackdrop } from '../components/ModalBackdrop';
 import { MenuControls } from '../components/MenuControls';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
+import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const rating = (value: number | undefined) => (value === undefined ? '—' : String(value));
@@ -62,6 +63,7 @@ export function LibraryMenu(props: Props) {
   const { page, albums, songs, albumId, songId, difficulty, seed, onAlbum, onSong, onDifficulty } =
     props;
   const scroller = useRef<HTMLDivElement>(null);
+  const { activate, handlers } = useCardHighlight();
   const scrollFrame = useRef(0);
   const [confirmStart, setConfirmStart] = useState<{ song: Song; difficulty: Difficulty } | null>(
     null,
@@ -126,6 +128,7 @@ export function LibraryMenu(props: Props) {
       updateScrollFocus(node, page === 'songs');
     };
     centerSelection();
+    if (page === 'songs') activate(node.querySelector<HTMLElement>('[aria-current="true"]'));
     const resize = new ResizeObserver(centerSelection);
     if (page === 'albums') resize.observe(node);
     return () => {
@@ -133,7 +136,7 @@ export function LibraryMenu(props: Props) {
       cancelAnimationFrame(scrollFrame.current);
       scrollFrame.current = 0;
     };
-  }, [page, albums]);
+  }, [page, albums, activate]);
 
   useEffect(() => {
     const node = scroller.current;
@@ -155,6 +158,7 @@ export function LibraryMenu(props: Props) {
       (c) => (c as HTMLElement).dataset.id === id,
     );
     const focusTarget = child?.querySelector<HTMLButtonElement>('.record-select') ?? child;
+    activate((child as HTMLElement | undefined) ?? null);
     (focusTarget as HTMLElement | undefined)?.focus({ preventScroll: true });
     child?.scrollIntoView({
       block: 'center',
@@ -168,7 +172,10 @@ export function LibraryMenu(props: Props) {
       cards.findIndex((c) => c.id === selectedId),
     );
     const nextId = cards[Math.max(0, Math.min(cards.length - 1, index + amount))]?.id ?? albumId;
-    if (nextId === selectedId) return;
+    if (nextId === selectedId) {
+      activate(scroller.current?.querySelector<HTMLElement>('[aria-current="true"]') ?? null);
+      return;
+    }
     props.onSound('settings');
     select(nextId);
   };
@@ -255,7 +262,13 @@ export function LibraryMenu(props: Props) {
       </header>
       {page === 'albums' ? (
         <>
-          <div key="albums" className="album-shelf" ref={scroller} onScroll={trackScroll}>
+          <div
+            key="albums"
+            className="album-shelf"
+            ref={scroller}
+            onScroll={trackScroll}
+            {...handlers}
+          >
             {albums.map((a, index) => (
               <button
                 key={a.id}
@@ -294,7 +307,13 @@ export function LibraryMenu(props: Props) {
         </div>
       ) : (
         <>
-          <div key="songs" className="song-carousel" ref={scroller} onScroll={trackScroll}>
+          <div
+            key="songs"
+            className="song-carousel"
+            ref={scroller}
+            onScroll={trackScroll}
+            {...handlers}
+          >
             {inAlbum.map((song) => {
               const ds = editionsIn(song, albumId);
               const d = ds.includes(difficulty) ? difficulty : ds.at(-1)!;
