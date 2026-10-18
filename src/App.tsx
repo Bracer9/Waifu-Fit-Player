@@ -187,6 +187,10 @@ export default function App() {
     playMenuSound('settings');
     setSettings(true);
   };
+  const closeSettings = () => {
+    playMenuSound('back');
+    setSettings(false);
+  };
   const difficulty = chart.difficulty ?? 'hard';
   const persistDraft = useCallback(async () => {
     if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
@@ -804,6 +808,7 @@ export default function App() {
             {mode === 'home' && (
               <Home
                 music={menuMusic}
+                onSound={playMenuSound}
                 onPlay={() => {
                   playMenuSound('mode');
                   navigateMenu('albums');
@@ -831,14 +836,29 @@ export default function App() {
                   }
                 }}
                 onSong={setSelectedSong}
-                onDifficulty={setSelectedDifficulty}
-                onBack={() => navigateMenu(mode === 'songs' ? 'albums' : 'home')}
-                onSongClick={() => playMenuSound('song')}
-                onCreate={enterEditor}
+                onDifficulty={(difficulty) => {
+                  playMenuSound('settings');
+                  setSelectedDifficulty(difficulty);
+                }}
+                onBack={() => {
+                  playMenuSound('back');
+                  navigateMenu(mode === 'songs' ? 'albums' : 'home');
+                }}
+                onSound={playMenuSound}
+                onCreate={() => {
+                  playMenuSound('mode');
+                  enterEditor();
+                }}
                 onPlay={playSong}
                 onPreview={setPreviewAsset}
-                onEdit={(song, d) => editSong(song, d, true)}
-                onManage={() => setManageSongs(true)}
+                onEdit={(song, d) => {
+                  playMenuSound('mode');
+                  editSong(song, d, true);
+                }}
+                onManage={() => {
+                  playMenuSound('settings');
+                  setManageSongs(true);
+                }}
               />
             )}
           </div>
@@ -1215,7 +1235,7 @@ export default function App() {
         </ModalBackdrop>
       )}
       {settings && (
-        <ModalBackdrop onClose={() => setSettings(false)}>
+        <ModalBackdrop onClose={closeSettings}>
           <section
             className="modal settings-modal"
             role="dialog"
@@ -1225,7 +1245,7 @@ export default function App() {
             <button
               className="modal-close icon-button"
               aria-label="关闭设置"
-              onClick={() => setSettings(false)}
+              onClick={closeSettings}
             >
               <X />
             </button>
@@ -1261,10 +1281,16 @@ export default function App() {
               onChange={media.setVolume}
             />
             <div className="modal-actions">
-              <button className="button light" onClick={() => changeNoteSpeed(DEFAULT_NOTE_SPEED)}>
+              <button
+                className="button light"
+                onClick={() => {
+                  playMenuSound('settings');
+                  changeNoteSpeed(DEFAULT_NOTE_SPEED);
+                }}
+              >
                 恢复默认
               </button>
-              <button className="button primary" onClick={() => setSettings(false)}>
+              <button className="button primary" onClick={closeSettings}>
                 完成
               </button>
             </div>
@@ -1274,7 +1300,10 @@ export default function App() {
       {manageSongs && (
         <SongManager
           songs={library.songs}
-          onClose={() => setManageSongs(false)}
+          onClose={() => {
+            playMenuSound('back');
+            setManageSongs(false);
+          }}
           onOpen={editSong}
           onWithdraw={withdraw}
           onDelete={deleteSong}
@@ -1284,7 +1313,10 @@ export default function App() {
         <AlbumManager
           albums={library.albums}
           onSave={library.saveAlbum}
-          onClose={() => setManageAlbums(false)}
+          onClose={() => {
+            playMenuSound('back');
+            setManageAlbums(false);
+          }}
           notify={notify}
         />
       )}
@@ -1294,7 +1326,10 @@ export default function App() {
           difficulty={difficulty}
           albums={library.albums}
           updating={!!library.songs.find((s) => s.id === chart.songId)?.released[difficulty]}
-          onClose={() => setPublishing(false)}
+          onClose={() => {
+            playMenuSound('back');
+            setPublishing(false);
+          }}
           onPublish={publish}
           onDifficulty={(difficulty) => updatePublication({ difficulty })}
         />

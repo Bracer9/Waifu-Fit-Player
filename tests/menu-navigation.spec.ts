@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { importDemo } from './helpers/project';
 
-test('菜单齿轮固定一致，前进返回动画与四类点击音效', async ({ page }) => {
+test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addInitScript(() => {
@@ -107,13 +107,40 @@ test('菜单齿轮固定一致，前进返回动画与四类点击音效', async
         }
       ).uiSoundEvents,
   );
-  expect(sounds.map((s) => s.name)).toEqual(['settings', 'mode', 'album', 'song']);
+  const expected = ['settings', 'back', 'mode', 'album', 'song', 'back', 'back', 'back'];
+  expect(sounds.map((s) => s.name)).toEqual(expected);
   await expect
     .poll(() =>
       page.evaluate(() => (window as unknown as { uiSoundsPlayed: string[] }).uiSoundsPlayed),
     )
-    .toEqual(['settings', 'mode', 'album', 'song']);
+    .toEqual(expected);
   expect(sounds.slice(1).every((s) => Math.abs(s.volume - 0.18) < 0.001)).toBe(true);
+
+  const checkSound = async (action: () => Promise<unknown>, name: string) => {
+    const events = () =>
+      page.evaluate(() =>
+        (window as unknown as { uiSoundEvents: { name: string }[] }).uiSoundEvents.map(
+          (s) => s.name,
+        ),
+      );
+    const before = (await events()).length;
+    await action();
+    await expect.poll(async () => (await events()).slice(before)).toEqual([name]);
+  };
+  const click = (name: string) => () => page.getByRole('button', { name, exact: true }).click();
+  await checkSound(click('选择主界面 BGM'), 'settings');
+  for (const name of ['列表循环', '随机', '单曲循环']) await checkSound(click(name), 'settings');
+  await checkSound(() => page.locator('.theme-track').first().click(), 'settings');
+  await checkSound(click('暂停菜单 BGM'), 'settings');
+  await checkSound(click('关闭主界面音乐'), 'back');
+  await checkSound(click('选择主界面 BGM'), 'settings');
+  await expect(page.getByRole('button', { name: '播放菜单 BGM', exact: true })).toBeVisible();
+  await checkSound(click('播放菜单 BGM'), 'settings');
+  await checkSound(() => page.keyboard.press('Escape'), 'back');
+  await checkSound(() => gear.click(), 'settings');
+  await checkSound(click('关闭设置'), 'back');
+  await checkSound(() => gear.click(), 'settings');
+  await checkSound(() => page.keyboard.press('Escape'), 'back');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 720 });

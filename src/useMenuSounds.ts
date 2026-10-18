@@ -3,9 +3,11 @@ import mode from './assets/menu-sfx/mode.wav';
 import album from './assets/menu-sfx/album.wav';
 import song from './assets/menu-sfx/song.wav';
 import settings from './assets/menu-sfx/settings.wav';
+import back from './assets/menu-sfx/back.wav';
 
-const sources = { mode, album, song, settings };
+const sources = { mode, album, song, settings, back };
 type MenuSound = keyof typeof sources;
+export type MenuSoundPlayer = (name: MenuSound) => void;
 
 export function useMenuSounds(volume: number) {
   const [sounds] = useState(

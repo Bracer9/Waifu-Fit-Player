@@ -35,6 +35,13 @@ const sounds = {
       [0.008, 2349.3, 0.05],
     ],
   },
+  back: {
+    length: 0.12,
+    tones: [
+      [0, 1320, 0.07],
+      [0.025, 660, 0.09],
+    ],
+  },
 };
 for (const [name, { length, tones }] of Object.entries(sounds)) {
   const samples = new Float64Array(Math.ceil(rate * length));
@@ -74,4 +81,4 @@ for (const [name, { length, tones }] of Object.entries(sounds)) {
   );
   writeFileSync(new URL(`${name}.wav`, directory), wav);
 }
-console.log(`Generated 4 menu sounds in ${fileURLToPath(directory)}`);
+console.log(`Generated ${Object.keys(sounds).length} menu sounds in ${fileURLToPath(directory)}`);

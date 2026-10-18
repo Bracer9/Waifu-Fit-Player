@@ -5,8 +5,9 @@
 - `mode.wav`：主菜单音游／创作卡片。
 - `album.wav`：进入专辑。
 - `song.wav`：点击单曲或打开开始确认。
-- `settings.wav`：打开设置。
+- `settings.wav`：设置、耳机菜单、循环方式、BGM 选择与播放暂停、难度和曲目切换。
+- `back.wav`：返回、关闭叉号、取消和 Esc 关闭，共用一个下降短音。
 
-44.1 kHz、16-bit 单声道，85–180 ms，四段合计约 49 KB。跟随菜单 BGM 音量，额外降低至 45%；快速连点会中断上一段，避免叠加。没有运行时合成或音效动画循环。
+44.1 kHz、16-bit 单声道，85–180 ms，五段合计约 60 KB。跟随菜单 BGM 音量，额外降低至 45%；快速连点会中断上一段，避免叠加。没有运行时合成或音效动画循环。
 
 需要调音色时修改 `scripts/generate-menu-sfx.mjs`，执行 `node scripts/generate-menu-sfx.mjs` 重新生成，也可以直接用同名 WAV 替换。

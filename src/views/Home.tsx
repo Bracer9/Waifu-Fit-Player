@@ -1,15 +1,18 @@
 import { ArrowUpRight, Disc3, PencilLine } from 'lucide-react';
 import { MenuMusicConsole } from '../components/MenuMusic';
 import type { MenuMusic } from '../useMenuMusic';
+import type { MenuSoundPlayer } from '../useMenuSounds';
 
 export function Home({
   onPlay,
   onCreate,
   music,
+  onSound,
 }: {
   onPlay: () => void;
   onCreate: () => void;
   music: MenuMusic;
+  onSound: MenuSoundPlayer;
 }) {
   return (
     <section className="title-menu" aria-label="主菜单">
@@ -41,7 +44,7 @@ export function Home({
           </span>
         </button>
       </div>
-      <MenuMusicConsole music={music} />
+      <MenuMusicConsole music={music} onSound={onSound} />
     </section>
   );
 }

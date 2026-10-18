@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Headphones, ListMusic, Pause, Play, Repeat1, Shuffle, X } from 'lucide-react';
 import type { MenuMusic } from '../useMenuMusic';
+import type { MenuSoundPlayer } from '../useMenuSounds';
 import { ModalBackdrop } from './ModalBackdrop';
 
 function MusicPulse({ music }: { music: MenuMusic }) {
@@ -113,8 +114,18 @@ export function AudioVolumeControl({
   );
 }
 
-export function MenuMusicConsole({ music }: { music: MenuMusic }) {
+export function MenuMusicConsole({
+  music,
+  onSound,
+}: {
+  music: MenuMusic;
+  onSound: MenuSoundPlayer;
+}) {
   const [open, setOpen] = useState(false);
+  const close = () => {
+    onSound('back');
+    setOpen(false);
+  };
   return (
     <div className="music-console">
       <div className="music-console-line">
@@ -123,25 +134,24 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
           className="headphone-button"
           aria-label="选择主界面 BGM"
           aria-expanded={open}
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            onSound('settings');
+            setOpen(true);
+          }}
         >
           <Headphones size={60} strokeWidth={2.5} />
         </button>
       </div>
       <span className="music-console-title">{music.track?.title ?? 'MENU MUSIC'}</span>
       {open && (
-        <ModalBackdrop onClose={() => setOpen(false)}>
+        <ModalBackdrop onClose={close}>
           <section
             className="modal theme-music-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="theme-music-title"
           >
-            <button
-              className="modal-close icon-button"
-              aria-label="关闭主界面音乐"
-              onClick={() => setOpen(false)}
-            >
+            <button className="modal-close icon-button" aria-label="关闭主界面音乐" onClick={close}>
               <X />
             </button>
             <span className="eyebrow">MENU MIX / WAIFU FIT</span>
@@ -151,7 +161,10 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
                 <button
                   key={id}
                   aria-pressed={music.order === id}
-                  onClick={() => music.setOrder(id)}
+                  onClick={() => {
+                    onSound('settings');
+                    music.setOrder(id);
+                  }}
                 >
                   <Icon size={16} />
                   {label}
@@ -165,7 +178,10 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
                     <button
                       className="theme-track"
                       aria-pressed={music.track?.id === track.id}
-                      onClick={() => music.select(track.id)}
+                      onClick={() => {
+                        onSound('settings');
+                        music.select(track.id);
+                      }}
                     >
                       <small>{String(index + 1).padStart(2, '0')}</small>
                       <span>{track.title}</span>
@@ -176,7 +192,10 @@ export function MenuMusicConsole({ music }: { music: MenuMusic }) {
                         className="theme-track-toggle"
                         aria-label={music.playing ? '暂停菜单 BGM' : '播放菜单 BGM'}
                         title={music.playing ? '暂停' : '播放'}
-                        onClick={music.toggle}
+                        onClick={() => {
+                          onSound('settings');
+                          music.toggle();
+                        }}
                       >
                         {music.playing ? <Pause size={18} /> : <Play size={18} />}
                       </button>

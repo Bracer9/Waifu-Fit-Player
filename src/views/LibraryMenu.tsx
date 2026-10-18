@@ -5,6 +5,7 @@ import { CoverArt } from '../components/CoverArt';
 import { ModalBackdrop } from '../components/ModalBackdrop';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
+import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const rating = (value: number | undefined) => (value === undefined ? '—' : String(value));
 
@@ -20,7 +21,7 @@ type Props = {
   onSong: (id: string) => void;
   onDifficulty: (difficulty: Difficulty) => void;
   onBack: () => void;
-  onSongClick: () => void;
+  onSound: MenuSoundPlayer;
   onCreate: () => void;
   onPlay: (song: Song, difficulty: Difficulty) => void;
   onPreview: (assetId: string | undefined) => void;
@@ -36,8 +37,12 @@ export function LibraryMenu(props: Props) {
     null,
   );
   const confirmSong = (song: Song, difficulty: Difficulty) => {
-    props.onSongClick();
+    props.onSound('song');
     setConfirmStart({ song, difficulty });
+  };
+  const closeConfirmation = () => {
+    props.onSound('back');
+    setConfirmStart(null);
   };
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
   const inAlbum = useMemo(
@@ -106,7 +111,10 @@ export function LibraryMenu(props: Props) {
       0,
       cards.findIndex((c) => c.id === selectedId),
     );
-    select(cards[Math.max(0, Math.min(cards.length - 1, index + amount))]?.id ?? albumId);
+    const nextId = cards[Math.max(0, Math.min(cards.length - 1, index + amount))]?.id ?? albumId;
+    if (nextId === selectedId) return;
+    props.onSound('settings');
+    select(nextId);
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -365,7 +373,7 @@ export function LibraryMenu(props: Props) {
         </>
       )}
       {confirmStart && (
-        <ModalBackdrop onClose={() => setConfirmStart(null)}>
+        <ModalBackdrop onClose={closeConfirmation}>
           <section
             className="modal start-confirmation"
             role="dialog"
@@ -380,12 +388,13 @@ export function LibraryMenu(props: Props) {
               {rating(confirmStart.song.released[confirmStart.difficulty]!.chart.difficultyRating)}
             </span>
             <div className="modal-actions">
-              <button className="button light" onClick={() => setConfirmStart(null)}>
+              <button className="button light" onClick={closeConfirmation}>
                 取消
               </button>
               <button
                 className="button primary"
                 onClick={() => {
+                  props.onSound('mode');
                   props.onPlay(confirmStart.song, confirmStart.difficulty);
                   setConfirmStart(null);
                 }}
