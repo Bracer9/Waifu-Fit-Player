@@ -11,6 +11,7 @@ import {
   Moon,
   Plus,
   Save,
+  Settings,
   Sun,
   X,
 } from 'lucide-react';
@@ -19,6 +20,7 @@ import { historyReducer } from './editing';
 import { MediaController, audioOutputErrorMessage, useMediaStatus } from './media';
 import { usePlayerPreparation } from './usePlayerPreparation';
 import { isTyping } from './recording';
+import { DEFAULT_NOTE_SPEED } from './timing';
 import { demoChart } from './demo';
 import { Player } from './views/Player';
 import { Editor } from './views/Editor';
@@ -49,6 +51,7 @@ type SaveHandle = {
 type SaveWindow = Window & { showSaveFilePicker?: (options: unknown) => Promise<SaveHandle> };
 const DRAFT_KEY = 'waifu-fit-player-draft-v1';
 const WORKBENCH_THEME_KEY = 'waifu-fit-player-workbench-theme';
+const NOTE_SPEED_KEY = 'waifu-fit-player-note-speed';
 const fileTitle = (name: string) => name.replace(/\.[^.]+$/, '');
 type VideoRequest = {
   kind: 'new' | 'open' | 'replace';
@@ -80,6 +83,23 @@ export default function App() {
   const [busy, setBusy] = useState('');
   const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'player' | 'editor'>('home');
+  const [settings, setSettings] = useState(false);
+  const [noteSpeed, setNoteSpeed] = useState(() => {
+    try {
+      const stored = Number(localStorage.getItem(NOTE_SPEED_KEY));
+      return stored >= 0.5 && stored <= 10 ? stored : DEFAULT_NOTE_SPEED;
+    } catch {
+      return DEFAULT_NOTE_SPEED;
+    }
+  });
+  const changeNoteSpeed = (value: number) => {
+    setNoteSpeed(value);
+    try {
+      localStorage.setItem(NOTE_SPEED_KEY, String(value));
+    } catch {
+      // Keep the preference for this session if local storage is unavailable.
+    }
+  };
   const [workbenchDark, setWorkbenchDark] = useState(() => {
     try {
       return localStorage.getItem(WORKBENCH_THEME_KEY) === 'dark';
@@ -342,7 +362,7 @@ export default function App() {
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (pending || help || binding || busy || preparation.pending) return;
+      if (pending || help || settings || binding || busy || preparation.pending) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mode === 'editor' && mod && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -366,6 +386,7 @@ export default function App() {
       if (
         !pending &&
         !help &&
+        !settings &&
         !binding &&
         !busy &&
         mode !== 'home' &&
@@ -439,6 +460,14 @@ export default function App() {
           </button>
         </nav>
         <div className="header-right">
+          <button
+            className="icon-button"
+            aria-label="全局设置"
+            title="全局设置"
+            onClick={() => setSettings(true)}
+          >
+            <Settings size={18} />
+          </button>
           {mode !== 'player' && (
             <button
               className="icon-button"
@@ -543,7 +572,12 @@ export default function App() {
             <div className="stage-left">
               {mode === 'player' && <PracticeCover chart={chart} media={media} />}
               {mode !== 'home' && (
-                <Player chart={chart} media={media} showGuide={mode === 'editor'} />
+                <Player
+                  chart={chart}
+                  media={media}
+                  showGuide={mode === 'editor'}
+                  noteSpeed={noteSpeed}
+                />
               )}
             </div>
             <div className="stage-right">
@@ -783,6 +817,53 @@ export default function App() {
                 }}
               >
                 保存并继续
+              </button>
+            </div>
+          </section>
+        </ModalBackdrop>
+      )}
+      {settings && (
+        <ModalBackdrop onClose={() => setSettings(false)}>
+          <section
+            className="modal settings-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-title"
+          >
+            <button
+              className="modal-close icon-button"
+              aria-label="关闭设置"
+              onClick={() => setSettings(false)}
+            >
+              <X />
+            </button>
+            <h2 id="settings-title">全局设置</h2>
+            <div className="note-speed-setting">
+              <div className="note-speed-heading">
+                <label htmlFor="note-speed">音符流速</label>
+                <output htmlFor="note-speed">{noteSpeed.toFixed(1)}</output>
+              </div>
+              <input
+                id="note-speed"
+                type="range"
+                min="0.5"
+                max="10"
+                step="0.5"
+                value={noteSpeed}
+                onChange={(event) => changeNoteSpeed(Number(event.target.value))}
+              />
+              <div className="note-speed-scale" aria-hidden="true">
+                <span>0.5 · 慢</span>
+                <span>10 · 快</span>
+              </div>
+            </div>
+            <p>默认 {DEFAULT_NOTE_SPEED.toFixed(1)}。所有曲目共用，自动记住你的选择。</p>
+            <div className="modal-actions">
+              <button className="button light" onClick={() => changeNoteSpeed(DEFAULT_NOTE_SPEED)}>
+                恢复默认
+              </button>
+              <button className="button primary" onClick={() => setSettings(false)}>
+                完成
               </button>
             </div>
           </section>

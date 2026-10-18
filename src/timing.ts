@@ -83,6 +83,8 @@ export function noteState(note: Note, timeMs: number): 'waiting' | 'holding' | '
       ? 'holding'
       : 'ended';
 }
+export const DEFAULT_NOTE_SPEED = 3;
+
 export function noteX(
   noteTime: number,
   currentTime: number,

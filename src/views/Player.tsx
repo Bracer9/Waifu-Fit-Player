@@ -9,7 +9,7 @@ import {
   specialMoveLabel,
 } from '../model';
 import { MediaController, useTime } from '../media';
-import { chartTimeAt, noteX, specialAt } from '../timing';
+import { chartTimeAt, DEFAULT_NOTE_SPEED, noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
@@ -17,17 +17,20 @@ import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
-const PREVIEW_MS = 3600;
+const BASE_PREVIEW_MS = 3600;
 export function Player({
   chart,
   media,
   showGuide = false,
+  noteSpeed = DEFAULT_NOTE_SPEED,
 }: {
   chart: Chart;
   media: MediaController;
   showGuide?: boolean;
+  noteSpeed?: number;
 }) {
   const time = chartTimeAt(chart, useTime(media));
+  const previewMs = (BASE_PREVIEW_MS * DEFAULT_NOTE_SPEED) / noteSpeed;
   const tracks = useRef<HTMLElement>(null);
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {
@@ -111,7 +114,7 @@ export function Player({
           const visible = displayNotes.filter(
             (n) =>
               n.lane === lane.id &&
-              n.timeMs <= time + PREVIEW_MS + 300 &&
+              n.timeMs <= time + previewMs + 300 &&
               (n.kind === 'hold' ? n.endTimeMs : n.timeMs + IMPACT_MS) >= time,
           );
           const holdings = visible.filter(
@@ -121,7 +124,7 @@ export function Player({
           const nextHeadDistance = Math.min(
             ...visible
               .filter((note) => note.timeMs > time)
-              .map((note) => ((note.timeMs - time) / PREVIEW_MS) * 0.88 * metrics.width),
+              .map((note) => ((note.timeMs - time) / previewMs) * 0.88 * metrics.width),
           );
           // Give the incoming action visual priority before its marker touches the old cue.
           const cueOpacity = Math.min(
@@ -130,7 +133,7 @@ export function Player({
           );
           const accentCharge =
             lane.id === 'side_crunch'
-              ? Math.max(0, 1 - nextHeadDistance / ((metrics.width * 0.88 * 650) / PREVIEW_MS))
+              ? Math.max(0, 1 - nextHeadDistance / ((metrics.width * 0.88 * 650) / previewMs))
               : 0;
           const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
           const release = displayNotes
@@ -177,7 +180,7 @@ export function Player({
                 <div className="highway-grid" />
                 {!showGuide && <div className="judgement-ring" aria-hidden="true" />}
                 {visible.map((note) => {
-                  const head = noteX(note.timeMs, time, 88, PREVIEW_MS);
+                  const head = noteX(note.timeMs, time, 88, previewMs);
                   if (note.kind === 'tap')
                     return time < note.timeMs ? (
                       <div
@@ -205,7 +208,7 @@ export function Player({
                         />
                       </div>
                     ) : null;
-                  const tail = noteX(note.endTimeMs, time, 88, PREVIEW_MS);
+                  const tail = noteX(note.endTimeMs, time, 88, previewMs);
                   const right = Math.min(head, 88);
                   const next = joinedTails.get(note.id);
                   // A TAP at the release time becomes the ribbon's end arrow, sharing
@@ -236,7 +239,7 @@ export function Player({
                         <HoldRibbon
                           durationMs={note.endTimeMs - note.timeMs}
                           fullWidth={
-                            ((note.endTimeMs - note.timeMs) * metrics.width * 0.88) / PREVIEW_MS
+                            ((note.endTimeMs - note.timeMs) * metrics.width * 0.88) / previewMs
                           }
                           visibleFraction={Math.max(0, right - tail) / (head - tail)}
                           size={metrics.marker}
