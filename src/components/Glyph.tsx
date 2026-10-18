@@ -6,31 +6,60 @@ import {
   type Lane,
   type StepDistance,
 } from '../model';
-export function LaneGlyph({ lane }: { lane: Lane }) {
-  const paths: Record<Lane, string> = {
-    squat: 'M21 20L14 31L28 34L20 48M21 22L35 25L43 25M14 31L8 43L24 48',
-    calf_raise:
-      'M26 20L25 33L21 47M25 33L31 47M25 22L15 31M25 22L34 31M12 48V39M8 43L12 39L16 43M39 48V39M35 43L39 39L43 43',
-    punch: 'M24 21L23 34L13 48M23 34L32 48M24 22L34 25L46 25M24 22L14 28L10 22',
-    step: 'M26 21L26 33L17 44M26 33L35 44M26 22L16 28M26 22L36 28M5 43H13M9 39L5 43L9 47M43 43H51M47 39L51 43L47 47',
-    side_crunch: 'M26 21L22 34L18 48M22 34L31 48M26 21L34 13L29 7M25 22L16 15L20 7',
-  };
-  return (
-    <svg viewBox="0 0 56 56" aria-hidden="true">
-      <circle
-        cx={lane === 'squat' ? 27 : 26}
-        cy={lane === 'squat' ? 12 : 11}
-        r="5"
-        fill="currentColor"
+const laneFigures: Record<Lane, React.ReactNode> = {
+  squat: (
+    <>
+      <circle cx="24" cy="9" r="6.5" />
+      <g fill="none" stroke="currentColor">
+        <path d="M20 21L15 34H28L22 49H28" strokeWidth="7.5" />
+        <path d="M20 21H44" strokeWidth="6.5" />
+      </g>
+    </>
+  ),
+  calf_raise: (
+    <path d="M22 3H36L31 30Q30 34 33 40L38 47Q40 49 44 48Q48 47 48 50Q48 53 42 53Q35 54 29 48L19 39Q15 35 18 30Z" />
+  ),
+  punch: (
+    <>
+      <circle cx="25" cy="8" r="6.5" />
+      <path
+        fillRule="evenodd"
+        d="M21 18Q25 17 28 19L45 16Q49 15 50 18Q51 21 47 22L29 25L27 32L20 36L13 32L15 25Q16 20 21 18ZM20 22L17 28L25 25L26 22Z"
       />
       <path
-        d={paths[lane]}
-        stroke="currentColor"
-        strokeWidth="4.5"
+        d="M19 33L16 41L11 49M24 33L31 39L35 49"
         fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke="currentColor"
+        strokeWidth="7.5"
       />
+    </>
+  ),
+  step: (
+    <g transform="translate(3 2) scale(1.3)">
+      <ShoePrint />
+    </g>
+  ),
+  side_crunch: (
+    <>
+      <circle cx="31" cy="12" r="6" />
+      <g fill="none" stroke="currentColor">
+        <path d="M24 5L12 12L26 25M40 14L44 23L29 27" strokeWidth="5.5" />
+        <path d="M27 25L24 35L23 50M25 36L37 33L31 44" strokeWidth="7" />
+      </g>
+    </>
+  ),
+};
+
+export function LaneGlyph({ lane }: { lane: Lane }) {
+  return (
+    <svg
+      viewBox="0 0 56 56"
+      fill="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {laneFigures[lane]}
     </svg>
   );
 }
