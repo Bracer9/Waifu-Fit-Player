@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { videoExportServer } from './scripts/video-export-server';
 export default defineConfig({
-  plugins: [react(), videoExportServer()],
+  plugins: [react()],
   server: {
     port: 5173,
     strictPort: true,

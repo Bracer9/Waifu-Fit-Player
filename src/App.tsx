@@ -24,7 +24,6 @@ import { Player } from './views/Player';
 import { Editor } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
-import { VideoExport } from './components/VideoExport';
 import {
   PracticeBackdrop,
   PracticeCover,
@@ -86,7 +85,6 @@ export default function App() {
   const [busy, setBusy] = useState('');
   const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'player' | 'editor'>('home');
-  const [exportOpen, setExportOpen] = useState(false);
   const [workbenchDark, setWorkbenchDark] = useState(() => {
     try {
       return localStorage.getItem(WORKBENCH_THEME_KEY) === 'dark';
@@ -133,14 +131,14 @@ export default function App() {
   }, [notice]);
   useEffect(() => {
     const beforeUnload = (e: BeforeUnloadEvent) => {
-      if (dirty || exportOpen) {
+      if (dirty) {
         e.preventDefault();
         e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', beforeUnload);
     return () => window.removeEventListener('beforeunload', beforeUnload);
-  }, [dirty, exportOpen]);
+  }, [dirty]);
   useEffect(() => {
     if (!dirty) return;
     const timer = setTimeout(() => {
@@ -350,7 +348,7 @@ export default function App() {
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (pending || help || binding || busy || preparation.pending || exportOpen) return;
+      if (pending || help || binding || busy || preparation.pending) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mode === 'editor' && mod && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -406,7 +404,7 @@ export default function App() {
 
   return (
     <div
-      className={`app ${mode === 'player' ? 'practice-app' : ''} ${exportOpen ? 'is-exporting' : ''}`}
+      className={`app ${mode === 'player' ? 'practice-app' : ''}`}
       data-workbench-theme={mode !== 'player' && workbenchDark ? 'dark' : undefined}
     >
       <div className="ambient-shape pink" />
@@ -551,17 +549,6 @@ export default function App() {
                 onClick={() => void save(true)}
               >
                 <Download size={17} />
-              </button>
-              <button
-                className="button small ghost"
-                disabled={saving || !status.ready || preparation.pending}
-                onClick={() => {
-                  media.pause();
-                  setExportOpen(true);
-                }}
-              >
-                <Film size={16} />
-                导出 MP4
               </button>
             </div>
           </div>
@@ -729,16 +716,6 @@ export default function App() {
           </div>,
           document.fullscreenElement || document.body,
         )}
-      {exportOpen && (
-        <VideoExport
-          media={media}
-          title={chart.title}
-          videoFileName={chart.videoHint.fileName}
-          onModeChange={setMode}
-          onClose={() => setExportOpen(false)}
-          notify={notify}
-        />
-      )}
       {busy ? (
         <ModalBackdrop key="loading" onClose={() => {}}>
           <section
