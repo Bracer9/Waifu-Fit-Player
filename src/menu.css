@@ -687,12 +687,19 @@
   opacity: 1;
 }
 .record-card:hover,
-.record-card:focus-visible {
+.record-card:has(:focus-visible) {
   transform: translateY(-5px) scale(var(--card-scale));
   opacity: 1;
 }
 .record-card:active {
   transform: translateY(2px) scale(calc(var(--card-scale) - 0.02));
+}
+.record-select {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  background: transparent;
 }
 .record-jacket {
   position: relative;
@@ -724,10 +731,12 @@
   transform: rotate(180deg);
   transform-origin: center;
 }
-:is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace {
+:is(.record-card, .collection-album):is(:hover, :focus-visible, :has(:focus-visible)) .cover-trace {
   opacity: 1;
 }
-:is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace rect {
+:is(.record-card, .collection-album):is(:hover, :focus-visible, :has(:focus-visible))
+  .cover-trace
+  rect {
   animation: cover-orbit 1.8s linear infinite;
 }
 @keyframes cover-orbit {
@@ -877,11 +886,25 @@
   border-color: var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
 }
-.button.edit-track {
-  flex: none;
-  border: 2px solid var(--ink);
-  border-radius: 0;
-  white-space: nowrap;
+.edit-track {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+  padding: 3px 8px;
+  background: transparent;
+  color: var(--ink);
+}
+.edit-track svg {
+  transition: transform 150ms;
+}
+.edit-track:is(:hover, :focus-visible) svg {
+  transform: translateY(-2px) rotate(-12deg);
+}
+.edit-track:active svg {
+  transform: translateY(1px);
 }
 .start-track {
   display: flex;
@@ -1172,13 +1195,16 @@
   .collection-album > .cover-art,
   .collection-album > .cover-placeholder,
   .record-card,
+  .edit-track svg,
   .cover-trace,
   .start-track,
   .headphone-button,
   .theme-track {
     transition: none;
   }
-  :is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace rect,
+  :is(.record-card, .collection-album):is(:hover, :focus-visible, :has(:focus-visible))
+    .cover-trace
+    rect,
   .mode-record-face,
   .menu-scene[data-exit-to='songs'] .collection-album,
   .start-confirmation,

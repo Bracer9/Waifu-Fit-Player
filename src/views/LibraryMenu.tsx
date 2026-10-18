@@ -166,7 +166,8 @@ export function LibraryMenu(props: Props) {
     const child = Array.from(scroller.current?.children ?? []).find(
       (c) => (c as HTMLElement).dataset.id === id,
     );
-    (child as HTMLElement | undefined)?.focus({ preventScroll: true });
+    const focusTarget = child?.querySelector<HTMLButtonElement>('.record-select') ?? child;
+    (focusTarget as HTMLElement | undefined)?.focus({ preventScroll: true });
     child?.scrollIntoView({
       block: 'center',
       inline: 'center',
@@ -203,7 +204,7 @@ export function LibraryMenu(props: Props) {
       } else if (
         e.key === 'Enter' &&
         ((e.target as HTMLElement).tagName !== 'BUTTON' ||
-          (e.target as HTMLElement).closest('.collection-album, .record-card'))
+          (e.target as HTMLElement).closest('.collection-album'))
       ) {
         e.preventDefault();
         if (page === 'albums') onAlbum(album.id, true);
@@ -310,17 +311,20 @@ export function LibraryMenu(props: Props) {
               const d = ds.includes(difficulty) ? difficulty : ds.at(-1)!;
               const release = song.released[d]!;
               return (
-                <button
+                <div
                   className="record-card"
                   key={song.id}
                   data-id={song.id}
                   aria-current={song.id === selected.id}
-                  onClick={() => {
-                    select(song.id);
-                    confirmSong(song, d);
-                  }}
-                  aria-label={`选择 ${release.chart.title}`}
                 >
+                  <button
+                    className="record-select"
+                    onClick={() => {
+                      select(song.id);
+                      confirmSong(song, d);
+                    }}
+                    aria-label={`选择 ${release.chart.title}`}
+                  />
                   <span className="record-overline">
                     <span>
                       <small>LEVEL</small>
@@ -344,6 +348,14 @@ export function LibraryMenu(props: Props) {
                             {level.toUpperCase()}
                           </i>
                         ))}
+                        <button
+                          className="edit-track"
+                          aria-label="编辑谱面"
+                          title="编辑谱面"
+                          onClick={() => props.onEdit(song, d)}
+                        >
+                          <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
+                        </button>
                       </span>
                     </span>
                     <span className="record-timing">
@@ -355,7 +367,7 @@ export function LibraryMenu(props: Props) {
                       </span>
                     </span>
                   </span>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -401,13 +413,6 @@ export function LibraryMenu(props: Props) {
                 </button>
               ))}
             </div>
-            <button
-              className="button light edit-track"
-              onClick={() => selectedDifficulty && props.onEdit(selected, selectedDifficulty)}
-            >
-              <Pencil size={18} />
-              编辑谱面
-            </button>
             <button
               className="start-track"
               onClick={() => selectedDifficulty && confirmSong(selected, selectedDifficulty)}
