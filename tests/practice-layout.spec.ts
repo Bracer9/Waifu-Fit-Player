@@ -86,12 +86,7 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
     };
     await checkLayout();
     const size = height === 1440 ? `${width}-${height}` : `${width}`;
-    await page.screenshot({ path: `artifacts/album-window-${size}.png`, fullPage: true });
-    await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
-    await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
-    await checkLayout();
     await page.screenshot({ path: `artifacts/album-fullscreen-${size}.png`, fullPage: true });
-    await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   }
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
@@ -99,7 +94,9 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
     .toBeGreaterThan(12.8);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const paused = await video.evaluate((element) => (element as HTMLVideoElement).currentTime);
-  await page.getByLabel('Playback speed').selectOption('0.75');
+  await page.locator('video').evaluate((v: HTMLVideoElement) => {
+    v.playbackRate = 0.75;
+  });
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   expect(await videoNode.evaluate((element) => element.isConnected)).toBe(true);
   expect(await video.evaluate((element) => (element as HTMLVideoElement).currentTime)).toBeCloseTo(
@@ -108,7 +105,7 @@ test('折页专辑在窗口与全屏保留 16:9 视频、五轨和真实播放�
   );
   await expect(page.getByRole('button', { name: '打开作品', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await expect(page.getByLabel('Playback speed')).toHaveValue('0.75');
+  expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.playbackRate)).toBe(0.75);
   expect(await videoNode.evaluate((element) => element.isConnected)).toBe(true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.screenshot({ path: 'artifacts/album-reduced-motion.png', fullPage: true });

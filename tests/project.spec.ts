@@ -81,7 +81,7 @@ test('旧谱一次定位后保存关联，失败与取消保留当前作品，�
   const original = await exported(page);
   const legacy = blankChart('旧版作品');
   legacy.videoHint = { fileName: 'demo.mp4', durationMs: original.videoHint.durationMs };
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await open(page, legacy);
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('dialog')).toContainText('这份旧作品还没有保存视频关联');
@@ -100,7 +100,7 @@ test('旧谱一次定位后保存关联，失败与取消保留当前作品，�
   await ready(page, '旧版作品');
   const linked = await exported(page);
   expect(linked.videoHint.assetId).toBeTruthy();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await page.reload();
   await open(page, linked);
   await ready(page, '旧版作品');

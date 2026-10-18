@@ -46,7 +46,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
   await expect(page.locator('.timeline-footer')).toContainText('4 SPECIAL');
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   const video = page.locator('video');
   const seek = async (seconds: number) => {
     await video.evaluate((v: HTMLVideoElement, t) => {
@@ -142,7 +142,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
     await seek(4.9);
     await expect(page.locator('.editing .special-hold-strip')).toHaveCount(5);
     await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-    await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
     await expect(effects('first').locator(`.lucide-${icon}`)).toHaveCount(5);
     await page.screenshot({ path: `artifacts/special-hold-${icon}-1920.png` });
   }

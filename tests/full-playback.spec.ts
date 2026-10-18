@@ -12,7 +12,7 @@ test('整首真实视频 1x 播放，五轨状态与媒体时间保持一致', a
   await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Mute', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   const monitoring = page.evaluate(async () => {
     const video = document.querySelector('video')!;
     const frames: { interval: number; renderLag: number; videoLag: number; special: boolean }[] =

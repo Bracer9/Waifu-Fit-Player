@@ -48,7 +48,7 @@ test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP �
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   const video = page.locator('video');
   const seek = async (seconds: number) => {
     await video.evaluate((v: HTMLVideoElement, time) => {
@@ -165,7 +165,7 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   const seek = async (seconds: number) => {
     await page.locator('video').evaluate((v: HTMLVideoElement, time) => {
       v.currentTime = time;
@@ -279,11 +279,11 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
     }, seconds);
     await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.seeking)).toBe(false);
   };
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await seek(29.3);
   await page.screenshot({ path: 'artifacts/notes-demo-fullscreen-1920.png' });
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
-  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(false);
+
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await downloading).path())!, 'utf8'));
@@ -320,8 +320,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   });
   await expect(page.getByRole('heading', { name: chart.title })).toBeVisible();
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  if (!(await page.evaluate(() => !!document.fullscreenElement)))
-    await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await seek(3.35);
   const heads = page.locator('.practice .hold-head, .practice .player-note');
   for (const item of await heads.all()) {

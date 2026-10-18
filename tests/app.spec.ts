@@ -113,7 +113,9 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   expect(await page.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime)).toBe(
     paused,
   );
-  await page.getByLabel('Playback speed').selectOption('0.5');
+  await page.locator('video').evaluate((v: HTMLVideoElement) => {
+    v.playbackRate = 0.5;
+  });
   await seek(page, 3);
   await expect(page.getByTestId('target-squat')).toHaveAttribute('data-state', 'sway');
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
@@ -133,7 +135,9 @@ test('真实 MP4 播放、暂停、跳转、变速和单视频切换', async ({ 
   await expect(page.getByTestId('special-cue')).toContainText('SPECIAL!');
   await seek(page, 26);
   await expect(page.getByTestId('special-cue')).not.toContainText('SPECIAL!');
-  await page.getByLabel('Playback speed').selectOption('1');
+  await page.locator('video').evaluate((v: HTMLVideoElement) => {
+    v.playbackRate = 1;
+  });
   await seek(page, 266.4);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
@@ -351,7 +355,7 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
   await expect(page.getByRole('status')).not.toBeVisible();
   await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await expect(flying).toHaveCount(5);
   await page.screenshot({ path: 'artifacts/special-sparkles-fullscreen.png', fullPage: true });
   await seek(page, 4.85);
@@ -526,7 +530,9 @@ test('分段节拍、唯一 SPECIAL 重复事件、网格修改不移动音符',
 test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录入取消', async ({ page }) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
-  await page.getByLabel('Playback speed').selectOption('0.5');
+  await page.locator('video').evaluate((v: HTMLVideoElement) => {
+    v.playbackRate = 0.5;
+  });
   await seek(page, 10);
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -958,7 +964,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await seek(page, 0.5);
   await expect(impact).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await expect(lanes).toHaveCount(5);
   await expect(page.getByLabel('Video', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'artifacts/step-fullscreen.png', fullPage: true });
@@ -1103,7 +1109,7 @@ test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显
   await page.screenshot({ path: 'artifacts/follow-editor.png' });
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
   await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await seek(page, 1.2);
   const follows = page.getByTestId('lane-step').locator('.player-note .glyph--follow');
   await expect(follows).toHaveCount(2);
@@ -1319,15 +1325,10 @@ test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async 
   expect(chart.notes).toHaveLength(1);
   expect(chart.videoHint.fileName).toBe('demo.mp4');
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
-  await expect
-    .poll(() =>
-      page.evaluate(() => document.fullscreenElement?.classList.contains('album-workspace')),
-    )
-    .toBe(true);
+
   await expect(page.getByLabel('Movement tracks')).toBeVisible();
   await expect(page.getByLabel('Video', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
   const secondChooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: '新建', exact: true }).click();
@@ -1353,7 +1354,7 @@ test('五轨录谱方向键不被下拉框或滑块吞掉，保留点按长按�
   });
   let count = 1;
   for (const [index, lane] of LANES.entries()) {
-    await page.getByLabel('Playback speed').focus();
+    await page.getByLabel('吸附', { exact: true }).focus();
     await page.keyboard.press(String(index + 1));
     await expect(page.locator(`.lane-picks [data-lane="${lane.id}"]`)).toHaveAttribute(
       'aria-pressed',
@@ -1378,7 +1379,7 @@ test('五轨录谱方向键不被下拉框或滑块吞掉，保留点按长按�
     await expect(page.locator('.timeline-footer')).toContainText(`${count} 音符`);
   }
   await expect(page.getByLabel('吸附', { exact: true })).toHaveValue('0');
-  await expect(page.getByLabel('Playback speed')).toHaveValue('1');
+  expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.playbackRate)).toBe(1);
   await expect(page.locator('video')).toHaveAttribute('data-seek-count', '0');
   await page.getByLabel('开始 / ms').focus();
   await page.keyboard.press('ArrowLeft');

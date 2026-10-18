@@ -73,7 +73,9 @@ test('workbench loop funnels drag independently and loop the actual offset video
         v.dataset.wraps = String(Number(v.dataset.wraps) + 1);
     });
   });
-  await page.getByLabel('Playback speed', { exact: true }).selectOption('1.5');
+  await page.locator('video').evaluate((v: HTMLVideoElement) => {
+    v.playbackRate = 1.5;
+  });
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   // The initial seek into the range plus two actual boundary crossings.
   await expect.poll(() => video.getAttribute('data-wraps')).toBe('3');

@@ -48,6 +48,6 @@ export function ModalBackdrop({ children, onClose }: { children: ReactNode; onCl
     <div className="modal-backdrop" ref={ref}>
       {children}
     </div>,
-    document.fullscreenElement || document.body,
+    document.body,
   );
 }

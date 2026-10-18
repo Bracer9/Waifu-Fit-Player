@@ -114,8 +114,7 @@ export default function App() {
     }
   });
   const chartInput = useRef<HTMLInputElement>(null),
-    videoInput = useRef<HTMLInputElement>(null),
-    albumRef = useRef<HTMLDivElement>(null);
+    videoInput = useRef<HTMLInputElement>(null);
   const videoIntent = useRef<VideoRequest | null>(null);
   const notify = useCallback((text: string) => setNotice(text), []);
   useEffect(() => {
@@ -395,12 +394,6 @@ export default function App() {
           await openProject(next, false);
         }),
     );
-  const fullScreen = () => {
-    if (document.fullscreenElement)
-      document.exitFullscreen().catch(() => notify('Unable to exit fullscreen.'));
-    else
-      albumRef.current?.requestFullscreen().catch(() => notify('Fullscreen unavailable. Try F11.'));
-  };
 
   return (
     <div
@@ -492,7 +485,6 @@ export default function App() {
         <div
           className={`album-workspace ${mode === 'editor' ? 'editing' : 'practice'}`}
           hidden={mode === 'home'}
-          ref={albumRef}
         >
           {mode === 'player' && <PracticeBackdrop />}
           <div className="album-spine" hidden={mode === 'player'}>
@@ -562,13 +554,8 @@ export default function App() {
             <div className="stage-right">
               {mode === 'player' && (
                 <PracticeMasthead
-                  onReturn={async () => {
+                  onReturn={() => {
                     media.pause();
-                    if (document.fullscreenElement) {
-                      await document
-                        .exitFullscreen()
-                        .catch(() => notify('Unable to exit fullscreen.'));
-                    }
                     setMode('editor');
                   }}
                 />
@@ -620,15 +607,13 @@ export default function App() {
                   </span>
                   <span>VIDEO + MUSIC</span>
                 </div>
-                {mode === 'player' && (
-                  <Transport media={media} fullScreen={fullScreen} notify={notify} />
-                )}
+                {mode === 'player' && <Transport media={media} notify={notify} />}
               </section>
             </div>
             {mode === 'player' && <div className="album-hinge" aria-hidden="true" />}
           </div>
           {mode === 'player' && <PracticeForeground />}
-          {mode !== 'player' && <Transport media={media} fullScreen={fullScreen} notify={notify} />}
+          {mode !== 'player' && <Transport media={media} notify={notify} />}
           {mode === 'editor' && (
             <Editor
               key={projectRevision}
@@ -678,7 +663,7 @@ export default function App() {
               </div>
             )}
           </div>,
-          document.fullscreenElement || document.body,
+          document.body,
         )}
       <input
         hidden
@@ -714,7 +699,7 @@ export default function App() {
               <X size={17} />
             </button>
           </div>,
-          document.fullscreenElement || document.body,
+          document.body,
         )}
       {busy ? (
         <ModalBackdrop key="loading" onClose={() => {}}>

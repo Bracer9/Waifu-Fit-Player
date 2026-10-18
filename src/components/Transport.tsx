@@ -1,13 +1,11 @@
-import { Play, Pause, SkipBack, Maximize, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipBack, Volume2, VolumeX } from 'lucide-react';
 import { MediaController, useMediaStatus, useTime } from '../media';
 import { formatTime } from '../timing';
 export function Transport({
   media,
-  fullScreen,
   notify,
 }: {
   media: MediaController;
-  fullScreen: () => void;
   notify: (text: string) => void;
 }) {
   const status = useMediaStatus(media),
@@ -57,18 +55,6 @@ export function Transport({
         onChange={(e) => media.seek(Number(e.target.value))}
       />
       <span className="time-readout total">{formatTime(status.durationMs)}</span>
-      <select
-        className="rate-select"
-        aria-label="Playback speed"
-        value={status.rate}
-        onChange={(e) => media.setRate(Number(e.target.value))}
-      >
-        {[0.5, 0.75, 1, 1.25, 1.5].map((rate) => (
-          <option key={rate} value={rate}>
-            {rate.toFixed(rate === 1 ? 1 : 2).replace(/0$/, rate === 1 ? '0' : '')}×
-          </option>
-        ))}
-      </select>
       <button
         className="icon-button volume-toggle"
         aria-label={status.volume ? 'Mute' : 'Unmute'}
@@ -86,14 +72,6 @@ export function Transport({
         value={status.volume}
         onChange={(e) => media.setVolume(Number(e.target.value))}
       />
-      <button
-        className="icon-button"
-        aria-label="Fullscreen"
-        title="Fullscreen"
-        onClick={fullScreen}
-      >
-        <Maximize size={19} />
-      </button>
     </div>
   );
 }

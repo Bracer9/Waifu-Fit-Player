@@ -264,7 +264,7 @@ test('actual chart: eight arrows, glove letters, sustain colors and judgment cli
     });
   await load(page, chart);
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   await page.evaluate(() => document.fonts.ready);
   const lane = page.getByTestId('lane-punch');
   await expect(lane.locator('.lane-label strong')).toHaveText('ARMS');

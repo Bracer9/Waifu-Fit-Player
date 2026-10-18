@@ -44,7 +44,7 @@ test('1080p 连续 SPECIAL 与五轨长条播放：视频帧、媒体时钟和�
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   // Include a normal lead-in; avoid treating decoder startup as a SPECIAL regression.
   const samples = await page.evaluate(async () => {
     const video = document.querySelector('video')!;

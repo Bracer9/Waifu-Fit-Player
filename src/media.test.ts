@@ -183,8 +183,6 @@ describe('媒体时钟不受渲染掉帧影响', () => {
     media.attach(video as unknown as HTMLVideoElement);
     video.currentTime = 8;
     video.playbackRate = 1.5;
-    video.dispatchEvent(new Event('ratechange'));
-    expect(media.getStatus().rate).toBe(1.5);
     frame();
     frame();
     expect(media.getTime()).toBe(8000);

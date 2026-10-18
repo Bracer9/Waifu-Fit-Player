@@ -114,8 +114,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await expect(page.locator('.combo-stat strong')).toHaveText('000');
   await expect(page.locator('.calorie-stat strong')).toHaveText('— KCAL');
   await page.evaluate(() => document.fonts.ready);
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
-  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+
   await expect(page.getByTestId('lane-step').locator('.lane-label')).toHaveCSS(
     'background-image',
     'none',

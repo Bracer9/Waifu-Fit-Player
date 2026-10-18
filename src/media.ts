@@ -10,7 +10,6 @@ export type MediaStatus = {
   ready: boolean;
   playing: boolean;
   durationMs: number;
-  rate: number;
   volume: number;
   error: string;
   preparing: boolean;
@@ -23,7 +22,6 @@ export class MediaController {
     ready: false,
     playing: false,
     durationMs: 0,
-    rate: 1,
     volume: 0.7,
     error: '',
     preparing: false,
@@ -97,7 +95,6 @@ export class MediaController {
       ready: v.readyState >= 1 && !v.error,
       playing: !v.paused && !v.ended,
       durationMs: Number.isFinite(v.duration) ? Math.round(v.duration * 1000) : 0,
-      rate: v.playbackRate,
       volume: v.muted ? 0 : v.volume,
       error: v.error
         ? audioOutputErrorMessage(v.error) ||
@@ -138,7 +135,6 @@ export class MediaController {
       'seeking',
       'seeked',
       'ended',
-      'ratechange',
       'volumechange',
       'error',
       'emptied',
@@ -172,9 +168,6 @@ export class MediaController {
     } else this.element.pause();
   };
   pause = () => this.element?.pause();
-  setRate = (rate: number) => {
-    if (this.element) this.element.playbackRate = rate;
-  };
   setVolume = (volume: number) => {
     if (this.element) {
       this.element.muted = false;

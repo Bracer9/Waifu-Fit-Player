@@ -42,7 +42,6 @@ try {
       buffer: Buffer.from(JSON.stringify(chart)),
     });
     await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-    await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
     const cdp = await context.newCDPSession(page);
     await cdp.send('Performance.enable');
     const beforeCpu = await cdp.send('Performance.getMetrics');

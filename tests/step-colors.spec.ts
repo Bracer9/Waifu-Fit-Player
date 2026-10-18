@@ -20,13 +20,11 @@ test('STEP separates type, direction and foot color in editing, recording and ga
     return JSON.parse(await readFile((await (await download).path())!, 'utf8'));
   };
   const load = async (chart: Chart) => {
-    await page
-      .getByLabel('导入谱面文件')
-      .setInputFiles({
-        name: 'step-colors.json',
-        mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(chart)),
-      });
+    await page.getByLabel('导入谱面文件').setInputFiles({
+      name: 'step-colors.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(chart)),
+    });
     await expect(page.getByRole('heading', { name: chart.title, exact: true })).toBeVisible();
   };
   const seek = async (seconds: number) => {
@@ -144,7 +142,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   await page.getByTestId('editor-note').first().click();
   await page.screenshot({ path: 'artifacts/step-colors-editor.png', fullPage: true });
   await page.getByRole('button', { name: '跟练模式', exact: true }).click();
-  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+
   const lane = page.getByTestId('lane-step');
   await seek(2.5);
   await expect(lane.locator('[data-note-id="tap"] .glyph-body')).toHaveCSS(
