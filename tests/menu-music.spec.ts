@@ -175,7 +175,7 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await page.getByRole('button', { name: /__qa_theme_pulse/ }).click();
   await expect.poll(async () => (await sound(page)).selectedTrack).toContain('__qa_theme_pulse');
   const motion = await page.evaluate(async () => {
-    const card = document.querySelector('.mode-record')!;
+    const card = document.querySelector('.mode-record-face')!;
     const values: number[] = [];
     const start = performance.now();
     await new Promise<void>((resolve) => {
@@ -188,12 +188,12 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
     });
     return values;
   });
-  expect(Math.max(...motion)).toBeGreaterThan(Math.min(...motion) + 0.0005);
+  expect(Math.max(...motion)).toBeGreaterThan(Math.min(...motion) + 0.006);
   expect(Math.min(...motion)).toBeGreaterThanOrEqual(1);
-  expect(Math.max(...motion)).toBeLessThanOrEqual(1.0081);
+  expect(Math.max(...motion)).toBeLessThanOrEqual(1.0301);
   await page.getByRole('button', { name: '暂停菜单 BGM', exact: true }).click();
   await expect.poll(async () => (await sound(page)).paused).toBe(true);
-  await expect(page.locator('.mode-record').first()).toHaveCSS('scale', '1');
+  await expect(page.locator('.mode-record-face').first()).toHaveCSS('scale', '1');
   await expect(page.locator('.title-brand h1 b')).toHaveCSS(
     'transform',
     'matrix(1, 0, 0, 1, 0, 0)',

@@ -29,8 +29,7 @@ function MusicPulse({ music }: { music: MenuMusic }) {
     const bassEnd = Math.ceil(220 / binHz);
     const bodyEnd = Math.ceil(1600 / binHz);
     let average = 0,
-      beat = 0,
-      drift = 0;
+      beat = 0;
     let frame = 0,
       last = 0,
       width = 0,
@@ -38,8 +37,8 @@ function MusicPulse({ music }: { music: MenuMusic }) {
     const draw = (animate: boolean) => {
       if (animate) music.analyser?.getByteFrequencyData(bins);
       else smooth.fill(0);
-      // Share the waveform's single FFT read. React only to energy above the recent
-      // baseline, so a loud sustained note cannot pin the whole page at maximum scale.
+      // Share the waveform's FFT read. Follow the musical energy continuously, with
+      // a soft attack and a longer release instead of isolated, abrupt peak kicks.
       if (animate) {
         let bass = 0,
           body = 0;
@@ -48,17 +47,15 @@ function MusicPulse({ music }: { music: MenuMusic }) {
           if (i < bassEnd) bass += power;
           else body += power;
         }
-        const energy = (bass / (bassEnd - bassStart)) * 0.8 + (body / (bodyEnd - bassEnd)) * 0.2;
-        average += (energy - average) * 0.035;
-        const accent = Math.min(
+        const energy = (bass / (bassEnd - bassStart)) * 0.65 + (body / (bodyEnd - bassEnd)) * 0.35;
+        average += (energy - average) * 0.025;
+        const target = Math.min(
           1,
-          Math.max(0, (energy - average - 0.008) / Math.max(0.08, average * 0.6)),
+          Math.max(0, (energy - average * 0.65) / Math.max(0.08, average)),
         );
-        beat = Math.max(accent, beat * 0.8);
-        drift += (beat - drift) * 0.07;
-      } else average = beat = drift = 0;
+        beat += (target - beat) * (target > beat ? 0.45 : 0.13);
+      } else average = beat = 0;
       menu?.style.setProperty('--music-beat', beat.toFixed(3));
-      menu?.style.setProperty('--music-drift', drift.toFixed(3));
       ctx.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
         const { start, end } = bands[i];
@@ -106,7 +103,6 @@ function MusicPulse({ music }: { music: MenuMusic }) {
       document.removeEventListener('visibilitychange', refresh);
       reduced.removeEventListener('change', refresh);
       menu?.style.removeProperty('--music-beat');
-      menu?.style.removeProperty('--music-drift');
     };
   }, [music.analyser, music.playing, audible]);
   return <canvas className="music-pulse" ref={canvas} aria-hidden="true" />;

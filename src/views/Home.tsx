@@ -26,21 +26,25 @@ export function Home({
       </div>
       <div className="mode-records">
         <button className="mode-record play-mode" onClick={onPlay}>
-          <span className="record-number">01 / PLAY</span>
-          <Disc3 className="mode-symbol" strokeWidth={1.5} />
-          <span className="mode-label">
-            <strong>音游模式</strong>
-            <small>LET'S MOVE</small>
-            <ArrowUpRight />
+          <span className="mode-record-face">
+            <span className="record-number">01 / PLAY</span>
+            <Disc3 className="mode-symbol" strokeWidth={1.5} />
+            <span className="mode-label">
+              <strong>音游模式</strong>
+              <small>LET'S MOVE</small>
+              <ArrowUpRight />
+            </span>
           </span>
         </button>
         <button className="mode-record create-mode" onClick={onCreate}>
-          <span className="record-number">02 / CREATE</span>
-          <PencilLine className="mode-symbol" strokeWidth={1.5} />
-          <span className="mode-label">
-            <strong>创作模式</strong>
-            <small>MAKE YOUR RHYTHM</small>
-            <ArrowUpRight />
+          <span className="mode-record-face">
+            <span className="record-number">02 / CREATE</span>
+            <PencilLine className="mode-symbol" strokeWidth={1.5} />
+            <span className="mode-label">
+              <strong>创作模式</strong>
+              <small>MAKE YOUR RHYTHM</small>
+              <ArrowUpRight />
+            </span>
           </span>
         </button>
       </div>
