@@ -25,7 +25,7 @@ body:has(.practice-app) {
   --album-heading-font: 'Arial Black', 'Barlow Condensed', sans-serif;
   --leaf-split: 44%;
   --album-height: 64.6dvh;
-  --album-width: 88.6vw;
+  --album-width: 88.4vw;
   display: grid;
   place-items: center;
   width: 100%;
@@ -86,7 +86,7 @@ body:has(.practice-app) {
   grid-template-rows: subgrid;
   min-height: 0;
   position: relative;
-  padding: 0 0 12px;
+  padding: 0;
   background: var(--album-ink);
   transform-origin: right center;
   transform: rotateY(35deg);
@@ -94,7 +94,6 @@ body:has(.practice-app) {
   box-shadow:
     inset 1px 0 0 #ffffff40,
     0 -4px 10px #35242d26,
-    0 2px 0 #fff0e4,
     0 7px 0 var(--album-ink),
     -3px 16px 18px #28192233,
     -2px 30px 40px #28192229;
@@ -263,7 +262,7 @@ body:has(.practice-app) {
   flex: 1;
   min-height: 0;
   position: relative;
-  padding: 7px 12px 0;
+  padding: 7px 0 0 12px;
 }
 .practice .lanes-stack {
   position: relative;
@@ -746,7 +745,7 @@ body:has(.practice-app) {
   grid-template-rows: subgrid;
   min-width: 0;
   min-height: 0;
-  padding: 0 12px 12px;
+  padding: 0;
   background: var(--album-paper);
   transform-origin: left center;
   transform: rotateY(-32deg);
@@ -754,7 +753,6 @@ body:has(.practice-app) {
   box-shadow:
     inset -1px 0 0 #ffffffb0,
     0 -4px 10px #35242d26,
-    0 2px 0 #fff0e4,
     0 7px 0 var(--album-ink),
     3px 16px 18px #28192233,
     2px 30px 40px #28192229;
@@ -764,7 +762,7 @@ body:has(.practice-app) {
   position: relative;
   flex: 1;
   min-height: 0;
-  margin: 0 -12px;
+  margin: 0;
   display: grid;
   grid-template-columns: 15% minmax(0, 1fr) 24%;
   align-items: center;
@@ -868,16 +866,9 @@ body:has(.practice-app) {
   left: var(--leaf-split);
   top: 0;
   bottom: -9px;
-  width: 10px;
+  width: 4px;
   transform: translateX(-50%) translateZ(1px);
-  background: linear-gradient(
-    90deg,
-    #06060b60,
-    #171419c9 40%,
-    #67554e88 55%,
-    #f7d9bd50 75%,
-    transparent
-  );
+  background: linear-gradient(90deg, #06060b40, #17141999 50%, #06060b20);
   pointer-events: none;
 }
 
@@ -888,7 +879,7 @@ body:has(.practice-app) {
     --target-size: 96px;
     --glyph-size: 55.2px;
     --lane-label-width: clamp(180px, 8.5vw, 240px);
-    padding: 8px 16px 0;
+    padding: 8px 0 0 16px;
   }
   .practice .lanes-stack {
     gap: 8px;
@@ -904,15 +895,6 @@ body:has(.practice-app) {
   .practice .player-hold.sway,
   .practice .play-lane[data-lane='step'] .player-hold.sway {
     height: calc(var(--note-size) * 1.08);
-  }
-  .practice .stage-left {
-    padding-bottom: 16px;
-  }
-  .practice .stage-right {
-    padding: 0 16px 16px;
-  }
-  .practice-masthead {
-    margin-inline: -16px;
   }
   .practice .transport {
     min-height: 72px;

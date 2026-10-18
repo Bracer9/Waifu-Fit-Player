@@ -55,14 +55,16 @@ test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿',
             pointerEvents: 'none',
           });
           element.appendChild(probe);
-          const y = probe.getBoundingClientRect().y;
+          const { x, y } = probe.getBoundingClientRect();
           probe.remove();
           element.style.position = position;
-          return y;
+          return { x, y };
         });
       });
-      expect(Math.abs(contentEdges[0] - contentEdges[1])).toBeLessThan(4);
-      expect(Math.abs(contentEdges[2] - contentEdges[3])).toBeLessThan(4);
+      expect(Math.abs(contentEdges[0].y - contentEdges[1].y)).toBeLessThan(1);
+      expect(Math.abs(contentEdges[2].y - contentEdges[3].y)).toBeLessThan(1);
+      expect(Math.abs(contentEdges[0].x - contentEdges[1].x)).toBeLessThan(1);
+      expect(Math.abs(contentEdges[2].x - contentEdges[3].x)).toBeLessThan(1);
       await expect
         .poll(() =>
           page
