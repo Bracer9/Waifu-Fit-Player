@@ -402,6 +402,7 @@
   color: #756c68;
 }
 .music-menu {
+  --title-inset: 144px;
   height: 100dvh;
   min-height: 650px;
   display: flex;
@@ -416,7 +417,7 @@
   align-items: center;
   gap: 32px;
   border-bottom: 2px solid var(--ink);
-  padding: 12px 128px 0 144px;
+  padding: 12px 128px 0 var(--title-inset);
 }
 .music-menu-header h1 {
   margin: 5px 0 0;
@@ -437,7 +438,7 @@
   flex: none;
   align-items: center;
   gap: clamp(24px, 2.6vw, 52px);
-  margin-left: auto;
+  margin-left: var(--title-inset);
   padding-bottom: clamp(20px, 2.8vh, 40px);
   color: var(--ink);
 }
@@ -448,6 +449,9 @@
 }
 .library-control {
   gap: 10px;
+}
+.library-control:first-child {
+  margin-right: auto;
 }
 .library-control svg {
   width: clamp(34px, 2.7vw, 44px);
