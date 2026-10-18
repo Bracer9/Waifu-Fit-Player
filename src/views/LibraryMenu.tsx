@@ -1,5 +1,15 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Disc3, Pencil } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
+  CornerDownLeft,
+  Disc3,
+  Pencil,
+} from 'lucide-react';
 import { editionsIn, type Album, type Difficulty, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
 import { ModalBackdrop } from '../components/ModalBackdrop';
@@ -422,6 +432,35 @@ export function LibraryMenu(props: Props) {
           </div>
         </>
       )}
+      <div className="library-controls" aria-label="键盘操作提示">
+        <span
+          className="library-control"
+          aria-label={page === 'albums' ? '上下方向键选择' : '左右方向键选择'}
+        >
+          <span className="library-control-symbols" aria-hidden="true">
+            {page === 'albums' ? (
+              <>
+                <ArrowUp />
+                <ArrowDown />
+              </>
+            ) : (
+              <>
+                <ArrowLeft />
+                <ArrowRight />
+              </>
+            )}
+          </span>
+          <span className="library-control-label">SELECT</span>
+        </span>
+        <span className="library-control" aria-label="回车确认">
+          <CornerDownLeft aria-hidden="true" />
+          <span className="library-control-label">Enter</span>
+        </span>
+        <span className="library-control" aria-label="Esc 返回" title="Esc 返回">
+          <ArrowLeft aria-hidden="true" />
+          <span className="library-control-label">Back</span>
+        </span>
+      </div>
       {confirmStart && (
         <ModalBackdrop onClose={closeConfirmation}>
           <section
