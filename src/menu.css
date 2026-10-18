@@ -624,7 +624,7 @@
 .song-carousel {
   --card-width: clamp(230px, 24vw, 360px);
   /* Scale the whole card, reserving room for the header and bottom controls on short screens. */
-  zoom: clamp(1, calc((100dvh - 350px) / 550px), 1.5);
+  zoom: clamp(0.9, calc((100dvh - 350px) / 550px * 0.9), 1.35);
   flex: 1;
   min-height: 0;
   display: flex;
