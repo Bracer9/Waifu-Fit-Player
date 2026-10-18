@@ -424,7 +424,7 @@
 }
 .music-menu-header h1,
 .collection-label strong,
-.library-control-label {
+.menu-control-label {
   font:
     900 clamp(34px, 2.7vw, 44px)/1.12 'Arial Black',
     'Microsoft YaHei',
@@ -433,27 +433,41 @@
   transform: skewX(-5deg);
   transform-origin: left center;
 }
-.library-controls {
+.menu-controls {
   display: flex;
   flex: none;
   align-items: center;
+  justify-content: flex-end;
   gap: clamp(24px, 2.6vw, 52px);
   margin-left: var(--title-inset);
   padding-bottom: clamp(20px, 2.8vh, 40px);
   color: var(--ink);
 }
-.library-control,
-.library-control-symbols {
+.title-menu .menu-controls {
+  position: fixed;
+  bottom: 0;
+  right: 5vw;
+  margin-left: 0;
+}
+.menu-control,
+.menu-control-symbols {
   display: flex;
   align-items: center;
 }
-.library-control {
+.menu-control {
   gap: 10px;
 }
-.library-control:first-child {
+.menu-control-back {
+  padding: 0;
   margin-right: auto;
 }
-.library-control svg {
+.menu-control-back svg {
+  transition: transform 150ms;
+}
+.menu-control-back:is(:hover, :focus-visible) svg {
+  transform: translateX(-4px);
+}
+.menu-control svg {
   width: clamp(34px, 2.7vw, 44px);
   height: clamp(34px, 2.7vw, 44px);
   stroke-width: 3;
@@ -1218,6 +1232,7 @@
   .menu-app .ambient-shape,
   .title-brand h1 b,
   .menu-back svg,
+  .menu-control-back svg,
   .mode-record-face,
   .collection-album,
   .collection-album > .cover-art,
