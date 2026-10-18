@@ -817,9 +817,7 @@ body:has(.practice-app) {
   width: 100%;
   border: 7px solid var(--album-ink);
   background: var(--album-ink);
-  box-shadow:
-    0 0 0 1px #fff8ee,
-    2px 4px 0 #201d2580;
+  box-shadow: none;
 }
 .practice .video-viewport {
   flex: none;
