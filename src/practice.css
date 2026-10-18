@@ -815,7 +815,7 @@ body:has(.practice-app) {
   flex: none;
   align-self: auto;
   width: 100%;
-  border: 7px solid var(--album-ink);
+  border: 0;
   background: var(--album-ink);
   box-shadow: none;
 }
@@ -826,8 +826,6 @@ body:has(.practice-app) {
   aspect-ratio: 16 / 9;
   border: 0;
   background: var(--album-ink);
-  outline: 1px solid #fff4ec;
-  outline-offset: -1px;
 }
 .practice .video-viewport video {
   object-fit: contain;
@@ -915,9 +913,6 @@ body:has(.practice-app) {
   }
   .practice-masthead {
     margin-inline: -16px;
-  }
-  .practice .video-panel {
-    border-width: 8px;
   }
   .practice .transport {
     min-height: 72px;
