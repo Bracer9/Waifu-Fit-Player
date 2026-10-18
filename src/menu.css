@@ -438,7 +438,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 8vh 16px 18vh;
+  padding: var(--album-padding, 20vh) 16px;
   position: relative;
   scroll-snap-type: y mandatory;
   scrollbar-width: thin;
@@ -465,6 +465,7 @@
   }
 }
 .collection-album {
+  --album-focus: 0;
   width: 100%;
   height: clamp(164px, 24.667vh, 274px);
   flex: none;
@@ -475,15 +476,18 @@
   text-align: left;
   background: var(--cream);
   border: 5px solid #1d1c21;
-  box-shadow: 5px 6px 0 #1d1c21;
+  box-shadow: calc(4px + var(--album-focus) * 2px) calc(5px + var(--album-focus) * 3px) 0 #1d1c21;
+  transform: translateY(var(--album-lift, 0px)) scale(calc(0.96 + var(--album-focus) * 0.04));
   scroll-snap-align: center;
-  transition: transform 180ms;
+  transition:
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out;
 }
-.collection-album[aria-current='true'] {
-  transform: translateX(-5px);
+.collection-album:last-child {
+  margin-bottom: 0;
 }
-.collection-album:hover {
-  transform: translate(-5px, -3px);
+.collection-album:is(:hover, :focus-visible) {
+  --album-lift: -3px;
 }
 .collection-album > .cover-art,
 .collection-album > .cover-placeholder {
@@ -491,6 +495,18 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  filter: saturate(calc(0.88 + var(--album-focus) * 0.12))
+    blur(calc((1 - var(--album-focus)) * 1.4px));
+  transition: filter 120ms ease-out;
+}
+.menu-scene[data-exit-to='songs'] .collection-album[aria-current='true'] {
+  animation: album-open 240ms ease-out both;
+}
+@keyframes album-open {
+  to {
+    transform: scale(1.025);
+    box-shadow: 8px 11px 0 var(--ink);
+  }
 }
 .cover-art {
   width: 100%;
@@ -1130,6 +1146,8 @@
   .menu-back svg,
   .mode-record,
   .collection-album,
+  .collection-album > .cover-art,
+  .collection-album > .cover-placeholder,
   .record-card,
   .cover-trace,
   .start-track,
@@ -1138,9 +1156,17 @@
     transition: none;
   }
   :is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace rect,
+  .menu-scene[data-exit-to='songs'] .collection-album,
   .start-confirmation,
   .theme-music-dialog,
   .countdown-card strong {
     animation: none;
+  }
+  .collection-album {
+    transform: none;
+  }
+  .collection-album > .cover-art,
+  .collection-album > .cover-placeholder {
+    filter: none;
   }
 }

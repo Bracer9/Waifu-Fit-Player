@@ -23,6 +23,34 @@ function CoverTrace() {
   );
 }
 
+function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
+  const center = horizontal
+    ? node.scrollLeft + node.clientWidth / 2
+    : node.scrollTop + node.clientHeight / 2;
+  // Read geometry before updating styles; transforms never change the layout slots.
+  const cards = Array.from(node.children, (child) => {
+    const card = child as HTMLElement;
+    const size = horizontal ? card.offsetWidth : card.offsetHeight;
+    const position = (horizontal ? card.offsetLeft : card.offsetTop) + size / 2;
+    return { card, size, distance: Math.abs(position - center) };
+  });
+  let closest: HTMLElement | undefined,
+    distance = Infinity;
+  for (const item of cards) {
+    if (item.distance < distance) {
+      closest = item.card;
+      distance = item.distance;
+    }
+    if (!horizontal) {
+      const focus = 1 - Math.min(1, item.distance / (item.size + 30));
+      const eased = (focus * focus * (3 - 2 * focus)).toFixed(3);
+      if (item.card.style.getPropertyValue('--album-focus') !== eased)
+        item.card.style.setProperty('--album-focus', eased);
+    }
+  }
+  return closest?.dataset.id;
+}
+
 type Props = {
   page: 'albums' | 'songs';
   albums: Album[];
@@ -46,6 +74,7 @@ export function LibraryMenu(props: Props) {
   const { page, albums, songs, albumId, songId, difficulty, seed, onAlbum, onSong, onDifficulty } =
     props;
   const scroller = useRef<HTMLDivElement>(null);
+  const scrollFrame = useRef(0);
   const [confirmStart, setConfirmStart] = useState<{ song: Song; difficulty: Difficulty } | null>(
     null,
   );
@@ -92,10 +121,31 @@ export function LibraryMenu(props: Props) {
   const selectedId = page === 'albums' ? album.id : selected?.id;
 
   useLayoutEffect(() => {
-    scroller.current
-      ?.querySelector<HTMLElement>('[aria-current="true"]')
-      ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
-  }, [page]);
+    const node = scroller.current;
+    if (!node) return;
+    const centerSelection = () => {
+      if (page === 'albums') {
+        const card = node.firstElementChild as HTMLElement | null;
+        if (card)
+          node.style.setProperty(
+            '--album-padding',
+            `${Math.max(16, (node.clientHeight - card.offsetHeight) / 2)}px`,
+          );
+      }
+      node
+        .querySelector<HTMLElement>('[aria-current="true"]')
+        ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+      updateScrollFocus(node, page === 'songs');
+    };
+    centerSelection();
+    const resize = new ResizeObserver(centerSelection);
+    if (page === 'albums') resize.observe(node);
+    return () => {
+      resize.disconnect();
+      cancelAnimationFrame(scrollFrame.current);
+      scrollFrame.current = 0;
+    };
+  }, [page, albums]);
 
   useEffect(() => {
     const node = scroller.current;
@@ -117,7 +167,11 @@ export function LibraryMenu(props: Props) {
       (c) => (c as HTMLElement).dataset.id === id,
     );
     (child as HTMLElement | undefined)?.focus({ preventScroll: true });
-    child?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+    child?.scrollIntoView({
+      block: 'center',
+      inline: 'center',
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    });
   };
   const move = (amount: number) => {
     const index = Math.max(
@@ -178,27 +232,17 @@ export function LibraryMenu(props: Props) {
     [albums, songs, seed],
   );
   const trackScroll = () => {
-    const node = scroller.current;
-    if (!node) return;
-    const horizontal = page === 'songs';
-    const center = horizontal
-      ? node.scrollLeft + node.clientWidth / 2
-      : node.scrollTop + node.clientHeight / 2;
-    let closest: HTMLElement | undefined,
-      distance = Infinity;
-    for (const child of Array.from(node.children) as HTMLElement[]) {
-      const position = horizontal
-        ? child.offsetLeft + child.offsetWidth / 2
-        : child.offsetTop + child.offsetHeight / 2;
-      if (Math.abs(position - center) < distance) {
-        closest = child;
-        distance = Math.abs(position - center);
+    if (scrollFrame.current) return;
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = 0;
+      const node = scroller.current;
+      if (!node || node.closest('.menu-scene[data-exit-to]')) return;
+      const id = updateScrollFocus(node, page === 'songs');
+      if (id && id !== selectedId) {
+        if (page === 'albums') onAlbum(id);
+        else onSong(id);
       }
-    }
-    if (closest?.dataset.id && closest.dataset.id !== selectedId) {
-      if (page === 'albums') onAlbum(closest.dataset.id);
-      else onSong(closest.dataset.id);
-    }
+    });
   };
 
   return (

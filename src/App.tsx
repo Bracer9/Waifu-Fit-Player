@@ -821,7 +821,12 @@ export default function App() {
       </header>
       <main>
         {menuPage && (
-          <div className="menu-scene" inert={!!menuTransition} key={mode}>
+          <div
+            className="menu-scene"
+            inert={!!menuTransition}
+            data-exit-to={menuTransition?.phase === 'cover' ? menuTransition.next : undefined}
+            key={mode}
+          >
             {mode === 'home' && (
               <Home
                 music={menuMusic}
