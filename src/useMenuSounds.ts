@@ -39,7 +39,7 @@ export function useMenuSounds(volume: number) {
       if (volume === 0) return;
       const audio = sounds[name];
       current.current = audio;
-      audio.volume = volume * 0.45;
+      audio.volume = volume;
       audio.currentTime = 0;
       void audio.play().catch(() => {
         /* A missing UI sound must not block navigation. */

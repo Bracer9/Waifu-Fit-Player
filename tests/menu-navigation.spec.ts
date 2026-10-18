@@ -33,7 +33,10 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   expect((await gear.locator('svg').boundingBox())!.width).toBe(96);
   await page.screenshot({ path: 'artifacts/menu-gear-home.png' });
   await gear.click();
+  await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.5');
   await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0.4');
+  await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.2');
+  await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
   await page.getByRole('button', { name: '完成', exact: true }).click();
   const freeze = await page.addStyleTag({
     content: '.menu-curtain-sheet { animation-play-state: paused !important; }',
@@ -114,7 +117,8 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
       page.evaluate(() => (window as unknown as { uiSoundsPlayed: string[] }).uiSoundsPlayed),
     )
     .toEqual(expected);
-  expect(sounds.slice(1).every((s) => Math.abs(s.volume - 0.18) < 0.001)).toBe(true);
+  expect(sounds[0].volume).toBe(0.5);
+  expect(sounds.slice(1).every((s) => Math.abs(s.volume - 0.3) < 0.001)).toBe(true);
 
   const checkSound = async (action: () => Promise<unknown>, name: string) => {
     const events = () =>
@@ -141,6 +145,34 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await checkSound(click('关闭设置'), 'back');
   await checkSound(() => gear.click(), 'settings');
   await checkSound(() => page.keyboard.press('Escape'), 'back');
+
+  // SE mute persists and does not change either music volume.
+  await gear.click();
+  await page.getByLabel('音效（SE）音量', { exact: true }).fill('0');
+  await page.reload();
+  await gear.click();
+  await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0');
+  await expect(page.getByLabel('菜单 BGM 音量', { exact: true })).toHaveValue('0.4');
+  await expect(page.getByLabel('游戏／视频音量', { exact: true })).toHaveValue('0.2');
+  expect(
+    await page.evaluate(() => (window as unknown as { uiSoundEvents: unknown[] }).uiSoundEvents),
+  ).toEqual([]);
+  // Muting BGM does not mute SE, including after a reload.
+  await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0');
+  await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
+  await checkSound(click('完成'), 'back');
+  await page.reload();
+  await checkSound(() => gear.click(), 'settings');
+  await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.3');
+  await expect(page.getByLabel('菜单 BGM 音量', { exact: true })).toHaveValue('0');
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { uiSoundEvents: { volume: number }[] }).uiSoundEvents[0].volume,
+    ),
+  ).toBe(0.3);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({ path: 'artifacts/menu-se-settings-720.png' });
+  await checkSound(click('完成'), 'back');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 720 });

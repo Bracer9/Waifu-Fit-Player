@@ -71,6 +71,7 @@ const LAST_DRAFT_KEY = 'waifu-last-draft';
 const DRAFT_KEY = 'waifu-fit-player-draft-v1';
 const WORKBENCH_THEME_KEY = 'waifu-fit-player-workbench-theme';
 const NOTE_SPEED_KEY = 'waifu-fit-player-note-speed';
+const SE_VOLUME_KEY = 'waifu-fit-player-se-volume';
 const fileTitle = (name: string) => name.replace(/\.[^.]+$/, '');
 type VideoRequest = {
   kind: 'new' | 'open' | 'replace';
@@ -122,6 +123,22 @@ export default function App() {
     });
   };
   const [settings, setSettings] = useState(false);
+  const [seVolume, setSeVolume] = useState(() => {
+    try {
+      const stored = Number(localStorage.getItem(SE_VOLUME_KEY) ?? 0.5);
+      return Number.isFinite(stored) && stored >= 0 && stored <= 1 ? stored : 0.5;
+    } catch {
+      return 0.5;
+    }
+  });
+  const changeSeVolume = (value: number) => {
+    setSeVolume(value);
+    try {
+      localStorage.setItem(SE_VOLUME_KEY, String(value));
+    } catch {
+      // Keep the preference for this session if local storage is unavailable.
+    }
+  };
   const [noteSpeed, setNoteSpeed] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(NOTE_SPEED_KEY));
@@ -182,7 +199,7 @@ export default function App() {
     notify,
     status.volume,
   );
-  const playMenuSound = useMenuSounds(menuMusic.volume);
+  const playMenuSound = useMenuSounds(seVolume);
   const openSettings = () => {
     playMenuSound('settings');
     setSettings(true);
@@ -1279,6 +1296,11 @@ export default function App() {
               label="游戏／视频音量"
               volume={status.volume}
               onChange={media.setVolume}
+            />
+            <AudioVolumeControl
+              label="音效（SE）音量"
+              volume={seVolume}
+              onChange={changeSeVolume}
             />
             <div className="modal-actions">
               <button
