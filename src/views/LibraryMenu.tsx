@@ -31,6 +31,7 @@ type Props = {
   onSettings: () => void;
   onCreate: () => void;
   onPlay: (song: Song, difficulty: Difficulty) => void;
+  onPreview: (assetId: string | undefined) => void;
   onEdit: (song: Song, difficulty: Difficulty) => void;
   onManage: () => void;
 };
@@ -71,6 +72,8 @@ export function LibraryMenu(props: Props) {
   const selectedDifficulty = available.includes(difficulty) ? difficulty : available.at(-1);
   const edition =
     selected && selectedDifficulty ? selected.released[selectedDifficulty] : undefined;
+  const previewAsset = page === 'songs' ? edition?.chart.videoHint.assetId : undefined;
+  useEffect(() => props.onPreview(previewAsset), [previewAsset, props.onPreview]);
   const cards = page === 'albums' ? albums : inAlbum;
   const selectedId = page === 'albums' ? album.id : selected?.id;
 

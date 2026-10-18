@@ -42,7 +42,8 @@ import {
   PublishDialog,
   SongManager,
 } from './components/LibraryControls';
-import { MenuMusicSettings, useMenuMusic } from './components/MenuMusic';
+import { MenuMusicSettings } from './components/MenuMusic';
+import { useMenuMusic } from './useMenuMusic';
 import { Player } from './views/Player';
 import { Editor } from './views/Editor';
 import { Home } from './views/Home';
@@ -154,8 +155,10 @@ export default function App() {
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
   const [startPending, setStartPending] = useState(false);
+  const [previewAsset, setPreviewAsset] = useState<string>();
   const menuMusic = useMenuMusic(
-    mode === 'home' ? 'home' : mode === 'albums' || mode === 'songs' ? 'library' : null,
+    mode === 'home' || mode === 'albums' ? 'theme' : mode === 'songs' ? 'preview' : null,
+    previewAsset,
     notify,
   );
   const difficulty = chart.difficulty ?? 'hard';
@@ -740,6 +743,7 @@ export default function App() {
       <main>
         {mode === 'home' && (
           <Home
+            music={menuMusic}
             onPlay={() => setMode('albums')}
             onCreate={enterEditor}
             onSettings={() => setSettings(true)}
@@ -764,6 +768,7 @@ export default function App() {
             onSettings={() => setSettings(true)}
             onCreate={enterEditor}
             onPlay={playSong}
+            onPreview={setPreviewAsset}
             onEdit={(song, d) => editSong(song, d, true)}
             onManage={() => setManageSongs(true)}
           />

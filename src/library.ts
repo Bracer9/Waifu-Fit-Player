@@ -14,7 +14,6 @@ export type Song = {
   released: Partial<Record<Difficulty, Edition>>;
 };
 export type Album = { id: string; name: string; cover: string };
-export type MenuMusic = { id: 'home' | 'library'; file: File };
 export const DEFAULT_ALBUMS: Album[] = [
   { id: 'all', name: '全部曲目', cover: '' },
   { id: 'touhou', name: '东方', cover: '' },
@@ -71,12 +70,12 @@ export function latestEdition(song: Song): Edition {
   )[0];
 }
 
-type Tables = { songs: Song; albums: Album; music: MenuMusic };
+type Tables = { songs: Song; albums: Album };
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const open = indexedDB.open('waifu-fit-player-library', 1);
     open.onupgradeneeded = () => {
-      for (const name of ['songs', 'albums', 'music'])
+      for (const name of ['songs', 'albums'])
         open.result.createObjectStore(name, { keyPath: 'id' });
     };
     open.onsuccess = () => resolve(open.result);

@@ -1,13 +1,17 @@
 import { ArrowUpRight, Disc3, PencilLine, Settings } from 'lucide-react';
+import { MenuMusicConsole } from '../components/MenuMusic';
+import type { MenuMusic } from '../useMenuMusic';
 
 export function Home({
   onPlay,
   onCreate,
   onSettings,
+  music,
 }: {
   onPlay: () => void;
   onCreate: () => void;
   onSettings: () => void;
+  music: MenuMusic;
 }) {
   return (
     <section className="title-menu" aria-label="主菜单">
@@ -43,7 +47,7 @@ export function Home({
         <Settings size={18} />
         全局设置
       </button>
-      <span className="title-edition">WAIFU FIT PLAYER — PERSONAL MUSIC COLLECTION</span>
+      <MenuMusicConsole music={music} />
     </section>
   );
 }

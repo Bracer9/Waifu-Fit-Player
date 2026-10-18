@@ -154,14 +154,147 @@
 .title-settings:hover {
   border-color: var(--ink);
 }
-.title-edition {
+.music-console {
   margin-top: auto;
-  padding-top: 24px;
+  padding: 18px 0 8px;
+  width: min(620px, 100%);
+  flex-shrink: 0;
+  text-align: center;
+}
+.music-console-line {
+  position: relative;
+  height: 72px;
+  display: grid;
+  place-items: center;
+}
+.music-pulse {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.headphone-button {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  position: relative;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  color: var(--cream);
+  background: var(--ink);
+  box-shadow:
+    -4px 2px 0 var(--cyan),
+    4px -2px 0 var(--pink);
+  transition:
+    transform 160ms,
+    box-shadow 160ms;
+}
+.headphone-button:hover {
+  transform: translateY(-3px) rotate(-7deg);
+  box-shadow:
+    -5px 4px 0 var(--cyan),
+    5px -2px 0 var(--pink);
+}
+.headphone-button:active {
+  transform: scale(0.94);
+}
+.music-console-title {
+  display: block;
+  margin-top: 9px;
+  color: #756c68;
   font:
-    600 11px 'Barlow Condensed',
+    600 12px 'Barlow Condensed',
+    'Microsoft YaHei',
     sans-serif;
-  letter-spacing: 3px;
-  color: #7a7471;
+  letter-spacing: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modal-backdrop:has(.theme-music-dialog) {
+  align-items: flex-end;
+  padding-bottom: 150px;
+  background: #24232945;
+  backdrop-filter: none;
+}
+.theme-music-dialog {
+  width: min(470px, 90vw);
+  border: 3px solid var(--ink);
+  padding: 26px;
+  box-shadow:
+    6px 6px 0 var(--pink),
+    -5px -5px 0 var(--cyan);
+  animation: start-confirm-enter 180ms ease-out;
+}
+.theme-music-dialog .eyebrow {
+  color: #b12c63;
+}
+.theme-music-dialog h2 {
+  font-size: 22px;
+  margin: 8px 0 20px;
+}
+.music-order {
+  display: flex;
+  gap: 6px;
+}
+.music-order button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #d8d0c7;
+}
+.music-order button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: var(--ink);
+}
+.theme-track-list {
+  margin: 16px 0 20px;
+  max-height: min(31vh, 300px);
+  overflow-y: auto;
+}
+.theme-track {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e4dcd1;
+  transition: background 120ms;
+}
+.theme-track span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+.theme-track small {
+  font:
+    700 16px 'Barlow Condensed',
+    sans-serif;
+}
+.theme-track:hover {
+  background: #f4e7da;
+}
+.theme-track[aria-pressed='true'] {
+  background: #fbd6e5;
+}
+.music-empty {
+  text-align: center;
+  padding: 22px 0;
+  font-size: 13px;
+  color: #756c68;
 }
 .music-menu {
   height: 100dvh;
@@ -854,43 +987,6 @@
 .publish-preview p {
   margin: 10px 0 0;
 }
-.menu-music-settings {
-  border-top: 1px solid #d4ccc0;
-  margin-top: 24px;
-  padding-top: 14px;
-}
-.menu-music-settings h3 {
-  font-size: 14px;
-  margin: 0 0 15px;
-}
-.music-file-setting {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0;
-  font-size: 12px;
-}
-.music-file-setting > div {
-  flex: 1;
-  min-width: 0;
-}
-.music-file-setting strong,
-.music-file-setting small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.music-file-setting small {
-  color: #8d837c;
-  margin-top: 4px;
-}
-.music-file-setting > button {
-  font-size: 11px;
-}
-.menu-music-settings .field {
-  margin-top: 20px;
-}
 @media (max-height: 850px) {
   .title-menu {
     padding-top: 30px;
@@ -925,11 +1021,14 @@
   .collection-album,
   .record-card,
   .cover-trace,
-  .start-track {
+  .start-track,
+  .headphone-button,
+  .theme-track {
     transition: none;
   }
   .record-card:is(:hover, :focus-visible) .cover-trace rect,
   .start-confirmation,
+  .theme-music-dialog,
   .countdown-card strong {
     animation: none;
   }

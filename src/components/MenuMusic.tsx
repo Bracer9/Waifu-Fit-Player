@@ -1,113 +1,159 @@
 import { useEffect, useRef, useState } from 'react';
-import { changeLibrary, readLibrary, type MenuMusic } from '../library';
+import { Check, Headphones, ListMusic, Repeat1, Shuffle, X } from 'lucide-react';
+import type { MenuMusic } from '../useMenuMusic';
+import { ModalBackdrop } from './ModalBackdrop';
 
-export function useMenuMusic(scene: MenuMusic['id'] | null, notify: (s: string) => void) {
-  const [tracks, setTracks] = useState<MenuMusic[]>([]);
-  const [volume, setVolume] = useState(() => {
-    try {
-      const v = localStorage.getItem('waifu-menu-volume');
-      return v === null ? 0.35 : Math.max(0, Math.min(1, Number(v) || 0));
-    } catch {
-      return 0.35;
-    }
-  });
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const track = tracks.find((t) => t.id === scene);
+function MusicPulse({ music }: { music: MenuMusic }) {
+  const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    void readLibrary('music')
-      .then(setTracks)
-      .catch(() => notify('菜单音乐设置未能读取。'));
-  }, [notify]);
-  useEffect(() => {
-    if (!track) return;
-    const url = URL.createObjectURL(track.file);
-    const element = new Audio(url);
-    audio.current = element;
-    element.loop = true;
-    element.volume = volume;
-    const start = () => {
-      if (element.paused) void element.play().catch(() => {});
+    const node = canvas.current!;
+    const ctx = node.getContext('2d')!;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 128);
+    let frame = 0,
+      last = 0,
+      width = 0,
+      height = 0;
+    const draw = (animate: boolean) => {
+      if (animate) music.analyser?.getByteFrequencyData(bins);
+      else bins.fill(0);
+      ctx.clearRect(0, 0, width, height);
+      for (let i = 0; i < 24; i++) {
+        const level = bins[1 + Math.floor(i * 1.7)] / 255;
+        const amplitude = 2 + level * (height * 0.42) * (1 - i / 32);
+        const offset = 54 + (i * (width / 2 - 62)) / 24;
+        ctx.globalAlpha = 1 - i / 34;
+        ctx.fillStyle = '#35c9db';
+        ctx.fillRect(width / 2 - offset - 3, height / 2 - amplitude, 3, amplitude * 2);
+        ctx.fillStyle = '#f64e93';
+        ctx.fillRect(width / 2 + offset, height / 2 - amplitude, 3, amplitude * 2);
+      }
     };
-    element.onerror = () => notify('这首菜单音乐无法播放，请在设置里换一个音频文件。');
-    start();
-    window.addEventListener('pointerdown', start);
-    window.addEventListener('keydown', start);
+    const tick = (now: number) => {
+      if (now - last >= 1000 / 30) {
+        draw(true);
+        last = now;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    const refresh = () => {
+      cancelAnimationFrame(frame);
+      draw(false);
+      if (music.playing && music.analyser && !document.hidden && !reduced.matches)
+        frame = requestAnimationFrame(tick);
+    };
+    const resize = new ResizeObserver(() => {
+      width = node.clientWidth;
+      height = node.clientHeight;
+      const ratio = Math.min(devicePixelRatio, 2);
+      node.width = width * ratio;
+      node.height = height * ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      refresh();
+    });
+    resize.observe(node);
+    document.addEventListener('visibilitychange', refresh);
+    reduced.addEventListener('change', refresh);
     return () => {
-      window.removeEventListener('pointerdown', start);
-      window.removeEventListener('keydown', start);
-      element.pause();
-      element.removeAttribute('src');
-      element.load();
-      URL.revokeObjectURL(url);
-      audio.current = null;
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      document.removeEventListener('visibilitychange', refresh);
+      reduced.removeEventListener('change', refresh);
     };
-    // Volume changes update the existing element without restarting the track.
-  }, [scene, track, notify]);
-  useEffect(() => {
-    if (audio.current) audio.current.volume = volume;
-    try {
-      localStorage.setItem('waifu-menu-volume', String(volume));
-    } catch {
-      /* Session volume still works. */
-    }
-  }, [volume]);
-  const select = async (id: MenuMusic['id'], file?: File) => {
-    try {
-      await changeLibrary('music', id, () => (file ? { id, file } : undefined));
-      setTracks((old) => [...old.filter((t) => t.id !== id), ...(file ? [{ id, file }] : [])]);
-    } catch {
-      notify('菜单音乐未能保存，请检查本地存储空间。');
-    }
-  };
-  return { tracks, volume, setVolume, select };
+  }, [music.analyser, music.playing]);
+  return <canvas className="music-pulse" ref={canvas} aria-hidden="true" />;
 }
 
-export function MenuMusicSettings({ music }: { music: ReturnType<typeof useMenuMusic> }) {
+const orders = [
+  { id: 'list', label: '列表循环', Icon: ListMusic },
+  { id: 'random', label: '随机', Icon: Shuffle },
+  { id: 'repeat', label: '单曲循环', Icon: Repeat1 },
+] as const;
+
+export function MenuMusicSettings({ music }: { music: MenuMusic }) {
   return (
-    <div className="menu-music-settings">
-      <h3>菜单背景音乐</h3>
-      {(['home', 'library'] as const).map((id) => (
-        <div className="music-file-setting" key={id}>
-          <div>
-            <strong>{id === 'home' ? '主菜单' : '选专辑 / 选曲'}</strong>
-            <small>{music.tracks.find((t) => t.id === id)?.file.name ?? '未选择音乐'}</small>
-          </div>
-          <label className="button light small">
-            选择
-            <input
-              hidden
-              type="file"
-              accept="audio/*,.mp3,.ogg,.wav,.m4a"
-              aria-label={id === 'home' ? '主菜单背景音乐' : '选曲背景音乐'}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.currentTarget.value = '';
-                if (f) void music.select(id, f);
-              }}
-            />
-          </label>
-          {music.tracks.some((t) => t.id === id) && (
+    <label className="field menu-music-volume">
+      <span>菜单音乐音量 · {Math.round(music.volume * 100)}%</span>
+      <input
+        aria-label="菜单音乐音量"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={music.volume}
+        onChange={(e) => music.setVolume(Number(e.target.value))}
+      />
+    </label>
+  );
+}
+
+export function MenuMusicConsole({ music }: { music: MenuMusic }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="music-console">
+      <div className="music-console-line">
+        <MusicPulse music={music} />
+        <button
+          className="headphone-button"
+          aria-label="选择主界面 BGM"
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+        >
+          <Headphones size={30} strokeWidth={2.5} />
+        </button>
+      </div>
+      <span className="music-console-title">{music.track?.title ?? 'MENU MUSIC'}</span>
+      {open && (
+        <ModalBackdrop onClose={() => setOpen(false)}>
+          <section
+            className="modal theme-music-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="theme-music-title"
+          >
             <button
-              aria-label={`移除${id === 'home' ? '主菜单' : '选曲'}背景音乐`}
-              onClick={() => void music.select(id)}
+              className="modal-close icon-button"
+              aria-label="关闭主界面音乐"
+              onClick={() => setOpen(false)}
             >
-              移除
+              <X />
             </button>
-          )}
-        </div>
-      ))}
-      <label className="field">
-        <span>菜单音乐音量 · {Math.round(music.volume * 100)}%</span>
-        <input
-          aria-label="菜单音乐音量"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={music.volume}
-          onChange={(e) => music.setVolume(Number(e.target.value))}
-        />
-      </label>
+            <span className="eyebrow">MENU MIX / WAIFU FIT</span>
+            <h2 id="theme-music-title">主界面音乐</h2>
+            <div className="music-order" aria-label="音乐播放方式">
+              {orders.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  aria-pressed={music.order === id}
+                  onClick={() => music.setOrder(id)}
+                >
+                  <Icon size={16} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="theme-track-list">
+              {music.tracks.length ? (
+                music.tracks.map((track, index) => (
+                  <button
+                    key={track.id}
+                    className="theme-track"
+                    aria-pressed={music.track?.id === track.id}
+                    onClick={() => music.select(track.id)}
+                  >
+                    <small>{String(index + 1).padStart(2, '0')}</small>
+                    <span>{track.title}</span>
+                    {music.track?.id === track.id && <Check size={17} />}
+                  </button>
+                ))
+              ) : (
+                <p className="music-empty">还没有主题音乐</p>
+              )}
+            </div>
+            <MenuMusicSettings music={music} />
+          </section>
+        </ModalBackdrop>
+      )}
     </div>
   );
 }
