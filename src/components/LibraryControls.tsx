@@ -21,6 +21,7 @@ export function PublicationFields({
   media,
   onChange,
   onAlbums,
+  onSongs,
   notify,
 }: {
   difficulty: Difficulty;
@@ -30,6 +31,7 @@ export function PublicationFields({
   media: MediaController;
   onChange: (values: { difficulty?: Difficulty; albumId?: string; cover?: string }) => void;
   onAlbums: () => void;
+  onSongs: () => void;
   notify: (text: string) => void;
 }) {
   return (
@@ -102,9 +104,14 @@ export function PublicationFields({
           </button>
         </div>
       </div>
-      <button className="text-link" onClick={onAlbums}>
-        管理专辑与封面
-      </button>
+      <div className="publication-management">
+        <button className="text-link" onClick={onAlbums}>
+          管理专辑与封面
+        </button>
+        <button className="text-link" onClick={onSongs}>
+          管理曲目
+        </button>
+      </div>
       <p className="inspector-tip">草稿与发布版本独立。更换难度后发布，可制作同曲的另一张谱。</p>
     </div>
   );

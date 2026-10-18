@@ -40,7 +40,6 @@ type Props = {
   onPlay: (song: Song, difficulty: Difficulty) => void;
   onPreview: (assetId: string | undefined) => void;
   onEdit: (song: Song, difficulty: Difficulty) => void;
-  onManage: () => void;
 };
 
 export function LibraryMenu(props: Props) {
@@ -248,11 +247,6 @@ export function LibraryMenu(props: Props) {
               </button>
             ))}
           </div>
-          <footer className="menu-hints">
-            <span>↑ ↓ 选择专辑</span>
-            <span>ENTER 进入</span>
-            <span>ESC 返回</span>
-          </footer>
         </>
       ) : !selected ? (
         <div className="library-empty">
@@ -364,24 +358,19 @@ export function LibraryMenu(props: Props) {
               ))}
             </div>
             <button
+              className="button light edit-track"
+              onClick={() => selectedDifficulty && props.onEdit(selected, selectedDifficulty)}
+            >
+              <Pencil size={18} />
+              编辑谱面
+            </button>
+            <button
               className="start-track"
               onClick={() => selectedDifficulty && confirmSong(selected, selectedDifficulty)}
             >
               开始
             </button>
           </div>
-          <footer className="menu-hints">
-            <span>← → 切换歌曲 · ENTER 开始</span>
-            <div>
-              <button
-                onClick={() => selectedDifficulty && props.onEdit(selected, selectedDifficulty)}
-              >
-                <Pencil size={15} />
-                编辑此谱面
-              </button>
-              <button onClick={props.onManage}>管理曲目</button>
-            </div>
-          </footer>
         </>
       )}
       {confirmStart && (

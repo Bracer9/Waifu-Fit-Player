@@ -157,10 +157,12 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   // A cancelled countdown must not start audio three seconds later in the menu.
   await page.waitForTimeout(3100);
   expect(await page.locator('video').evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
-  await page.getByRole('button', { name: '编辑此谱面', exact: true }).click();
+  await expect(page.getByRole('button', { name: '管理曲目', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '编辑谱面', exact: true }).click();
   await expect(page.getByRole('button', { name: '保存草稿', exact: true })).toBeEnabled();
   expect((await songs(page))[0].released.hard).toEqual(hard);
-  await page.getByRole('button', { name: '本地作品', exact: true }).click();
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  await page.getByRole('button', { name: '管理曲目', exact: true }).click();
   const hardRow = page.locator('.managed-edition').filter({ has: page.locator('b.hard') });
   await hardRow.getByRole('button', { name: '撤下发布' }).click();
   await expect(hardRow).toContainText('未发布');

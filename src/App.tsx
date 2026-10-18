@@ -872,10 +872,6 @@ export default function App() {
                   playMenuSound('mode');
                   editSong(song, d, true);
                 }}
-                onManage={() => {
-                  playMenuSound('settings');
-                  setManageSongs(true);
-                }}
               />
             )}
           </div>
@@ -1058,6 +1054,11 @@ export default function App() {
                   onAlbums={() => {
                     media.pause();
                     setManageAlbums(true);
+                  }}
+                  onSongs={() => {
+                    playMenuSound('settings');
+                    media.pause();
+                    setManageSongs(true);
                   }}
                   notify={notify}
                 />
