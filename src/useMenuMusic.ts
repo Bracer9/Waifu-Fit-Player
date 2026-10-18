@@ -36,8 +36,7 @@ export function useMenuMusic(
   notify: (s: string) => void,
   videoVolume: number,
 ) {
-  // Keep the paused theme loaded: swapping MP3/MP4 and seeking a reloaded MP3 can
-  // fail in Chromium's demuxer. Only one of these two elements plays at a time.
+  // Keep theme and preview independent. Only one element plays at a time.
   const [bgm] = useState(() => new Audio());
   const [preview] = useState(() => new Audio());
   const [selected, setSelected] = useState(() => preference('waifu-menu-track', ''));
@@ -55,6 +54,7 @@ export function useMenuMusic(
   const active = useRef<HTMLAudioElement | null>(null);
   const manuallyPaused = useRef(false);
   const previewUrl = useRef<string | undefined>(undefined);
+  const themeSource = useRef<{ url: string; objectUrl: string } | null>(null);
   const levels = useRef({ volume, videoVolume });
   levels.current = { volume, videoVolume };
   const gain = useRef(0);
@@ -177,6 +177,7 @@ export function useMenuMusic(
 
   useEffect(() => {
     let cancelled = false;
+    const request = new AbortController();
     fadeIn.current = false;
     void (async () => {
       if (!(await fade(0, 160)) || cancelled) return;
@@ -189,7 +190,28 @@ export function useMenuMusic(
       let next: HTMLAudioElement;
       if (themeUrl) {
         next = bgm;
-        if (bgm.getAttribute('src') !== themeUrl) bgm.src = themeUrl;
+        if (themeSource.current?.url !== themeUrl) {
+          try {
+            // Chromium may discard its HTTP media buffer during a long pause.
+            // Retain only this track's compressed file so resume needs no range request.
+            const response = await fetch(themeUrl, {
+              signal: request.signal,
+              headers: { Range: 'bytes=0-' },
+            });
+            if (!response.ok) throw new Error(`BGM HTTP ${response.status}`);
+            const file = await response.blob();
+            if (!file.size) throw new Error('Empty BGM response');
+            if (cancelled) return;
+            const previous = themeSource.current;
+            const objectUrl = URL.createObjectURL(file);
+            themeSource.current = { url: themeUrl, objectUrl };
+            bgm.src = objectUrl;
+            if (previous) URL.revokeObjectURL(previous.objectUrl);
+          } catch {
+            if (!cancelled) notify('菜单音乐加载失败，请检查音乐文件。');
+            return;
+          }
+        }
       } else if (assetId) {
         // The fade also lets fast carousel scrolling settle before reading a video.
         const result = await resolveVideo(assetId).catch(() => null);
@@ -210,9 +232,10 @@ export function useMenuMusic(
     })();
     return () => {
       cancelled = true;
+      request.abort();
       cancelFade();
     };
-  }, [scene, themeUrl, assetId, bgm, preview, fade, clearPreview, cancelFade, play]);
+  }, [scene, themeUrl, assetId, bgm, preview, fade, clearPreview, cancelFade, play, notify]);
 
   useEffect(() => {
     bgm.loop = order === 'repeat' || themeTracks.length < 2;
@@ -240,6 +263,8 @@ export function useMenuMusic(
       bgm.pause();
       bgm.removeAttribute('src');
       bgm.load();
+      if (themeSource.current) URL.revokeObjectURL(themeSource.current.objectUrl);
+      themeSource.current = null;
       graph.current?.source.disconnect();
       void graph.current?.context.close();
     },

@@ -51,6 +51,7 @@ async function sound(page: Page) {
     const a = probe.menuAudio.find((audio) => !audio.paused) ?? probe.menuAudio[0];
     return {
       src: a.getAttribute('src'),
+      selectedTrack: localStorage.getItem('waifu-menu-track'),
       time: a.currentTime,
       paused: a.paused,
       loop: a.loop,
@@ -122,14 +123,14 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await page.evaluate(() => {
     (window as Probes).menuAudio[0].currentTime = 7.9;
   });
-  await expect.poll(async () => (await sound(page)).src).toContain('__qa_theme_b');
+  await expect.poll(async () => (await sound(page)).selectedTrack).toContain('__qa_theme_b');
   await page.getByRole('button', { name: '随机', exact: true }).click();
   await page.evaluate(() => {
     (window as Probes).menuAudio[0].currentTime = 7.9;
   });
-  await expect.poll(async () => (await sound(page)).src).not.toContain('__qa_theme_b');
+  await expect.poll(async () => (await sound(page)).selectedTrack).not.toContain('__qa_theme_b');
   await page.getByRole('button', { name: /__qa_theme_a/ }).click();
-  await expect.poll(async () => (await sound(page)).src).toContain('__qa_theme_a');
+  await expect.poll(async () => (await sound(page)).selectedTrack).toContain('__qa_theme_a');
   await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0.5');
   await expect.poll(async () => (await sound(page)).volume).toBe(0.5);
   const waveHeights = () =>

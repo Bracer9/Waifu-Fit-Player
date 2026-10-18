@@ -2,6 +2,11 @@ import { expect, test } from '@playwright/test';
 import { importDemo } from './helpers/project';
 
 test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', async ({ page }) => {
+  test.setTimeout(90000);
+  const bgmRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('.mp3')) bgmRequests.push(request.url());
+  });
   const downloads: string[] = [];
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -61,14 +66,21 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
     animations: 'disabled',
   });
   await page.getByRole('button', { name: /音游模式/ }).click();
+  const requestsBeforePreview = bgmRequests.length;
   for (let i = 0; i < 6; i++) {
     await page.locator('.collection-album').first().click();
     await expect.poll(async () => (await sound()).src).toBe('/demo.mp4');
     await expect.poll(async () => (await sound()).time).toBeGreaterThan(0.1);
     expect(await sound()).toMatchObject({ count: 2, playing: 1 });
+    const pausedAt = await page.evaluate(
+      () => (window as unknown as { menuProbe: HTMLAudioElement[] }).menuProbe[0].currentTime,
+    );
+    // Chrome suspends the paused media pipeline after a delay; quick visits missed this bug.
+    if (i === 0) await page.waitForTimeout(25000);
     await page.getByRole('button', { name: '选择专辑', exact: true }).click();
     await expect.poll(async () => (await sound()).src).toBe(theme);
     const resumed = (await sound()).time;
+    expect(resumed).toBeGreaterThanOrEqual(pausedAt);
     await expect
       .poll(async () => (await sound()).time)
       .toBeGreaterThan(resumed + 0.15)
@@ -78,7 +90,14 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
       });
     expect((await sound()).events).toEqual([]);
     expect(await sound()).toMatchObject({ count: 2, playing: 1 });
+    expect(bgmRequests).toHaveLength(requestsBeforePreview);
   }
+  await page.getByRole('button', { name: '主菜单', exact: true }).click();
+  await expect(page.locator('.title-menu')).toBeVisible();
+  const homeTime = (await sound()).time;
+  await expect.poll(async () => (await sound()).time).toBeGreaterThan(homeTime + 0.2);
+  expect((await sound()).events).toEqual([]);
+  expect(bgmRequests).toHaveLength(requestsBeforePreview);
   expect(downloads).toEqual([]);
   expect(errors).toEqual([]);
 });
