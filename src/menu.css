@@ -778,15 +778,15 @@
 }
 .cover-trace rect {
   fill: none;
-  stroke: #8dffff;
+  stroke: #00bfff;
   stroke-width: 4px;
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 20 80;
-  filter: drop-shadow(0 0 3px var(--cyan));
+  filter: drop-shadow(0 0 3px #00bfff);
 }
 .cover-trace rect + rect {
-  stroke: #ffabd1;
-  filter: drop-shadow(0 0 3px var(--pink));
+  stroke: #ff187d;
+  filter: drop-shadow(0 0 3px #ff187d);
   transform: rotate(180deg);
   transform-origin: center;
 }
