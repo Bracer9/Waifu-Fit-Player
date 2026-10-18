@@ -26,6 +26,7 @@ export const DEFAULT_ALBUMS: Album[] = [
 export function publishSong(song: Song, difficulty: Difficulty): Song {
   const draft = song.drafts[difficulty];
   if (!draft) throw new Error('请先保存这个难度的草稿。');
+  if (!draft.albumId || draft.albumId === 'all') throw new Error('请选择发布专辑。');
   const chart = parseChart({ ...draft.chart, songId: song.id, difficulty });
   if (!chart.videoHint.assetId) throw new Error('请先关联视频。');
   if (!chart.notes.length && !chart.specialEvents.length) throw new Error('空谱面不能发布。');

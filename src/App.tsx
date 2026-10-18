@@ -142,7 +142,7 @@ export default function App() {
   const notify = useCallback((text: string) => setNotice(text), []);
   const library = useLibrary(notify);
   const { updateSong } = library;
-  const [draftMeta, setDraftMeta] = useState({ albumId: 'touhou', cover: '' });
+  const [draftMeta, setDraftMeta] = useState({ albumId: '', cover: '' });
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
   const [albumId, setAlbumId] = useState('all');
   const [selectedSong, setSelectedSong] = useState('');
@@ -277,7 +277,7 @@ export default function App() {
     }
     const known = library.songs.find((s) => s.id === paired.songId);
     const edition = context?.edition ?? known?.drafts[paired.difficulty ?? 'hard'];
-    const meta = { albumId: edition?.albumId ?? 'touhou', cover: edition?.cover ?? '' };
+    const meta = { albumId: edition?.albumId ?? '', cover: edition?.cover ?? '' };
     try {
       if (!context?.play)
         await updateSong(paired.songId!, (previous) => ({
@@ -527,7 +527,7 @@ export default function App() {
           media.pause();
           setSource('');
           reset(blankChart());
-          setDraftMeta({ albumId: 'touhou', cover: '' });
+          setDraftMeta({ albumId: '', cover: '' });
           setPlayOrigin('editor');
           setMode('editor');
         }
@@ -595,7 +595,7 @@ export default function App() {
         media.pause();
         setSource('');
         reset(blankChart());
-        setDraftMeta({ albumId: 'touhou', cover: '' });
+        setDraftMeta({ albumId: '', cover: '' });
         activeVideo.current = null;
         if (objectUrl.current) {
           URL.revokeObjectURL(objectUrl.current);
@@ -1192,6 +1192,7 @@ export default function App() {
           onClose={() => setPublishing(false)}
           onPublish={publish}
           onDifficulty={(difficulty) => updatePublication({ difficulty })}
+          onAlbum={(albumId) => void updatePublication({ albumId })}
         />
       )}
       {help && (

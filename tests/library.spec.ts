@@ -23,6 +23,8 @@ async function songs(page: Page): Promise<Song[]> {
 }
 async function publish(page: Page) {
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
+  if (!(await page.getByLabel('发布专辑').inputValue()))
+    await page.getByLabel('发布专辑').selectOption('touhou');
   await page.getByRole('button', { name: /确认(发布|更新发布)/ }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
@@ -41,15 +43,27 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await expect(page.getByLabel('草稿难度')).toHaveValue('hard');
-  await publish(page);
+  await expect(page.getByLabel('所属专辑')).toHaveValue('');
+  await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
+  await expect(page.getByLabel('发布专辑')).toHaveValue('');
+  await expect(page.getByRole('button', { name: '确认发布', exact: true })).toBeDisabled();
+  await page.getByLabel('发布专辑').selectOption('anime');
+  await page.getByRole('button', { name: '确认发布', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   const hard = (await songs(page))[0].released.hard!;
+  expect(hard.albumId).toBe('anime');
   expect(hard.cover.startsWith('data:image/webp')).toBe(true);
   await page.getByLabel('草稿难度').selectOption('normal');
   await expect(page.getByLabel('草稿难度')).toHaveValue('normal');
   await page.getByLabel('作品名称').fill('Sunlight NORMAL');
-  await publish(page);
+  await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
+  await expect(page.getByLabel('发布专辑')).toHaveValue('anime');
+  await page.getByLabel('发布专辑').selectOption('pop');
+  await page.getByRole('button', { name: '确认发布', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   let stored = (await songs(page))[0];
   expect(stored.released.hard).toEqual(hard);
+  expect(stored.released.normal!.albumId).toBe('pop');
   expect(stored.released.normal!.chart.title).toBe('Sunlight NORMAL');
   await page.getByLabel('作品名称').fill('未发布修改');
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
