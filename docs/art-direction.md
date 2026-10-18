@@ -1,12 +1,22 @@
 # 跟练场景素材记录
 
-日期：2026-10-16。当前使用 v3 场景：硬边几何地板、舞台灯、粉色与炭黑色运动垫。可交互的专辑、五轨、视频、控制条、文字与水壶由 React / CSS / SVG 单独渲染。下方保留各轮素材来源和提示词。
+当前使用 v4 场景：硬边几何地板、舞台灯、粉色与炭黑色运动垫。专辑、五轨、视频、控制条与墙面蓝色花纹由 React / CSS / SVG 单独渲染。下方保留各轮素材来源和提示词。
+
+## v4：墙面蓝色花纹移到左上方（2026-10-18）
+
+- 内置 `image_gen` 编辑 v3，移除右墙的两块蓝色花纹，输出复制为 `public/art/studio-scene-v4.png`。
+- 左上方三角形和竖条改用两个静态 SVG 多边形；与 NOW PLAYING、WORKBENCH 蓝底共用 `--album-cyan: #32c6d3`。不增加动画或逐帧计算。
+- 生成提示词：
+
+```text
+Use case: precise-object-edit. This is an existing game background plate, NOT a request to redesign it. Edit only the TWO CYAN GEOMETRIC PAINTED SHAPES on the rear RIGHT WALL: the large cyan right-pointing triangle (approximately x47%-72%, y5%-58%) and the vertical cyan rectangle (approximately x77%-85%, y0%-60%). REMOVE BOTH shapes and continue the surrounding warm cream wall naturally through those two regions. Keep the pink geometric wall stripes EXACTLY as they are, and keep the ceiling pink region, two black spotlights, central wall corner, floor's cyan and pink geometric planes, pink left mat, charcoal right mat with two pink stripes, texture, lighting, shadows, framing and perspective unchanged. No new cyan shapes on either wall: those will be added by the UI separately. No lettering, icons, furniture, UI, characters, bottles, or other additions. Preserve the original 1672x941 framing and all objects as closely as possible. Output the entire clean background plate with only those two right-wall cyan shapes removed, otherwise identical.
+```
 
 ## v3：硬边几何场景
 
 - 对照图：`references/idea.jpg`（目标）和 `references/current.png`（用户提供的修改前画面）。
 - 生成方式：内置 `image_gen` 编辑模式；以 v2 背景为编辑目标，idea 为几何配色参考。
-- 当前素材：`public/art/studio-scene-v3.png`（1672 × 941，约 1.85 MB），直接复制原始结果，保留 v2 便于对照。
+- 历史素材：`public/art/studio-scene-v3.png`（1672 × 941，约 1.85 MB），直接复制原始结果，保留 v2 便于对照。
 - 地板改成奶油白、青蓝、粉色的大面积多边形，保留垫子纹理、边缘厚度、局部光照和接触阴影；没有向背景内绘制游戏界面或角色。
 - 专辑采用共享透视空间，左右页分别围绕中央连接边旋转 35° / −32°；整体不再沿 Z 轴倾斜。背板位于纸面后方 9px，外缘高光和底部厚边与页面一起投影。
 - SWAY 使用完整时长对应的 SVG 贝塞尔曲线；播放时仅在判定线裁切，不重新拉伸剩余波形。HOLD 使用同一套细光带；方向符号、STEP L/R/C/L2/R2、动作状态继续由原谱面数据驱动。
