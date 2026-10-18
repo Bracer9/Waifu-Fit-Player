@@ -6,9 +6,11 @@ import { ModalBackdrop } from './ModalBackdrop';
 
 function MusicPulse({ music }: { music: MenuMusic }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const audible = music.volume > 0;
   useEffect(() => {
     const node = canvas.current!;
     const ctx = node.getContext('2d')!;
+    const menu = node.closest<HTMLElement>('.menu-app');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 1024);
     const count = 56;
@@ -23,6 +25,12 @@ function MusicPulse({ music }: { music: MenuMusic }) {
       );
       return { start, end };
     });
+    const bassStart = Math.max(1, Math.floor(60 / binHz));
+    const bassEnd = Math.ceil(220 / binHz);
+    const bodyEnd = Math.ceil(1600 / binHz);
+    let average = 0,
+      beat = 0,
+      drift = 0;
     let frame = 0,
       last = 0,
       width = 0,
@@ -30,6 +38,27 @@ function MusicPulse({ music }: { music: MenuMusic }) {
     const draw = (animate: boolean) => {
       if (animate) music.analyser?.getByteFrequencyData(bins);
       else smooth.fill(0);
+      // Share the waveform's single FFT read. React only to energy above the recent
+      // baseline, so a loud sustained note cannot pin the whole page at maximum scale.
+      if (animate) {
+        let bass = 0,
+          body = 0;
+        for (let i = bassStart; i < bodyEnd; i++) {
+          const power = (bins[i] / 255) ** 2;
+          if (i < bassEnd) bass += power;
+          else body += power;
+        }
+        const energy = (bass / (bassEnd - bassStart)) * 0.8 + (body / (bodyEnd - bassEnd)) * 0.2;
+        average += (energy - average) * 0.035;
+        const accent = Math.min(
+          1,
+          Math.max(0, (energy - average - 0.008) / Math.max(0.08, average * 0.6)),
+        );
+        beat = Math.max(accent, beat * 0.8);
+        drift += (beat - drift) * 0.07;
+      } else average = beat = drift = 0;
+      menu?.style.setProperty('--music-beat', beat.toFixed(3));
+      menu?.style.setProperty('--music-drift', drift.toFixed(3));
       ctx.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
         const { start, end } = bands[i];
@@ -56,7 +85,7 @@ function MusicPulse({ music }: { music: MenuMusic }) {
     const refresh = () => {
       cancelAnimationFrame(frame);
       draw(false);
-      if (music.playing && music.analyser && !document.hidden && !reduced.matches)
+      if (music.playing && audible && music.analyser && !document.hidden && !reduced.matches)
         frame = requestAnimationFrame(tick);
     };
     const resize = new ResizeObserver(() => {
@@ -76,8 +105,10 @@ function MusicPulse({ music }: { music: MenuMusic }) {
       resize.disconnect();
       document.removeEventListener('visibilitychange', refresh);
       reduced.removeEventListener('change', refresh);
+      menu?.style.removeProperty('--music-beat');
+      menu?.style.removeProperty('--music-drift');
     };
-  }, [music.analyser, music.playing]);
+  }, [music.analyser, music.playing, audible]);
   return <canvas className="music-pulse" ref={canvas} aria-hidden="true" />;
 }
 

@@ -4,7 +4,7 @@ import { importDemo } from './helpers/project';
 
 // This suite runs against Vite dev so the temporary assets enter its normal glob.
 // Fixtures never enter the user's music library or the committed asset folder.
-const fixtures = ['__qa_theme_a.wav', '__qa_theme_b.wav'];
+const fixtures = ['__qa_theme_a.wav', '__qa_theme_b.wav', '__qa_theme_pulse.wav'];
 const created: string[] = [];
 test.beforeAll(async () => {
   for (let index = 0; index < fixtures.length; index++) {
@@ -24,9 +24,19 @@ test.beforeAll(async () => {
     wav.write('data', 36);
     wav.writeUInt32LE(wav.length - 44, 40);
     for (let i = 0; i < rate * seconds; i++) {
-      const envelope = 0.4 + 0.3 * Math.sin((i / rate) * Math.PI * 4);
+      const phase = (i / rate) % 0.6;
+      const envelope =
+        index === 2
+          ? phase < 0.12
+            ? Math.sin((phase / 0.12) * Math.PI)
+            : 0
+          : 0.4 + 0.3 * Math.sin((i / rate) * Math.PI * 4);
       wav.writeInt16LE(
-        Math.round(9000 * envelope * Math.sin((i / rate) * Math.PI * (880 + index * 440))),
+        Math.round(
+          9000 *
+            envelope *
+            Math.sin((i / rate) * Math.PI * (index === 2 ? 180 : 880 + index * 440)),
+        ),
         44 + i * 2,
       );
     }
@@ -162,8 +172,32 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(peakBand).toBeLessThanOrEqual(25);
   await page.getByRole('button', { name: /__qa_theme_a/ }).click();
   await expect.poll(peakBand).toBeLessThanOrEqual(21);
+  await page.getByRole('button', { name: /__qa_theme_pulse/ }).click();
+  await expect.poll(async () => (await sound(page)).selectedTrack).toContain('__qa_theme_pulse');
+  const motion = await page.evaluate(async () => {
+    const card = document.querySelector('.mode-record')!;
+    const values: number[] = [];
+    const start = performance.now();
+    await new Promise<void>((resolve) => {
+      const sample = () => {
+        values.push(Number(getComputedStyle(card).scale));
+        if (performance.now() - start < 1800) requestAnimationFrame(sample);
+        else resolve();
+      };
+      sample();
+    });
+    return values;
+  });
+  expect(Math.max(...motion)).toBeGreaterThan(Math.min(...motion) + 0.0005);
+  expect(Math.min(...motion)).toBeGreaterThanOrEqual(1);
+  expect(Math.max(...motion)).toBeLessThanOrEqual(1.0081);
   await page.getByRole('button', { name: '暂停菜单 BGM', exact: true }).click();
   await expect.poll(async () => (await sound(page)).paused).toBe(true);
+  await expect(page.locator('.mode-record').first()).toHaveCSS('scale', '1');
+  await expect(page.locator('.title-brand h1 b')).toHaveCSS(
+    'transform',
+    'matrix(1, 0, 0, 1, 0, 0)',
+  );
   const pausedAt = (await sound(page)).time;
   await page.getByRole('button', { name: '单曲循环', exact: true }).click();
   await page.getByRole('button', { name: '关闭主界面音乐' }).click();
