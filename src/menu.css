@@ -802,6 +802,9 @@
 .mode-record .cover-trace {
   z-index: 2;
 }
+.mode-record .cover-trace rect {
+  stroke-width: 8px;
+}
 @keyframes cover-orbit {
   to {
     stroke-dashoffset: -100;
