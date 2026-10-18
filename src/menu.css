@@ -18,8 +18,8 @@
   top: -90vh;
   right: -5vw;
   background: var(--pink);
-  transform: translate(calc(var(--music-beat, 0) * -28px), calc(var(--music-beat, 0) * 20px))
-    rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.012));
+  transform: translate(calc(var(--music-beat, 0) * -44px), calc(var(--music-beat, 0) * 32px))
+    rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.024));
 }
 .menu-app .ambient-shape.cyan {
   width: 25vw;
@@ -27,8 +27,8 @@
   top: 50vh;
   left: -15vw;
   background: var(--cyan);
-  transform: translate(calc(var(--music-beat, 0) * 28px), calc(var(--music-beat, 0) * -20px))
-    rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.012));
+  transform: translate(calc(var(--music-beat, 0) * 44px), calc(var(--music-beat, 0) * -32px))
+    rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.024));
 }
 .menu-app .ambient-shape {
   transition: transform 80ms linear;
@@ -94,26 +94,39 @@
   inset: 0;
   background: var(--mode-color);
   border: 5px solid #1d1c21;
-  box-shadow: 7px calc(8px + var(--music-beat, 0) * 4px) 0 #1d1c21;
-  scale: calc(1 + var(--music-beat, 0) * 0.03);
+  box-shadow: 7px 8px 0 #1d1c21;
+  animation: mode-float 5.6s ease-in-out infinite;
   overflow: hidden;
   text-align: left;
   padding: 24px;
   transition:
     transform 160ms,
-    scale 80ms linear,
-    box-shadow 80ms linear;
+    box-shadow 160ms;
 }
 .mode-record:hover .mode-record-face,
 .mode-record:focus-visible .mode-record-face {
   transform: translateY(-7px);
-  box-shadow: 8px calc(15px + var(--music-beat, 0) * 4px) 0 #1d1c21;
+  box-shadow: 8px 15px 0 #1d1c21;
 }
 .play-mode {
   --mode-color: var(--pink);
 }
 .create-mode {
   --mode-color: var(--cyan);
+}
+.create-mode .mode-record-face {
+  animation-delay: -2.8s;
+}
+@keyframes mode-float {
+  0%,
+  100% {
+    translate: -2px 6px;
+    rotate: -0.25deg;
+  }
+  50% {
+    translate: 2px -8px;
+    rotate: 0.25deg;
+  }
 }
 .record-number {
   position: relative;
@@ -1166,6 +1179,7 @@
     transition: none;
   }
   :is(.record-card, .collection-album):is(:hover, :focus-visible) .cover-trace rect,
+  .mode-record-face,
   .menu-scene[data-exit-to='songs'] .collection-album,
   .start-confirmation,
   .theme-music-dialog,
