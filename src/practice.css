@@ -93,6 +93,7 @@ body:has(.practice-app) {
   transform-style: preserve-3d;
   box-shadow:
     inset 1px 0 0 #ffffff40,
+    0 -4px 10px #35242d26,
     0 2px 0 #fff0e4,
     0 7px 0 #29262d,
     -3px 16px 18px #28192233,
@@ -124,6 +125,7 @@ body:has(.practice-app) {
 }
 .practice-cover {
   container-type: size;
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -132,6 +134,18 @@ body:has(.practice-app) {
   color: var(--album-ink);
   background: var(--album-paper);
   overflow: hidden;
+}
+.practice-cover::before,
+.practice-masthead::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  z-index: 1;
+  pointer-events: none;
+  /* A thin bound edge: dark silhouette, lit bevel, then the paper face. */
+  background: linear-gradient(#57464b 0 1px, #fffaf2 1px 2px, #d3bdb0 2px 4px, #fff1e6 4px);
+  box-shadow: 0 2px 3px #30232a30;
 }
 .cover-wordmark {
   font-family: var(--album-heading-font);
@@ -740,6 +754,7 @@ body:has(.practice-app) {
   transform-style: preserve-3d;
   box-shadow:
     inset -1px 0 0 #ffffffb0,
+    0 -4px 10px #35242d26,
     0 2px 0 #fff0e4,
     0 7px 0 #29262d,
     3px 16px 18px #28192233,
