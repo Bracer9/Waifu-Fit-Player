@@ -5,7 +5,7 @@
 ## v4：墙面蓝色花纹移到左上方（2026-10-18）
 
 - 内置 `image_gen` 编辑 v3，移除右墙的两块蓝色花纹，输出复制为 `public/art/studio-scene-v4.png`。
-- 左上方三角形和竖条改用两个静态 SVG 多边形；与 NOW PLAYING、WORKBENCH 蓝底共用 `--album-cyan: #32c6d3`。不增加动画或逐帧计算。
+- 左上方竖条使用静态 SVG 多边形（三角形已按后续反馈删除）；与 NOW PLAYING、WORKBENCH 蓝底共用 `--album-cyan: #32c6d3`。不增加动画或逐帧计算。
 - 生成提示词：
 
 ```text

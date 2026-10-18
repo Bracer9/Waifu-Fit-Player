@@ -95,7 +95,7 @@ body:has(.practice-app) {
     inset 1px 0 0 #ffffff40,
     0 -4px 10px #35242d26,
     0 2px 0 #fff0e4,
-    0 7px 0 #29262d,
+    0 7px 0 var(--album-ink),
     -3px 16px 18px #28192233,
     -2px 30px 40px #28192229;
 }
@@ -104,8 +104,8 @@ body:has(.practice-app) {
   content: '';
   position: absolute;
   inset: -2px;
-  background: #17151c;
-  border: 1px solid #51414a;
+  background: var(--album-ink);
+  border: 1px solid var(--album-ink);
   transform: translateZ(-9px);
   pointer-events: none;
 }
@@ -143,9 +143,8 @@ body:has(.practice-app) {
   height: 6px;
   z-index: 1;
   pointer-events: none;
-  /* A thin bound edge: dark silhouette, lit bevel, then the paper face. */
-  background: linear-gradient(#57464b 0 1px, #fffaf2 1px 2px, #d3bdb0 2px 4px, #fff1e6 4px);
-  box-shadow: 0 2px 3px #30232a30;
+  background: var(--album-ink);
+  box-shadow: 0 2px 2px #17151c30;
 }
 .cover-wordmark {
   font-family: var(--album-heading-font);
@@ -756,7 +755,7 @@ body:has(.practice-app) {
     inset -1px 0 0 #ffffffb0,
     0 -4px 10px #35242d26,
     0 2px 0 #fff0e4,
-    0 7px 0 #29262d,
+    0 7px 0 var(--album-ink),
     3px 16px 18px #28192233,
     2px 30px 40px #28192229;
 }
@@ -816,8 +815,8 @@ body:has(.practice-app) {
   flex: none;
   align-self: auto;
   width: 100%;
-  border: 7px solid #232329;
-  background: #232329;
+  border: 7px solid var(--album-ink);
+  background: var(--album-ink);
   box-shadow:
     0 0 0 1px #fff8ee,
     2px 4px 0 #201d2580;
@@ -828,6 +827,7 @@ body:has(.practice-app) {
   height: auto;
   aspect-ratio: 16 / 9;
   border: 0;
+  background: var(--album-ink);
   outline: 1px solid #fff4ec;
   outline-offset: -1px;
 }
@@ -844,7 +844,7 @@ body:has(.practice-app) {
   min-height: 58px;
   padding: 9px 7px 4px;
   color: #fff4f9;
-  background: #232329;
+  background: var(--album-ink);
 }
 .practice .transport .time-readout {
   color: #fff5ee;

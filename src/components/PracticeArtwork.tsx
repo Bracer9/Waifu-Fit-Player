@@ -10,7 +10,6 @@ export function PracticeBackdrop() {
     <div className="practice-backdrop" aria-hidden="true">
       <img className="studio-scene" src="/art/studio-scene-v4.png" alt="" />
       <svg className="studio-wall-patterns" viewBox="0 0 1672 941" preserveAspectRatio="none">
-        <polygon points="75,0 410,110 75,180" />
         <polygon points="525,44 625,68 625,400 525,376" />
       </svg>
     </div>
