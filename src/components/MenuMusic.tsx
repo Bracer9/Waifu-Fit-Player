@@ -9,35 +9,34 @@ function MusicPulse({ music }: { music: MenuMusic }) {
     const node = canvas.current!;
     const ctx = node.getContext('2d')!;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    const samples = new Uint8Array(music.analyser?.fftSize ?? 512);
+    const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 1024);
     const count = 56;
-    const trail = new Float32Array(count);
-    let previousRms = 0,
-      envelope = 0;
+    const smooth = new Float32Array(count);
+    const binHz = (music.analyser?.context.sampleRate ?? 48000) / (bins.length * 2);
+    // Low frequencies sit by the headphones; treble extends toward the edges.
+    const bands = Array.from({ length: count }, (_, i) => {
+      const start = Math.max(1, Math.floor((80 * 150 ** (i / count)) / binHz));
+      const end = Math.min(
+        bins.length,
+        Math.max(start + 1, Math.ceil((80 * 150 ** ((i + 1) / count)) / binHz)),
+      );
+      return { start, end };
+    });
     let frame = 0,
       last = 0,
       width = 0,
       height = 0;
     const draw = (animate: boolean) => {
-      if (animate) {
-        music.analyser?.getByteTimeDomainData(samples);
-        let power = 0;
-        for (const sample of samples) power += ((sample - 128) / 128) ** 2;
-        const rms = Math.sqrt(power / samples.length);
-        const attack = Math.max(0, rms - previousRms) * 2.5;
-        const level = Math.min(1, (rms / (rms + 0.12)) * 0.85 + attack);
-        envelope += (level - envelope) * (level > envelope ? 0.8 : 0.45);
-        previousRms = rms;
-        // Each measured pulse travels from the headphones to both outer edges.
-        trail.copyWithin(1, 0);
-        trail[0] = envelope;
-      } else {
-        trail.fill(0);
-        previousRms = envelope = 0;
-      }
+      if (animate) music.analyser?.getByteFrequencyData(bins);
+      else smooth.fill(0);
       ctx.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
-        const amplitude = 2 + trail[i] * height * 0.46 * (1 - i / (count * 10));
+        const { start, end } = bands[i];
+        let total = 0;
+        for (let bin = start; bin < end; bin++) total += bins[bin];
+        const level = (total / ((end - start) * 255)) ** 2;
+        if (animate) smooth[i] += (level - smooth[i]) * (level > smooth[i] ? 0.55 : 0.25);
+        const amplitude = 2 + smooth[i] * height * 0.28;
         const offset = 54 + (i * (width / 2 - 55.5)) / (count - 1);
         ctx.globalAlpha = 0.95 - (i / count) * 0.3;
         ctx.fillStyle = '#f64e93';

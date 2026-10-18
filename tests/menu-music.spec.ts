@@ -96,8 +96,8 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
         probe.menuContexts.push(this);
       }
     };
-    const read = AnalyserNode.prototype.getByteTimeDomainData;
-    AnalyserNode.prototype.getByteTimeDomainData = function (data) {
+    const read = AnalyserNode.prototype.getByteFrequencyData;
+    AnalyserNode.prototype.getByteFrequencyData = function (data) {
       probe.spectrumReads++;
       read.call(this, data);
     };
@@ -146,14 +146,22 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
         return height / ratio;
       });
     });
-  await expect.poll(async () => (await waveHeights()).at(-1)!).toBeGreaterThan(5);
-  const waveBefore = await waveHeights();
-  await page.waitForTimeout(250);
-  const waveAfter = await waveHeights();
-  expect(
-    waveAfter.slice(28).filter((height, i) => Math.abs(height - waveBefore[i + 28]) >= 2).length,
-  ).toBeGreaterThan(10);
-  expect(Math.max(...waveAfter) - Math.min(...waveAfter)).toBeGreaterThan(4);
+  const peakBand = async () => {
+    const heights = await waveHeights();
+    return heights.indexOf(Math.max(...heights));
+  };
+  // The 440 Hz fixture must peak near its frequency, not across a travelling history.
+  await expect.poll(peakBand).toBeGreaterThanOrEqual(17);
+  await expect.poll(peakBand).toBeLessThanOrEqual(21);
+  const spectrum = await waveHeights();
+  expect(Math.max(...spectrum)).toBeGreaterThan(8);
+  expect(spectrum.slice(35).every((height) => height <= 5)).toBe(true);
+  await page.getByRole('button', { name: /__qa_theme_b/ }).click();
+  // 660 Hz moves the peak toward the treble end.
+  await expect.poll(peakBand).toBeGreaterThanOrEqual(22);
+  await expect.poll(peakBand).toBeLessThanOrEqual(25);
+  await page.getByRole('button', { name: /__qa_theme_a/ }).click();
+  await expect.poll(peakBand).toBeLessThanOrEqual(21);
   await page.getByRole('button', { name: '暂停菜单 BGM', exact: true }).click();
   await expect.poll(async () => (await sound(page)).paused).toBe(true);
   const pausedAt = (await sound(page)).time;
