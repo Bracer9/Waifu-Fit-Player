@@ -1,23 +1,18 @@
-import { ArrowUpRight, Disc3, PencilLine, Settings } from 'lucide-react';
+import { ArrowUpRight, Disc3, PencilLine } from 'lucide-react';
 import { MenuMusicConsole } from '../components/MenuMusic';
 import type { MenuMusic } from '../useMenuMusic';
 
 export function Home({
   onPlay,
   onCreate,
-  onSettings,
   music,
 }: {
   onPlay: () => void;
   onCreate: () => void;
-  onSettings: () => void;
   music: MenuMusic;
 }) {
   return (
     <section className="title-menu" aria-label="主菜单">
-      <button className="icon-button title-settings" aria-label="全局设置" onClick={onSettings}>
-        <Settings size={48} />
-      </button>
       <div className="title-brand">
         <span className="eyebrow">YOUR MUSIC. YOUR MOVEMENT.</span>
         <h1>

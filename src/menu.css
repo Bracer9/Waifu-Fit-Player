@@ -140,15 +140,81 @@
   height: 42px;
   stroke-width: 3;
 }
-.title-settings {
-  position: absolute;
+.menu-settings {
+  position: fixed;
   top: 28px;
   right: 5vw;
   padding: 8px;
+  width: 112px;
+  height: 112px;
+  z-index: 10;
 }
-.title-settings svg {
-  width: 48px;
-  height: 48px;
+.menu-settings:hover {
+  background: transparent;
+}
+.menu-settings svg {
+  width: 96px;
+  height: 96px;
+  transition: transform 180ms ease-out;
+}
+.menu-settings:hover svg {
+  transform: rotate(18deg) scale(1.04);
+}
+.menu-settings:active svg {
+  transform: rotate(8deg) scale(0.94);
+}
+.menu-scene {
+  height: 100%;
+}
+.menu-scene[data-direction] {
+  --enter-x: 42px;
+  animation: menu-pop-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.menu-scene[data-direction='back'] {
+  --enter-x: -42px;
+}
+@keyframes menu-pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--enter-x)) scale(0.985);
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.menu-swipe {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  overflow: hidden;
+}
+.menu-swipe::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  height: 120%;
+  width: 32vw;
+  border-inline: 4px solid var(--ink);
+  background: linear-gradient(90deg, var(--pink) 0 65%, var(--cream) 65% 70%, var(--cyan) 70%);
+  transform: translateX(-50vw) skewX(-14deg);
+  animation: menu-color-swipe 380ms cubic-bezier(0.3, 0.5, 0.6, 1);
+}
+.menu-swipe.back::before {
+  animation-direction: reverse;
+  background: linear-gradient(90deg, var(--cyan) 0 65%, var(--cream) 65% 70%, var(--pink) 70%);
+}
+@keyframes menu-color-swipe {
+  from {
+    transform: translateX(-50vw) skewX(-14deg);
+  }
+  to {
+    transform: translateX(150vw) skewX(-14deg);
+  }
 }
 .music-console {
   margin-top: auto;
@@ -312,19 +378,17 @@
 }
 .music-menu-header {
   flex: none;
-  height: 116px;
+  height: 156px;
   display: flex;
   align-items: center;
   gap: 32px;
   border-bottom: 2px solid var(--ink);
+  padding-right: 128px;
 }
 .music-menu-header h1 {
   margin: 5px 0 0;
   font-size: 28px;
   font-weight: 900;
-}
-.music-menu-header > .icon-button {
-  margin-left: auto;
 }
 .menu-back {
   display: flex;
@@ -1006,9 +1070,6 @@
   .mode-record {
     height: 265px;
   }
-  .music-menu-header {
-    height: 88px;
-  }
   .song-carousel {
     --card-width: min(29vh, 300px);
     padding-top: 45px;
@@ -1023,6 +1084,13 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .menu-swipe {
+    display: none;
+  }
+  .menu-scene[data-direction] {
+    animation: none;
+  }
+  .menu-settings svg,
   .mode-record,
   .collection-album,
   .record-card,

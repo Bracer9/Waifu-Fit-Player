@@ -1,13 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Disc3,
-  Pencil,
-  Settings,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Disc3, Pencil } from 'lucide-react';
 import { editionsIn, type Album, type Difficulty, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
 import { ModalBackdrop } from '../components/ModalBackdrop';
@@ -28,7 +20,7 @@ type Props = {
   onSong: (id: string) => void;
   onDifficulty: (difficulty: Difficulty) => void;
   onBack: () => void;
-  onSettings: () => void;
+  onSongClick: () => void;
   onCreate: () => void;
   onPlay: (song: Song, difficulty: Difficulty) => void;
   onPreview: (assetId: string | undefined) => void;
@@ -43,6 +35,10 @@ export function LibraryMenu(props: Props) {
   const [confirmStart, setConfirmStart] = useState<{ song: Song; difficulty: Difficulty } | null>(
     null,
   );
+  const confirmSong = (song: Song, difficulty: Difficulty) => {
+    props.onSongClick();
+    setConfirmStart({ song, difficulty });
+  };
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
   const inAlbum = useMemo(
     () =>
@@ -135,8 +131,7 @@ export function LibraryMenu(props: Props) {
       ) {
         e.preventDefault();
         if (page === 'albums') onAlbum(album.id, true);
-        else if (selected && selectedDifficulty)
-          setConfirmStart({ song: selected, difficulty: selectedDifficulty });
+        else if (selected && selectedDifficulty) confirmSong(selected, selectedDifficulty);
       }
     };
     window.addEventListener('keydown', key);
@@ -198,9 +193,6 @@ export function LibraryMenu(props: Props) {
           <span className="eyebrow">WAIFU FIT PLAYER / MUSIC COLLECTION</span>
           <h1>{page === 'albums' ? '选择专辑' : album.name}</h1>
         </div>
-        <button className="icon-button" aria-label="全局设置" onClick={props.onSettings}>
-          <Settings />
-        </button>
       </header>
       {page === 'albums' ? (
         <>
@@ -260,7 +252,7 @@ export function LibraryMenu(props: Props) {
                   aria-current={song.id === selected.id}
                   onClick={() => {
                     select(song.id);
-                    setConfirmStart({ song, difficulty: d });
+                    confirmSong(song, d);
                   }}
                   aria-label={`选择 ${release.chart.title}`}
                 >
@@ -349,10 +341,7 @@ export function LibraryMenu(props: Props) {
             </div>
             <button
               className="start-track"
-              onClick={() =>
-                selectedDifficulty &&
-                setConfirmStart({ song: selected, difficulty: selectedDifficulty })
-              }
+              onClick={() => selectedDifficulty && confirmSong(selected, selectedDifficulty)}
             >
               开始
             </button>

@@ -154,7 +154,7 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   expect(wave!.x).toBeCloseTo(cards!.x, 0);
   expect(wave!.width).toBeCloseTo(cards!.width, 0);
   await expect(page.locator('.headphone-button svg')).toHaveAttribute('width', '60');
-  expect((await page.locator('.title-settings svg').boundingBox())!.width).toBe(48);
+  expect((await page.locator('.menu-settings svg').boundingBox())!.width).toBe(96);
   await expect(page.getByText('WAIFU FIT PLAYER — PERSONAL MUSIC COLLECTION')).toHaveCount(0);
 
   // Create a real released MP4-backed chart in this isolated browser profile.

@@ -44,6 +44,7 @@ import {
 } from './components/LibraryControls';
 import { AudioVolumeControl } from './components/MenuMusic';
 import { useMenuMusic } from './useMenuMusic';
+import { useMenuSounds } from './useMenuSounds';
 import { Player } from './views/Player';
 import { Editor } from './views/Editor';
 import { Home } from './views/Home';
@@ -101,6 +102,13 @@ export default function App() {
   const [busy, setBusy] = useState('');
   const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
+  const [menuMotion, setMenuMotion] = useState<'forward' | 'back'>();
+  const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
+  const navigateMenu = (next: 'home' | 'albums' | 'songs') => {
+    const pages = ['home', 'albums', 'songs'];
+    setMenuMotion(pages.indexOf(next) > pages.indexOf(mode) ? 'forward' : 'back');
+    setMode(next);
+  };
   const [settings, setSettings] = useState(false);
   const [noteSpeed, setNoteSpeed] = useState(() => {
     try {
@@ -162,6 +170,11 @@ export default function App() {
     notify,
     status.volume,
   );
+  const playMenuSound = useMenuSounds(menuMusic.volume);
+  const openSettings = () => {
+    playMenuSound('settings');
+    setSettings(true);
+  };
   const difficulty = chart.difficulty ?? 'hard';
   const persistDraft = useCallback(async () => {
     if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
@@ -679,6 +692,14 @@ export default function App() {
       <div className="ambient-shape pink" />
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
+      {menuPage && (
+        <button className="icon-button menu-settings" aria-label="全局设置" onClick={openSettings}>
+          <Settings size={96} />
+        </button>
+      )}
+      {menuPage && menuMotion && (
+        <div key={mode} className={`menu-swipe ${menuMotion}`} aria-hidden="true" />
+      )}
       <header className="app-header" hidden={mode !== 'editor'}>
         <button
           className="wordmark"
@@ -712,7 +733,7 @@ export default function App() {
             className="icon-button"
             aria-label="全局设置"
             title="全局设置"
-            onClick={() => setSettings(true)}
+            onClick={openSettings}
           >
             <Settings size={18} />
           </button>
@@ -742,37 +763,49 @@ export default function App() {
         </div>
       </header>
       <main>
-        {mode === 'home' && (
-          <Home
-            music={menuMusic}
-            onPlay={() => setMode('albums')}
-            onCreate={enterEditor}
-            onSettings={() => setSettings(true)}
-          />
-        )}
-        {(mode === 'albums' || mode === 'songs') && (
-          <LibraryMenu
-            page={mode}
-            albums={library.albums}
-            songs={library.songs}
-            albumId={albumId}
-            songId={selectedSong}
-            difficulty={selectedDifficulty}
-            seed={coverSeed}
-            onAlbum={(id, enter) => {
-              setAlbumId(id);
-              if (enter) setMode('songs');
-            }}
-            onSong={setSelectedSong}
-            onDifficulty={setSelectedDifficulty}
-            onBack={() => setMode(mode === 'songs' ? 'albums' : 'home')}
-            onSettings={() => setSettings(true)}
-            onCreate={enterEditor}
-            onPlay={playSong}
-            onPreview={setPreviewAsset}
-            onEdit={(song, d) => editSong(song, d, true)}
-            onManage={() => setManageSongs(true)}
-          />
+        {menuPage && (
+          <div className="menu-scene" data-direction={menuMotion} key={mode}>
+            {mode === 'home' && (
+              <Home
+                music={menuMusic}
+                onPlay={() => {
+                  playMenuSound('mode');
+                  navigateMenu('albums');
+                }}
+                onCreate={() => {
+                  playMenuSound('mode');
+                  enterEditor();
+                }}
+              />
+            )}
+            {(mode === 'albums' || mode === 'songs') && (
+              <LibraryMenu
+                page={mode}
+                albums={library.albums}
+                songs={library.songs}
+                albumId={albumId}
+                songId={selectedSong}
+                difficulty={selectedDifficulty}
+                seed={coverSeed}
+                onAlbum={(id, enter) => {
+                  setAlbumId(id);
+                  if (enter) {
+                    playMenuSound('album');
+                    navigateMenu('songs');
+                  }
+                }}
+                onSong={setSelectedSong}
+                onDifficulty={setSelectedDifficulty}
+                onBack={() => navigateMenu(mode === 'songs' ? 'albums' : 'home')}
+                onSongClick={() => playMenuSound('song')}
+                onCreate={enterEditor}
+                onPlay={playSong}
+                onPreview={setPreviewAsset}
+                onEdit={(song, d) => editSong(song, d, true)}
+                onManage={() => setManageSongs(true)}
+              />
+            )}
+          </div>
         )}
         <div
           className={`album-workspace ${mode === 'editor' ? 'editing' : 'practice'}`}
