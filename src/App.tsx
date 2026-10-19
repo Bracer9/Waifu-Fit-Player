@@ -548,15 +548,17 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   };
   const pauseGame = () => {
     if (startPending || preparation.pending || !status.ready) return;
+    playMenuSound('settings');
     media.pause();
     setGamePauseOpen(true);
   };
-  const resumeGame = () => {
+  const resumeGame = (sound: 'mode' | 'song' = 'mode') => {
     if (!status.ready || status.preparing) return;
     if (!media.element?.paused) {
       setGamePauseOpen(false);
       return;
     }
+    playMenuSound(sound);
     void media
       .toggle()
       .then(() => setGamePauseOpen(false))
@@ -569,9 +571,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const restartGame = () => {
     media.pause();
     media.seek(playStart ?? 0);
-    resumeGame();
+    resumeGame('song');
   };
   const backToSelect = () => {
+    playMenuSound('back');
     media.pause();
     setGamePauseOpen(false);
     setStartPending(false);
@@ -1130,6 +1133,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       onResume={resumeGame}
                       onRestart={restartGame}
                       onBack={backToSelect}
+                      onSound={playMenuSound}
                     />
                   )}
                 </div>

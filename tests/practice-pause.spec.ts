@@ -9,6 +9,20 @@ test('restart uses the play-range start, return restores song selection, and cou
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addInitScript(() => {
     Object.defineProperty(window, 'showOpenFilePicker', { value: undefined });
+    if (localStorage.getItem('waifu-fit-player-se-volume') === null)
+      localStorage.setItem('waifu-fit-player-se-volume', '0.3');
+    const events: { name: string; volume: number }[] = [];
+    const played: string[] = [];
+    Object.assign(window, { pauseSoundEvents: events, pauseSoundsPlayed: played });
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.dataset.menuSound)
+        events.push({ name: this.dataset.menuSound, volume: this.volume });
+      const result = play.call(this);
+      if (this.dataset.menuSound)
+        void result.then(() => played.push(this.dataset.menuSound!)).catch(() => {});
+      return result;
+    };
   });
   await page.goto('/');
   await page.getByRole('button', { name: /创作模式/ }).click();
@@ -36,6 +50,11 @@ test('restart uses the play-range start, return restores song selection, and cou
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  await page.evaluate(() => {
+    const state = window as unknown as { pauseSoundEvents: unknown[]; pauseSoundsPlayed: string[] };
+    state.pauseSoundEvents.length = 0;
+    state.pauseSoundsPlayed.length = 0;
+  });
   const video = page.locator('video');
   const originalVideo = (await video.elementHandle())!;
   const seek = page.getByRole('slider', { name: 'Playback position', exact: true });
@@ -47,7 +66,19 @@ test('restart uses the play-range start, return restores song selection, and cou
     12,
     true,
   ]);
+  // Let each isolated gesture become audible before testing rapid navigation;
+  // the shared sound player intentionally interrupts the previous short clip.
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { pauseSoundsPlayed: string[] }).pauseSoundsPlayed),
+    )
+    .toEqual(['settings']);
   await page.keyboard.press('ArrowDown');
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { pauseSoundsPlayed: string[] }).pauseSoundsPlayed),
+    )
+    .toEqual(['settings', 'settings']);
   await page.keyboard.press('Enter');
   await expect(dialog).toHaveCount(0);
   await expect
@@ -58,6 +89,17 @@ test('restart uses the play-range start, return restores song selection, and cou
     false,
   ]);
   expect(await originalVideo.evaluate((v) => v.isConnected)).toBe(true);
+  const soundEvents = () =>
+    page.evaluate(
+      () =>
+        (window as unknown as { pauseSoundEvents: { name: string; volume: number }[] })
+          .pauseSoundEvents,
+    );
+  expect((await soundEvents()).map((event) => event.name)).toEqual([
+    'settings',
+    'settings',
+    'song',
+  ]);
 
   await seek.fill('10000');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
@@ -71,6 +113,17 @@ test('restart uses the play-range start, return restores song selection, and cou
   await expect(dialog).toHaveCount(0);
   expect(await video.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeLessThan(4);
   await page.keyboard.press('Escape');
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const state = window as unknown as {
+          pauseSoundsPlayed: string[];
+          pauseSoundEvents: unknown[];
+        };
+        return state.pauseSoundsPlayed.length === state.pauseSoundEvents.length;
+      }),
+    )
+    .toBe(true);
   await page.keyboard.press('ArrowUp');
   await expect(dialog.getByRole('button', { name: 'BACK TO SELECT', exact: true })).toHaveAttribute(
     'data-selected',
@@ -82,6 +135,26 @@ test('restart uses the play-range start, return restores song selection, and cou
   await expect(page.getByRole('button', { name: /NORMAL/, pressed: true })).toBeVisible();
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   expect(await originalVideo.evaluate((v) => v.isConnected)).toBe(true);
+  const expectedSounds = [
+    'settings',
+    'settings',
+    'song',
+    'settings',
+    'mode',
+    'settings',
+    'settings',
+    'song',
+    'settings',
+    'settings',
+    'back',
+  ];
+  expect((await soundEvents()).map((event) => event.name)).toEqual(expectedSounds);
+  expect((await soundEvents()).every((event) => Math.abs(event.volume - 0.3) < 0.001)).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { pauseSoundsPlayed: string[] }).pauseSoundsPlayed),
+    )
+    .toEqual(expectedSounds);
 
   await card.locator('.record-select').click();
   await page.getByRole('button', { name: '开始游戏', exact: true }).click();
@@ -96,5 +169,20 @@ test('restart uses the play-range start, return restores song selection, and cou
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await dialog.getByRole('button', { name: 'BACK TO SELECT', exact: true }).click();
   await expect(card).toContainText(chart.title);
+  await page.evaluate(() => localStorage.setItem('waifu-fit-player-se-volume', '0'));
+  await page.reload();
+  await page.getByRole('button', { name: /创作模式/ }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: '暂停游戏', exact: true }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'RESUME', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(await soundEvents()).toEqual([]);
   expect(errors).toEqual([]);
 });

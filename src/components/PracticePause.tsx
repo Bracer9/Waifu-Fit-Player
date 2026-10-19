@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronRight, CornerDownLeft, Pause, Play, RotateCcw } from 
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { Chart } from '../model';
 import { CoverArt } from './CoverArt';
+import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const options = [
   { label: 'RESUME', Icon: Play },
@@ -16,6 +17,7 @@ export function PracticePause({
   onResume,
   onRestart,
   onBack,
+  onSound,
 }: {
   chart: Chart;
   cover: string;
@@ -23,8 +25,10 @@ export function PracticePause({
   onResume: () => void;
   onRestart: () => void;
   onBack: () => void;
+  onSound: MenuSoundPlayer;
 }) {
   const [selected, setSelected] = useState(0);
+  const selection = useRef(0);
   const [pressed, setPressed] = useState<number | null>(null);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const root = useRef<HTMLDivElement>(null);
@@ -33,8 +37,15 @@ export function PracticePause({
   const actions = useRef([onResume, onRestart, onBack]);
   actions.current = [onResume, onRestart, onBack];
 
+  const select = (index: number) => {
+    if (timer.current !== null || selection.current === index) return;
+    selection.current = index;
+    setSelected(index);
+    onSound('settings');
+  };
   const activate = (index: number) => {
     if (timer.current !== null) return;
+    selection.current = index;
     setSelected(index);
     setPressed(index);
     // Keep the same brief confirmation pulse for pointer and keyboard input.
@@ -67,8 +78,9 @@ export function PracticePause({
         event.preventDefault();
         event.stopImmediatePropagation();
         const next =
-          (selected + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
-        setSelected(next);
+          (selection.current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) %
+          options.length;
+        select(next);
         buttons.current[next]?.focus({ preventScroll: true });
       } else if (
         event.key === 'Enter' &&
@@ -76,7 +88,7 @@ export function PracticePause({
       ) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (!event.repeat) activate(selected);
+        if (!event.repeat) activate(selection.current);
       }
     };
     window.addEventListener('keydown', key, true);
@@ -124,13 +136,13 @@ export function PracticePause({
               className={`pause-option${pressed === index ? ' is-pressed' : ''}`}
               data-selected={selected === index}
               onFocus={() => {
-                if (timer.current === null) setSelected(index);
+                select(index);
               }}
               onPointerMove={(event) => {
                 const { clientX: x, clientY: y } = event;
                 if (pointer.current?.x === x && pointer.current.y === y) return;
                 pointer.current = { x, y };
-                if (timer.current === null) setSelected(index);
+                select(index);
               }}
               onClick={() => activate(index)}
             >
