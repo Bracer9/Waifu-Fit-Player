@@ -30,7 +30,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   const gear = page.getByRole('button', { name: '全局设置', exact: true });
   const bounds = await gear.boundingBox();
   expect(bounds!.width).toBe(112);
-  expect((await gear.locator('svg').boundingBox())!.width).toBe(96);
+  expect((await gear.locator(':scope > svg').boundingBox())!.width).toBe(96);
   const selectGuide = page.locator('.menu-control-select');
   const enterGuide = page.locator('.menu-control-enter');
   const guideBounds = [await selectGuide.boundingBox(), await enterGuide.boundingBox()];
@@ -47,7 +47,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.4');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.2');
   await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
-  await page.getByRole('button', { name: '完成', exact: true }).click();
+  await page.keyboard.press('Escape');
   const freeze = await page.addStyleTag({
     content: '.menu-curtain-sheet { animation-play-state: paused !important; }',
   });
@@ -157,7 +157,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: '主界面音乐' })).toBeHidden();
   await checkSound(() => gear.click(), 'settings');
-  await checkSound(click('关闭设置'), 'back');
+  await checkSound(() => gear.click(), 'back');
   await checkSound(() => gear.click(), 'settings');
   await checkSound(() => page.keyboard.press('Escape'), 'back');
 
@@ -175,7 +175,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   // Muting BGM does not mute SE, including after a reload.
   await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0');
   await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
-  await checkSound(click('完成'), 'back');
+  await checkSound(() => page.keyboard.press('Escape'), 'back');
   await page.reload();
   await checkSound(() => gear.click(), 'settings');
   await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.3');
@@ -187,7 +187,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   ).toBe(0.3);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.screenshot({ path: 'artifacts/menu-se-settings-1080p.png' });
-  await checkSound(click('完成'), 'back');
+  await checkSound(() => page.keyboard.press('Escape'), 'back');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1920, height: 1080 });
@@ -217,7 +217,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.keyboard.press('Enter');
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   const enter = (await enterGuide.boundingBox())!;
-  const gearIcon = (await gear.locator('svg').boundingBox())!;
+  const gearIcon = (await gear.locator(':scope > svg').boundingBox())!;
   expect(enter.x + enter.width).toBeCloseTo(gearIcon.x + gearIcon.width, 0);
   await page.mouse.move(10, 10);
   expect((await page.locator('.menu-control-back svg').boundingBox())!.x).toBe(

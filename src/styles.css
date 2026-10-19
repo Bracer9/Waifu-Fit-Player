@@ -2325,41 +2325,6 @@ nav button.active:after {
   right: 14px;
   top: 14px;
 }
-.modal-backdrop:has(.settings-modal) {
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding-top: 80px;
-  background: #20192330;
-  backdrop-filter: none;
-}
-.settings-modal {
-  width: min(380px, 90vw);
-  padding: 28px;
-}
-.note-speed-setting {
-  display: grid;
-  gap: 10px;
-  margin-top: 24px;
-}
-.note-speed-heading,
-.note-speed-scale {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.note-speed-heading output {
-  font-size: 24px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--pink);
-}
-.note-speed-setting input {
-  width: 100%;
-  accent-color: var(--pink);
-}
-.note-speed-scale {
-  font-size: 12px;
-}
 .help-modal {
   max-height: 90vh;
   overflow-y: auto;

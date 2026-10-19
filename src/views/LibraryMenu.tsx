@@ -63,7 +63,7 @@ export function LibraryMenu(props: Props) {
   const { page, albums, songs, albumId, songId, difficulty, seed, onAlbum, onSong, onDifficulty } =
     props;
   const scroller = useRef<HTMLDivElement>(null);
-  const { activate, handlers } = useCardHighlight();
+  const { activate, getCurrent, handlers } = useCardHighlight();
   const scrollFrame = useRef(0);
   const [confirmStart, setConfirmStart] = useState<{ song: Song; difficulty: Difficulty } | null>(
     null,
@@ -169,7 +169,7 @@ export function LibraryMenu(props: Props) {
   const move = (amount: number) => {
     const index = Math.max(
       0,
-      cards.findIndex((c) => c.id === selectedId),
+      cards.findIndex((c) => c.id === (getCurrent()?.dataset.id ?? selectedId)),
     );
     const nextId = cards[Math.max(0, Math.min(cards.length - 1, index + amount))]?.id ?? albumId;
     if (nextId === selectedId) {
@@ -181,13 +181,53 @@ export function LibraryMenu(props: Props) {
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const current = getCurrent();
+      const gear = document.querySelector<HTMLButtonElement>('.menu-settings');
       if (
+        e.defaultPrevented ||
         document.querySelector('.menu-curtain') ||
-        document.querySelector('[role="dialog"]') ||
-        /INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName) ||
-        (e.target as HTMLElement).isContentEditable
+        (document.querySelector('[role="dialog"]') && current !== gear) ||
+        target.closest('.corner-settings') ||
+        /INPUT|SELECT|TEXTAREA/.test(target.tagName) ||
+        target.isContentEditable
       )
         return;
+      const focusGear = () => {
+        activate(gear);
+        if (gear && document.activeElement !== gear) {
+          props.onSound('settings');
+          gear.focus({ preventScroll: true });
+        }
+      };
+      if (current === gear) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!e.repeat) gear?.click();
+          return;
+        }
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          if (document.querySelector('.corner-settings[data-open]')) {
+            if (e.key === 'ArrowDown')
+              document
+                .querySelector<HTMLButtonElement>(
+                  '.corner-settings [role="tab"][aria-selected="true"]',
+                )
+                ?.focus();
+          } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+            if (selectedId) {
+              props.onSound('settings');
+              select(selectedId);
+            }
+          } else focusGear();
+          return;
+        }
+      }
+      const index = Math.max(
+        0,
+        cards.findIndex((card) => card.id === (current?.dataset.id ?? selectedId)),
+      );
       if (e.key === 'Escape' || e.key === 'Backspace') {
         e.preventDefault();
         if (!e.repeat) props.onBack();
@@ -196,15 +236,29 @@ export function LibraryMenu(props: Props) {
         move(1);
       } else if (e.key === (page === 'albums' ? 'ArrowUp' : 'ArrowLeft')) {
         e.preventDefault();
-        move(-1);
+        if (page === 'albums' && index === 0) focusGear();
+        else move(-1);
+      } else if (e.key === (page === 'albums' ? 'ArrowRight' : 'ArrowUp')) {
+        e.preventDefault();
+        focusGear();
       } else if (
         e.key === 'Enter' &&
-        ((e.target as HTMLElement).tagName !== 'BUTTON' ||
-          (e.target as HTMLElement).closest('.collection-album'))
+        !target.closest('.edit-track') &&
+        (current?.matches('.collection-album, .record-card') || target.tagName !== 'BUTTON')
       ) {
         e.preventDefault();
-        if (page === 'albums') onAlbum(album.id, true);
-        else if (selected && selectedDifficulty) confirmSong(selected, selectedDifficulty);
+        if (e.repeat) return;
+        if (page === 'albums') onAlbum(current?.dataset.id ?? album.id, true);
+        else {
+          const song = inAlbum.find((song) => song.id === current?.dataset.id) ?? selected;
+          if (!song) return;
+          const choices = editionsIn(song, albumId);
+          const nextDifficulty = choices.includes(difficulty) ? difficulty : choices.at(-1);
+          if (nextDifficulty) {
+            onSong(song.id);
+            confirmSong(song, nextDifficulty);
+          }
+        }
       }
     };
     window.addEventListener('keydown', key);
@@ -424,7 +478,7 @@ export function LibraryMenu(props: Props) {
           </div>
         </>
       )}
-      <MenuControls vertical={page === 'albums'} onBack={props.onBack} />
+      <MenuControls onBack={props.onBack} />
       {confirmStart && (
         <ModalBackdrop onClose={closeConfirmation}>
           <section

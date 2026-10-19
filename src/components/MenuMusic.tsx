@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Headphones, ListMusic, Pause, Play, Repeat, Shuffle, Volume2, VolumeX } from 'lucide-react';
+import {
+  Headphones,
+  ListMusic,
+  Pause,
+  Play,
+  Repeat,
+  Shuffle,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import type { MenuMusic } from '../useMenuMusic';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
@@ -116,33 +125,6 @@ const orders = [
   { id: 'repeat', label: '单曲循环', caption: 'REPEAT', Icon: Repeat },
   { id: 'list', label: '列表循环', caption: 'SEQUENTIAL', Icon: ListMusic },
 ] as const;
-
-export function AudioVolumeControl({
-  label,
-  volume,
-  onChange,
-}: {
-  label: string;
-  volume: number;
-  onChange: (volume: number) => void;
-}) {
-  return (
-    <label className="field menu-music-volume">
-      <span>
-        {label} · {Math.round(volume * 100)}%
-      </span>
-      <input
-        aria-label={label}
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={volume}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-    </label>
-  );
-}
 
 const panelOutline = 'M3 23 23 3H977L997 23V177L977 197H518L500 215 482 197H23L3 177Z';
 
@@ -271,6 +253,15 @@ export function MenuMusicConsole({
     closeTimer.current = window.setTimeout(close, 100);
   };
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+  useEffect(() => {
+    const button = root.current?.querySelector('.headphone-button');
+    const highlight = (event: Event) => {
+      if ((event as CustomEvent<boolean>).detail) show();
+      else scheduleClose();
+    };
+    button?.addEventListener('menu-highlight-change', highlight);
+    return () => button?.removeEventListener('menu-highlight-change', highlight);
+  }, [pinned]);
   return (
     <div
       className="music-console"
@@ -299,7 +290,6 @@ export function MenuMusicConsole({
           aria-expanded={open}
           aria-pressed={pinned}
           aria-controls="theme-music-panel"
-          onPointerEnter={show}
           onPointerLeave={scheduleClose}
           onFocus={show}
           onClick={() => {

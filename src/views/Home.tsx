@@ -19,38 +19,62 @@ export function Home({
   onSound: MenuSoundPlayer;
 }) {
   const records = useRef<HTMLDivElement>(null);
-  const { activate, handlers } = useCardHighlight();
+  const { activate, getCurrent, handlers } = useCardHighlight();
+  const lastMode = useRef(0);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
+      const current = getCurrent();
+      const gear = document.querySelector<HTMLButtonElement>('.menu-settings');
+      const headphone = document.querySelector<HTMLButtonElement>('.headphone-button');
       if (
-        document.querySelector('.menu-curtain, [role="dialog"]') ||
-        target.closest('.music-console') ||
+        event.defaultPrevented ||
+        document.querySelector('.menu-curtain') ||
+        (document.querySelector('[role="dialog"]') && current !== gear) ||
+        target.closest('.corner-settings, .music-panel') ||
         /INPUT|SELECT|TEXTAREA/.test(target.tagName) ||
         target.isContentEditable
       )
         return;
-      const buttons = Array.from(records.current?.querySelectorAll('button') ?? []);
-      const index = Math.max(0, buttons.indexOf(document.activeElement as HTMLButtonElement));
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      if (
+        current === gear &&
+        document.querySelector('.corner-settings[data-open]') &&
+        event.key.startsWith('Arrow')
+      ) {
         event.preventDefault();
-        const next = Math.max(
-          0,
-          Math.min(buttons.length - 1, index + (event.key === 'ArrowRight' ? 1 : -1)),
-        );
-        activate(buttons[next] ?? null);
-        if (document.activeElement !== buttons[next]) {
+        if (event.key === 'ArrowDown')
+          document
+            .querySelector<HTMLButtonElement>('.corner-settings [role="tab"][aria-selected="true"]')
+            ?.focus();
+        return;
+      }
+      const modes = Array.from(records.current?.querySelectorAll('button') ?? []);
+      const buttons = [...modes, gear].filter((button): button is HTMLButtonElement => !!button);
+      const index = Math.max(0, buttons.indexOf(current as HTMLButtonElement));
+      if (current === modes[0] || current === modes[1])
+        lastMode.current = modes.indexOf(current as HTMLButtonElement);
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        let next: HTMLButtonElement | null = current as HTMLButtonElement | null;
+        if (event.key === 'ArrowRight')
+          next = current === headphone ? gear : buttons[Math.min(buttons.length - 1, index + 1)];
+        if (event.key === 'ArrowLeft')
+          next = current === headphone ? modes[lastMode.current] : buttons[Math.max(0, index - 1)];
+        if (event.key === 'ArrowDown') next = current === gear ? modes[1] : headphone;
+        if (event.key === 'ArrowUp') next = current === headphone ? modes[lastMode.current] : gear;
+        activate(next);
+        if (next && document.activeElement !== next) {
           onSound('settings');
-          buttons[next]?.focus({ preventScroll: true });
+          next.focus({ preventScroll: true });
         }
-      } else if (event.key === 'Enter' && target.tagName !== 'BUTTON') {
+      } else if (event.key === 'Enter' && (current || target.tagName !== 'BUTTON')) {
         event.preventDefault();
-        buttons[index]?.click();
+        if (!event.repeat) ((current as HTMLButtonElement | null) ?? modes[0])?.click();
       }
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [onSound, activate]);
+  }, [onSound, activate, getCurrent]);
   return (
     <section className="title-menu" aria-label="主菜单">
       <div className="title-brand">

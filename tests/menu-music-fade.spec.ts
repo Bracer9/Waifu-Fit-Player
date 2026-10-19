@@ -62,7 +62,7 @@ test('专辑与单曲试听往返有完整的平滑淡出淡入，快速返回�
   await page.getByRole('button', { name: '全局设置', exact: true }).click();
   await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.7');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.7');
-  await page.getByRole('button', { name: '完成', exact: true }).click();
+  await page.keyboard.press('Escape');
   await importDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();

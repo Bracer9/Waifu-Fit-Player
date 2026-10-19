@@ -42,7 +42,9 @@ import {
   PublishDialog,
   SongManager,
 } from './components/LibraryControls';
-import { AudioVolumeControl, MusicPulse } from './components/MenuMusic';
+import { MusicPulse } from './components/MenuMusic';
+import { MenuSettings, SettingsGearHalo } from './components/MenuSettings';
+import { MenuHighlightContext, useMenuHighlight } from './useCardHighlight';
 import { useMenuMusic } from './useMenuMusic';
 import { useMenuSounds } from './useMenuSounds';
 import { Player } from './views/Player';
@@ -83,6 +85,15 @@ type VideoRequest = {
 };
 
 export default function App() {
+  const menuHighlight = useMenuHighlight();
+  return (
+    <MenuHighlightContext.Provider value={menuHighlight}>
+      <AppContent menuHighlight={menuHighlight} />
+    </MenuHighlightContext.Provider>
+  );
+}
+
+function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMenuHighlight> }) {
   const [initial] = useState(() => blankChart());
   const [history, dispatch] = useReducer(historyReducer, {
     past: [],
@@ -123,6 +134,7 @@ export default function App() {
     });
   };
   const [settings, setSettings] = useState(false);
+  const menuSettingsTrigger = useRef<HTMLButtonElement>(null);
   const [seVolume, setSeVolume] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(SE_VOLUME_KEY) ?? 0.5);
@@ -721,6 +733,8 @@ export default function App() {
     <div
       className={`app ${mode === 'player' ? 'practice-app' : mode === 'editor' ? '' : 'menu-app'}`}
       data-workbench-theme={mode === 'editor' && workbenchDark ? 'dark' : undefined}
+      data-menu-settings={menuPage && settings ? 'open' : undefined}
+      {...(menuPage ? menuHighlight.handlers : {})}
     >
       <div className="ambient-shape pink" />
       <div className="ambient-shape cyan" />
@@ -728,10 +742,14 @@ export default function App() {
       {menuPage && (
         <button
           className="icon-button menu-settings"
+          ref={menuSettingsTrigger}
           aria-label="全局设置"
+          aria-expanded={settings}
+          aria-controls="menu-settings-panel"
           inert={!!menuTransition}
-          onClick={openSettings}
+          onClick={settings ? closeSettings : openSettings}
         >
+          <SettingsGearHalo />
           <Settings size={96} />
         </button>
       )}
@@ -786,14 +804,6 @@ export default function App() {
           </button>
         </nav>
         <div className="header-right">
-          <button
-            className="icon-button"
-            aria-label="全局设置"
-            title="全局设置"
-            onClick={openSettings}
-          >
-            <Settings size={18} />
-          </button>
           {mode !== 'player' && (
             <button
               className="icon-button"
@@ -1260,73 +1270,21 @@ export default function App() {
           </section>
         </ModalBackdrop>
       )}
-      {settings && (
-        <ModalBackdrop onClose={closeSettings}>
-          <section
-            className="modal settings-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="settings-title"
-          >
-            <button
-              className="modal-close icon-button"
-              aria-label="关闭设置"
-              onClick={closeSettings}
-            >
-              <X />
-            </button>
-            <h2 id="settings-title">全局设置</h2>
-            <div className="note-speed-setting">
-              <div className="note-speed-heading">
-                <label htmlFor="note-speed">音符流速</label>
-                <output htmlFor="note-speed">{noteSpeed.toFixed(1)}</output>
-              </div>
-              <input
-                id="note-speed"
-                type="range"
-                min="0.5"
-                max="10"
-                step="0.5"
-                value={noteSpeed}
-                onChange={(event) => changeNoteSpeed(Number(event.target.value))}
-              />
-              <div className="note-speed-scale" aria-hidden="true">
-                <span>0.5 · 慢</span>
-                <span>10 · 快</span>
-              </div>
-            </div>
-            <p>默认 {DEFAULT_NOTE_SPEED.toFixed(1)}。所有曲目共用，自动记住你的选择。</p>
-            <AudioVolumeControl
-              label="菜单 BGM 音量"
-              volume={menuMusic.volume}
-              onChange={menuMusic.setVolume}
-            />
-            <AudioVolumeControl
-              label="游戏／视频音量"
-              volume={status.volume}
-              onChange={media.setVolume}
-            />
-            <AudioVolumeControl
-              label="音效（SE）音量"
-              volume={seVolume}
-              onChange={changeSeVolume}
-            />
-            <div className="modal-actions">
-              <button
-                className="button light"
-                onClick={() => {
-                  playMenuSound('settings');
-                  changeNoteSpeed(DEFAULT_NOTE_SPEED);
-                }}
-              >
-                恢复默认
-              </button>
-              <button className="button primary" onClick={closeSettings}>
-                完成
-              </button>
-            </div>
-          </section>
-        </ModalBackdrop>
+      {menuPage && (
+        <MenuSettings
+          open={settings}
+          trigger={menuSettingsTrigger}
+          onClose={closeSettings}
+          onSound={playMenuSound}
+          menuVolume={menuMusic.volume}
+          onMenuVolume={menuMusic.setVolume}
+          videoVolume={status.volume}
+          onVideoVolume={media.setVolume}
+          seVolume={seVolume}
+          onSeVolume={changeSeVolume}
+          noteSpeed={noteSpeed}
+          onNoteSpeed={changeNoteSpeed}
+        />
       )}
       {manageSongs && (
         <SongManager

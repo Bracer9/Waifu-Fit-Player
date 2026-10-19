@@ -121,7 +121,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await page.getByRole('button', { name: '全局设置', exact: true }).click();
   await expect(page.getByRole('slider', { name: '菜单 BGM 音量', exact: true })).toHaveValue('0.9');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.25');
-  await page.getByRole('button', { name: '完成', exact: true }).click();
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
   await expect(page.getByRole('region', { name: '主界面音乐' })).toBeVisible();
   await page.getByRole('button', { name: /__qa_theme_a/ }).click();
@@ -228,7 +228,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   expect(wave!.x).toBeCloseTo(cards!.x, 0);
   expect(wave!.width).toBeCloseTo(cards!.width, 0);
   await expect(page.locator('.headphone-button svg')).toHaveAttribute('width', '60');
-  expect((await page.locator('.menu-settings svg').boundingBox())!.width).toBe(96);
+  expect((await page.locator('.menu-settings > svg').boundingBox())!.width).toBe(96);
   await expect(page.getByText('WAIFU FIT PLAYER — PERSONAL MUSIC COLLECTION')).toHaveCount(0);
 
   // Create a real released MP4-backed chart in this isolated browser profile.
@@ -315,7 +315,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await closeMusic(page);
   await page.getByRole('button', { name: '全局设置', exact: true }).click();
   await expect(page.getByLabel('游戏／视频音量', { exact: true })).toHaveValue('0.2');
-  await page.getByRole('button', { name: '完成', exact: true }).click();
+  await page.keyboard.press('Escape');
   await page.screenshot({ path: 'artifacts/menu-music-1080p.png' });
   const headphone = await page.getByRole('button', { name: '选择主界面 BGM' }).boundingBox();
   expect(
