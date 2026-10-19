@@ -702,6 +702,7 @@ nav button.active:after {
 }
 .player-hold {
   position: absolute;
+  z-index: 1;
   top: 50%;
   height: 27px;
   border-radius: 20px;
@@ -960,6 +961,7 @@ nav button.active:after {
   top: 50%;
   background-size: 100% 100%;
   background-repeat: no-repeat;
+  opacity: 0.5;
   will-change: transform;
 }
 .special-hold-strip {
@@ -973,7 +975,8 @@ nav button.active:after {
   width: calc(var(--special-size) * 0.88);
   height: calc(var(--special-size) * 0.88);
   background-image: url('/art/special/hold-tail.png');
-  z-index: 2;
+  /* Both trail pieces stay behind TAPs and ordinary HOLDs, including the editor preview. */
+  z-index: 0;
 }
 .special-burst {
   position: absolute;
