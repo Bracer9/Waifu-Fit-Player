@@ -243,6 +243,7 @@ export function Player({
                             ((note.endTimeMs - note.timeMs) * metrics.width * 0.88) / previewMs
                           }
                           visibleFraction={Math.max(0, right - tail) / (head - tail)}
+                          offscreenWidth={Math.max(0, (-tail * metrics.width) / 100)}
                           size={metrics.marker}
                           note={note}
                           headOpacity={headOpacity}
