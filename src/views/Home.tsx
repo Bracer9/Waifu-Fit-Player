@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { ArrowUpRight, Disc3, PencilLine } from 'lucide-react';
 import { MenuMusicConsole } from '../components/MenuMusic';
 import { MainMenuDownHint } from '../components/MainMenuDownHint';
@@ -22,6 +22,11 @@ export function Home({
   const records = useRef<HTMLDivElement>(null);
   const { activate, getCurrent, handlers } = useCardHighlight();
   const lastMode = useRef(0);
+  useLayoutEffect(() => {
+    const play = records.current?.querySelector<HTMLButtonElement>('.play-mode') ?? null;
+    activate(play);
+    play?.focus({ preventScroll: true });
+  }, [activate]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;

@@ -1,20 +1,40 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
 
 async function only(page: Page, target: Locator) {
   await expect(target).toHaveAttribute('data-highlighted', '');
   await expect(page.locator('[data-highlighted]')).toHaveCount(1);
 }
 
+test('home initially selects play and restores that selection after returning from albums or the workbench', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('.play-mode')).toBeVisible();
+  await only(page, page.locator('.play-mode'));
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.music-menu.albums')).toBeVisible();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await page.keyboard.press('Backspace');
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await only(page, page.locator('.play-mode'));
+  await page.locator('.create-mode').click();
+  await expect(page.getByRole('button', { name: '主菜单', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '主菜单', exact: true }).click();
+  await only(page, page.locator('.play-mode'));
+});
+
 test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回车切换固定和设置', async ({ page }) => {
   await page.goto('/');
-  await page.mouse.move(10, 10);
   const play = page.locator('.play-mode');
   const create = page.locator('.create-mode');
   const gear = page.getByRole('button', { name: '全局设置', exact: true });
   const headphone = page.getByRole('button', { name: '选择主界面 BGM' });
   const music = page.getByRole('region', { name: '主界面音乐' });
   await expect(headphone).toBeVisible();
+  await only(page, play);
+  await page.mouse.move(10, 10);
   await page.keyboard.press('ArrowRight');
   await only(page, create);
   await page.keyboard.press('ArrowRight');
@@ -55,6 +75,8 @@ test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回�
   await only(page, headphone);
   await expect(music).toBeVisible();
   await expect(headphone).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.theme-track').first()).toBeFocused();
+  await page.keyboard.press('ArrowUp');
   await page.keyboard.press('Enter');
   await expect(headphone).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('ArrowUp');
@@ -62,6 +84,8 @@ test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回�
   await expect(music).toBeVisible();
   await page.keyboard.press('ArrowDown');
   await only(page, headphone);
+  await expect(page.locator('.theme-track').first()).toBeFocused();
+  await page.keyboard.press('ArrowUp');
   await page.keyboard.press('Enter');
   await expect(headphone).toHaveAttribute('aria-pressed', 'false');
   await expect(music).toBeHidden();
@@ -72,6 +96,8 @@ test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回�
   await page.keyboard.press('ArrowDown');
   await only(page, headphone);
   await expect(music).toBeVisible();
+  await page.keyboard.press('ArrowUp');
+  await expect(headphone).toBeFocused();
   await page.keyboard.press('ArrowUp');
   await only(page, play);
   await expect(music).toBeHidden();
@@ -104,7 +130,12 @@ test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回�
 
 test('专辑顶端和单曲按上通往齿轮，单曲左右只选曲，鼠标与键盘可交替接管', async ({ page }) => {
   await page.goto('/');
-  await importDemo(page);
+  // Navigation does not depend on the local demo video's length or full song chart.
+  const chart = blankChart();
+  chart.title = 'Menu navigation';
+  chart.difficultyRating = 3;
+  chart.notes = [{ id: 'menu-note', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
+  await importDemo(page, chart);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByLabel('所属专辑').selectOption('touhou');

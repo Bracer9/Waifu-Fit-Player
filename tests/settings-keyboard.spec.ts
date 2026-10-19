@@ -1,0 +1,146 @@
+import { expect, test } from '@playwright/test';
+import { importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
+
+test('settings keyboard navigation adjusts shared audio and note speed on home, albums and songs', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    localStorage.setItem('waifu-menu-volume', '0.5');
+    localStorage.setItem('waifu-video-volume', '0.7');
+    localStorage.setItem('waifu-fit-player-se-volume', '0.5');
+    localStorage.setItem('waifu-fit-player-note-speed', '3');
+  });
+  await page.goto('/');
+  const gear = page.getByRole('button', { name: '全局设置', exact: true });
+  const settings = page.getByRole('dialog', { name: '全局设置', exact: true });
+  const audio = page.getByRole('tab', { name: 'AUDIO', exact: true });
+  const system = page.getByRole('tab', { name: 'SYSTEM', exact: true });
+  const menuVolume = settings.getByRole('slider', { name: '菜单 BGM 音量', exact: true });
+  const videoVolume = settings.getByRole('slider', { name: '游戏／视频音量', exact: true });
+  const seVolume = settings.getByRole('slider', { name: '音效（SE）音量', exact: true });
+  const speed = settings.getByRole('slider', { name: '音符流速', exact: true });
+  const focused = async (node: typeof menuVolume) => {
+    await expect(node).toBeFocused();
+    await expect(node).toHaveAttribute('data-settings-highlighted', '');
+    await expect(settings.locator('[data-settings-highlighted]')).toHaveCount(1);
+    await expect(node).toHaveCSS('outline-style', 'solid');
+  };
+  await expect(gear).toBeVisible();
+  await page.mouse.move(10, 10);
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await expect(gear).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(settings).toBeVisible();
+  await page.keyboard.press('ArrowDown');
+  await focused(audio);
+  await page.keyboard.press('ArrowDown');
+  await focused(menuVolume);
+  await expect(menuVolume).toHaveAttribute('data-adjusting', '');
+  await page.keyboard.press('ArrowRight');
+  await expect(menuVolume).toHaveValue('0.55');
+  await page.keyboard.press('Enter');
+  await expect(menuVolume).not.toHaveAttribute('data-adjusting');
+  await page.keyboard.press('ArrowDown');
+  await focused(videoVolume);
+  await page.keyboard.press('ArrowLeft');
+  await expect(videoVolume).toHaveValue('0.65');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowDown');
+  await focused(seVolume);
+  await page.keyboard.press('ArrowLeft');
+  await expect(seVolume).toHaveValue('0.45');
+  await page.keyboard.press('ArrowDown');
+  await focused(seVolume);
+  await page.keyboard.press('ArrowUp');
+  await focused(videoVolume);
+  await page.keyboard.press('ArrowUp');
+  await focused(menuVolume);
+  await page.keyboard.press('ArrowUp');
+  await focused(audio);
+  await page.keyboard.press('ArrowRight');
+  await focused(system);
+  await page.keyboard.press('Enter');
+  await focused(speed);
+  await page.keyboard.press('ArrowRight');
+  await expect(speed).toHaveValue('3.5');
+  await page.keyboard.press('Enter');
+  await expect(speed).not.toHaveAttribute('data-adjusting');
+  await page.keyboard.press('ArrowLeft');
+  await expect(speed).toHaveValue('3');
+  await speed.fill('10');
+  await page.keyboard.press('ArrowRight');
+  await expect(speed).toHaveValue('10');
+  await page.keyboard.press('ArrowLeft');
+  await expect(speed).toHaveValue('9.5');
+  await speed.fill('0.5');
+  await page.keyboard.press('ArrowLeft');
+  await expect(speed).toHaveValue('0.5');
+  await page.keyboard.press('ArrowUp');
+  await focused(system);
+  await page.keyboard.press('ArrowUp');
+  await expect(gear).toBeFocused();
+  await expect(settings.locator('[data-settings-highlighted]')).toHaveCount(0);
+  await page.keyboard.press('Backspace');
+  await expect(settings).toBeHidden();
+  const headphone = page.getByRole('button', { name: '选择主界面 BGM' });
+  await headphone.click();
+  const music = page.getByRole('region', { name: '主界面音乐' });
+  await expect(music.getByRole('slider', { name: '菜单 BGM 音量' })).toHaveValue('0.55');
+  await headphone.click();
+  const chart = blankChart('Settings keyboard');
+  chart.difficultyRating = 3;
+  chart.notes = [{ id: 'n', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
+  await importDemo(page, chart);
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
+  await expect(page.getByRole('button', { name: '确认发布', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '确认发布', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: '主菜单', exact: true }).click();
+  await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  for (const scene of ['albums', 'songs']) {
+    if (scene === 'songs') {
+      await page.locator('.collection-album').first().click();
+      await expect(page.locator('.menu-curtain')).toHaveCount(0);
+    }
+    await gear.click();
+    await expect(settings).toBeVisible();
+    await page.keyboard.press('ArrowDown');
+    await audio.hover();
+    await focused(audio);
+    await page.keyboard.press('ArrowDown');
+    await focused(menuVolume);
+    const before = Number(await menuVolume.inputValue());
+    await page.keyboard.press('ArrowLeft');
+    await expect(menuVolume).toHaveValue(String(Math.round((before - 0.05) * 100) / 100));
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowDown');
+    await focused(speed);
+    await system.hover();
+    await focused(system);
+    await page.keyboard.press('ArrowLeft');
+    await focused(audio);
+    // A stationary pointer over SYSTEM cannot undo the keyboard selection.
+    await expect(system).toHaveAttribute('aria-selected', 'false');
+    await page.keyboard.press('ArrowDown');
+    await focused(menuVolume);
+    await page.screenshot({ path: `artifacts/settings-keyboard-${scene}-1080p.png` });
+    await page.keyboard.press('Escape');
+    await expect(settings).toBeHidden();
+    await expect(gear).toBeFocused();
+    await expect(page.locator(`.music-menu.${scene}`)).toBeVisible();
+  }
+  expect(await page.evaluate(() => localStorage.getItem('waifu-video-volume'))).toBe('0.65');
+  expect(await page.evaluate(() => localStorage.getItem('waifu-fit-player-se-volume'))).toBe(
+    '0.45',
+  );
+  expect(errors).toEqual([]);
+});

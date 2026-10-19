@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
 
 test('右上几何设置在三页一致，悬停切换等宽标签，共享音量且不挤压主卡片', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
@@ -88,7 +89,12 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   await verifyWidth();
   await close();
   expect(await page.locator('.mode-records').boundingBox()).toEqual(cards);
-  await importDemo(page);
+  const chart = blankChart('Settings navigation');
+  chart.difficultyRating = 3;
+  chart.notes = [
+    { id: 'settings-note', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' },
+  ];
+  await importDemo(page, chart);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByLabel('所属专辑').selectOption('touhou');

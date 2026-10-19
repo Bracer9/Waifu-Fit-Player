@@ -48,6 +48,7 @@ function SettingsVolume({
           id={id}
           className="music-range"
           aria-label={label}
+          aria-description="左右调整，Enter 确认，上下切换设置项。"
           type="range"
           min="0"
           max="1"
@@ -90,6 +91,32 @@ export function MenuSettings({
 }) {
   const [tab, setTab] = useState<'audio' | 'system'>('audio');
   const root = useRef<HTMLElement>(null);
+  const selected = useRef<HTMLElement | null>(null);
+  const pointer = useRef({ x: -1, y: -1 });
+  const clearSelection = () => {
+    selected.current?.removeAttribute('data-settings-highlighted');
+    selected.current?.removeAttribute('data-adjusting');
+    selected.current = null;
+  };
+  const select = (node: HTMLElement, adjusting = true) => {
+    if (selected.current === node) return;
+    clearSelection();
+    selected.current = node;
+    node.setAttribute('data-settings-highlighted', '');
+    if (node instanceof HTMLInputElement) node.toggleAttribute('data-adjusting', adjusting);
+  };
+  const focus = (node: HTMLElement | null | undefined) => {
+    if (!node) return;
+    if (node === trigger.current) clearSelection();
+    else select(node);
+    if (document.activeElement !== node) {
+      onSound('settings');
+      node.focus({ preventScroll: true });
+    }
+  };
+  useEffect(() => {
+    if (!open) clearSelection();
+  }, [open]);
   const close = useRef(onClose);
   close.current = onClose;
   useEffect(() => {
@@ -124,6 +151,87 @@ export function MenuSettings({
       aria-modal={false}
       aria-hidden={!open}
       inert={!open}
+      onFocusCapture={(event) => select(event.target as HTMLElement)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) clearSelection();
+      }}
+      onPointerMoveCapture={(event) => {
+        if (pointer.current.x === event.clientX && pointer.current.y === event.clientY) return;
+        pointer.current = { x: event.clientX, y: event.clientY };
+        const target = event.target as HTMLElement;
+        const node =
+          target.closest<HTMLElement>('[role="tab"], input[type="range"]') ??
+          target.closest('.corner-settings-row')?.querySelector<HTMLInputElement>('input');
+        if (!node) return;
+        select(node, false);
+        node.focus({ preventScroll: true });
+      }}
+      onKeyDown={(event) => {
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(event.key))
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        const target = event.target as HTMLElement;
+        const activeTab = root.current?.querySelector<HTMLElement>(
+          '[role="tab"][aria-selected="true"]',
+        );
+        const ranges = Array.from(
+          root.current?.querySelectorAll<HTMLInputElement>(
+            '.corner-settings-pane:not([hidden]) input',
+          ) ?? [],
+        );
+        if (target.matches('[role="tab"]')) {
+          if (event.key === 'ArrowUp') focus(trigger.current);
+          else if (event.key === 'ArrowDown' || (event.key === 'Enter' && !event.repeat))
+            focus(ranges[0]);
+          else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+            focus(
+              root.current?.querySelector<HTMLElement>(
+                `#menu-settings-tab-${tab === 'audio' ? 'system' : 'audio'}`,
+              ),
+            );
+          }
+          return;
+        }
+        if (!(target instanceof HTMLInputElement)) return;
+        if (event.key === 'Enter') {
+          if (!event.repeat) {
+            target.toggleAttribute('data-adjusting');
+            onSound('settings');
+          }
+          return;
+        }
+        const index = ranges.indexOf(target);
+        if (event.key === 'ArrowUp') focus(index > 0 ? ranges[index - 1] : activeTab);
+        else if (event.key === 'ArrowDown') focus(ranges[Math.min(ranges.length - 1, index + 1)]);
+        else {
+          target.setAttribute('data-adjusting', '');
+          const speed = target.id === 'menu-note-speed';
+          const change = speed
+            ? onNoteSpeed
+            : target.id === 'settings-menu-volume'
+              ? onMenuVolume
+              : target.id === 'settings-video-volume'
+                ? onVideoVolume
+                : onSeVolume;
+          const value = speed
+            ? noteSpeed
+            : target.id === 'settings-menu-volume'
+              ? menuVolume
+              : target.id === 'settings-video-volume'
+                ? videoVolume
+                : seVolume;
+          const delta = (event.key === 'ArrowRight' ? 1 : -1) * (speed ? 0.5 : 0.05);
+          const next = Math.max(
+            Number(target.min),
+            Math.min(Number(target.max), Math.round((value + delta) * 100) / 100),
+          );
+          if (next !== value) {
+            change(next);
+            onSound('settings');
+          }
+        }
+      }}
     >
       <header className="corner-settings-heading">
         <h2>SETTINGS</h2>
@@ -143,24 +251,10 @@ export function MenuSettings({
             role="tab"
             aria-selected={tab === id}
             aria-controls={`menu-settings-${id}`}
-            onPointerEnter={() => setTab(id)}
             onFocus={() => setTab(id)}
             onClick={() => {
               setTab(id);
               onSound('settings');
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                trigger.current?.focus({ preventScroll: true });
-              } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-                event.preventDefault();
-                root.current
-                  ?.querySelector<HTMLButtonElement>(
-                    `#menu-settings-tab-${id === 'audio' ? 'system' : 'audio'}`,
-                  )
-                  ?.focus();
-              }
             }}
           >
             <Icon size={25} aria-hidden="true" />
@@ -227,6 +321,7 @@ export function MenuSettings({
                 id="menu-note-speed"
                 className="music-range"
                 aria-label="音符流速"
+                aria-description="左右每次调整 0.5，Enter 确认，上方向键返回 SYSTEM 标签。"
                 type="range"
                 min="0.5"
                 max="10"

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Headphones,
   ListMusic,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { MenuMusic } from '../useMenuMusic';
 import type { MenuSoundPlayer } from '../useMenuSounds';
+import { useMusicPanelNavigation } from '../useMusicPanelNavigation';
 
 export function MusicPulse({ music, waveform = true }: { music: MenuMusic; waveform?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -181,6 +182,7 @@ function BgmNowPlaying({
       <div className="music-progress-controls">
         <button
           className="music-play-toggle"
+          data-music-control="play"
           aria-label={music.playing ? '暂停菜单 BGM' : '播放菜单 BGM'}
           onClick={() => {
             onSound('settings');
@@ -196,6 +198,7 @@ function BgmNowPlaying({
         <input
           className="music-range"
           aria-label="菜单 BGM 进度"
+          tabIndex={-1}
           aria-valuetext={`${clock(position.time)} / ${clock(position.duration)}`}
           type="range"
           min="0"
@@ -236,30 +239,77 @@ export function MenuMusicConsole({
   const [pinned, setPinned] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const navigation = useMusicPanelNavigation({ root, panel, open, music, onSound });
+  const pendingKeyboardEntry = useRef(false);
+  const keyboardEntryFrame = useRef(0);
   const closeTimer = useRef<number | undefined>(undefined);
   const cancelClose = () => window.clearTimeout(closeTimer.current);
   const show = () => {
     cancelClose();
     setOpen(true);
   };
+  const enterFromKeyboard = () => {
+    show();
+    pendingKeyboardEntry.current = true;
+    if (open) queueKeyboardEntry();
+  };
+  const queueKeyboardEntry = () => {
+    cancelAnimationFrame(keyboardEntryFrame.current);
+    // Finish the headphone focus event and expose the panel before moving focus inside.
+    const enter = () => {
+      if (!pendingKeyboardEntry.current) return;
+      if (
+        !panel.current ||
+        panel.current.inert ||
+        getComputedStyle(panel.current).visibility !== 'visible'
+      ) {
+        keyboardEntryFrame.current = requestAnimationFrame(enter);
+        return;
+      }
+      pendingKeyboardEntry.current = false;
+      navigation.enter();
+    };
+    keyboardEntryFrame.current = requestAnimationFrame(enter);
+  };
+  useLayoutEffect(() => {
+    if (!open) {
+      pendingKeyboardEntry.current = false;
+      cancelAnimationFrame(keyboardEntryFrame.current);
+    } else if (pendingKeyboardEntry.current) queueKeyboardEntry();
+  }, [open]);
   const close = () => {
+    pendingKeyboardEntry.current = false;
     cancelClose();
     setPinned(false);
     if (panel.current?.contains(document.activeElement))
       (document.activeElement as HTMLElement)?.blur();
     setOpen(false);
   };
-  const scheduleClose = () => {
+  const armClose = () => {
     cancelClose();
     if (pinned) return;
     closeTimer.current = window.setTimeout(close, 100);
   };
-  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+  const scheduleClose = () => {
+    if (panel.current?.contains(document.activeElement)) return;
+    armClose();
+  };
+  useEffect(
+    () => () => {
+      window.clearTimeout(closeTimer.current);
+      cancelAnimationFrame(keyboardEntryFrame.current);
+    },
+    [],
+  );
   useEffect(() => {
     const button = root.current?.querySelector('.headphone-button');
     const highlight = (event: Event) => {
       if ((event as CustomEvent<boolean>).detail) show();
-      else scheduleClose();
+      else {
+        pendingKeyboardEntry.current = false;
+        navigation.release();
+        armClose();
+      }
     };
     button?.addEventListener('menu-highlight-change', highlight);
     return () => button?.removeEventListener('menu-highlight-change', highlight);
@@ -277,8 +327,20 @@ export function MenuMusicConsole({
         }
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
+        if (
+          !open &&
+          event.key === 'ArrowDown' &&
+          (event.target as HTMLElement).closest('.headphone-button')
+        ) {
+          event.preventDefault();
+          enterFromKeyboard();
+          return;
+        }
+        navigation.onKeyDown(event);
+        if (event.key === 'Escape' || event.key === 'Backspace') {
+          event.preventDefault();
           event.stopPropagation();
+          onSound('back');
           root.current?.querySelector<HTMLButtonElement>('.headphone-button')?.focus();
           close();
         }
@@ -294,7 +356,14 @@ export function MenuMusicConsole({
           aria-pressed={pinned}
           aria-controls="theme-music-panel"
           onPointerLeave={scheduleClose}
-          onFocus={show}
+          onFocus={(event) => {
+            if (
+              event.currentTarget.matches(':focus-visible') &&
+              !panel.current?.contains(event.relatedTarget)
+            )
+              enterFromKeyboard();
+            else show();
+          }}
           onClick={() => {
             onSound('settings');
             if (pinned) close();
@@ -328,7 +397,12 @@ export function MenuMusicConsole({
         inert={!open}
         onPointerEnter={show}
         onPointerLeave={scheduleClose}
-        onFocusCapture={show}
+        onFocusCapture={(event) => {
+          show();
+          navigation.onFocus(event);
+        }}
+        onPointerMoveCapture={navigation.onPointer}
+        onPointerDownCapture={navigation.onPointer}
       >
         <MusicPanelFrame />
         <div className="music-panel-columns">
@@ -340,6 +414,7 @@ export function MenuMusicConsole({
                 music.tracks.map((track, index) => (
                   <button
                     className="theme-track"
+                    data-music-control={`track-${index}`}
                     key={track.id}
                     aria-pressed={music.track?.id === track.id}
                     onClick={() => {
@@ -360,10 +435,11 @@ export function MenuMusicConsole({
           <div className="music-panel-section music-playback-settings">
             <h2 className="music-section-heading">PLAYBACK MODE</h2>
             <div className="music-order" aria-label="音乐播放方式">
-              {orders.map(({ id, label, caption, Icon }) => (
+              {orders.map(({ id, label, caption, Icon }, index) => (
                 <button
                   key={id}
                   aria-label={label}
+                  data-music-control={`order-${index}`}
                   aria-pressed={music.order === id}
                   onClick={() => {
                     onSound('settings');
@@ -379,6 +455,7 @@ export function MenuMusicConsole({
             <div className="music-volume-controls">
               <button
                 className="music-mute-toggle"
+                data-music-control="mute"
                 aria-label={music.volume === 0 ? '取消菜单 BGM 静音' : '静音菜单 BGM'}
                 aria-pressed={music.volume === 0}
                 onClick={() => {
@@ -391,6 +468,8 @@ export function MenuMusicConsole({
               <input
                 className="music-range"
                 aria-label="菜单 BGM 音量"
+                data-music-control="volume"
+                aria-description="左右调节音量，Enter 确认；确认后左移至静音，上移至播放模式。"
                 type="range"
                 min="0"
                 max="1"
