@@ -1,4 +1,5 @@
 import { parseChart, type Chart } from './model';
+import { playableChart, playRangeCrossings } from './play-range';
 
 export type Difficulty = 'normal' | 'hard';
 export const DIFFICULTIES: Difficulty[] = ['normal', 'hard'];
@@ -28,7 +29,11 @@ export function publishSong(song: Song, difficulty: Difficulty): Song {
   if (!draft.albumId || draft.albumId === 'all') throw new Error('请选择发布专辑。');
   const chart = parseChart({ ...draft.chart, songId: song.id, difficulty });
   if (!chart.videoHint.assetId) throw new Error('请先关联视频。');
-  if (!chart.notes.length && !chart.specialEvents.length) throw new Error('空谱面不能发布。');
+  if (playRangeCrossings(chart).length)
+    throw new Error('长条跨越游玩区间边界，请先定位并调整后发布。');
+  const playable = playableChart(chart);
+  if (!playable.notes.length && !playable.specialEvents.length)
+    throw new Error('游玩区间内没有动作，空谱面不能发布。');
   return {
     ...song,
     released: {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveVideo } from './local-media';
 import { audioOutputErrorMessage } from './media';
+import type { PlayRange } from './model';
 
 const files = import.meta.glob<string>('./assets/menu-bgm/*.{mp3,ogg,wav,m4a,MP3,OGG,WAV,M4A}', {
   eager: true,
@@ -37,6 +38,7 @@ export function useMenuMusic(
   previewAsset: string | undefined,
   notify: (s: string) => void,
   videoVolume: number,
+  previewRange?: PlayRange,
 ) {
   // Keep theme and preview independent. Only one element plays at a time.
   const [bgm] = useState(() => new Audio());
@@ -80,6 +82,7 @@ export function useMenuMusic(
   const active = useRef<HTMLAudioElement | null>(null);
   const manuallyPaused = useRef(false);
   const previewUrl = useRef<string | undefined>(undefined);
+  const previewBounds = useRef<{ start: number; end: number } | null>(null);
   const themeSource = useRef<{ url: string; objectUrl: string } | null>(null);
   const levels = useRef({ volume, videoVolume });
   levels.current = { volume, videoVolume };
@@ -89,6 +92,8 @@ export function useMenuMusic(
   const track = themeTracks.find((t) => t.id === selected) ?? themeTracks[0];
   const themeUrl = scene === 'theme' ? track?.url : undefined;
   const assetId = scene === 'preview' ? previewAsset : undefined;
+  const previewStart = scene === 'preview' ? (previewRange?.startMs ?? 0) / 1000 : 0;
+  const previewEnd = scene === 'preview' && previewRange ? previewRange.endMs / 1000 : undefined;
 
   const cancelFade = useCallback(() => {
     if (!fading.current) return;
@@ -126,6 +131,7 @@ export function useMenuMusic(
   );
   const clearPreview = useCallback(() => {
     preview.pause();
+    previewBounds.current = null;
     if (preview.hasAttribute('src')) {
       preview.removeAttribute('src');
       preview.load();
@@ -261,7 +267,10 @@ export function useMenuMusic(
           asset.kind === 'demo'
             ? asset.url
             : (previewUrl.current = URL.createObjectURL(asset.file));
-        preview.loop = true;
+        preview.loop = previewEnd === undefined;
+        previewBounds.current =
+          previewEnd === undefined ? null : { start: previewStart, end: previewEnd };
+        preview.currentTime = previewStart;
       } else return;
       next.volume = 0;
       active.current = next;
@@ -274,7 +283,59 @@ export function useMenuMusic(
       request.abort();
       cancelFade();
     };
-  }, [scene, themeUrl, assetId, bgm, preview, fade, clearPreview, cancelFade, play, notify]);
+  }, [
+    scene,
+    themeUrl,
+    assetId,
+    previewStart,
+    previewEnd,
+    bgm,
+    preview,
+    fade,
+    clearPreview,
+    cancelFade,
+    play,
+    notify,
+  ]);
+
+  useEffect(() => {
+    let frame = 0;
+    const guard = () => {
+      const range = previewBounds.current;
+      if (active.current === preview && range && preview.currentTime >= range.end)
+        preview.currentTime = range.start;
+    };
+    const tick = () => {
+      guard();
+      if (!preview.paused && previewBounds.current) frame = requestAnimationFrame(tick);
+    };
+    const start = () => {
+      cancelAnimationFrame(frame);
+      if (previewBounds.current) frame = requestAnimationFrame(tick);
+    };
+    const stop = () => cancelAnimationFrame(frame);
+    const position = () => {
+      if (previewBounds.current) preview.currentTime = previewBounds.current.start;
+    };
+    const repeat = () => {
+      if (active.current !== preview || !previewBounds.current) return;
+      position();
+      play();
+    };
+    preview.addEventListener('loadedmetadata', position);
+    preview.addEventListener('playing', start);
+    preview.addEventListener('pause', stop);
+    preview.addEventListener('timeupdate', guard);
+    preview.addEventListener('ended', repeat);
+    return () => {
+      cancelAnimationFrame(frame);
+      preview.removeEventListener('loadedmetadata', position);
+      preview.removeEventListener('playing', start);
+      preview.removeEventListener('pause', stop);
+      preview.removeEventListener('timeupdate', guard);
+      preview.removeEventListener('ended', repeat);
+    };
+  }, [preview, play]);
 
   useEffect(() => {
     bgm.loop = order === 'repeat' || themeTracks.length < 2;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ImagePlus, Plus, X } from 'lucide-react';
 import {
   DIFFICULTIES,
@@ -12,6 +12,9 @@ import { coverFromFile, coverFromVideo } from '../cover';
 import { MediaController } from '../media';
 import { CoverArt } from './CoverArt';
 import { ModalBackdrop } from './ModalBackdrop';
+import { playableChart, playDuration, playRangeCrossings, videoPlayRange } from '../play-range';
+import { formatTime } from '../timing';
+import { PlayRangeWarnings } from './PlayRangeFields';
 
 export function PublicationFields({
   difficulty,
@@ -297,6 +300,7 @@ export function PublishDialog({
   onPublish,
   onDifficulty,
   onClose,
+  onLocate,
 }: {
   edition: Edition;
   difficulty: Difficulty;
@@ -305,8 +309,13 @@ export function PublishDialog({
   onPublish: () => Promise<void>;
   onDifficulty: (difficulty: Difficulty) => Promise<void>;
   onClose: () => void;
+  onLocate: (id: string) => void;
 }) {
   const [working, setWorking] = useState(false);
+  const issues = useMemo(() => playRangeCrossings(edition.chart), [edition.chart]);
+  const playable = useMemo(() => playableChart(edition.chart), [edition.chart]);
+  const range = videoPlayRange(edition.chart);
+  const empty = !playable.notes.length && !playable.specialEvents.length;
   return (
     <ModalBackdrop
       onClose={() => {
@@ -347,6 +356,16 @@ export function PublishDialog({
             <option value="hard">HARD</option>
           </select>
         </label>
+        <p className="publish-range-summary">
+          游玩区间 {formatTime(range.startMs)}–{formatTime(range.endMs)} ·{' '}
+          {formatTime(playDuration(edition.chart))}
+        </p>
+        <PlayRangeWarnings issues={issues} onLocate={onLocate} />
+        {empty && !issues.length && (
+          <p className="play-range-warnings" role="alert">
+            游玩区间内没有动作，请调整区间或编写谱面。
+          </p>
+        )}
         <p>
           {updating
             ? `将替换已发布的 ${difficulty.toUpperCase()} 谱面。`
@@ -359,7 +378,7 @@ export function PublishDialog({
           </button>
           <button
             className="button primary"
-            disabled={working}
+            disabled={working || !!issues.length || empty}
             onClick={async () => {
               setWorking(true);
               try {

@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowUpRight,
@@ -17,7 +25,8 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { blankChart, parseChart, serializeChart, type Chart } from './model';
+import { blankChart, parseChart, serializeChart, type Chart, type PlayRange } from './model';
+import { playableChart } from './play-range';
 import { historyReducer } from './editing';
 import { MediaController, audioOutputErrorMessage, useMediaStatus } from './media';
 import { usePlayerPreparation } from './usePlayerPreparation';
@@ -48,7 +57,7 @@ import { MenuHighlightContext, useMenuHighlight } from './useCardHighlight';
 import { useMenuMusic } from './useMenuMusic';
 import { useMenuSounds } from './useMenuSounds';
 import { Player } from './views/Player';
-import { Editor } from './views/Editor';
+import { Editor, type EditorHandle } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
 import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
@@ -101,6 +110,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     future: [],
   });
   const chart = history.present;
+  const gameChart = useMemo(() => playableChart(chart), [chart]);
+  const editor = useRef<EditorHandle>(null);
   const [saved, setSaved] = useState(JSON.stringify(initial));
   const dirty = JSON.stringify(chart) !== saved;
   const [media] = useState(() => new MediaController());
@@ -120,6 +131,16 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     phase: 'cover' | 'reveal';
   } | null>(null);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
+  const playStart = chart.playRange?.startMs;
+  const playEnd = chart.playRange?.endMs;
+  useLayoutEffect(() => {
+    media.setPlaybackRange(
+      mode === 'player' && playStart !== undefined && playEnd !== undefined
+        ? { startMs: playStart, endMs: playEnd }
+        : null,
+    );
+    return () => media.setPlaybackRange(null);
+  }, [media, mode, source, playStart, playEnd]);
   const navigateMenu = (next: 'home' | 'albums' | 'songs') => {
     if (menuTransition || next === mode) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -205,11 +226,17 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const deletedSongs = useRef(new Set<string>());
   const [startPending, setStartPending] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<string>();
+  const [previewRange, setPreviewRange] = useState<PlayRange>();
+  const previewSong = useCallback((assetId: string | undefined, range?: PlayRange) => {
+    setPreviewAsset(assetId);
+    setPreviewRange(range);
+  }, []);
   const menuMusic = useMenuMusic(
     mode === 'home' || mode === 'albums' ? 'theme' : mode === 'songs' ? 'preview' : null,
     previewAsset,
     notify,
     status.volume,
+    previewRange,
   );
   const playMenuSound = useMenuSounds(seVolume);
   const openSettings = () => {
@@ -885,7 +912,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   enterEditor();
                 }}
                 onPlay={playSong}
-                onPreview={setPreviewAsset}
+                onPreview={previewSong}
                 onEdit={(song, d) => {
                   playMenuSound('mode');
                   editSong(song, d, true);
@@ -974,10 +1001,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           </div>
           <div className="stage-grid">
             <div className="stage-left">
-              {mode === 'player' && <PracticeCover chart={chart} media={media} />}
+              {mode === 'player' && <PracticeCover chart={gameChart} media={media} />}
               {(mode === 'editor' || mode === 'player') && (
                 <Player
-                  chart={chart}
+                  chart={mode === 'player' ? gameChart : chart}
                   media={media}
                   showGuide={mode === 'editor'}
                   noteSpeed={noteSpeed}
@@ -1042,7 +1069,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   </span>
                   <span>VIDEO + MUSIC</span>
                 </div>
-                {mode === 'player' && <Transport media={media} notify={notify} />}
+                {mode === 'player' && (
+                  <Transport media={media} notify={notify} playRange={chart.playRange} />
+                )}
               </section>
             </div>
             {mode === 'player' && <div className="album-hinge" aria-hidden="true" />}
@@ -1050,6 +1079,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           {mode !== 'player' && <Transport media={media} notify={notify} />}
           {mode === 'editor' && (
             <Editor
+              ref={editor}
               key={projectRevision}
               chart={chart}
               media={media}
@@ -1321,6 +1351,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
             setPublishing(false);
           }}
           onPublish={publish}
+          onLocate={(id) => {
+            setPublishing(false);
+            editor.current?.locateEvent(id);
+          }}
           onDifficulty={(difficulty) => updatePublication({ difficulty })}
         />
       )}

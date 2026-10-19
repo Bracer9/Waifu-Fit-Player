@@ -44,6 +44,8 @@ flowchart LR
 
 **BPM 检测**：`BpmDetectButton.tsx` 按需启动 `bpm.worker.ts`，用打包到本地的 Mediabunny 按块读取、解码当前 MP4 的音轨；不播放音频、不解码视频。只分析当前节拍段内最多 90 秒，以三频段能量起音包络与自相关估计速度，逐块释放音频样本，读取缓存限 8 MiB。成功后通过原 `onChange` 更新当前段 BPM 并进入撤销历史；不修改锚点、音符或共享视频时钟。换视频、换段、改 BPM、关闭面板时终止 Worker，失败不覆盖原值。
 
+**游玩区间**：Chart 可选 `playRange: { startMs, endMs }` 使用原视频的绝对毫秒，保持 schemaVersion 1；缺省为完整视频，由 `parseChart` 校验整数、顺序和媒体边界。草稿与发布快照均保留全部事件及区间；`play-range.ts` 将区间加上 `videoOffsetMs` 后筛选 `[start, end)` 内的事件，供音游显示、连击、卡路里及选曲统计使用，不改写事件时间。HOLD／SWAY／SPECIAL 长条必须完整位于区间内，跨边界时发布阻止并可定位；完全在外的事件忽略。工作台“曲目”设置区间并在时间轴映射终点红线，仍可编辑完整媒体；发布弹窗显示实际范围。`MediaController.setPlaybackRange` 仅在音游启用，以同一 video.currentTime 限制跳转、起播和终点暂停，工作台循环独立。音游进度显示区间内的相对时长；单曲试听在原有 Audio 上循环当前已加载音源的区间，换曲淡出期间仍保留旧音源边界。
+
 **曲库与发布**：`library.ts` 定义 Song、Edition、Album 及原子读改写；`useLibrary.ts` 持有菜单数据。每首 Song 有 Normal / Hard 两个独立草稿槽与两个发布槽，Edition 保存谱面、专辑归属、曲绘和更新时间。发布校验并深复制所选草稿，只替换该难度的发布槽；音游模式加载发布版，禁用草稿自动保存。撤下发布保留草稿；彻底删除清除整首记录及不再被其他谱面引用的视频关联，不操作磁盘原文件。
 
 `Home.tsx` / `LibraryMenu.tsx` 呈现主菜单、纵向专辑与横向单曲选择，`LibraryControls.tsx` 提供编辑器发布字段和管理弹窗。选曲状态由 App 保留。封面压缩为小图，未指定曲绘时取视频帧；专辑未指定封面时从成员曲绘选取，会话内稳定。菜单显示静态封面，不挂载游戏轨道。IndexedDB `waifu-fit-player-library` 存 songs / albums，原视频库保持不变。

@@ -72,6 +72,8 @@ export type Note = {
 } & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
 export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '4/4' | '3/4' };
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
+/** Absolute video positions, independent of the chart's video/audio offset. */
+export type PlayRange = { startMs: number; endMs: number };
 export type Chart = {
   schemaVersion: 1;
   songId?: string;
@@ -79,6 +81,7 @@ export type Chart = {
   difficultyRating?: number;
   title: string;
   videoOffsetMs?: number;
+  playRange?: PlayRange;
   videoHint: { fileName: string; durationMs: number; assetId?: string };
   specialMove: { name: string; icon: 'heart' | 'star' | 'sparkles'; previewBeats: number } | null;
   tempoSegments: TempoSegment[];
@@ -275,6 +278,18 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     if (!Number.isInteger(value) || Number(value) < 0 || Number(value) > limit)
       errors.push(`${label}：时间必须为视频范围内的非负整数毫秒。`);
   };
+  if (input.playRange !== undefined) {
+    const range = input.playRange;
+    if (
+      !record(range) ||
+      !Number.isInteger(range.startMs) ||
+      !Number.isInteger(range.endMs) ||
+      Number(range.startMs) < 0 ||
+      Number(range.endMs) <= Number(range.startMs) ||
+      Number(range.endMs) > limit
+    )
+      errors.push('游玩区间无效：起止位置必须为视频范围内的整数毫秒，终点必须晚于起点。');
+  }
   if (!Array.isArray(input.tempoSegments) || !input.tempoSegments.length)
     errors.push('至少需要一个节拍段。');
   else {

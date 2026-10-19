@@ -159,6 +159,58 @@ describe('工作台区间循环', () => {
   });
 });
 afterEach(() => vi.unstubAllGlobals());
+describe('published playback range', () => {
+  it('seeks to the range start, stops video/audio at its end, and replays from its start', async () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.paused = true;
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setPlaybackRange({ startMs: 5000, endMs: 15000 });
+    expect(video.currentTime).toBe(5);
+    media.seek(2000);
+    expect(video.currentTime).toBe(5);
+    await media.toggle();
+    video.currentTime = 15.08;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(video.currentTime).toBe(15);
+    expect(video.paused).toBe(true);
+    expect(media.getTime()).toBe(15000);
+    expect(media.getStatus().playing).toBe(false);
+    await media.toggle();
+    expect(video.currentTime).toBe(5);
+    expect(video.paused).toBe(false);
+    media.attach(null);
+  });
+  it('initializes a newly loaded video and allows the entire source again in the editor', () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.paused = true;
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setPlaybackRange({ startMs: 5000, endMs: 15000 });
+    video.currentTime = 0;
+    video.dispatchEvent(new Event('loadedmetadata'));
+    expect(video.currentTime).toBe(5);
+    media.setPlaybackRange(null);
+    media.seek(20000);
+    expect(video.currentTime).toBe(20);
+    media.attach(null);
+  });
+  it('never loops a published range even while the editor loop cleanup is pending', () => {
+    const media = new MediaController(),
+      video = new Video();
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setLoopRange({ startMs: 2000, endMs: 4000 });
+    media.setPlaybackRange({ startMs: 5000, endMs: 10000 });
+    video.currentTime = 10.1;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(video.currentTime).toBe(10);
+    expect(video.paused).toBe(true);
+    video.ended = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(video.paused).toBe(true);
+    media.attach(null);
+  });
+});
 let frameTime = 0;
 function frame(timestamp = (frameTime += 1000 / 60)) {
   const next = [...callbacks.values()];

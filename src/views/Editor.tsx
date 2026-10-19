@@ -1,10 +1,12 @@
 import {
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
 import {
   ArrowLeftRight,
@@ -81,6 +83,10 @@ import { NoteGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Gly
 import { checkStepPositions } from '../stepping';
 import { ArmActionPicker, ArmHandPicker } from '../components/ArmPicker';
 import { BpmDetectButton } from '../components/BpmDetectButton';
+import { PlayRangeFields } from '../components/PlayRangeFields';
+import { chartPlayRange } from '../play-range';
+
+export type EditorHandle = { locateEvent: (id: string) => void };
 
 type Props = {
   chart: Chart;
@@ -93,6 +99,7 @@ type Props = {
   canRedo: boolean;
   notify: (text: string) => void;
   publication?: ReactNode;
+  ref?: Ref<EditorHandle>;
 };
 type Drag = {
   mode: 'move' | 'start' | 'end' | 'extend' | 'draw' | 'marquee';
@@ -201,6 +208,7 @@ export function Editor({
   canRedo,
   notify,
   publication,
+  ref,
 }: Props) {
   const time = chartTimeAt(chart, useTime(media)),
     status = useMediaStatus(media);
@@ -260,7 +268,22 @@ export function Editor({
     specials: [],
   });
   const px = zoom / 1000,
-    width = Math.max(duration * px + LABEL + 60, viewport);
+    width = Math.max(
+      Math.max(duration, chart.playRange ? chartPlayRange(chart).endMs : 0) * px + LABEL + 60,
+      viewport,
+    );
+  const locateEvent = (id: string) => {
+    const event =
+      chart.notes.find((note) => note.id === id) ??
+      chart.specialEvents.find((event) => event.id === id);
+    if (!event) return;
+    media.pause();
+    media.seek(videoTimeAt(chart, event.timeMs));
+    setSelected([id]);
+    setTab('note');
+    if (scrollRef.current) scrollRef.current.scrollLeft = Math.max(0, event.timeMs * px - 160);
+  };
+  useImperativeHandle(ref, () => ({ locateEvent }));
   const shown = draft || chart;
   const stepIssues = useMemo(() => checkStepPositions(shown), [shown]);
   const pickLane = (newLane: Lane) => {
@@ -1171,6 +1194,16 @@ export function Editor({
                   </span>
                 </div>
               ))}
+              {chart.playRange && (
+                <div
+                  className="play-range-end"
+                  role="img"
+                  aria-label={`游玩终点 ${formatTime(chart.playRange.endMs, true)}`}
+                  style={{ left: LABEL + chartPlayRange(chart).endMs * px }}
+                >
+                  <span>终点 {formatTime(chart.playRange.endMs)}</span>
+                </div>
+              )}
               {shown.notes.map((n) =>
                 renderEvent(
                   n,
@@ -1580,6 +1613,19 @@ export function Editor({
                   label="作品名称"
                   value={chart.title}
                   onCommit={(title) => onChange({ ...chart, title })}
+                />
+                <PlayRangeFields
+                  chart={chart}
+                  media={media}
+                  durationMs={status.durationMs || chart.videoHint.durationMs}
+                  onChange={(playRange) => {
+                    const next = { ...chart };
+                    if (playRange) next.playRange = playRange;
+                    else delete next.playRange;
+                    onChange(next);
+                  }}
+                  onLocate={locateEvent}
+                  notify={notify}
                 />
                 {publication}
                 <NumberField

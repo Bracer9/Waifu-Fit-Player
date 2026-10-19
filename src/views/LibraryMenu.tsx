@@ -7,6 +7,8 @@ import { ModalBackdrop } from '../components/ModalBackdrop';
 import { MenuControls } from '../components/MenuControls';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
+import { playableChart, playDuration } from '../play-range';
+import type { PlayRange } from '../model';
 import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
@@ -55,7 +57,7 @@ type Props = {
   onSound: MenuSoundPlayer;
   onCreate: () => void;
   onPlay: (song: Song, difficulty: Difficulty) => void;
-  onPreview: (assetId: string | undefined) => void;
+  onPreview: (assetId: string | undefined, range?: PlayRange) => void;
   onEdit: (song: Song, difficulty: Difficulty) => void;
 };
 
@@ -95,7 +97,8 @@ export function LibraryMenu(props: Props) {
       new Map(
         songs.flatMap((song) =>
           Object.values(song.released).map(
-            ({ chart }) => [chart, createCalorieIndex(chart.notes).at(-1)?.kcal ?? 0] as const,
+            ({ chart }) =>
+              [chart, createCalorieIndex(playableChart(chart).notes).at(-1)?.kcal ?? 0] as const,
           ),
         ),
       ),
@@ -106,7 +109,11 @@ export function LibraryMenu(props: Props) {
   const edition =
     selected && selectedDifficulty ? selected.released[selectedDifficulty] : undefined;
   const previewAsset = page === 'songs' ? edition?.chart.videoHint.assetId : undefined;
-  useEffect(() => props.onPreview(previewAsset), [previewAsset, props.onPreview]);
+  const previewRange = page === 'songs' ? edition?.chart.playRange : undefined;
+  useEffect(
+    () => props.onPreview(previewAsset, previewRange),
+    [previewAsset, previewRange, props.onPreview],
+  );
   const cards = page === 'albums' ? albums : inAlbum;
   const selectedId = page === 'albums' ? album.id : selected?.id;
 
@@ -425,7 +432,7 @@ export function LibraryMenu(props: Props) {
                         <small>BPM</small> {release.chart.tempoSegments[0]?.bpm ?? '—'}
                       </span>
                       <span>
-                        <small>TIME</small> {formatTime(release.chart.videoHint.durationMs)}
+                        <small>TIME</small> {formatTime(playDuration(release.chart))}
                       </span>
                     </span>
                   </span>
