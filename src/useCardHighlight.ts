@@ -28,7 +28,7 @@ export function useMenuHighlight() {
     if (!(target instanceof Element)) return null;
     const card =
       target.closest<HTMLElement>(cards) ??
-      (target.closest('.music-console')
+      (target.closest('.music-panel, .music-panel-bridge')?.closest('.music-console[data-open]')
         ? root.querySelector<HTMLElement>('.headphone-button')
         : null) ??
       (target.closest('.corner-settings')

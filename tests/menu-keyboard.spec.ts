@@ -7,6 +7,37 @@ async function only(page: Page, target: Locator) {
   await expect(page.locator('[data-highlighted]')).toHaveCount(1);
 }
 
+test('headphone opens only over its button or through keyboard selection; the open bridge still works', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const headphone = page.getByRole('button', { name: '选择主界面 BGM' });
+  const music = page.getByRole('region', { name: '主界面音乐' });
+  const button = (await headphone.boundingBox())!;
+  const consoleBox = (await page.locator('.music-console').boundingBox())!;
+  for (const [x, y] of [
+    [consoleBox.x + consoleBox.width / 2, consoleBox.y + 12],
+    [consoleBox.x + 30, button.y + button.height / 2],
+    [consoleBox.x + consoleBox.width - 30, button.y + button.height / 2],
+    [button.x + button.width / 2, button.y + button.height + 6],
+  ]) {
+    await page.mouse.move(x, y);
+    await expect(headphone).toHaveAttribute('aria-expanded', 'false');
+    await expect(music).toBeHidden();
+  }
+  await headphone.hover();
+  await expect(music).toBeVisible();
+  await page.locator('.music-panel-bridge').hover();
+  await expect(headphone).toHaveAttribute('aria-expanded', 'true');
+  await music.hover();
+  await expect(music).toBeVisible();
+  await page.locator('.play-mode').hover();
+  await expect(music).toBeHidden();
+  await page.keyboard.press('ArrowDown');
+  await expect(music).toBeVisible();
+  await expect(page.locator('.theme-track').first()).toBeFocused();
+});
+
 test('home initially selects play and restores that selection after returning from albums or the workbench', async ({
   page,
 }) => {
