@@ -20,13 +20,26 @@ describe('chart calorie estimate', () => {
   it('accrues only the elapsed hold portion and does not award its tail twice', () => {
     const index = createCalorieIndex([squatHold]);
     expect(caloriesAt(index, 1000)).toBeCloseTo(0.1242);
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.2898);
-    expect(caloriesAt(index, 5000)).toBeCloseTo(0.4554);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.414);
+    expect(caloriesAt(index, 5000)).toBeCloseTo(0.7038);
     expect(caloriesAt(index, 60000)).toBe(caloriesAt(index, 5000));
     // A paused frame and a backward seek are lookups, not additional exercise.
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.2898);
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.2898);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.414);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.414);
     expect(caloriesAt(index, 0)).toBe(0);
+  });
+
+  it('weights a sustained static squat above sway without changing arrival or standing effort', () => {
+    const hold: Note = { ...squatHold, endTimeMs: 11000 };
+    const sway: Note = { ...hold, modifier: 'sway' };
+    const holdIndex = createCalorieIndex([hold]);
+    const swayIndex = createCalorieIndex([sway]);
+    expect(caloriesAt(holdIndex, 1000)).toBeCloseTo(0.1242);
+    expect(caloriesAt(swayIndex, 1000)).toBeCloseTo(0.1242);
+    expect(total([hold])).toBeCloseTo(1.5732);
+    expect(total([sway])).toBeCloseTo(1.3662);
+    expect(total([{ ...hold, direction: 'up' }])).toBeCloseTo(0.0621);
+    expect(total([{ ...sway, direction: 'up' }])).toBeCloseTo(0.0621);
   });
 
   it('combines overlapping lanes and removes each hold rate at its own ending', () => {
@@ -45,10 +58,10 @@ describe('chart calorie estimate', () => {
     ];
     const before = structuredClone(notes);
     const index = createCalorieIndex(notes);
-    expect(caloriesAt(index, 2000)).toBeCloseTo(0.214452);
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.369702);
-    expect(caloriesAt(index, 4000)).toBeCloseTo(0.475272);
-    expect(caloriesAt(index, 5000)).toBeCloseTo(0.558072);
+    expect(caloriesAt(index, 2000)).toBeCloseTo(0.276552);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.493902);
+    expect(caloriesAt(index, 4000)).toBeCloseTo(0.661572);
+    expect(caloriesAt(index, 5000)).toBeCloseTo(0.806472);
     expect(notes).toEqual(before);
   });
 
