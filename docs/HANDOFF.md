@@ -10,7 +10,7 @@
 
 ## 易回退的约定
 
-- **数据**：Normal / Hard 各自有 draft 和 released 快照。编辑不影响成品，发布只替换所选难度；撤下保留草稿，彻底删除也不删除用户磁盘原视频。入口在 `library.ts`、`useLibrary.ts`、`LibraryControls.tsx`。
+- **数据**：FITNESS / 健身与 DANCE / 舞蹈各自有 draft 和 released 快照。健身由作者标注低／中／高运动强度，舞蹈保留数值难度。IndexedDB v2 原子迁移旧 Normal→fitness、Hard→dance；旧 JSON 在模型入口兼容，无类型默认 dance。旧数值保存在 `danceDifficulty`，不推断 `intensity`。音符、区间、视频关联、曲绘和更新时间保持原样，上次草稿指针在恢复时迁移。编辑不影响成品，发布只替换所选类型；撤下保留草稿，彻底删除也不删除用户磁盘原视频。入口在 `chart-types.ts`、`library.ts`、`useLibrary.ts`、`LibraryControls.tsx`。
 - **游戏**：共享 video 是唯一媒体时钟；音符是绝对毫秒，`chartTime = videoTime + videoOffsetMs`。节拍段 offset 只管网格，不能拿来移动音轨。菜单／编辑器样式调整不能误伤游戏画面和音画性能。MP4 录屏导出已被用户明确废弃并删除，不要恢复。
 - **音乐**：菜单 BGM、游戏／视频、SE 是三个独立音量，SE 默认 50%。试听直接用 MP4 音轨。当前 BGM 的完整压缩文件保留为 Blob URL，试听期间不释放；这是修复停留约 20～25 秒后返回无声的关键。菜单两个 Audio 共用一个 AudioContext／Analyser，只有一个音源在播放；不要把单曲页误判为应暂停 AudioContext。
 - **视觉**：主页两张卡片自行规律悬浮，不跟 BGM；背景粉／蓝色块跟随当前音乐，单曲页跟试听。转场必须先完整遮住旧页，再换页、揭幕。延续现有 Pop Art，不擅自加功能区或换风格。

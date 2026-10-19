@@ -4,7 +4,7 @@
 
 ## 系统范围
 
-React + TypeScript + Vite 本地浏览器应用，无业务后端。主菜单分音游模式与创作模式：前者经专辑、单曲及难度选择进入跟练，后者直接进入谱面工作台。一个作品由谱面 JSON 与关联的本地视频组成；工作台和跟练共用同一个 `<video>`，游玩声音直接来自视频。
+React + TypeScript + Vite 本地浏览器应用，无业务后端。主菜单分音游模式与创作模式：前者经专辑、单曲及谱面类型选择进入跟练，后者直接进入谱面工作台。FITNESS 健身谱以节奏锻炼为主，DANCE 舞蹈谱以视频舞步联动为主。一个作品由谱面 JSON 与关联的本地视频组成；工作台和跟练共用同一个 `<video>`，游玩声音直接来自视频。
 
 ```mermaid
 flowchart LR
@@ -21,18 +21,18 @@ flowchart LR
 
 ## 模块与状态归属
 
-| 位置                                                                                               | 职责与持有的状态                                                                                        |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [App.tsx](../src/App.tsx)                                                                          | 当前作品、撤销历史、保存状态、视频来源、页面切换；协调打开、保存、草稿恢复和视频授权。                  |
-| [model.ts](../src/model.ts)、[editing.ts](../src/editing.ts)                                       | 谱面类型、解析／序列化、编辑变换和历史 reducer。业务规则尽量放在这些可独立测试的函数中。                |
-| [Editor.tsx](../src/views/Editor.tsx)、[recording.ts](../src/recording.ts)                         | 时间轴交互、属性编辑与录谱；选择、缩放、拖动预览等为编辑器临时状态，不写入谱面。                        |
-| [media.ts](../src/media.ts)、[timing.ts](../src/timing.ts)                                         | 控制实际视频，发布时间／播放状态，处理循环；提供媒体时间与谱面时间换算、编谱网格和吸附。                |
-| [Player.tsx](../src/views/Player.tsx)、`components/`                                               | 从谱面与当前媒体时间计算画面；音符、长条与特效组件负责呈现。`combo.ts`、`special.ts` 等提供计算规则。   |
-| [local-media.ts](../src/local-media.ts)                                                            | 视频预检、关联解析、文件句柄／文件的 IndexedDB 存储和访问权限恢复。对象 URL 的当前生命周期由 App 管理。 |
-| [usePlayerPreparation.ts](../src/usePlayerPreparation.ts)、[asset-cache.ts](../src/asset-cache.ts) | 前者提供本曲资源清单并协调视频就绪；后者共享图片解码、字体加载任务和成功结果，失败项可重试。            |
-| [library.ts](../src/library.ts)、[useLibrary.ts](../src/useLibrary.ts) | 本地曲库、Normal / Hard 草稿与发布快照、专辑及曲绘；向菜单提供已发布作品。 |
-| [Home.tsx](../src/views/Home.tsx)、[LibraryMenu.tsx](../src/views/LibraryMenu.tsx)、[useCardHighlight.ts](../src/useCardHighlight.ts) | 菜单布局与导航、专辑滚动对焦、最近输入目标的唯一流光；曲目选择仍由 App 保留。 |
-| [useMenuMusic.ts](../src/useMenuMusic.ts)、[MenuMusic.tsx](../src/components/MenuMusic.tsx)、[useMenuSounds.ts](../src/useMenuSounds.ts) | 主题 BGM、单曲试听及淡入淡出、共享频谱与菜单律动、独立 SE 播放；不接管游戏媒体时钟。 |
+| 位置                                                                                                                                     | 职责与持有的状态                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [App.tsx](../src/App.tsx)                                                                                                                | 当前作品、撤销历史、保存状态、视频来源、页面切换；协调打开、保存、草稿恢复和视频授权。                  |
+| [model.ts](../src/model.ts)、[editing.ts](../src/editing.ts)                                                                             | 谱面类型、解析／序列化、编辑变换和历史 reducer。业务规则尽量放在这些可独立测试的函数中。                |
+| [Editor.tsx](../src/views/Editor.tsx)、[recording.ts](../src/recording.ts)                                                               | 时间轴交互、属性编辑与录谱；选择、缩放、拖动预览等为编辑器临时状态，不写入谱面。                        |
+| [media.ts](../src/media.ts)、[timing.ts](../src/timing.ts)                                                                               | 控制实际视频，发布时间／播放状态，处理循环；提供媒体时间与谱面时间换算、编谱网格和吸附。                |
+| [Player.tsx](../src/views/Player.tsx)、`components/`                                                                                     | 从谱面与当前媒体时间计算画面；音符、长条与特效组件负责呈现。`combo.ts`、`special.ts` 等提供计算规则。   |
+| [local-media.ts](../src/local-media.ts)                                                                                                  | 视频预检、关联解析、文件句柄／文件的 IndexedDB 存储和访问权限恢复。对象 URL 的当前生命周期由 App 管理。 |
+| [usePlayerPreparation.ts](../src/usePlayerPreparation.ts)、[asset-cache.ts](../src/asset-cache.ts)                                       | 前者提供本曲资源清单并协调视频就绪；后者共享图片解码、字体加载任务和成功结果，失败项可重试。            |
+| [library.ts](../src/library.ts)、[useLibrary.ts](../src/useLibrary.ts)、[chart-types.ts](../src/chart-types.ts)                          | 本地曲库、FITNESS / DANCE 草稿与发布快照、类型及评级元数据、专辑及曲绘；向菜单提供已发布作品。          |
+| [Home.tsx](../src/views/Home.tsx)、[LibraryMenu.tsx](../src/views/LibraryMenu.tsx)、[useCardHighlight.ts](../src/useCardHighlight.ts)    | 菜单布局与导航、专辑滚动对焦、最近输入目标的唯一流光；曲目选择仍由 App 保留。                           |
+| [useMenuMusic.ts](../src/useMenuMusic.ts)、[MenuMusic.tsx](../src/components/MenuMusic.tsx)、[useMenuSounds.ts](../src/useMenuSounds.ts) | 主题 BGM、单曲试听及淡入淡出、共享频谱与菜单律动、独立 SE 播放；不接管游戏媒体时钟。                    |
 
 播放时间通过媒体订阅直接进入需要它的视图，不写回谱面历史。编辑器卸载后临时工具状态会重置；谱面、历史和实际视频仍由 App 保留。
 
@@ -40,17 +40,21 @@ flowchart LR
 
 **打开作品**：解析 JSON → 按 `videoHint.assetId` 查找本地视频关联 → 必要时授权或重新定位 → 视频元数据预检与谱面校验 → 一起安装谱面和视频来源 → 等待图片解码、字体及实际视频可播放 → 允许播放。关联或预检失败不替换原作品；安装后的资源准备失败停在可重试界面。预检用的临时 video 不播放，不参与游戏计时。
 
-**编辑与保存**：操作生成新的 Chart → history reducer 提交／撤销／重做 → 工作台及试玩读取当前草稿。拖动仅更新预览，松开提交历史。编辑后防抖 650 ms 自动存草稿，Ctrl+S 立即存；JSON 下载用于备份，包含可选 `songId` / `difficulty`，仍为 schemaVersion 1。localStorage 只存上次草稿指针与偏好；旧版单份草稿首次进入创作模式时迁移，成功后移除旧记录。
+**编辑与保存**：操作生成新的 Chart → history reducer 提交／撤销／重做 → 工作台及试玩读取当前草稿。拖动仅更新预览，松开提交历史。编辑后防抖 650 ms 自动存草稿，Ctrl+S 立即存；JSON 下载用于备份，包含可选 `songId`、`chartType`（fitness / dance）、`intensity`（low / medium / high）、`danceDifficulty`（非负数），仍为 schemaVersion 1。两种评级互相独立，切换类型保留另一评级的值。localStorage 只存上次草稿指针 `{id, chartType}` 与偏好；旧版单份草稿首次进入创作模式时迁移，成功后移除旧记录。
 
 **BPM 检测**：`BpmDetectButton.tsx` 按需启动 `bpm.worker.ts`，用打包到本地的 Mediabunny 按块读取、解码当前 MP4 的音轨；不播放音频、不解码视频。只分析当前节拍段内最多 90 秒，以三频段能量起音包络与自相关估计速度，逐块释放音频样本，读取缓存限 8 MiB。成功后通过原 `onChange` 更新当前段 BPM 并进入撤销历史；不修改锚点、音符或共享视频时钟。换视频、换段、改 BPM、关闭面板时终止 Worker，失败不覆盖原值。
 
 **游玩区间**：Chart 可选 `playRange: { startMs, endMs }` 使用原视频的绝对毫秒，保持 schemaVersion 1；缺省为完整视频，由 `parseChart` 校验整数、顺序和媒体边界。草稿与发布快照均保留全部事件及区间；`play-range.ts` 将区间加上 `videoOffsetMs` 后筛选 `[start, end)` 内的事件，供音游显示、连击、卡路里及选曲统计使用，不改写事件时间。HOLD／SWAY／SPECIAL 长条必须完整位于区间内，跨边界时发布阻止并可定位；完全在外的事件忽略。工作台“曲目”设置区间并在时间轴映射终点红线，仍可编辑完整媒体；发布弹窗显示实际范围。`MediaController.setPlaybackRange` 仅在音游启用，以同一 video.currentTime 限制跳转、起播和终点暂停，工作台循环独立。音游进度显示区间内的相对时长；单曲试听在原有 Audio 上循环当前已加载音源的区间，换曲淡出期间仍保留旧音源边界。
 
-**曲库与发布**：`library.ts` 定义 Song、Edition、Album 及原子读改写；`useLibrary.ts` 持有菜单数据。每首 Song 有 Normal / Hard 两个独立草稿槽与两个发布槽，Edition 保存谱面、专辑归属、曲绘和更新时间。发布校验并深复制所选草稿，只替换该难度的发布槽；音游模式加载发布版，禁用草稿自动保存。撤下发布保留草稿；彻底删除清除整首记录及不再被其他谱面引用的视频关联，不操作磁盘原文件。
+**曲库与发布**：`library.ts` 定义 Song、Edition、Album 及原子读改写；`useLibrary.ts` 持有菜单数据。每首 Song 有 FITNESS / DANCE 两个独立草稿槽与两个发布槽，Edition 保存谱面、专辑归属、曲绘和更新时间。发布校验并深复制所选草稿，只替换该类型的发布槽；音游模式加载发布版，禁用草稿自动保存。撤下发布保留草稿；彻底删除清除整首记录及不再被其他谱面引用的视频关联，不操作磁盘原文件。
+
+**谱面类型迁移**：`chart-types.ts` 集中兼容旧 `difficulty: normal / hard` 与 `difficultyRating`。JSON 解析转为 `chartType: fitness / dance`、`danceDifficulty`，无类型旧谱默认 dance；导出只写新字段。健身强度不从旧数值猜测，未标注显示 `—`。曲库 IndexedDB v2 升级事务逐条迁移 draft / released，槽名决定类型，保留全部谱面内容、曲绘、视频 ID、区间和时间戳；若新旧槽并存，已有新槽优先。恢复草稿时同时迁移旧 `{id, difficulty}` 指针，避免丢失上次编辑位置。
 
 `Home.tsx` / `LibraryMenu.tsx` 呈现主菜单、纵向专辑与横向单曲选择，`LibraryControls.tsx` 提供编辑器发布字段和管理弹窗。选曲状态由 App 保留。封面压缩为小图，未指定曲绘时取视频帧；专辑未指定封面时从成员曲绘选取，会话内稳定。菜单显示静态封面，不挂载游戏轨道。IndexedDB `waifu-fit-player-library` 存 songs / albums，原视频库保持不变。
 
-专辑列表保留原生滚动吸附，首尾留白随列表高度调整，使第一张和最后一张也可居中。按卡片距可视区中心的距离连续对焦：中心为 100%，相邻约 96%；仅封面轻微降饱和及最多 1.4px 模糊，文字和黑边保持清晰。滚动事件每帧最多处理一次，先读取位置再写样式；只在中心所属卡片变化时更新选中状态。点击的 240ms 展开与原有幕布同时进行，不延迟换页；键盘、鼠标点击和返回位置延续原有逻辑，减少动态效果时关闭缩放与模糊。
+**开始确认**：`StartBriefing.tsx` 使用所选发布快照，切换类型同时更新 App 的真实选曲／试听状态。`start-briefing.ts` 集中充能参数及动作构成统计：仅计算游玩区间内 Notes 数量，HOLD／SWAY 各计一个音符，高亮前两类及占比至少 15% 的第三类；图标复用游戏轨道 `LaneGlyph`。作者只读取已有可选 `artist`／`author` 元数据，缺失标为未标注，不扩展 Chart 格式。按住 Enter 或主鼠标键约 1150ms 充能，单一 RAF 只写 CSS 进度变量；松开 180ms 回退，失焦／取消／卸载清理，首次打开的 Enter 连发不能触发充能。视觉填充使用 ease-out，实际充满时间不变；专用充能 SE 随取消立即停止，充满播放 220ms 完成反馈及专用完成 SE。光晕位于进度裁切外层，箭头从灰暗逐渐点亮，曲绘叠加静态纸纹，整张卡片缩放为 90%。进入游戏专用 `GameEntrance.tsx`／`game-entrance.css`，只动画黑色遮罩透明度：420ms 渐暗，完全遮住旧页后安装媒体，至少保持黑场 140ms，再用 620ms 显出昏暗房间。房间显现前保持倒计时 waiting，显现完成后才启动既有灯光、轨道通电和 Cover 倒计时；普通菜单导航保留粉蓝几何幕布。安装失败或需授权时淡回原页面，减少动态效果时直接切换。准备期间显示 Cover 等待，资源错误仍使用原重试界面。充能和暗场不操作媒体时间，视频与谱面仍在 GO 共用原媒体时钟。
+
+专辑列表保留原生滚动吸附，首尾留白随列表高度调整，使第一张和最后一张也可居中。图片区域独立采用 7:2 宽高比，下方标题栏另占高度，整张卡片自动增高；图片使用 contain 完整显示，居中清晰，临近卡片保留景深模糊。默认五张插画来自 `src/assets/albums-illustrations/`。专辑上传保留原文件分辨率和比例，单曲曲绘仍走原有方图处理。`useAlbumArtwork.ts` 仅对与这些原图的旧 512 方形裁切完全匹配的保存封面恢复原图显示，不修改保存数据或替换无关自定义图。按卡片距可视区中心的距离连续对焦：中心为 100%，相邻约 96%。滚动事件每帧最多处理一次，先读取位置再写样式；只在中心所属卡片变化时更新选中状态。点击的 240ms 展开与原有幕布同时进行，不延迟换页；键盘、鼠标点击和返回位置延续原有逻辑，减少动态效果时关闭缩放。
 
 **菜单输入与流光**：三页共用 `MenuControls.tsx`，SELECT 使用倒 T 形方向键键帽图标。主菜单／单曲用左右选择，专辑用上下选择，Enter 确认；主菜单右端、专辑顶端、单曲按上可到齿轮，单曲左右键仅选曲，Enter 切换设置。主页卡片按下到耳机并直接展开，Enter 固定，再按收起并取消固定，按上回到原卡片。专辑和单曲的 Back 按钮、Backspace、Esc 走同一返回流程及音效。`CoverTrace.tsx` 提供流光，`useCardHighlight.ts` 在 App 统一管理卡片、齿轮与耳机的唯一 `data-highlighted`；只有最近实际鼠标移动／点击或键盘操作的目标高亮。原生焦点与视觉高亮分开，停住的鼠标不能因滚动或动画抢回高亮；单曲页初次进入即高亮当前曲目，Enter 可直接确认。此状态用 ref 与 DOM 属性管理，不增加逐帧 React 更新。齿轮高亮沿用旋转，并通过现有 `--music-beat` 做轻微呼吸伸缩。悬停流光不改变居中选曲或试听来源。
 
@@ -70,7 +74,7 @@ flowchart LR
 
 **音效（SE）音量**：全局设置独立控制，默认 50%，0 为静音；`App` 保存到 `waifu-fit-player-se-volume`，与菜单 BGM、游戏／视频音量互不影响。当前传给 `useMenuSounds.ts`，将来增加游戏 note 音效时沿用此音量值。
 
-**菜单音效**：`useMenuSounds.ts` 统一播放 `src/assets/menu-sfx/` 的五个短 WAV（合计约 60 KB），使用 SE 音量；每次操作至多播放一个，连点中断上一段。耳机菜单、循环方式、BGM 选择与播放暂停、难度等按钮复用点击音；菜单返回、取消、关闭叉号及 Esc 关闭共用 `back.wav`。只在实际操作回调中触发，滚动不会连续发声；音效由脚本离线生成并随 Git 保存。
+**菜单音效**：`useMenuSounds.ts` 统一播放 `src/assets/menu-sfx/` 的五个短 WAV（合计约 60 KB），使用 SE 音量；每次操作至多播放一个，连点中断上一段。耳机菜单、循环方式、BGM 选择与播放暂停、谱面类型等按钮复用点击音；菜单返回、取消、关闭叉号及 Esc 关闭共用 `back.wav`。只在实际操作回调中触发，滚动不会连续发声；音效由脚本离线生成并随 Git 保存。
 
 **本地持久化**：JSON 保存谱面与视频关联 ID，不包含视频二进制。IndexedDB 优先保存视频文件句柄，不支持时保存 File；关联依赖当前浏览器资料及站点 origin，跨机器或清理存储后可能需要重新定位。页面会话中的对象 URL 仅用于播放。
 
@@ -88,15 +92,15 @@ flowchart LR
 
 `calories.ts` 按谱面估算跟练消耗，不使用身高、体重或生理模型。每个音符到达判定点时计入一次动作权重；HOLD／SWAY 再按已经通过判定区的持续秒数计入，不在尾端重复计分。空白段和 SPECIAL 不额外增加。
 
-| 动作               | 起始权重   | 持续权重／秒                  |
-| ------------------ | ---------- | ----------------------------- |
-| 下蹲／起身         | 3／1.5     | 保持下蹲 2，起身后 0          |
-| 出拳／其他手臂方向 | 1.2／0.65  | HOLD 0.25，SWAY 0.65          |
-| 侧收腹             | 3          | 1.2                           |
-| 提踵／落脚         | 0.4／0.2   | 提踵保持 0.25，落脚后 0       |
-| STEP／FOLLOW       | 0.18／0.09 | HOLD 0.55，SWAY（含 FREE）0.2 |
+| 动作               | 起始权重   | 持续权重／秒                    |
+| ------------------ | ---------- | ------------------------------- |
+| 下蹲／起身         | 3／1.5     | 下蹲 HOLD 3.5、SWAY 3，起身后 0 |
+| 出拳／其他手臂方向 | 1.2／0.65  | HOLD 0.25，SWAY 0.65            |
+| 侧收腹             | 3          | 1.2                             |
+| 提踵／落脚         | 0.4／0.2   | 提踵保持 0.25，落脚后 0         |
+| STEP／FOLLOW       | 0.18／0.09 | HOLD 0.55，SWAY（含 FREE）0.2   |
 
-总权重乘固定系数 **0.0414 kcal**。当前 Sunlight 谱面约 507.2051 权重点，对应用户手环测得的全曲约 **21 kcal**：手臂约 9.6、蹲起 5.8、侧收腹 4.1、踏步 1.1、提踵 0.5（分项四舍五入）。后续所有谱面沿用权重和系数，不逐曲归一到 21；后续获得更多实测后再调整。这是动作量参考值，并非个人实测消耗。
+总权重乘固定系数 **0.0414 kcal**。此系数最初按 Sunlight 旧权重约 507.2051 点、用户手环全曲约 **21 kcal** 校准。持续下蹲由原每秒 2 点提高到 HOLD 3.5、SWAY 3 后，包含这些动作的谱面总值会相应提高；静止保持高于下蹲摇摆。保持统一换算系数，不逐曲归一到 21；后续获得更多实测后再调整。这是动作量参考值，并非个人实测消耗。
 
 音符变化时预先生成累计值与持续速率索引，播放时复用现有媒体时钟，以二分查找计算当前位置的累计值，不逐帧扫描音符、不另设计时循环。暂停冻结，跳转／重播按目标谱面时间重算，视频 offset 与音符使用相同换算。仅最终显示四舍五入到一位小数；每个动作贡献保留精度，**0.1 是显示精度，不是固定增量**。数值变化时仅做短暂的透明度／位移动画。
 
