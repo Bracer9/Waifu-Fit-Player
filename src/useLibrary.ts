@@ -12,7 +12,14 @@ export function useLibrary(notify: (text: string) => void) {
         .then(([songs, albums]) => {
           setSongs(songs);
           setAlbums([
-            ...DEFAULT_ALBUMS.map((a) => albums.find((b) => b.id === a.id) ?? a),
+            ...DEFAULT_ALBUMS.map((a) => {
+              const saved = albums.find((b) => b.id === a.id);
+              if (!saved) return a;
+              const legacyName =
+                (a.id === 'anime' && saved.name === 'Anime') ||
+                (a.id === 'vocaloid' && saved.name === 'Vocaloid');
+              return legacyName ? { ...saved, name: a.name } : saved;
+            }),
             ...albums.filter((a) => !DEFAULT_ALBUMS.some((b) => b.id === a.id)),
           ]);
           setReady(true);

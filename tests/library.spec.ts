@@ -53,7 +53,7 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByRole('status')).toContainText('曲目 → 所属专辑');
   await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Anime');
+  await expect(page.getByRole('dialog')).toContainText('动漫');
   await expect(page.getByLabel('发布专辑')).toHaveCount(0);
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);

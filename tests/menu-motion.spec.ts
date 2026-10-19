@@ -43,7 +43,7 @@ test('专辑首尾居中，滚轮与键盘对焦，点击邻近专辑后返回�
   // A non-focused card still opens on a single click, during the existing curtain.
   const neighbor = page.locator('.collection-album[data-id="vocaloid"]');
   await neighbor.click();
-  await expect(page.locator('.music-menu.songs h1')).toHaveText('Vocaloid');
+  await expect(page.locator('.music-menu.songs h1')).toHaveText('虚拟歌姬');
   await page.getByRole('button', { name: '选择专辑', exact: true }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(current).toHaveAttribute('data-id', 'vocaloid');
