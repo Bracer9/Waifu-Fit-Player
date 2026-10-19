@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ArrowUpRight, Disc3, PencilLine } from 'lucide-react';
 import { MenuMusicConsole } from '../components/MenuMusic';
+import { MainMenuDownHint } from '../components/MainMenuDownHint';
 import { MenuControls } from '../components/MenuControls';
 import { CoverTrace } from '../components/CoverTrace';
 import { useCardHighlight } from '../useCardHighlight';
@@ -111,7 +112,9 @@ export function Home({
           </span>
         </button>
       </div>
-      <MenuMusicConsole music={music} onSound={onSound} />
+      <MenuMusicConsole music={music} onSound={onSound}>
+        <MainMenuDownHint />
+      </MenuMusicConsole>
       <MenuControls />
     </section>
   );

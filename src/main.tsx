@@ -9,4 +9,5 @@ import './styles.css';
 import './practice.css';
 import './ready-countdown.css';
 import './menu.css';
+import './main-menu-down-hint.css';
 createRoot(document.getElementById('root')!).render(<App />);

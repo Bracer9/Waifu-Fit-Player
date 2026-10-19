@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Headphones,
   ListMusic,
@@ -226,9 +226,11 @@ function BgmNowPlaying({
 export function MenuMusicConsole({
   music,
   onSound,
+  children,
 }: {
   music: MenuMusic;
   onSound: MenuSoundPlayer;
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -282,6 +284,7 @@ export function MenuMusicConsole({
         }
       }}
     >
+      {children}
       <div className="music-console-line">
         <MusicPulse music={music} />
         <button
