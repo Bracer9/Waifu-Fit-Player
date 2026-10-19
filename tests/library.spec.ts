@@ -1,8 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { readFile, readdir } from 'node:fs/promises';
-import path from 'node:path';
 import type { Song } from '../src/library';
-import { importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
+import { importDemo, holdStart } from './helpers/project';
 import { createCalorieIndex } from '../src/calories';
 
 async function songs(page: Page): Promise<Song[]> {
@@ -31,7 +30,7 @@ async function publish(page: Page) {
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
-test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重开', async ({ page }) => {
+test('健身与舞蹈谱独立发布、编辑、撤下、删除与重开', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('dialog', (dialog) => dialog.accept());
@@ -39,14 +38,14 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await page.screenshot({ path: 'artifacts/menu-home.png' });
   await page.getByRole('button', { name: /创作模式/ }).click();
   await expect(page.getByRole('button', { name: '新建', exact: true })).toBeVisible();
-  const file = (await readdir('maps', { recursive: true })).find((f) => f.endsWith('.wfp.json'))!;
-  const chart = JSON.parse(await readFile(path.join('maps', file), 'utf8'));
+  const chart = blankChart('Dance workout');
+  chart.notes = [{ id: 'workout', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
   await importDemo(page, chart);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await expect(page.getByLabel('草稿难度')).toHaveValue('hard');
-  await page.getByLabel('难度系数').fill('8.5');
-  await page.getByLabel('难度系数').press('Enter');
+  await expect(page.getByLabel('谱面类型')).toHaveValue('dance');
+  await page.getByLabel('舞蹈难度').fill('8.5');
+  await page.getByLabel('舞蹈难度').press('Enter');
   await expect(page.getByLabel('所属专辑')).toHaveValue('');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -57,37 +56,36 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByLabel('发布专辑')).toHaveCount(0);
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  const hard = (await songs(page))[0].released.hard!;
-  expect(hard.albumId).toBe('anime');
-  expect(hard.chart.difficultyRating).toBe(8.5);
-  expect(hard.cover.startsWith('data:image/webp')).toBe(true);
-  await page.getByLabel('草稿难度').selectOption('normal');
-  await expect(page.getByLabel('草稿难度')).toHaveValue('normal');
-  await page.getByLabel('作品名称').fill('Sunlight NORMAL');
-  await page.getByLabel('难度系数').fill('4.5');
-  await page.getByLabel('难度系数').press('Enter');
+  const dance = (await songs(page))[0].released.dance!;
+  expect(dance.albumId).toBe('anime');
+  expect(dance.chart.danceDifficulty).toBe(8.5);
+  expect(dance.cover.startsWith('data:image/webp')).toBe(true);
+  await page.getByLabel('谱面类型').selectOption('fitness');
+  await expect(page.getByLabel('谱面类型')).toHaveValue('fitness');
+  await page.getByLabel('作品名称').fill('Sunlight FITNESS');
+  await page.getByLabel('运动强度').selectOption('medium');
   await page.getByLabel('所属专辑').selectOption('pop');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('流行');
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   let stored = (await songs(page))[0];
-  expect(stored.released.hard).toEqual(hard);
-  expect(stored.released.normal!.albumId).toBe('pop');
-  expect(stored.released.normal!.chart.title).toBe('Sunlight NORMAL');
-  expect(stored.released.normal!.chart.difficultyRating).toBe(4.5);
+  expect(stored.released.dance).toEqual(dance);
+  expect(stored.released.fitness!.albumId).toBe('pop');
+  expect(stored.released.fitness!.chart.title).toBe('Sunlight FITNESS');
+  expect(stored.released.fitness!.chart.intensity).toBe('medium');
   await page.getByLabel('作品名称').fill('未发布修改');
-  await page.getByLabel('难度系数').fill('9');
-  await page.getByLabel('难度系数').press('Enter');
+  await page.getByLabel('运动强度').selectOption('high');
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   await expect(page.locator('.collection-album').first()).toContainText('全部曲目');
   await page.screenshot({ path: 'artifacts/menu-albums.png' });
   await page.locator('.collection-album').first().click();
-  await expect(page.getByRole('button', { name: 'HARD', exact: true })).toContainText('8.5');
-  await expect(page.getByRole('button', { name: 'NORMAL', exact: true })).toContainText('4.5');
-  await page.getByRole('button', { name: 'NORMAL', exact: true }).click();
-  await expect(page.locator('.selection-title h2')).toHaveText('Sunlight NORMAL');
-  await expect(page.locator('.record-overline')).toContainText('4.5');
+  await expect(page.getByRole('button', { name: 'DANCE', exact: true })).toContainText('8.5');
+  await expect(page.getByRole('button', { name: 'FITNESS', exact: true })).toContainText('MEDIUM');
+  await page.getByRole('button', { name: 'FITNESS', exact: true }).click();
+  await expect(page.locator('.selection-title h2')).toHaveText('Sunlight FITNESS');
+  await expect(page.locator('.record-overline')).toContainText('INTENSITY');
+  await expect(page.locator('.record-overline')).toContainText('MEDIUM');
   await expect(page.locator('.record-timing')).toContainText('BPM');
   const card = page.locator('.record-card[aria-current="true"]');
   await card.hover();
@@ -100,12 +98,12 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   expect(await page.locator('.menu-app').evaluate((el) => [el.scrollLeft, el.scrollTop])).toEqual([
     0, 0,
   ]);
-  await page.getByRole('button', { name: 'HARD', exact: true }).click();
+  await page.getByRole('button', { name: 'DANCE', exact: true }).click();
   await expect(card.locator('.record-overline')).toContainText(
-    (createCalorieIndex(hard.chart.notes).at(-1)?.kcal ?? 0).toFixed(1),
+    (createCalorieIndex(dance.chart.notes).at(-1)?.kcal ?? 0).toFixed(1),
   );
   await expect(card.locator('.record-timing')).toContainText(
-    String(hard.chart.tempoSegments[0].bpm),
+    String(dance.chart.tempoSegments[0].bpm),
   );
   expect(
     await card.evaluate((el) => {
@@ -118,13 +116,13 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
     }),
   ).toBe(true);
   await card.click();
-  await expect(page.getByRole('dialog')).toContainText('开始这首曲子？');
+  await expect(page.getByRole('dialog')).toContainText('HOLD ENTER TO START');
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await page.keyboard.press('Enter');
   // Observing "3" can happen partway through its first second; time from the action.
   const countdownStart = Date.now();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await holdStart(page);
   const countdown = page.getByRole('timer');
   await expect(countdown).toHaveText('3');
   await page.keyboard.press('Space');
@@ -138,19 +136,20 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
     await page.locator('video').evaluate((v: HTMLVideoElement) => [v.paused, v.currentTime]),
   ).toEqual([true, 0]);
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
-  expect(Date.now() - countdownStart).toBeGreaterThan(2800);
+  expect(Date.now() - countdownStart).toBeGreaterThan(2200);
   await expect(page.locator('.toast')).toHaveCount(0);
   await expect(page.locator('.play-lane')).toHaveCount(5);
   await expect
     .poll(() => page.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime))
     .toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'SELECT MUSIC', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'HARD', exact: true })).toHaveAttribute(
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'BACK TO SELECT', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'DANCE', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
   await card.click();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await holdStart(page);
   await expect(countdown).toHaveText('3');
   await page.keyboard.press('Escape');
   await expect(page.locator('.music-menu.songs')).toBeVisible();
@@ -160,16 +159,16 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByRole('button', { name: '管理曲目', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '编辑谱面', exact: true }).click();
   await expect(page.getByRole('button', { name: '保存草稿', exact: true })).toBeEnabled();
-  expect((await songs(page))[0].released.hard).toEqual(hard);
+  expect((await songs(page))[0].released.dance).toEqual(dance);
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByRole('button', { name: '管理曲目', exact: true }).click();
-  const hardRow = page.locator('.managed-edition').filter({ has: page.locator('b.hard') });
-  await hardRow.getByRole('button', { name: '撤下发布' }).click();
-  await expect(hardRow).toContainText('未发布');
+  const danceRow = page.locator('.managed-edition').filter({ has: page.locator('b.dance') });
+  await danceRow.getByRole('button', { name: '撤下发布' }).click();
+  await expect(danceRow).toContainText('未发布');
   stored = (await songs(page))[0];
-  expect(stored.drafts.hard).toBeTruthy();
-  expect(stored.released.hard).toBeUndefined();
-  expect(stored.released.normal).toBeTruthy();
+  expect(stored.drafts.dance).toBeTruthy();
+  expect(stored.released.dance).toBeUndefined();
+  expect(stored.released.fitness).toBeTruthy();
   await page.reload();
   await page.getByRole('button', { name: /创作模式/ }).click();
   await expect(page.getByRole('button', { name: '保存草稿', exact: true })).toBeEnabled();
@@ -187,7 +186,10 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
 
 test('自定义专辑封面、分组与曲绘保存', async ({ page }) => {
   await page.goto('/');
-  await importDemo(page);
+  await importDemo(page, {
+    ...blankChart('Dance workout'),
+    notes: [{ id: 'n', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }],
+  });
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByRole('button', { name: '管理专辑与封面' }).click();
@@ -200,11 +202,11 @@ test('自定义专辑封面、分组与曲绘保存', async ({ page }) => {
   await page.getByRole('button', { name: '关闭专辑设置' }).click();
   await page.getByLabel('所属专辑').selectOption({ label: '自定义专辑' });
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
-  await page.getByLabel('发布难度').selectOption('normal');
-  await expect(page.getByLabel('发布难度')).toHaveValue('normal');
+  await page.getByLabel('发布类型').selectOption('fitness');
+  await expect(page.getByLabel('发布类型')).toHaveValue('fitness');
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  expect((await songs(page))[0].released.normal).toBeTruthy();
+  expect((await songs(page))[0].released.fitness).toBeTruthy();
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   const album = page.locator('.collection-album').filter({ hasText: '自定义专辑' });
   await expect(album.locator('img')).toHaveAttribute('src', /^data:image\/webp/);
@@ -214,7 +216,10 @@ test('自定义专辑封面、分组与曲绘保存', async ({ page }) => {
 
 test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ page }) => {
   await page.goto('/');
-  await importDemo(page);
+  await importDemo(page, {
+    ...blankChart('Dance workout'),
+    notes: [{ id: 'n', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }],
+  });
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await publish(page);
   const base = (await songs(page))[0];
@@ -228,9 +233,9 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
           for (let i = 1; i <= 4; i++) {
             const song = structuredClone(base);
             song.id = crypto.randomUUID();
-            song.released.hard!.chart.songId = song.id;
-            song.released.hard!.chart.title = `Test song ${i}`;
-            song.released.hard!.updatedAt += i;
+            song.released.dance!.chart.songId = song.id;
+            song.released.dance!.chart.title = `Test song ${i}`;
+            song.released.dance!.updatedAt += i;
             tx.objectStore('songs').put(song);
           }
           tx.oncomplete = () => {
@@ -256,13 +261,11 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
       }),
     )
     .toBeLessThan(3);
-  await page.getByRole('button', { name: '选择专辑', exact: true }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.locator('.collection-album[aria-current="true"]')).toContainText('东方');
   await page.locator('.collection-album[aria-current="true"]').click();
   await expect(page.locator('.record-card[aria-current="true"]')).toContainText('Test song 3');
   await page.screenshot({ path: 'artifacts/menu-carousel.png' });
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.screenshot({ path: 'artifacts/menu-carousel-720.png' });
   expect(
     await page.locator('.record-card[aria-current="true"] .record-overline').evaluate((el) => {
       const stats = el.getBoundingClientRect();

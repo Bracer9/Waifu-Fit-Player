@@ -25,6 +25,18 @@ export async function openDemo(page: Page) {
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 }
 
+export async function holdStart(page: Page) {
+  await page.getByRole('button', { name: '按住 Enter 开始游戏', exact: true }).hover();
+  await page.mouse.down();
+  try {
+    await page.waitForFunction(
+      () => document.querySelector('.start-briefing')?.getAttribute('data-state') === 'complete',
+    );
+  } finally {
+    await page.mouse.up();
+  }
+}
+
 export async function lastDraft(page: Page): Promise<Chart | undefined> {
   return page.evaluate(
     () =>
@@ -37,7 +49,7 @@ export async function lastDraft(page: Page): Promise<Chart | undefined> {
           const db = opening.result;
           const request = db.transaction('songs').objectStore('songs').get(last.id);
           request.onsuccess = () => {
-            resolve(request.result?.drafts[last.difficulty]?.chart);
+            resolve(request.result?.drafts[last.chartType]?.chart);
             db.close();
           };
         };

@@ -2,9 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CoverArt } from './CoverArt';
 import { READY_COUNTDOWN, type ReadyCountdownPhase } from '../ready-countdown';
 import type { MenuSoundPlayer } from '../useMenuSounds';
+import type { ChartType } from '../chart-types';
 
 export function GameStartCountdown({
   cover,
+  chartType,
   ready,
   onPhase,
   onComplete,
@@ -13,6 +15,7 @@ export function GameStartCountdown({
   onSound,
 }: {
   cover: string;
+  chartType: ChartType;
   ready: boolean;
   onPhase: (phase: ReadyCountdownPhase) => void;
   onComplete: () => void;
@@ -20,7 +23,7 @@ export function GameStartCountdown({
   onCancel: () => void;
   onSound: MenuSoundPlayer;
 }) {
-  const [remaining, setRemaining] = useState<number | 'GO!'>(3);
+  const [remaining, setRemaining] = useState<number | 'GO!' | null>(null);
   const [phase, setPhase] = useState<ReadyCountdownPhase>('waiting');
   const [imageReady, setImageReady] = useState(!cover);
   const [imageFailed, setImageFailed] = useState(false);
@@ -33,31 +36,38 @@ export function GameStartCountdown({
   useEffect(() => {
     if (!ready || !imageReady) {
       setPhase('waiting');
-      setRemaining(3);
+      setRemaining(null);
       callbacks.current.onPhase('waiting');
       return;
     }
     setPhase('counting');
     callbacks.current.onPhase('counting');
-    callbacks.current.onSound('settings');
-    const timers = [1, 2].map((beat) =>
-      setTimeout(() => {
-        setRemaining(3 - beat);
-        callbacks.current.onSound('settings');
-      }, READY_COUNTDOWN.beatMs * beat),
+    // Power the room and lanes first, then reveal 3 and start the counted beats.
+    setRemaining(null);
+    const timers = [0, 1, 2].map((beat) =>
+      setTimeout(
+        () => {
+          setRemaining(3 - beat);
+          callbacks.current.onSound('settings');
+        },
+        READY_COUNTDOWN.introMs + READY_COUNTDOWN.beatMs * beat,
+      ),
     );
     timers.push(
-      setTimeout(() => {
-        setRemaining('GO!');
-        setPhase('go');
-        // Start the existing media clock now, while the prepared cover reveals it.
-        callbacks.current.onComplete();
-      }, READY_COUNTDOWN.beatMs * 3),
+      setTimeout(
+        () => {
+          setRemaining('GO!');
+          setPhase('go');
+          // Start the existing media clock now, while the prepared cover reveals it.
+          callbacks.current.onComplete();
+        },
+        READY_COUNTDOWN.introMs + READY_COUNTDOWN.beatMs * 3,
+      ),
     );
     timers.push(
       setTimeout(
         () => callbacks.current.onFinished(),
-        READY_COUNTDOWN.beatMs * 3 + READY_COUNTDOWN.revealMs,
+        READY_COUNTDOWN.introMs + READY_COUNTDOWN.beatMs * 3 + READY_COUNTDOWN.revealMs,
       ),
     );
     return () => timers.forEach(clearTimeout);
@@ -95,6 +105,7 @@ export function GameStartCountdown({
       role="dialog"
       aria-label="开始倒计时"
       data-phase={phase}
+      data-chart-type={chartType}
       ref={root}
       tabIndex={-1}
     >
@@ -150,12 +161,16 @@ export function GameStartCountdown({
           key={remaining}
           className={`ready-number${remaining === 3 ? ' is-initial' : ''}${phase === 'go' ? ' is-go' : ''}`}
           role="timer"
+          aria-hidden={remaining === null}
           aria-live="polite"
         >
           {remaining}
         </strong>
         <div className="ready-progress" aria-hidden="true">
-          <span />
+          <div className="ready-progress-track">
+            <span className="ready-progress-fill" />
+            <i className="ready-progress-front" />
+          </div>
         </div>
       </div>
       <small className="ready-cancel">ESC / BACK · 返回选曲</small>

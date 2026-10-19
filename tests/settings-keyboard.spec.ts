@@ -92,7 +92,7 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await expect(music.getByRole('slider', { name: '菜单 BGM 音量' })).toHaveValue('0.55');
   await headphone.click();
   const chart = blankChart('Settings keyboard');
-  chart.difficultyRating = 3;
+  chart.danceDifficulty = 3;
   chart.notes = [{ id: 'n', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
   await importDemo(page, chart);
   await page.getByRole('button', { name: '曲目', exact: true }).click();

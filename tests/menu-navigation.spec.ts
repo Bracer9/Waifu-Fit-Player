@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
 
 test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async ({ page }) => {
   const errors: string[] = [];
@@ -19,7 +20,10 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
     };
   });
   await page.goto('/');
-  await importDemo(page);
+  await importDemo(page, {
+    ...blankChart('Menu navigation'),
+    notes: [{ id: 'n', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1000 }],
+  });
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByLabel('所属专辑').selectOption('touhou');
@@ -104,7 +108,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   expect(await gear.boundingBox()).toEqual(bounds);
   expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(guideBounds);
   await page.locator('.record-card').first().click();
-  await expect(page.getByRole('dialog')).toContainText('开始这首曲子');
+  await expect(page.getByRole('dialog')).toContainText('HOLD ENTER TO START');
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.locator('.menu-curtain')).toHaveAttribute('data-direction', 'back');

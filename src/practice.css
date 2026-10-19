@@ -856,31 +856,31 @@ body:has(.practice-app) {
 .practice-song-cover .cover-placeholder i {
   display: none;
 }
-.practice-difficulty {
+.practice-chart-type {
   display: flex;
   align-items: stretch;
   white-space: nowrap;
   font-size: clamp(14px, 0.9vw, 22px);
   letter-spacing: 0.035em;
 }
-.practice-difficulty strong,
-.practice-difficulty > span {
+.practice-chart-type strong,
+.practice-chart-type > span {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 10px 13px;
 }
-.practice-difficulty strong {
-  background: #00c9dd;
+.practice-chart-type strong {
+  background: var(--fitness-color);
 }
-.practice-difficulty.hard strong {
-  background: var(--pink);
+.practice-chart-type.dance strong {
+  background: var(--dance-color);
   color: #fff8f4;
 }
-.practice-difficulty > span {
+.practice-chart-type > span {
   border: 1px solid #9fa7a7;
 }
-.practice-difficulty small,
+.practice-chart-type small,
 .practice-bpm small {
   color: #919495;
   font-size: 0.7em;

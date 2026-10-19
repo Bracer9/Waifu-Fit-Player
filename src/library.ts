@@ -1,8 +1,8 @@
 import { parseChart, type Chart } from './model';
 import { playableChart, playRangeCrossings } from './play-range';
+import { CHART_TYPES, migrateChartMetadata, type ChartType } from './chart-types';
 
-export type Difficulty = 'normal' | 'hard';
-export const DIFFICULTIES: Difficulty[] = ['normal', 'hard'];
+export { CHART_TYPES, type ChartType } from './chart-types';
 export type Edition = {
   chart: Chart;
   albumId: string;
@@ -11,9 +11,34 @@ export type Edition = {
 };
 export type Song = {
   id: string;
-  drafts: Partial<Record<Difficulty, Edition>>;
-  released: Partial<Record<Difficulty, Edition>>;
+  drafts: Partial<Record<ChartType, Edition>>;
+  released: Partial<Record<ChartType, Edition>>;
 };
+
+/** Slot names are authoritative, including old copied drafts whose chart tag differed. */
+export function migrateSong(song: {
+  id: string;
+  drafts: Partial<Record<string, Edition>>;
+  released: Partial<Record<string, Edition>>;
+}): Song {
+  const next: Song = { ...song, drafts: {}, released: {} };
+  for (const collection of ['drafts', 'released'] as const) {
+    for (const chartType of CHART_TYPES) {
+      const edition =
+        song[collection][chartType] ??
+        song[collection][chartType === 'fitness' ? 'normal' : 'hard'];
+      if (edition)
+        next[collection][chartType] = {
+          ...edition,
+          chart: migrateChartMetadata(
+            edition.chart as unknown as Record<string, unknown>,
+            chartType,
+          ) as unknown as Chart,
+        };
+    }
+  }
+  return next;
+}
 export type Album = { id: string; name: string; cover: string };
 export const DEFAULT_ALBUMS: Album[] = [
   { id: 'all', name: '全部曲目', cover: '' },
@@ -23,11 +48,11 @@ export const DEFAULT_ALBUMS: Album[] = [
   { id: 'pop', name: '流行', cover: '' },
 ];
 
-export function publishSong(song: Song, difficulty: Difficulty): Song {
-  const draft = song.drafts[difficulty];
-  if (!draft) throw new Error('请先保存这个难度的草稿。');
+export function publishSong(song: Song, chartType: ChartType): Song {
+  const draft = song.drafts[chartType];
+  if (!draft) throw new Error('请先保存这个类型的草稿。');
   if (!draft.albumId || draft.albumId === 'all') throw new Error('请选择发布专辑。');
-  const chart = parseChart({ ...draft.chart, songId: song.id, difficulty });
+  const chart = parseChart({ ...draft.chart, songId: song.id, chartType });
   if (!chart.videoHint.assetId) throw new Error('请先关联视频。');
   if (playRangeCrossings(chart).length)
     throw new Error('长条跨越游玩区间边界，请先定位并调整后发布。');
@@ -38,23 +63,23 @@ export function publishSong(song: Song, difficulty: Difficulty): Song {
     ...song,
     released: {
       ...song.released,
-      [difficulty]: structuredClone({ ...draft, chart, updatedAt: Date.now() }),
+      [chartType]: structuredClone({ ...draft, chart, updatedAt: Date.now() }),
     },
   };
 }
 
-export function unpublishSong(song: Song, difficulty: Difficulty): Song {
+export function unpublishSong(song: Song, chartType: ChartType): Song {
   const released = { ...song.released };
   const drafts = { ...song.drafts };
-  if (!drafts[difficulty] && released[difficulty])
-    drafts[difficulty] = structuredClone(released[difficulty]);
-  delete released[difficulty];
+  if (!drafts[chartType] && released[chartType])
+    drafts[chartType] = structuredClone(released[chartType]);
+  delete released[chartType];
   return { ...song, drafts, released };
 }
 
-export function editionsIn(song: Song, albumId: string): Difficulty[] {
-  return DIFFICULTIES.filter((difficulty) => {
-    const edition = song.released[difficulty];
+export function editionsIn(song: Song, albumId: string): ChartType[] {
+  return CHART_TYPES.filter((chartType) => {
+    const edition = song.released[chartType];
     return edition && (albumId === 'all' || edition.albumId === albumId);
   });
 }
@@ -78,10 +103,19 @@ export function latestEdition(song: Song): Edition {
 type Tables = { songs: Song; albums: Album };
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const open = indexedDB.open('waifu-fit-player-library', 1);
+    const open = indexedDB.open('waifu-fit-player-library', 2);
     open.onupgradeneeded = () => {
-      for (const name of ['songs', 'albums'])
-        open.result.createObjectStore(name, { keyPath: 'id' });
+      for (const name of ['songs', 'albums']) {
+        if (!open.result.objectStoreNames.contains(name))
+          open.result.createObjectStore(name, { keyPath: 'id' });
+      }
+      const cursor = open.transaction!.objectStore('songs').openCursor();
+      cursor.onsuccess = () => {
+        const item = cursor.result;
+        if (!item) return;
+        item.update(migrateSong(item.value));
+        item.continue();
+      };
     };
     open.onsuccess = () => resolve(open.result);
     open.onerror = () => reject(open.error);

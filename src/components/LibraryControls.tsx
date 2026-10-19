@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ImagePlus, Plus, X } from 'lucide-react';
 import {
-  DIFFICULTIES,
+  CHART_TYPES,
   latestEdition,
   type Album,
-  type Difficulty,
+  type ChartType,
   type Edition,
   type Song,
 } from '../library';
@@ -15,9 +15,10 @@ import { ModalBackdrop } from './ModalBackdrop';
 import { playableChart, playDuration, playRangeCrossings, videoPlayRange } from '../play-range';
 import { formatTime } from '../timing';
 import { PlayRangeWarnings } from './PlayRangeFields';
+import { ratingSummary } from '../chart-types';
 
 export function PublicationFields({
-  difficulty,
+  chartType,
   albumId,
   cover,
   albums,
@@ -27,12 +28,12 @@ export function PublicationFields({
   onSongs,
   notify,
 }: {
-  difficulty: Difficulty;
+  chartType: ChartType;
   albumId: string;
   cover: string;
   albums: Album[];
   media: MediaController;
-  onChange: (values: { difficulty?: Difficulty; albumId?: string; cover?: string }) => void;
+  onChange: (values: { chartType?: ChartType; albumId?: string; cover?: string }) => void;
   onAlbums: () => void;
   onSongs: () => void;
   notify: (text: string) => void;
@@ -41,14 +42,14 @@ export function PublicationFields({
     <div className="publication-fields">
       <div className="field-pair">
         <label className="field">
-          <span>草稿难度</span>
+          <span>谱面类型</span>
           <select
-            aria-label="草稿难度"
-            value={difficulty}
-            onChange={(e) => onChange({ difficulty: e.target.value as Difficulty })}
+            aria-label="谱面类型"
+            value={chartType}
+            onChange={(e) => onChange({ chartType: e.target.value as ChartType })}
           >
-            <option value="normal">NORMAL</option>
-            <option value="hard">HARD</option>
+            <option value="fitness">FITNESS / 健身</option>
+            <option value="dance">DANCE / 舞蹈</option>
           </select>
         </label>
         <label className="field">
@@ -115,7 +116,9 @@ export function PublicationFields({
           管理曲目
         </button>
       </div>
-      <p className="inspector-tip">草稿与发布版本独立。更换难度后发布，可制作同曲的另一张谱。</p>
+      <p className="inspector-tip">
+        FITNESS 跟随节奏锻炼，DANCE 跟随视频舞步。两种类型的草稿与发布版本各自独立。
+      </p>
     </div>
   );
 }
@@ -232,8 +235,8 @@ export function SongManager({
 }: {
   songs: Song[];
   onClose: () => void;
-  onOpen: (song: Song, difficulty: Difficulty, published: boolean) => void;
-  onWithdraw: (song: Song, difficulty: Difficulty) => void;
+  onOpen: (song: Song, chartType: ChartType, published: boolean) => void;
+  onWithdraw: (song: Song, chartType: ChartType) => void;
   onDelete: (song: Song) => void;
 }) {
   return (
@@ -248,7 +251,7 @@ export function SongManager({
           <X />
         </button>
         <h2 id="song-manager-title">本地作品</h2>
-        <p>草稿留在创作模式；已发布的难度出现在音游模式。</p>
+        <p>草稿留在创作模式；已发布的健身谱与舞蹈谱出现在音游模式。</p>
         <div className="managed-songs">
           {[...songs]
             .sort((a, b) => latestEdition(b).updatedAt - latestEdition(a).updatedAt)
@@ -261,10 +264,10 @@ export function SongManager({
                     从 WAIFU 删除
                   </button>
                 </div>
-                {DIFFICULTIES.map((d) =>
+                {CHART_TYPES.map((d) =>
                   song.drafts[d] || song.released[d] ? (
                     <div className="managed-edition" key={d}>
-                      <b className={`difficulty-tag ${d}`}>{d.toUpperCase()}</b>
+                      <b className={`chart-type-tag ${d}`}>{d.toUpperCase()}</b>
                       <button disabled={!song.drafts[d]} onClick={() => onOpen(song, d, false)}>
                         继续草稿
                       </button>
@@ -294,20 +297,20 @@ export function SongManager({
 
 export function PublishDialog({
   edition,
-  difficulty,
+  chartType,
   albums,
   updating,
   onPublish,
-  onDifficulty,
+  onChartType,
   onClose,
   onLocate,
 }: {
   edition: Edition;
-  difficulty: Difficulty;
+  chartType: ChartType;
   albums: Album[];
   updating: boolean;
   onPublish: () => Promise<void>;
-  onDifficulty: (difficulty: Difficulty) => Promise<void>;
+  onChartType: (chartType: ChartType) => Promise<void>;
   onClose: () => void;
   onLocate: (id: string) => void;
 }) {
@@ -333,27 +336,28 @@ export function PublishDialog({
           <CoverArt src={edition.cover} />
           <div>
             <h3>{edition.chart.title}</h3>
-            <b className={`difficulty-tag ${difficulty}`}>{difficulty.toUpperCase()}</b>
+            <b className={`chart-type-tag ${chartType}`}>{chartType.toUpperCase()}</b>
+            <p>{ratingSummary(edition.chart)}</p>
             <p>{albums.find((a) => a.id === edition.albumId)?.name}</p>
           </div>
         </div>
         <label className="field">
-          <span>发布难度</span>
+          <span>发布类型</span>
           <select
-            aria-label="发布难度"
-            value={difficulty}
+            aria-label="发布类型"
+            value={chartType}
             disabled={working}
             onChange={async (e) => {
               setWorking(true);
               try {
-                await onDifficulty(e.target.value as Difficulty);
+                await onChartType(e.target.value as ChartType);
               } finally {
                 setWorking(false);
               }
             }}
           >
-            <option value="normal">NORMAL</option>
-            <option value="hard">HARD</option>
+            <option value="fitness">FITNESS / 健身</option>
+            <option value="dance">DANCE / 舞蹈</option>
           </select>
         </label>
         <p className="publish-range-summary">
@@ -368,9 +372,9 @@ export function PublishDialog({
         )}
         <p>
           {updating
-            ? `将替换已发布的 ${difficulty.toUpperCase()} 谱面。`
-            : `发布当前 ${difficulty.toUpperCase()} 草稿。`}
-          另一难度的发布版本保留。
+            ? `将替换已发布的 ${chartType.toUpperCase()} 谱面。`
+            : `发布当前 ${chartType.toUpperCase()} 草稿。`}
+          另一类型的发布版本保留。
         </p>
         <div className="modal-actions">
           <button className="button light" disabled={working} onClick={onClose}>

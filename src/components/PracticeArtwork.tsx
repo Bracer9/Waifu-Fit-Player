@@ -6,6 +6,7 @@ import { comboAt, createComboIndex } from '../combo';
 import { caloriesAt, createCalorieIndex } from '../calories';
 import { chartTimeAt } from '../timing';
 import { CoverArt } from './CoverArt';
+import { ratingValue } from '../chart-types';
 
 export function PracticeStartupLighting() {
   return (
@@ -13,6 +14,7 @@ export function PracticeStartupLighting() {
       <span className="ready-room-shade" />
       <span className="ready-lamp-cap" />
       <span className="ready-light-wash" />
+      <span className="ready-room-focus" />
     </div>
   );
 }
@@ -118,10 +120,10 @@ export function PracticeMasthead({
       <div className="practice-track-info">
         <h1 title={chart.title}>{chart.title}</h1>
       </div>
-      <div className={`practice-difficulty ${chart.difficulty ?? 'hard'}`} aria-label="Difficulty">
-        <strong>{(chart.difficulty ?? 'hard').toUpperCase()}</strong>
+      <div className={`practice-chart-type ${chart.chartType ?? 'dance'}`} aria-label="谱面类型">
+        <strong>{(chart.chartType ?? 'dance').toUpperCase()}</strong>
         <span>
-          <small>Lv.</small> {chart.difficultyRating ?? '—'}
+          <small>{chart.chartType === 'fitness' ? 'INT.' : 'Lv.'}</small> {ratingValue(chart)}
         </span>
       </div>
       <PracticeBpm chart={chart} media={media} />

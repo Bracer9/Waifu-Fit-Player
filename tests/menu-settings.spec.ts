@@ -90,7 +90,7 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   await close();
   expect(await page.locator('.mode-records').boundingBox()).toEqual(cards);
   const chart = blankChart('Settings navigation');
-  chart.difficultyRating = 3;
+  chart.danceDifficulty = 3;
   chart.notes = [
     { id: 'settings-note', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' },
   ];

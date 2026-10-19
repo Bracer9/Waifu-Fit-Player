@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
+import { EXERCISE_INTENSITIES, INTENSITY_LABELS, type ExerciseIntensity } from '../chart-types';
 import {
   ArrowLeftRight,
   Circle,
@@ -1628,13 +1629,38 @@ export function Editor({
                   notify={notify}
                 />
                 {publication}
-                <NumberField
-                  label="难度系数"
-                  value={chart.difficultyRating}
-                  step={0.1}
-                  onCommit={(difficultyRating) => onChange({ ...chart, difficultyRating })}
-                  onClear={() => onChange({ ...chart, difficultyRating: undefined })}
-                />
+                {chart.chartType === 'fitness' ? (
+                  <label className="field">
+                    <span>运动强度</span>
+                    <select
+                      aria-label="运动强度"
+                      value={chart.intensity ?? ''}
+                      onChange={(event) =>
+                        onChange({
+                          ...chart,
+                          intensity: (event.target.value || undefined) as
+                            ExerciseIntensity | undefined,
+                        })
+                      }
+                    >
+                      <option value="">未标注</option>
+                      {EXERCISE_INTENSITIES.map((value, index) => (
+                        <option key={value} value={value}>
+                          {['低', '中', '高'][index]} / {INTENSITY_LABELS[value]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <NumberField
+                    label="舞蹈难度"
+                    value={chart.danceDifficulty}
+                    min={0}
+                    step={0.1}
+                    onCommit={(danceDifficulty) => onChange({ ...chart, danceDifficulty })}
+                    onClear={() => onChange({ ...chart, danceDifficulty: undefined })}
+                  />
+                )}
                 <NumberField
                   label="视频偏移 / ms"
                   value={chart.videoOffsetMs ?? 0}

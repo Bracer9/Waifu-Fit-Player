@@ -586,6 +586,9 @@
   animation-name: menu-curtain-reveal;
   animation-delay: 80ms;
 }
+.menu-curtain[data-phase='hold'] .menu-curtain-sheet {
+  animation: none;
+}
 @keyframes menu-curtain-cover {
   from {
     transform: translateX(var(--curtain-from)) skewX(-14deg);
@@ -1474,12 +1477,12 @@
   white-space: nowrap;
   font-size: 17px;
 }
-.record-difficulties {
+.record-chart-types {
   display: flex;
   gap: 7px;
   margin-top: 10px;
 }
-.difficulty-tag {
+.chart-type-tag {
   display: inline-block;
   font:
     700 12px 'Barlow Condensed',
@@ -1488,12 +1491,12 @@
   padding: 3px 8px;
   font-style: normal;
 }
-.difficulty-tag.normal {
-  background: #35c9db;
+.chart-type-tag.fitness {
+  background: var(--fitness-color);
   color: #16343b;
 }
-.difficulty-tag.hard {
-  background: #f64e93;
+.chart-type-tag.dance {
+  background: var(--dance-color);
   color: #361429;
 }
 .carousel-arrow {
@@ -1534,11 +1537,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.difficulty-choice {
+.chart-type-choice {
   display: flex;
   gap: 10px;
 }
-.difficulty-choice button {
+.chart-type-choice button {
   border: 2px solid #d3ccc1;
   padding: 13px 22px;
   min-width: 105px;
@@ -1547,20 +1550,20 @@
     800 22px 'Barlow Condensed',
     sans-serif;
 }
-.difficulty-choice button small {
+.chart-type-choice button small {
   display: block;
   font:
     600 18px 'Barlow Condensed',
     sans-serif;
   margin-top: 5px;
 }
-.difficulty-choice .normal[aria-pressed='true'] {
-  background: var(--cyan);
+.chart-type-choice .fitness[aria-pressed='true'] {
+  background: var(--fitness-color);
   border-color: var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
 }
-.difficulty-choice .hard[aria-pressed='true'] {
-  background: var(--pink);
+.chart-type-choice .dance[aria-pressed='true'] {
+  background: var(--dance-color);
   border-color: var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
 }
@@ -1583,22 +1586,6 @@
 }
 .edit-track:active svg {
   transform: translateY(1px);
-}
-.start-confirmation {
-  animation: start-confirm-enter 180ms ease-out;
-}
-.start-confirmation p {
-  font-weight: 700;
-}
-@keyframes start-confirm-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 .publication-fields {
   border-top: 1px solid var(--line);
@@ -1719,7 +1706,7 @@
   padding: 5px 0 5px 63px;
   font-size: 12px;
 }
-.managed-edition .difficulty-tag {
+.managed-edition .chart-type-tag {
   width: 63px;
   text-align: center;
 }
@@ -1813,8 +1800,7 @@
   [data-highlighted] .cover-trace rect,
   .music-console[data-open] .music-panel-trace path,
   .mode-record-face,
-  .menu-scene[data-exit-to='songs'] .collection-album,
-  .start-confirmation {
+  .menu-scene[data-exit-to='songs'] .collection-album {
     animation: none;
   }
   .collection-album {

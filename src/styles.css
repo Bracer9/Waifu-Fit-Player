@@ -6,6 +6,8 @@
   font-weight: 400;
   --pink: #f64e93;
   --cyan: #35c9db;
+  --fitness-color: var(--cyan);
+  --dance-color: var(--pink);
   --miku: #39c5bb;
   --step-free: #73ded1;
   --arms-any: #e7edf2;

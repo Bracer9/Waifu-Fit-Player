@@ -1,4 +1,6 @@
 .ready-countdown {
+  --ready-accent: var(--fitness-color);
+  --ready-gauge-ease: cubic-bezier(0.42, 0, 1, 1);
   position: absolute;
   inset: 0;
   z-index: 6;
@@ -9,6 +11,9 @@
   outline: none;
   color: #fff4e7;
   font-family: 'Barlow Condensed', 'Microsoft YaHei', sans-serif;
+}
+.ready-countdown[data-chart-type='dance'] {
+  --ready-accent: var(--dance-color);
 }
 .ready-cover,
 .ready-shade,
@@ -38,7 +43,7 @@
   font-size: 7vw;
 }
 .ready-countdown[data-phase='counting'] .ready-cover {
-  animation: ready-cover-drift var(--ready-duration) linear both;
+  animation: ready-cover-drift calc(var(--ready-intro) + var(--ready-duration)) linear both;
 }
 @keyframes ready-cover-drift {
   from {
@@ -100,6 +105,9 @@
 .ready-number.is-go {
   animation: ready-number-hit 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+.ready-number[aria-hidden='true'] {
+  visibility: hidden;
+}
 .ready-countdown[data-phase='counting'] .ready-number.is-initial {
   animation: ready-number-first 240ms ease-out both;
 }
@@ -129,31 +137,86 @@
   }
 }
 .ready-progress {
+  position: relative;
   width: 64%;
   max-width: 440px;
   height: clamp(17px, 2.2vh, 30px);
   margin-top: 4px;
-  padding: 3px;
-  border: 3px solid;
-  border-image: linear-gradient(90deg, #ff288b, #ff288b 60%, #00d2e4) 1;
-  background: #0a0d18d9;
-  box-shadow: 0 3px 0 #0009;
+  border: 1px solid #fff4e79c;
+  background: #0a0d18bf;
+  transform: skewX(-12deg);
+  box-shadow: 0 3px 0 #0005;
 }
-.ready-progress > span {
+.ready-progress::before,
+.ready-progress::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  background: var(--ready-accent);
+}
+.ready-progress::before {
+  left: -2px;
+}
+.ready-progress::after {
+  right: -2px;
+}
+.ready-progress-track {
+  position: absolute;
+  inset: 3px;
+  overflow: hidden;
+  background: #fff4e70a;
+}
+.ready-progress-fill {
+  position: absolute;
+  inset: 0;
   display: block;
-  width: 100%;
-  height: 100%;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: repeating-linear-gradient(130deg, #fff4e7 0 8px, #ff288b 8px 15px);
+  clip-path: inset(0 100% 0 0);
+  background: var(--ready-accent);
 }
-.ready-countdown[data-phase='counting'] .ready-progress > span {
-  animation: ready-progress-fill var(--ready-duration) linear both;
+.ready-progress-front {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+}
+.ready-progress-front::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 2px;
+  background: #fff4e7;
+  box-shadow: 0 0 6px #fff4e7b3;
+}
+.ready-countdown[data-phase='counting'] .ready-progress-fill {
+  animation: ready-progress-fill var(--ready-duration) var(--ready-gauge-ease) both;
+  animation-delay: var(--ready-intro);
+}
+.ready-countdown[data-phase='counting'] .ready-progress-front {
+  animation: ready-progress-front var(--ready-duration) var(--ready-gauge-ease) both;
+  animation-delay: var(--ready-intro);
 }
 @keyframes ready-progress-fill {
-  to {
-    transform: scaleX(1);
+  from {
+    clip-path: inset(0 100% 0 0);
   }
+  to {
+    clip-path: inset(0);
+  }
+}
+@keyframes ready-progress-front {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.ready-countdown[data-phase='go'] .ready-progress-fill {
+  clip-path: inset(0);
+}
+.ready-countdown[data-phase='go'] .ready-progress-front {
+  transform: translateX(0);
 }
 .ready-cancel {
   position: absolute;
@@ -275,8 +338,11 @@
     transform: none;
   }
 }
-.ready-countdown[data-phase='go'] .ready-progress > span {
-  transform: scaleX(1);
+.ready-countdown[data-phase='go'] .ready-progress-fill {
+  clip-path: inset(0);
+}
+.ready-countdown[data-phase='go'] .ready-progress-front {
+  transform: translateX(0);
 }
 @keyframes ready-reveal {
   from {
@@ -321,6 +387,26 @@
     radial-gradient(ellipse 28vw 66vh at 40.67% 5%, #fff5e014, transparent 72%),
     radial-gradient(ellipse 30vw 8vh at 50% 90%, #fff4d81a, transparent 75%);
   opacity: 0;
+}
+.ready-room-focus {
+  position: absolute;
+  inset: 0;
+}
+.practice[data-ready='waiting'] .ready-room-focus {
+  backdrop-filter: blur(var(--ready-room-focus-blur));
+}
+.practice[data-ready='counting'] .ready-room-focus {
+  /* Clear with the lamp's 600ms rise. No forwards fill: release the fullscreen
+     filter entirely before the counted beats or normal gameplay. */
+  animation: ready-room-focus var(--ready-light-rise) ease-in-out backwards;
+}
+@keyframes ready-room-focus {
+  from {
+    backdrop-filter: blur(var(--ready-room-focus-blur));
+  }
+  to {
+    backdrop-filter: blur(0px);
+  }
 }
 .practice[data-ready='counting'] .ready-room-shade {
   animation: ready-room-power var(--ready-light-rise) ease-in-out both;
@@ -421,7 +507,7 @@
 .practice[data-ready='counting'] .highway-line {
   z-index: 2;
   transform-origin: left;
-  animation: ready-lane-sweep var(--ready-lane-sweep) ease-in-out both;
+  animation: ready-lane-sweep var(--ready-line-sweep) ease-in-out both;
   animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
 }
 .practice[data-ready='counting'] .highway-line::after {
@@ -433,7 +519,7 @@
   height: 3px;
   background: linear-gradient(90deg, transparent, #fff8e9);
   box-shadow: 0 0 8px var(--lane);
-  animation: ready-sweep-tip var(--ready-lane-sweep) ease-out both;
+  animation: ready-sweep-tip var(--ready-line-sweep) ease-out both;
   animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
 }
 @keyframes ready-sweep-tip {
@@ -514,6 +600,10 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .practice[data-ready] .ready-room-focus {
+    backdrop-filter: none;
+    animation: none;
+  }
   .ready-countdown[data-phase='counting'] :is(.ready-cover, .ready-number),
   .ready-number.is-go,
   .ready-countdown[data-phase='counting'] .ready-number.is-initial,

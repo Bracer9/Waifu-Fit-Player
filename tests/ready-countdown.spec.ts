@@ -1,3 +1,4 @@
+import { holdStart } from './helpers/project';
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -91,8 +92,8 @@ async function publish(page: Page, title: string, coverFile: string) {
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));
   chart.title = title;
-  chart.difficulty = 'normal';
-  chart.difficultyRating = 3;
+  chart.chartType = 'fitness';
+  chart.danceDifficulty = 3;
   chart.playRange = { startMs: 3000, endMs: 18000 };
   chart.notes = [{ id: 'start', kind: 'tap', lane: 'squat', direction: 'down', timeMs: 4000 }];
   await page.getByLabel('导入谱面文件').setInputFiles({
@@ -120,7 +121,7 @@ async function songs(page: Page) {
 
 async function start(page: Page, title: string) {
   await page.getByRole('button', { name: `选择 ${title}`, exact: true }).click();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await holdStart(page);
   await expect(page.getByRole('dialog', { name: '开始倒计时' })).toBeVisible();
 }
 
@@ -140,6 +141,10 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     (window as unknown as { holdReadyFrame: boolean }).holdReadyFrame = true;
   });
   await start(page, 'Ready Pink');
+  await expect(page.locator('.ready-progress-fill')).toHaveCSS(
+    'background-color',
+    'rgb(53, 201, 219)',
+  );
   const countdown = page.getByRole('dialog', { name: '开始倒计时' });
   const video = page.locator('video');
   const videoNode = (await video.elementHandle())!;
@@ -162,7 +167,7 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   await expect(countdown.locator('.cover-art')).toHaveAttribute('src', first);
   await expect(countdown.locator('.cover-art')).toHaveCSS('object-fit', 'cover');
   await page.waitForTimeout(900);
-  await expect(countdown.getByRole('timer')).toHaveText('3');
+  await expect(countdown.locator('.ready-number')).toBeHidden();
   expect(await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.paused])).toEqual([
     3,
     true,
@@ -172,6 +177,28 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     document.querySelector('video')!.dispatchEvent(new Event('canplay'));
   });
   await expect(countdown).toHaveAttribute('data-phase', 'counting');
+  const gauge = await countdown.locator('.ready-progress-fill').evaluate((element) => {
+    const animation = element
+      .getAnimations()
+      .find((item) => (item as CSSAnimation).animationName === 'ready-progress-fill')!;
+    const timing = animation.effect!.getComputedTiming();
+    const previousTime = animation.currentTime;
+    animation.pause();
+    const samples = [0.25, 0.5, 0.75].map((fraction) => {
+      animation.currentTime = Number(timing.delay) + Number(timing.duration) * fraction;
+      return 1 - parseFloat(getComputedStyle(element).clipPath.split(' ')[1]) / 100;
+    });
+    animation.currentTime = previousTime;
+    animation.play();
+    return { duration: timing.duration, delay: timing.delay, samples };
+  });
+  expect(gauge.duration).toBe(READY_COUNTDOWN.beatMs * 3);
+  expect(gauge.delay).toBe(READY_COUNTDOWN.introMs);
+  expect(gauge.samples[0]).toBeCloseTo(0.093, 2);
+  expect(gauge.samples[1]).toBeCloseTo(0.315, 2);
+  expect(gauge.samples[2]).toBeCloseTo(0.622, 2);
+  await expect(countdown.locator('.ready-number')).toBeHidden();
+  expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   await page.screenshot({ path: 'artifacts/ready-room-power-on-1080p.png' });
   await expect(countdown.locator('.ready-cover')).toHaveCSS('filter', 'blur(12px)');
   await expect(countdown.locator('.ready-number')).toHaveCSS('filter', 'none');
@@ -179,15 +206,14 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     .locator('.practice .highway-line')
     .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).animationDelay));
   expect(delays).toEqual(['0s', '0.085s', '0.17s', '0.255s', '0.34s']);
+  await expect(countdown.getByRole('timer')).toHaveText('3');
+  // The lamp and room finish lighting during the lead-in, before the counted beats.
+  await expect(page.locator('.ready-room-shade')).toHaveCSS('opacity', '0');
+  await expect(page.locator('.ready-lamp-cap')).toHaveCSS('opacity', '0');
   await expect(countdown.getByRole('timer')).toHaveText('2');
   await page.screenshot({ path: 'artifacts/ready-cover-1080p.png' });
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   await expect(countdown.getByRole('timer')).toHaveText('1');
-  const roomShade = Number(
-    await page.locator('.ready-room-shade').evaluate((node) => getComputedStyle(node).opacity),
-  );
-  expect(roomShade).toBeGreaterThan(0);
-  expect(roomShade).toBeLessThan(READY_COUNTDOWN.roomShade);
   await page.waitForFunction(
     () => document.querySelector('.ready-countdown')?.getAttribute('data-phase') === 'go',
   );
@@ -208,8 +234,14 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   const numberOpacity = proof.filter((entry) => entry.kind === 'number-opacity');
   expect(numberOpacity.length).toBeGreaterThan(5);
   expect(numberOpacity.every((entry) => entry.opacity === 1)).toBe(true);
-  const steps = proof.filter((entry) => entry.kind === 'step' && entry.phase !== 'waiting');
+  const intro = proof.find(
+    (entry) => entry.kind === 'step' && entry.phase === 'counting' && entry.text === '',
+  )!;
+  const steps = proof.filter(
+    (entry) => entry.kind === 'step' && entry.phase !== 'waiting' && entry.text !== '',
+  );
   expect(steps.map((entry) => entry.text)).toEqual(['3', '2', '1', 'GO!']);
+  expect(Math.abs(steps[0].at - intro.at - READY_COUNTDOWN.introMs)).toBeLessThan(120);
   const playback = proof.find((entry) => entry.kind === 'play')!;
   const go = steps.at(-1)!;
   const removed = proof.find((entry) => entry.kind === 'removed')!;
@@ -257,7 +289,7 @@ test('missing cover uses the existing placeholder and reduced motion keeps count
           const request = store.getAll();
           request.onsuccess = () => {
             for (const song of request.result) {
-              song.released.normal.cover = '';
+              song.released.fitness.cover = '';
               store.put(song);
             }
           };

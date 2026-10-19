@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Disc3, Pencil } from 'lucide-react';
-import { editionsIn, type Album, type Difficulty, type Song } from '../library';
+import { editionsIn, type Album, type ChartType, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
 import { CoverTrace } from '../components/CoverTrace';
-import { ModalBackdrop } from '../components/ModalBackdrop';
+import { StartBriefing } from '../components/StartBriefing';
 import { MenuControls } from '../components/MenuControls';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
@@ -11,8 +11,7 @@ import { playableChart, playDuration } from '../play-range';
 import type { PlayRange } from '../model';
 import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
-
-const rating = (value: number | undefined) => (value === undefined ? '—' : String(value));
+import { ratingValue, ratingSummary } from '../chart-types';
 
 function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   const center = horizontal
@@ -48,31 +47,31 @@ type Props = {
   songs: Song[];
   albumId: string;
   songId: string;
-  difficulty: Difficulty;
+  chartType: ChartType;
   seed: number;
   onAlbum: (id: string, enter?: boolean) => void;
   onSong: (id: string) => void;
-  onDifficulty: (difficulty: Difficulty) => void;
+  onChartType: (chartType: ChartType) => void;
   onBack: () => void;
   onSound: MenuSoundPlayer;
   onCreate: () => void;
-  onPlay: (song: Song, difficulty: Difficulty) => void;
+  onPlay: (song: Song, chartType: ChartType) => Promise<void>;
   onPreview: (assetId: string | undefined, range?: PlayRange) => void;
-  onEdit: (song: Song, difficulty: Difficulty) => void;
+  onEdit: (song: Song, chartType: ChartType) => void;
 };
 
 export function LibraryMenu(props: Props) {
-  const { page, albums, songs, albumId, songId, difficulty, seed, onAlbum, onSong, onDifficulty } =
+  const { page, albums, songs, albumId, songId, chartType, seed, onAlbum, onSong, onChartType } =
     props;
   const scroller = useRef<HTMLDivElement>(null);
   const { activate, getCurrent, handlers } = useCardHighlight();
   const scrollFrame = useRef(0);
-  const [confirmStart, setConfirmStart] = useState<{ song: Song; difficulty: Difficulty } | null>(
+  const [confirmStart, setConfirmStart] = useState<{ song: Song; chartType: ChartType } | null>(
     null,
   );
-  const confirmSong = (song: Song, difficulty: Difficulty) => {
+  const confirmSong = (song: Song, chartType: ChartType) => {
     props.onSound('song');
-    setConfirmStart({ song, difficulty });
+    setConfirmStart({ song, chartType });
   };
   const closeConfirmation = () => {
     props.onSound('back');
@@ -85,8 +84,8 @@ export function LibraryMenu(props: Props) {
         .filter((s) => editionsIn(s, albumId).length)
         .sort(
           (a, b) =>
-            (b.released.hard ?? b.released.normal)!.updatedAt -
-            (a.released.hard ?? a.released.normal)!.updatedAt,
+            (b.released.dance ?? b.released.fitness)!.updatedAt -
+            (a.released.dance ?? a.released.fitness)!.updatedAt,
         ),
     [songs, albumId],
   );
@@ -105,9 +104,8 @@ export function LibraryMenu(props: Props) {
     [songs],
   );
   const available = selected ? editionsIn(selected, albumId) : [];
-  const selectedDifficulty = available.includes(difficulty) ? difficulty : available.at(-1);
-  const edition =
-    selected && selectedDifficulty ? selected.released[selectedDifficulty] : undefined;
+  const selectedChartType = available.includes(chartType) ? chartType : available.at(-1);
+  const edition = selected && selectedChartType ? selected.released[selectedChartType] : undefined;
   const previewAsset = page === 'songs' ? edition?.chart.videoHint.assetId : undefined;
   const previewRange = page === 'songs' ? edition?.chart.playRange : undefined;
   useEffect(
@@ -260,10 +258,10 @@ export function LibraryMenu(props: Props) {
           const song = inAlbum.find((song) => song.id === current?.dataset.id) ?? selected;
           if (!song) return;
           const choices = editionsIn(song, albumId);
-          const nextDifficulty = choices.includes(difficulty) ? difficulty : choices.at(-1);
-          if (nextDifficulty) {
+          const nextChartType = choices.includes(chartType) ? chartType : choices.at(-1);
+          if (nextChartType) {
             onSong(song.id);
-            confirmSong(song, nextDifficulty);
+            confirmSong(song, nextChartType);
           }
         }
       }
@@ -377,7 +375,7 @@ export function LibraryMenu(props: Props) {
           >
             {inAlbum.map((song) => {
               const ds = editionsIn(song, albumId);
-              const d = ds.includes(difficulty) ? difficulty : ds.at(-1)!;
+              const d = ds.includes(chartType) ? chartType : ds.at(-1)!;
               const release = song.released[d]!;
               return (
                 <div
@@ -396,8 +394,8 @@ export function LibraryMenu(props: Props) {
                   />
                   <span className="record-overline">
                     <span>
-                      <small>LEVEL</small>
-                      <b>{rating(release.chart.difficultyRating)}</b>
+                      <small>{d === 'fitness' ? 'INTENSITY' : 'LEVEL'}</small>
+                      <b>{ratingValue(release.chart)}</b>
                     </span>
                     <span>
                       <b>{totalCalories.get(release.chart)?.toFixed(1)}</b>
@@ -411,9 +409,9 @@ export function LibraryMenu(props: Props) {
                   <span className="record-caption">
                     <span className="record-title">
                       <strong>{release.chart.title}</strong>
-                      <span className="record-difficulties">
+                      <span className="record-chart-types">
                         {ds.map((level) => (
-                          <i className={`difficulty-tag ${level}`} key={level}>
+                          <i className={`chart-type-tag ${level}`} key={level}>
                             {level.toUpperCase()}
                           </i>
                         ))}
@@ -461,23 +459,19 @@ export function LibraryMenu(props: Props) {
               <span className="eyebrow">SELECTED TRACK</span>
               <h2>{edition?.chart.title}</h2>
             </div>
-            <div className="difficulty-choice" aria-label="游玩难度">
-              {(['normal', 'hard'] as const).map((d) => (
+            <div className="chart-type-choice" aria-label="游玩谱面类型">
+              {(['fitness', 'dance'] as const).map((d) => (
                 <button
                   key={d}
                   aria-label={d.toUpperCase()}
                   disabled={!available.includes(d)}
-                  aria-pressed={selectedDifficulty === d}
+                  aria-pressed={selectedChartType === d}
                   className={d}
-                  onClick={() => onDifficulty(d)}
+                  onClick={() => onChartType(d)}
                 >
                   {d.toUpperCase()}
                   <small>
-                    {rating(
-                      available.includes(d)
-                        ? selected.released[d]?.chart.difficultyRating
-                        : undefined,
-                    )}
+                    {available.includes(d) ? ratingSummary(selected.released[d]!.chart) : '—'}
                   </small>
                 </button>
               ))}
@@ -487,37 +481,23 @@ export function LibraryMenu(props: Props) {
       )}
       <MenuControls onBack={props.onBack} />
       {confirmStart && (
-        <ModalBackdrop onClose={closeConfirmation}>
-          <section
-            className="modal start-confirmation"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="start-confirmation-title"
-          >
-            <span className="eyebrow">READY TO MOVE?</span>
-            <h2 id="start-confirmation-title">开始这首曲子？</h2>
-            <p>{confirmStart.song.released[confirmStart.difficulty]!.chart.title}</p>
-            <span className={`difficulty-tag ${confirmStart.difficulty}`}>
-              {confirmStart.difficulty.toUpperCase()} ·{' '}
-              {rating(confirmStart.song.released[confirmStart.difficulty]!.chart.difficultyRating)}
-            </span>
-            <div className="modal-actions">
-              <button className="button light" onClick={closeConfirmation}>
-                取消
-              </button>
-              <button
-                className="button primary"
-                onClick={() => {
-                  props.onSound('mode');
-                  props.onPlay(confirmStart.song, confirmStart.difficulty);
-                  setConfirmStart(null);
-                }}
-              >
-                开始游戏
-              </button>
-            </div>
-          </section>
-        </ModalBackdrop>
+        <StartBriefing
+          song={confirmStart.song}
+          chartType={confirmStart.chartType}
+          available={editionsIn(confirmStart.song, albumId)}
+          albumName={album.name}
+          onChartType={(type) => {
+            onChartType(type);
+            setConfirmStart({ ...confirmStart, chartType: type });
+          }}
+          onClose={closeConfirmation}
+          onStart={() => {
+            void props
+              .onPlay(confirmStart.song, confirmStart.chartType)
+              .finally(() => setConfirmStart(null));
+          }}
+          onSound={props.onSound}
+        />
       )}
     </section>
   );

@@ -1,3 +1,11 @@
+import {
+  CHART_TYPES,
+  EXERCISE_INTENSITIES,
+  migrateChartMetadata,
+  type ChartType,
+  type ExerciseIntensity,
+} from './chart-types';
+
 export const ARM_DIRECTIONS = [
   'up_left',
   'up',
@@ -77,8 +85,9 @@ export type PlayRange = { startMs: number; endMs: number };
 export type Chart = {
   schemaVersion: 1;
   songId?: string;
-  difficulty?: 'normal' | 'hard';
-  difficultyRating?: number;
+  chartType?: ChartType;
+  intensity?: ExerciseIntensity;
+  danceDifficulty?: number;
   title: string;
   videoOffsetMs?: number;
   playRange?: PlayRange;
@@ -194,6 +203,7 @@ export function specialMoveLabel(move: NonNullable<Chart['specialMove']>): strin
 export function blankChart(title = '我的新作品'): Chart {
   return {
     schemaVersion: 1,
+    chartType: 'dance',
     title,
     videoHint: { fileName: '', durationMs: 0 },
     specialMove: null,
@@ -222,14 +232,16 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     !!value && typeof value === 'object' && !Array.isArray(value);
   if (!record(source)) throw new ChartError(['谱面必须是一个 JSON 对象。']);
   // Retired C actions are discarded, including their hold and sway variants.
-  const input = Array.isArray(source.notes)
-    ? {
-        ...source,
-        notes: source.notes.filter(
-          (note) => !record(note) || note.lane !== 'step' || note.direction !== 'close',
-        ),
-      }
-    : source;
+  const input = migrateChartMetadata(
+    Array.isArray(source.notes)
+      ? {
+          ...source,
+          notes: source.notes.filter(
+            (note) => !record(note) || note.lane !== 'step' || note.direction !== 'close',
+          ),
+        }
+      : source,
+  );
   if (input.schemaVersion !== 1)
     throw new ChartError(['不支持此谱面版本，当前仅支持 schemaVersion: 1。']);
   if (typeof input.title !== 'string' || !input.title.trim()) errors.push('作品名称不能为空。');
@@ -238,15 +250,22 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     (typeof input.songId !== 'string' || !/^[a-f0-9-]{36}$/.test(input.songId))
   )
     errors.push('曲目 ID 无效。');
-  if (input.difficulty !== undefined && !['normal', 'hard'].includes(String(input.difficulty)))
-    errors.push('难度必须为 normal 或 hard。');
+  if (!CHART_TYPES.includes(input.chartType as ChartType))
+    errors.push('谱面类型必须为 fitness 或 dance。');
+  if (source.difficulty !== undefined && !['normal', 'hard'].includes(String(source.difficulty)))
+    errors.push('旧谱面类型无效。');
   if (
-    input.difficultyRating !== undefined &&
-    (typeof input.difficultyRating !== 'number' ||
-      !Number.isFinite(input.difficultyRating) ||
-      input.difficultyRating < 0)
+    input.intensity !== undefined &&
+    !EXERCISE_INTENSITIES.includes(input.intensity as ExerciseIntensity)
   )
-    errors.push('难度系数必须为不小于 0 的数字。');
+    errors.push('运动强度必须为 low、medium 或 high。');
+  if (
+    input.danceDifficulty !== undefined &&
+    (typeof input.danceDifficulty !== 'number' ||
+      !Number.isFinite(input.danceDifficulty) ||
+      input.danceDifficulty < 0)
+  )
+    errors.push('舞蹈难度必须为不小于 0 的数字。');
   if (
     input.videoOffsetMs !== undefined &&
     (!Number.isInteger(input.videoOffsetMs) || Math.abs(Number(input.videoOffsetMs)) > 1000)

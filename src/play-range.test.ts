@@ -142,17 +142,17 @@ describe('saved play ranges', () => {
     const chart = fixture();
     const song: Song = {
       id: '11223344-1234-1234-1234-aabbccddeeff',
-      drafts: { hard: { chart, albumId: 'touhou', cover: '', updatedAt: 1 } },
+      drafts: { dance: { chart, albumId: 'touhou', cover: '', updatedAt: 1 } },
       released: {},
     };
-    const published = publishSong(song, 'hard');
-    expect(published.released.hard!.chart.notes).toHaveLength(5);
+    const published = publishSong(song, 'dance');
+    expect(published.released.dance!.chart.notes).toHaveLength(5);
     chart.playRange!.endMs = 6000;
-    expect(published.released.hard!.chart.playRange!.endMs).toBe(15000);
+    expect(published.released.dance!.chart.playRange!.endMs).toBe(15000);
     chart.playRange = { startMs: 18000, endMs: 20000 };
-    expect(() => publishSong(song, 'hard')).toThrow('空谱面');
+    expect(() => publishSong(song, 'dance')).toThrow('空谱面');
     chart.playRange = { startMs: 5000, endMs: 10000 };
-    expect(() => publishSong(song, 'hard')).toThrow('跨越');
+    expect(() => publishSong(song, 'dance')).toThrow('跨越');
   });
   it.each([
     ['03:41', 221000],

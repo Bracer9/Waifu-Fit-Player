@@ -1,4 +1,4 @@
-export function CoverTrace() {
+export function CoverTrace({ inset = 1 }: { inset?: number }) {
   return (
     <svg
       className="cover-trace"
@@ -6,8 +6,8 @@ export function CoverTrace() {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <rect x="1" y="1" width="98" height="98" pathLength="100" />
-      <rect x="1" y="1" width="98" height="98" pathLength="100" />
+      <rect x={inset} y={inset} width={100 - inset * 2} height={100 - inset * 2} pathLength="100" />
+      <rect x={inset} y={inset} width={100 - inset * 2} height={100 - inset * 2} pathLength="100" />
     </svg>
   );
 }

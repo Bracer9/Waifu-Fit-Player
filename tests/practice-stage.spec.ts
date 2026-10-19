@@ -10,8 +10,8 @@ test('stage artwork, track metadata and shared keyboard/mouse pause controls at 
   await page.goto('/');
   const chart = blankChart();
   chart.title = 'Happy Halloween';
-  chart.difficulty = 'normal';
-  chart.difficultyRating = 3;
+  chart.chartType = 'fitness';
+  chart.intensity = 'medium';
   chart.tempoSegments = [
     { id: 'first', anchorMs: 0, bpm: 120, meter: '4/4' },
     { id: 'second', anchorMs: 20000, bpm: 148, meter: '4/4' },
@@ -30,7 +30,7 @@ test('stage artwork, track metadata and shared keyboard/mouse pause controls at 
   await expect(header.getByRole('heading', { name: chart.title, exact: true })).toBeVisible();
   await expect(header.locator('.practice-song-cover img')).toHaveAttribute('src', cover!);
   await expect(header.locator('.track-status')).toHaveText('NOW PLAYING');
-  await expect(header.locator('.practice-difficulty')).toHaveText('NORMALLv. 3');
+  await expect(header.locator('.practice-chart-type')).toHaveText('FITNESSINT. MEDIUM');
   await expect(header.locator('.practice-bpm')).toHaveText('BPM120');
   await expect(header).not.toContainText('TIME');
   await expect(page.locator('.return-workspace')).toHaveCount(0);
@@ -102,7 +102,7 @@ test('stage artwork, track metadata and shared keyboard/mouse pause controls at 
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(1080);
   for (const part of await header
     .locator(
-      '.practice-song-cover, .track-status, h1, .practice-difficulty, .practice-bpm, .practice-pause',
+      '.practice-song-cover, .track-status, h1, .practice-chart-type, .practice-bpm, .practice-pause',
     )
     .all()) {
     await expect(part).toBeVisible();

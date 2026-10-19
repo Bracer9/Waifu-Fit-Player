@@ -65,6 +65,9 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
         beat += (target - beat) * (target > beat ? 0.45 : 0.13);
       } else average = beat = 0;
       menu?.style.setProperty('--music-beat', beat.toFixed(3));
+      // The start briefing is portaled outside .menu-app. Share this same FFT beat
+      // with its charge control without another analyser, RAF or React render.
+      document.body.style.setProperty('--menu-music-beat', beat.toFixed(3));
       if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
@@ -116,6 +119,7 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
       document.removeEventListener('visibilitychange', refresh);
       reduced.removeEventListener('change', refresh);
       menu?.style.removeProperty('--music-beat');
+      document.body.style.removeProperty('--menu-music-beat');
     };
   }, [music.analyser, music.playing, audible, waveform]);
   return <canvas className="music-pulse" ref={canvas} hidden={!waveform} aria-hidden="true" />;

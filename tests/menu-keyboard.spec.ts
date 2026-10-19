@@ -133,7 +133,7 @@ test('专辑顶端和单曲按上通往齿轮，单曲左右只选曲，鼠标�
   // Navigation does not depend on the local demo video's length or full song chart.
   const chart = blankChart();
   chart.title = 'Menu navigation';
-  chart.difficultyRating = 3;
+  chart.danceDifficulty = 3;
   chart.notes = [{ id: 'menu-note', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
   await importDemo(page, chart);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
@@ -198,5 +198,5 @@ test('专辑顶端和单曲按上通往齿轮，单曲左右只选曲，鼠标�
   await song.hover();
   await only(page, song);
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('dialog')).toContainText('开始这首曲子');
+  await expect(page.getByRole('dialog')).toContainText('HOLD ENTER TO START');
 });

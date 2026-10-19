@@ -1,8 +1,9 @@
+import { holdStart } from './helpers/project';
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
 
-test('restart uses the play-range start, return restores song selection, and countdown stays separate', async ({
+test('restart replays the countdown at the range start, while seeking only changes playback position', async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -34,8 +35,8 @@ test('restart uses the play-range start, return restores song selection, and cou
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));
   chart.title = 'Pause range check';
-  chart.difficulty = 'normal';
-  chart.difficultyRating = 3;
+  chart.chartType = 'fitness';
+  chart.danceDifficulty = 3;
   chart.playRange = { startMs: 3000, endMs: 18000 };
   chart.notes = [{ id: 'first', kind: 'tap', lane: 'squat', direction: 'down', timeMs: 4000 }];
   await page.getByLabel('导入谱面文件').setInputFiles({
@@ -81,13 +82,18 @@ test('restart uses the play-range start, return restores song selection, and cou
     .toEqual(['settings', 'settings']);
   await page.keyboard.press('Enter');
   await expect(dialog).toHaveCount(0);
-  await expect
-    .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
-    .toBeGreaterThanOrEqual(3);
-  expect(await video.evaluate((v: HTMLVideoElement) => [v.currentTime < 4, v.paused])).toEqual([
+  const countdown = page.getByRole('dialog', { name: '开始倒计时', exact: true });
+  await expect(countdown).toBeVisible();
+  expect(await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.paused])).toEqual([
+    3,
     true,
-    false,
   ]);
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
+  await expect(seek).toBeDisabled();
+  await expect(countdown.getByRole('timer')).toHaveText('3');
+  expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
+  await expect(countdown).toHaveCount(0);
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
   expect(await originalVideo.evaluate((v) => v.isConnected)).toBe(true);
   const soundEvents = () =>
     page.evaluate(
@@ -99,7 +105,19 @@ test('restart uses the play-range start, return restores song selection, and cou
     'settings',
     'settings',
     'song',
+    'settings',
+    'settings',
+    'settings',
+    'mode',
   ]);
+
+  // Dragging to the start keeps playback running and must not recreate the countdown.
+  await seek.fill('3000');
+  await expect(countdown).toHaveCount(0);
+  await expect
+    .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
+    .toBeGreaterThan(3.1);
+  expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
 
   await seek.fill('10000');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
@@ -111,7 +129,13 @@ test('restart uses the play-range start, return restores song selection, and cou
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'RESTART', exact: true }).click();
   await expect(dialog).toHaveCount(0);
-  expect(await video.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeLessThan(4);
+  await expect(countdown).toBeVisible();
+  expect(await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.paused])).toEqual([
+    3,
+    true,
+  ]);
+  await expect(countdown).toHaveCount(0);
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
   await page.keyboard.press('Escape');
   await expect
     .poll(() =>
@@ -132,7 +156,7 @@ test('restart uses the play-range start, return restores song selection, and cou
   await page.keyboard.press('Enter');
   const card = page.locator('.record-card[aria-current="true"]');
   await expect(card).toContainText(chart.title);
-  await expect(page.getByRole('button', { name: /NORMAL/, pressed: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /FITNESS/, pressed: true })).toBeVisible();
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   expect(await originalVideo.evaluate((v) => v.isConnected)).toBe(true);
   const expectedSounds = [
@@ -140,10 +164,18 @@ test('restart uses the play-range start, return restores song selection, and cou
     'settings',
     'song',
     'settings',
+    'settings',
+    'settings',
+    'mode',
+    'settings',
     'mode',
     'settings',
     'settings',
     'song',
+    'settings',
+    'settings',
+    'settings',
+    'mode',
     'settings',
     'settings',
     'back',
@@ -157,7 +189,7 @@ test('restart uses the play-range start, return restores song selection, and cou
     .toEqual(expectedSounds);
 
   await card.locator('.record-select').click();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await holdStart(page);
   await expect(page.getByRole('dialog', { name: '开始倒计时', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '暂停游戏', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
@@ -179,6 +211,8 @@ test('restart uses the play-range start, return restores song selection, and cou
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(dialog).toHaveCount(0);
+  await expect(countdown).toBeVisible();
+  await expect(countdown).toHaveCount(0);
   await page.getByRole('button', { name: '暂停游戏', exact: true }).click();
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'RESUME', exact: true }).click();

@@ -1,5 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
 
 test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) => {
   const only = async (card: Locator) => {
@@ -32,7 +33,10 @@ test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) 
   await page.mouse.move(10, 10);
   await expect(page.locator('.cover-trace:visible')).toHaveCount(0);
 
-  await importDemo(page);
+  await importDemo(page, {
+    ...blankChart('Highlight navigation'),
+    notes: [{ id: 'n', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1000 }],
+  });
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByLabel('所属专辑').selectOption('touhou');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
@@ -51,9 +55,9 @@ test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) 
           request.onsuccess = () => {
             const song = structuredClone(request.result[0]);
             song.id = 'highlight-second';
-            song.released.hard.chart.songId = song.id;
-            song.released.hard.chart.title = 'Second song';
-            song.released.hard.updatedAt += 1;
+            song.released.dance.chart.songId = song.id;
+            song.released.dance.chart.title = 'Second song';
+            song.released.dance.updatedAt += 1;
             store.put(song);
           };
           tx.oncomplete = () => {

@@ -1,3 +1,4 @@
+import { holdStart } from './helpers/project';
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -144,7 +145,7 @@ test('保存游玩范围，终点红线跟随偏移，发布、试听和音游�
   });
   await expect.poll(previewTime).toBeLessThan(4);
   await card.locator('.record-select').click();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await holdStart(page);
   await expect(page.getByRole('dialog', { name: '开始倒计时' })).toBeVisible();
   expect(await video.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeCloseTo(3, 2);
   await expect(page.getByRole('dialog', { name: '开始倒计时' })).toBeHidden();

@@ -39,7 +39,7 @@ import {
   readLibrary,
   unpublishSong,
   videoIds,
-  type Difficulty,
+  type ChartType,
   type Edition,
   type Song,
 } from './library';
@@ -60,6 +60,7 @@ import { Player } from './views/Player';
 import { Editor, type EditorHandle } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
+import { chartTypeFrom } from './chart-types';
 import {
   PracticeBackdrop,
   PracticeCover,
@@ -69,6 +70,7 @@ import {
 import { PracticePause } from './components/PracticePause';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
+import { GameEntrance } from './components/GameEntrance';
 import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
   forgetVideo,
@@ -133,10 +135,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const working = useRef(false);
   const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
   const [menuTransition, setMenuTransition] = useState<{
-    next: 'home' | 'albums' | 'songs';
+    next: 'home' | 'albums' | 'songs' | 'player';
     direction: 'forward' | 'back';
-    phase: 'cover' | 'reveal';
+    phase: 'cover' | 'hold' | 'reveal';
   } | null>(null);
+  const playOnCovered = useRef<(() => void) | null>(null);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
   const playStart = chart.playRange?.startMs;
   const playEnd = chart.playRange?.endMs;
@@ -225,7 +228,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
   const [albumId, setAlbumId] = useState('all');
   const [selectedSong, setSelectedSong] = useState('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('hard');
+  const [selectedChartType, setSelectedChartType] = useState<ChartType>('dance');
   const [coverSeed] = useState(Math.random);
   const [manageSongs, setManageSongs] = useState(false);
   const [manageAlbums, setManageAlbums] = useState(false);
@@ -273,7 +276,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     playMenuSound('back');
     setSettings(false);
   };
-  const difficulty = chart.difficulty ?? 'hard';
+  const chartType = chart.chartType ?? 'dance';
   const persistDraft = useCallback(async () => {
     if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
     const edition: Edition = { chart: structuredClone(chart), ...draftMeta, updatedAt: Date.now() };
@@ -282,7 +285,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         ? previous
         : {
             id: chart.songId!,
-            drafts: { ...previous?.drafts, [chart.difficulty ?? 'hard']: edition },
+            drafts: { ...previous?.drafts, [chart.chartType ?? 'dance']: edition },
             released: previous?.released ?? {},
           },
     );
@@ -290,7 +293,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     try {
       localStorage.setItem(
         LAST_DRAFT_KEY,
-        JSON.stringify({ id: chart.songId, difficulty: chart.difficulty ?? 'hard' }),
+        JSON.stringify({ id: chart.songId, chartType: chart.chartType ?? 'dance' }),
       );
     } catch {
       /* The draft itself is in IndexedDB. */
@@ -385,7 +388,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         {
           ...next,
           songId: next.songId ?? existing?.id ?? crypto.randomUUID(),
-          difficulty: next.difficulty ?? 'hard',
+          chartType: next.chartType ?? 'dance',
           videoHint: video.hint,
         },
         video.hint.durationMs,
@@ -396,7 +399,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       throw error;
     }
     const known = library.songs.find((s) => s.id === paired.songId);
-    const edition = context?.edition ?? known?.drafts[paired.difficulty ?? 'hard'];
+    const edition = context?.edition ?? known?.drafts[paired.chartType ?? 'dance'];
     const meta = { albumId: edition?.albumId ?? '', cover: edition?.cover ?? '' };
     try {
       if (!context?.play)
@@ -404,14 +407,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           id: paired.songId!,
           drafts: {
             ...previous?.drafts,
-            [paired.difficulty ?? 'hard']: { chart: paired, ...meta, updatedAt: Date.now() },
+            [paired.chartType ?? 'dance']: { chart: paired, ...meta, updatedAt: Date.now() },
           },
           released: previous?.released ?? {},
         }));
       else if (JSON.stringify(next.videoHint) !== JSON.stringify(paired.videoHint))
         await updateSong(paired.songId!, (previous) => {
           if (!previous) return previous;
-          const d = paired.difficulty ?? 'hard';
+          const d = paired.chartType ?? 'dance';
           return {
             ...previous,
             released: { ...previous.released, [d]: { ...previous.released[d]!, chart: paired } },
@@ -429,7 +432,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       try {
         localStorage.setItem(
           LAST_DRAFT_KEY,
-          JSON.stringify({ id: paired.songId, difficulty: paired.difficulty }),
+          JSON.stringify({ id: paired.songId, chartType: paired.chartType }),
         );
         if (context?.legacy) localStorage.removeItem(DRAFT_KEY);
       } catch {
@@ -472,7 +475,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         ? {
             ...blankChart(fileTitle(file.name)),
             songId: crypto.randomUUID(),
-            difficulty: 'hard' as const,
+            chartType: 'dance' as const,
           }
         : request.chart;
     await installProject(
@@ -549,7 +552,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         );
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${chart.title.replace(/[<>:"/\\|?*]/g, '_')}_${difficulty}.wfp.json`;
+        link.download = `${chart.title.replace(/[<>:"/\\|?*]/g, '_')}_${chartType}.wfp.json`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
@@ -585,9 +588,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     else pauseGame();
   };
   const restartGame = () => {
+    if (!status.ready || status.preparing || startPending) return;
+    playMenuSound('song');
     media.pause();
     media.seek(playStart ?? 0);
-    resumeGame('song');
+    setGamePauseOpen(false);
+    setReadyPhase('waiting');
+    // Reuse the opening sequence after the seeked video frame is ready.
+    preparation.retry();
   };
   const backToSelect = () => {
     playMenuSound('back');
@@ -595,7 +603,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setGamePauseOpen(false);
     setReadyPhase(null);
     setSelectedSong(chart.songId ?? selectedSong);
-    setSelectedDifficulty(difficulty);
+    setSelectedChartType(chartType);
     setMode('songs');
   };
   useEffect(() => {
@@ -676,14 +684,18 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     void runTask('正在打开草稿…', async () => {
       await library.load();
       const songs = await readLibrary('songs');
-      let last: { id: string; difficulty: Difficulty } | undefined;
+      let last: { id: string; chartType: ChartType } | undefined;
       try {
-        last = JSON.parse(localStorage.getItem(LAST_DRAFT_KEY) || 'null');
+        const saved = JSON.parse(localStorage.getItem(LAST_DRAFT_KEY) || 'null');
+        if (saved && typeof saved.id === 'string') {
+          last = { id: saved.id, chartType: chartTypeFrom(saved.chartType ?? saved.difficulty) };
+          localStorage.setItem(LAST_DRAFT_KEY, JSON.stringify(last));
+        }
       } catch {
         /* Start an empty editor. */
       }
       const song = songs.find((s) => s.id === last?.id);
-      const edition = song?.drafts[last?.difficulty ?? 'hard'];
+      const edition = song?.drafts[last?.chartType ?? 'dance'];
       if (edition) await openProject(edition.chart, true, { edition });
       else {
         const legacy = localStorage.getItem(DRAFT_KEY);
@@ -699,14 +711,28 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       }
     });
   };
-  const playSong = (song: Song, d: Difficulty) => {
+  const playSong = async (song: Song, d: ChartType) => {
     const edition = song.released[d];
-    if (!edition) return;
+    if (!edition || menuTransition || working.current) return;
     setSelectedSong(song.id);
-    setSelectedDifficulty(d);
-    void runTask('正在准备曲目…', () => openProject(edition.chart, true, { play: true, edition }));
+    setSelectedChartType(d);
+    const open = () =>
+      runTask('正在准备曲目…', () => openProject(edition.chart, true, { play: true, edition }));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      await open();
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      playOnCovered.current = () => {
+        void open().finally(() => {
+          setMenuTransition((current) => (current ? { ...current, phase: 'reveal' } : null));
+          resolve();
+        });
+      };
+      setMenuTransition({ next: 'player', direction: 'forward', phase: 'cover' });
+    });
   };
-  const editSong = (song: Song, d: Difficulty, published: boolean) => {
+  const editSong = (song: Song, d: ChartType, published: boolean) => {
     const edition = published ? song.released[d] : song.drafts[d];
     if (!edition) return;
     if (
@@ -726,10 +752,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       await openProject(edition.chart, true, { edition });
     });
   };
-  const withdraw = (song: Song, d: Difficulty) => {
+  const withdraw = (song: Song, d: ChartType) => {
     if (
       !window.confirm(
-        `撤下《${latestEdition(song).chart.title}》的 ${d.toUpperCase()}？只从音游模式移除，保留该难度草稿。`,
+        `撤下《${latestEdition(song).chart.title}》的 ${d.toUpperCase()}？只从音游模式移除，保留该类型草稿。`,
       )
     )
       return;
@@ -741,7 +767,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const deleteSong = (song: Song) => {
     if (
       !window.confirm(
-        `彻底从 WAIFU 删除《${latestEdition(song).chart.title}》？将删除 Normal / Hard 的草稿、发布版本和曲绘。磁盘原始文件不会删除。`,
+        `彻底从 WAIFU 删除《${latestEdition(song).chart.title}》？将删除 FITNESS / DANCE 的草稿、发布版本和曲绘。磁盘原始文件不会删除。`,
       )
     )
       return;
@@ -777,22 +803,22 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     });
   };
   const updatePublication = async (values: {
-    difficulty?: Difficulty;
+    chartType?: ChartType;
     albumId?: string;
     cover?: string;
   }) => {
-    if (values.difficulty && values.difficulty !== difficulty) {
-      const existing = library.songs.find((s) => s.id === chart.songId)?.drafts[values.difficulty];
+    if (values.chartType && values.chartType !== chartType) {
+      const existing = library.songs.find((s) => s.id === chart.songId)?.drafts[values.chartType];
       if (
         existing &&
         !window.confirm(
-          `将当前谱面复制为 ${values.difficulty.toUpperCase()} 草稿，替换该难度现有草稿？两个难度的发布版本都不改变。`,
+          `将当前谱面复制为 ${values.chartType.toUpperCase()} 草稿，替换该类型现有草稿？两种类型的发布版本都不改变。`,
         )
       )
         return;
       try {
         await persistDraft();
-        edit({ ...chart, difficulty: values.difficulty });
+        edit({ ...chart, chartType: values.chartType });
       } catch (error) {
         notify(`草稿未能保存：${(error as Error).message}`);
         return;
@@ -822,9 +848,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const publish = async () => {
     try {
       await persistDraft();
-      await updateSong(chart.songId!, (song) => song && publishSong(song, difficulty));
+      await updateSong(chart.songId!, (song) => song && publishSong(song, chartType));
       setPublishing(false);
-      notify(`${difficulty.toUpperCase()} 已发布到曲库。`);
+      notify(`${chartType.toUpperCase()} 已发布到曲库。`);
     } catch (error) {
       notify(`发布失败：${(error as Error).message}`);
     }
@@ -854,26 +880,38 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           <Settings size={96} />
         </button>
       )}
-      {menuPage &&
-        menuTransition &&
+      {menuTransition &&
         createPortal(
-          <div
-            className="menu-curtain"
-            data-direction={menuTransition.direction}
-            data-phase={menuTransition.phase}
-            aria-hidden="true"
-          >
-            <div
-              className="menu-curtain-sheet"
-              onAnimationEnd={() => {
-                if (menuTransition.phase === 'cover') {
-                  // Switch only after the sheet has physically covered the whole viewport.
-                  setMode(menuTransition.next);
-                  setMenuTransition({ ...menuTransition, phase: 'reveal' });
-                } else setMenuTransition(null);
+          menuTransition.next === 'player' ? (
+            <GameEntrance
+              phase={menuTransition.phase}
+              onCovered={() => {
+                setMenuTransition({ ...menuTransition, phase: 'hold' });
+                const play = playOnCovered.current;
+                playOnCovered.current = null;
+                play?.();
               }}
+              onRevealed={() => setMenuTransition(null)}
             />
-          </div>,
+          ) : (
+            <div
+              className="menu-curtain"
+              data-direction={menuTransition.direction}
+              data-phase={menuTransition.phase}
+              aria-hidden="true"
+            >
+              <div
+                className="menu-curtain-sheet"
+                onAnimationEnd={() => {
+                  if (menuTransition.phase === 'cover') {
+                    // Menu navigation keeps its existing geometric curtain.
+                    setMode(menuTransition.next);
+                    setMenuTransition({ ...menuTransition, phase: 'reveal' });
+                  } else if (menuTransition.phase === 'reveal') setMenuTransition(null);
+                }}
+              />
+            </div>
+          ),
           document.body,
         )}
       <header className="app-header" hidden={mode !== 'editor'}>
@@ -962,7 +1000,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                 songs={library.songs}
                 albumId={albumId}
                 songId={selectedSong}
-                difficulty={selectedDifficulty}
+                chartType={selectedChartType}
                 seed={coverSeed}
                 onAlbum={(id, enter) => {
                   setAlbumId(id);
@@ -972,9 +1010,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   }
                 }}
                 onSong={setSelectedSong}
-                onDifficulty={(difficulty) => {
+                onChartType={(chartType) => {
                   playMenuSound('settings');
-                  setSelectedDifficulty(difficulty);
+                  setSelectedChartType(chartType);
                 }}
                 onBack={() => {
                   playMenuSound('back');
@@ -1023,7 +1061,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                 />
               </h1>
               <p hidden={mode === 'player'}>
-                {`${difficulty.toUpperCase()} DRAFT · ${chart.tempoSegments[0]?.bpm ?? 120} BPM · ${chart.notes.length} 个动作提示 · ${dirty ? '正在保存草稿…' : '草稿已保存'}`}
+                {`${chartType.toUpperCase()} DRAFT · ${chart.tempoSegments[0]?.bpm ?? 120} BPM · ${chart.notes.length} 个动作提示 · ${dirty ? '正在保存草稿…' : '草稿已保存'}`}
               </p>
             </div>
             <div className="workspace-actions" hidden={mode !== 'editor'}>
@@ -1159,12 +1197,20 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                     <GameStartCountdown
                       key={projectRevision}
                       cover={draftMeta.cover}
-                      ready={menuMusic.quiet && !busy && !preparation.pending && status.ready}
+                      chartType={chartType}
+                      ready={
+                        !menuTransition &&
+                        menuMusic.quiet &&
+                        !busy &&
+                        !preparation.pending &&
+                        status.ready
+                      }
                       onPhase={setReadyPhase}
                       onComplete={completeCountdown}
                       onFinished={finishCountdown}
                       onCancel={() => {
                         playMenuSound('back');
+                        setMenuTransition(null);
                         setReadyPhase(null);
                         setMode('songs');
                       }}
@@ -1208,7 +1254,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               notify={notify}
               publication={
                 <PublicationFields
-                  difficulty={difficulty}
+                  chartType={chartType}
                   albumId={draftMeta.albumId}
                   cover={draftMeta.cover}
                   albums={library.albums}
@@ -1247,6 +1293,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       </main>
       {(mode === 'editor' || mode === 'player') &&
         preparation.pending &&
+        (mode !== 'player' || readyPhase === null || !!preparation.error) &&
         createPortal(
           <div className="playback-preparation" aria-busy={!preparation.error}>
             {preparation.error ? (
@@ -1444,9 +1491,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       {publishing && (
         <PublishDialog
           edition={{ chart, ...draftMeta, updatedAt: Date.now() }}
-          difficulty={difficulty}
+          chartType={chartType}
           albums={library.albums}
-          updating={!!library.songs.find((s) => s.id === chart.songId)?.released[difficulty]}
+          updating={!!library.songs.find((s) => s.id === chart.songId)?.released[chartType]}
           onClose={() => {
             playMenuSound('back');
             setPublishing(false);
@@ -1456,7 +1503,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
             setPublishing(false);
             editor.current?.locateEvent(id);
           }}
-          onDifficulty={(difficulty) => updatePublication({ difficulty })}
+          onChartType={(chartType) => updatePublication({ chartType })}
         />
       )}
       {help && (
@@ -1526,7 +1573,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               <li>
                 <strong>保存，然后跟练</strong>
                 <p>
-                  Ctrl+S 保存本地草稿，Ctrl+Shift+S 导出 JSON 副本。在“曲目”里选择难度、专辑与曲绘，
+                  Ctrl+S 保存本地草稿，Ctrl+Shift+S 导出 JSON
+                  副本。在“曲目”里选择谱面类型、专辑与曲绘，
                   点击“发布到曲库”后可从音游模式游玩。编辑草稿不会改变已发布的谱面。
                 </p>
               </li>

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { writeFile, unlink } from 'node:fs/promises';
-import { importDemo } from './helpers/project';
+import { importDemo, holdStart } from './helpers/project';
 
 // This suite runs against Vite dev so the temporary assets enter its normal glob.
 // Fixtures never enter the user's music library or the committed asset folder.
@@ -290,7 +290,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   ).toBeGreaterThan(3);
   await page.locator('.collection-album').first().click();
   await page.locator('.record-card[aria-current="true"] .record-select').click();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await holdStart(page);
   await expect(page.getByRole('timer')).toHaveText('3');
   expect(await sound(page)).toMatchObject({
     paused: true,

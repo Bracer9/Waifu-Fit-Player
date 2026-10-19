@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronRight, CornerDownLeft, Pause, Play, RotateCcw } from 
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { Chart } from '../model';
 import { CoverArt } from './CoverArt';
+import { ratingSummary } from '../chart-types';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const options = [
@@ -120,7 +121,7 @@ export function PracticePause({
             <div>
               <strong title={chart.title}>{chart.title}</strong>
               <small>
-                {(chart.difficulty ?? 'hard').toUpperCase()} / Lv. {chart.difficultyRating ?? '—'}
+                {(chart.chartType ?? 'dance').toUpperCase()} / {ratingSummary(chart)}
               </small>
             </div>
           </div>
