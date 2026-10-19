@@ -50,14 +50,15 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
   const tracks = page.locator('.theme-track');
   test.skip((await tracks.count()) === 0, '需要游戏 BGM 资源');
   await tracks.first().click();
   await page.getByRole('button', { name: '单曲循环', exact: true }).click();
   await expect.poll(async () => (await sound()).time).toBeGreaterThan(0);
   const theme = (await sound()).src;
-  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
+  await page.mouse.move(10, 10);
+  await expect(page.getByRole('region', { name: '主界面音乐' })).toBeHidden();
   await expect.poll(async () => (await sound()).time).toBeGreaterThan(2.5);
   await page.screenshot({ path: 'artifacts/menu-music-real-track.png', animations: 'disabled' });
   await page.waitForTimeout(350);

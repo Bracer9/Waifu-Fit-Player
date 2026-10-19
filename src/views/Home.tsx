@@ -25,6 +25,7 @@ export function Home({
       const target = event.target as HTMLElement;
       if (
         document.querySelector('.menu-curtain, [role="dialog"]') ||
+        target.closest('.music-console') ||
         /INPUT|SELECT|TEXTAREA/.test(target.tagName) ||
         target.isContentEditable
       )

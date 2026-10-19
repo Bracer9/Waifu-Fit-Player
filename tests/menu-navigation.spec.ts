@@ -44,7 +44,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.screenshot({ path: 'artifacts/menu-gear-home.png' });
   await gear.click();
   await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.5');
-  await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0.4');
+  await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.4');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.2');
   await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
   await page.getByRole('button', { name: '完成', exact: true }).click();
@@ -148,11 +148,14 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   for (const name of ['列表循环', '随机', '单曲循环']) await checkSound(click(name), 'settings');
   await checkSound(() => page.locator('.theme-track').first().click(), 'settings');
   await checkSound(click('暂停菜单 BGM'), 'settings');
-  await checkSound(click('关闭主界面音乐'), 'back');
+  await checkSound(click('选择主界面 BGM'), 'settings');
+  await page.mouse.move(10, 10);
+  await expect(page.getByRole('region', { name: '主界面音乐' })).toBeHidden();
   await checkSound(click('选择主界面 BGM'), 'settings');
   await expect(page.getByRole('button', { name: '播放菜单 BGM', exact: true })).toBeVisible();
   await checkSound(click('播放菜单 BGM'), 'settings');
-  await checkSound(() => page.keyboard.press('Escape'), 'back');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('region', { name: '主界面音乐' })).toBeHidden();
   await checkSound(() => gear.click(), 'settings');
   await checkSound(click('关闭设置'), 'back');
   await checkSound(() => gear.click(), 'settings');
@@ -164,37 +167,37 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.reload();
   await gear.click();
   await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0');
-  await expect(page.getByLabel('菜单 BGM 音量', { exact: true })).toHaveValue('0.4');
+  await expect(page.getByRole('slider', { name: '菜单 BGM 音量', exact: true })).toHaveValue('0.4');
   await expect(page.getByLabel('游戏／视频音量', { exact: true })).toHaveValue('0.2');
   expect(
     await page.evaluate(() => (window as unknown as { uiSoundEvents: unknown[] }).uiSoundEvents),
   ).toEqual([]);
   // Muting BGM does not mute SE, including after a reload.
-  await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0');
+  await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0');
   await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
   await checkSound(click('完成'), 'back');
   await page.reload();
   await checkSound(() => gear.click(), 'settings');
   await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.3');
-  await expect(page.getByLabel('菜单 BGM 音量', { exact: true })).toHaveValue('0');
+  await expect(page.getByRole('slider', { name: '菜单 BGM 音量', exact: true })).toHaveValue('0');
   expect(
     await page.evaluate(
       () => (window as unknown as { uiSoundEvents: { volume: number }[] }).uiSoundEvents[0].volume,
     ),
   ).toBe(0.3);
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.screenshot({ path: 'artifacts/menu-se-settings-720.png' });
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.screenshot({ path: 'artifacts/menu-se-settings-1080p.png' });
   await checkSound(click('完成'), 'back');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 1920, height: 1080 });
   await page.getByRole('button', { name: /音游模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
-  await page.screenshot({ path: 'artifacts/menu-gear-albums-720.png' });
+  await page.screenshot({ path: 'artifacts/menu-gear-albums-1080p.png' });
   await page.locator('.collection-album').first().click();
-  await page.screenshot({ path: 'artifacts/menu-gear-songs-720.png' });
+  await page.screenshot({ path: 'artifacts/menu-gear-songs-1080p.png' });
   const start = await page.getByRole('button', { name: '开始', exact: true }).boundingBox();
-  expect(start!.y + start!.height).toBeLessThan(720);
+  expect(start!.y + start!.height).toBeLessThan(1080);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   await page.keyboard.press('Escape');

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveVideo } from './local-media';
 import { audioOutputErrorMessage } from './media';
 
@@ -39,6 +39,24 @@ export function useMenuMusic(
   // Keep theme and preview independent. Only one element plays at a time.
   const [bgm] = useState(() => new Audio());
   const [preview] = useState(() => new Audio());
+  const transport = useMemo(
+    () => ({
+      position: () => ({
+        time: bgm.currentTime,
+        duration: Number.isFinite(bgm.duration) ? bgm.duration : 0,
+      }),
+      subscribe: (update: () => void) => {
+        const events = ['timeupdate', 'durationchange', 'loadedmetadata', 'emptied', 'seeked'];
+        events.forEach((event) => bgm.addEventListener(event, update));
+        return () => events.forEach((event) => bgm.removeEventListener(event, update));
+      },
+      seek: (time: number) => {
+        if (Number.isFinite(bgm.duration) && bgm.duration > 0)
+          bgm.currentTime = Math.max(0, Math.min(bgm.duration, time));
+      },
+    }),
+    [bgm],
+  );
   const [selected, setSelected] = useState(() => preference('waifu-menu-track', ''));
   const [order, setOrder] = useState<MusicOrder>(() => {
     const saved = preference('waifu-menu-order', 'list');
@@ -47,6 +65,10 @@ export function useMenuMusic(
   const [volume, setVolume] = useState(() =>
     Math.max(0, Math.min(1, Number(preference('waifu-menu-volume', '0.9')) || 0)),
   );
+  const unmutedVolume = useRef(volume || 0.9);
+  useEffect(() => {
+    if (volume > 0) unmutedVolume.current = volume;
+  }, [volume]);
   const [playing, setPlaying] = useState(false);
   const [quiet, setQuiet] = useState(true);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
@@ -285,12 +307,19 @@ export function useMenuMusic(
     [bgm, clearPreview, cancelFade],
   );
   return {
+    transport,
     tracks: themeTracks,
     track,
     order,
     setOrder,
     volume,
     setVolume,
+    toggleMute: () => {
+      if (volume > 0) {
+        unmutedVolume.current = volume;
+        setVolume(0);
+      } else setVolume(unmutedVolume.current);
+    },
     select: (id: string) => {
       if (id !== track?.id) manuallyPaused.current = false;
       setSelected(id);
