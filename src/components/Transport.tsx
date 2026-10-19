@@ -6,10 +6,16 @@ export function Transport({
   media,
   notify,
   playRange,
+  onToggle,
+  onRestart,
+  disabled = false,
 }: {
   media: MediaController;
   notify: (text: string) => void;
   playRange?: PlayRange;
+  onToggle?: () => void;
+  onRestart?: () => void;
+  disabled?: boolean;
 }) {
   const status = useMediaStatus(media),
     time = useTime(media);
@@ -23,17 +29,19 @@ export function Transport({
         className="icon-button"
         title="Restart"
         aria-label="Restart"
-        disabled={!status.ready}
-        onClick={() => media.seek(start)}
+        disabled={disabled || !status.ready}
+        onClick={onRestart ?? (() => media.seek(start))}
       >
         <SkipBack size={19} />
       </button>
       <button
         className="play-button"
         aria-label={status.playing ? 'Pause' : 'Play'}
-        disabled={!status.ready || status.preparing}
+        disabled={disabled || !status.ready || status.preparing}
         onClick={() =>
-          media.toggle().catch(() => notify('Unable to start. Press Play to try again.'))
+          onToggle
+            ? onToggle()
+            : media.toggle().catch(() => notify('Unable to start. Press Play to try again.'))
         }
       >
         {status.playing ? (
@@ -53,7 +61,7 @@ export function Transport({
         max={end || 1}
         step={1}
         value={position}
-        disabled={!status.ready}
+        disabled={disabled || !status.ready}
         style={
           {
             '--progress': `${duration ? ((position - start) / duration) * 100 : 0}%`,

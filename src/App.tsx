@@ -61,6 +61,7 @@ import { Editor, type EditorHandle } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
 import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
+import { PracticePause } from './components/PracticePause';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
 import {
@@ -225,6 +226,21 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
   const [startPending, setStartPending] = useState(false);
+  const [gamePauseOpen, setGamePauseOpen] = useState(false);
+  const gamePauseTrigger = useRef<HTMLButtonElement>(null);
+  const gameWasPlaying = useRef(false);
+  useLayoutEffect(() => {
+    const wasPlaying = gameWasPlaying.current;
+    gameWasPlaying.current = mode === 'player' && status.playing;
+    if (mode !== 'player' || startPending || preparation.pending || status.playing)
+      setGamePauseOpen(false);
+    else if (
+      wasPlaying &&
+      !media.element?.ended &&
+      media.getTime() < (playEnd ?? status.durationMs)
+    )
+      setGamePauseOpen(true);
+  }, [mode, startPending, preparation.pending, status.playing, status.durationMs, media, playEnd]);
   const [previewAsset, setPreviewAsset] = useState<string>();
   const [previewRange, setPreviewRange] = useState<PlayRange>();
   const previewSong = useCallback((assetId: string | undefined, range?: PlayRange) => {
@@ -530,6 +546,39 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       setSaving(false);
     }
   };
+  const pauseGame = () => {
+    if (startPending || preparation.pending || !status.ready) return;
+    media.pause();
+    setGamePauseOpen(true);
+  };
+  const resumeGame = () => {
+    if (!status.ready || status.preparing) return;
+    if (!media.element?.paused) {
+      setGamePauseOpen(false);
+      return;
+    }
+    void media
+      .toggle()
+      .then(() => setGamePauseOpen(false))
+      .catch(() => notify('无法播放，请重试。'));
+  };
+  const toggleGamePlayback = () => {
+    if (gamePauseOpen || media.element?.paused) resumeGame();
+    else pauseGame();
+  };
+  const restartGame = () => {
+    media.pause();
+    media.seek(playStart ?? 0);
+    resumeGame();
+  };
+  const backToSelect = () => {
+    media.pause();
+    setGamePauseOpen(false);
+    setStartPending(false);
+    setSelectedSong(chart.songId ?? selectedSong);
+    setSelectedDifficulty(difficulty);
+    setMode('songs');
+  };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -552,7 +601,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         return;
       }
       if (isTyping(e.target)) return;
-      if (mode === 'editor' && mod && e.key.toLowerCase() === 'z') {
+      if (mode === 'player' && (e.key === 'Escape' || e.key === 'Backspace')) {
+        e.preventDefault();
+        if (!e.repeat) gamePauseOpen ? resumeGame() : pauseGame();
+      } else if (mode === 'editor' && mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         e.shiftKey ? redo() : undo();
       } else if (mode === 'editor' && mod && e.key.toLowerCase() === 'y') {
@@ -560,7 +612,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         redo();
       } else if (e.code === 'Space' && (mode === 'editor' || mode === 'player')) {
         e.preventDefault();
-        if (!e.repeat) media.toggle().catch(() => notify('Press Play to start.'));
+        if (!e.repeat) {
+          if (mode === 'player') toggleGamePlayback();
+          else media.toggle().catch(() => notify('Press Play to start.'));
+        }
       }
     };
     const keyup = (e: KeyboardEvent) => {
@@ -1001,6 +1056,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           </div>
           <div className="stage-grid">
             <div className="stage-left">
+              {mode === 'player' && <span className="stage-skirt" aria-hidden="true" />}
               {mode === 'player' && <PracticeCover chart={gameChart} media={media} />}
               {(mode === 'editor' || mode === 'player') && (
                 <Player
@@ -1012,14 +1068,16 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               )}
             </div>
             <div className="stage-right">
+              {mode === 'player' && <span className="stage-skirt" aria-hidden="true" />}
               {mode === 'player' && (
                 <PracticeMasthead
-                  title={chart.title}
-                  returnLabel={playOrigin === 'library' ? 'SELECT MUSIC' : 'WORKBENCH'}
-                  onReturn={() => {
-                    media.pause();
-                    setMode(playOrigin === 'library' ? 'songs' : 'editor');
-                  }}
+                  chart={gameChart}
+                  cover={draftMeta.cover}
+                  media={media}
+                  paused={gamePauseOpen}
+                  pauseTrigger={gamePauseTrigger}
+                  onPause={() => (gamePauseOpen ? resumeGame() : pauseGame())}
+                  disabled={startPending || preparation.pending || !status.ready}
                 />
               )}
               <section className="video-panel" aria-label="Video">
@@ -1036,7 +1094,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                     src={source || undefined}
                     preload="auto"
                     playsInline
-                    onDoubleClick={() => media.toggle().catch(() => {})}
+                    onDoubleClick={() =>
+                      mode === 'player' ? toggleGamePlayback() : media.toggle().catch(() => {})
+                    }
                   />
                   {!source && (
                     <div className="video-placeholder">
@@ -1062,6 +1122,16 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       </button>
                     </div>
                   )}
+                  {mode === 'player' && gamePauseOpen && (
+                    <PracticePause
+                      chart={gameChart}
+                      cover={draftMeta.cover}
+                      trigger={gamePauseTrigger}
+                      onResume={resumeGame}
+                      onRestart={restartGame}
+                      onBack={backToSelect}
+                    />
+                  )}
                 </div>
                 <div className="video-caption" hidden={mode === 'player'}>
                   <span>
@@ -1070,7 +1140,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   <span>VIDEO + MUSIC</span>
                 </div>
                 {mode === 'player' && (
-                  <Transport media={media} notify={notify} playRange={chart.playRange} />
+                  <Transport
+                    media={media}
+                    notify={notify}
+                    playRange={chart.playRange}
+                    onToggle={toggleGamePlayback}
+                    onRestart={restartGame}
+                    disabled={startPending}
+                  />
                 )}
               </section>
             </div>

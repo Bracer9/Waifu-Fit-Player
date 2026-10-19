@@ -2627,9 +2627,6 @@ nav button.active:after {
   font-size: 20px;
   margin: 0;
 }
-.return-workspace {
-  flex-shrink: 0;
-}
 .practice .stage-grid {
   height: clamp(518px, 68vh, 720px);
 }

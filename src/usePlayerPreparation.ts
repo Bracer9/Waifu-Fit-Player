@@ -6,7 +6,7 @@ import { prepareAssets, type AssetManifest } from './asset-cache';
 export function playerAssets(chart: Chart): AssetManifest {
   // Common actions stay ready while recording adds notes. Only the song's
   // configured SPECIAL changes the manifest, not every chart edit.
-  const images = ['/art/studio-scene-v4.png', '/art/crunch/impact.png', '/art/crunch/trail.png'];
+  const images = ['/art/studio-scene-v5.png', '/art/crunch/impact.png', '/art/crunch/trail.png'];
   if (chart.specialMove) {
     const icon = chart.specialMove.icon;
     images.push(

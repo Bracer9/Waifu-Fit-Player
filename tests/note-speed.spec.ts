@@ -92,7 +92,10 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
     await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.playbackRate, v.paused]),
   ).toEqual([1, 1, true]);
   await page.screenshot({ path: 'artifacts/note-speed-game.png', fullPage: true });
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: /创作模式/ }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await seek(1);
   await page.getByRole('button', { name: '切换日夜主题', exact: true }).click();
   await openSettings();
   await speed.focus();

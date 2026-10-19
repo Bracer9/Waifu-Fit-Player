@@ -1,0 +1,24 @@
+# Practice stage background v5
+
+Production asset: `public/art/studio-scene-v5.png`.
+
+Generated with the built-in image_gen tool, then copied into the repository. The previous v4 plate remains available. The user-provided gameplay reference guided the room, floor, materials and overhead equipment; the former v4 plate supplied the empty-stage layout. Text, metadata, the mat wordmark and the panel-following LED strips are rendered in code.
+
+## Initial prompt
+
+```text
+Use case: compositing / precise-object-edit.
+Asset type: production background plate for a 16:9 rhythm fitness game's folded two-wall stage, NOT a UI screenshot.
+Input images: Image 1 is the user's full game UI reference (with anime video and note lanes): use its environment as the exact visual target. Image 2 is the current empty studio background plate: edit/replace this plate to match Image 1's room, not its UI.
+Primary request: make the environment of Image 1 as close as possible, particularly its FLOOR. Remove all gameplay panels, video, notes, text HUD and characters. They will be real HTML overlaid separately. Render only the empty cream white two-wall room, pink ceiling strip, overhead camera and spotlight, pop-art wall accents and finished floor.
+Composition/framing: landscape exactly 16:9, 1672x941 composition. Two cream walls meet on vertical seam at x=720/1672 (43% of width). Wall-floor seam is a shallow chevron from left (0,810/941) through center (720/1672,736/941) to right (1672/1672,788/941). At the top wall corner place the black cylindrical security camera at x=580/1672 and black stage spotlight at x=690/1672, both partially cut by top edge like reference. Pink ceiling planes with crisp thin black edges meet at (720/1672,100/941). Walls remain largely empty because real game panels will cover from y=~100 through y=~790.
+FLOOR essential: match Image 1. Foreground glossy ivory/offwhite large square tiles with fine beige/gray seams, receding in perspective toward the central room corner, pink LED luminous skirting line running along the shallow chevron at the base of BOTH walls, soft realistic pink reflections on nearby white tiles. ONE central charcoal-black dark rubber fitness mat in extreme shallow perspective, not two separate mats. Its trapezoid far edge extends from (438,789) to (1210,789), its near sides extend out to (88,941) and (1590,941). Detailed realistic fine pebbled charcoal rubber grain, flat and taut. Bright thin magenta stripe inset on BOTH sloping side edges, slim cyan stripe on the outer left and right side accents. Mat far edge thin pink. No bright pink mat, no cyan/pink colored floor blocks. Keep bottom floor/mat proportions extremely close to reference. Do not write the mat logo; it will be overlaid as crisp typography in code.
+Wall accents above panel area: sparse magenta halftone dot triangles near upper left x=180..310 and upper right x=1220..1320; tiny diagonal magenta slashes at far upper-left, crisp cyan upright band on left wall at x=535..620. Magenta/cyan diagonal stripes on far top-right edge. Subtle material warmth, cream, dark charcoal, hot pink #ff278d, cyan #00cfdf. Match reference's polished stylized 3D render texture and lighting with crisp pop-art graphic details. High quality realistic rubber/tile material, restrained bloom only around pink skirting and spotlight lens.
+Constraints: absolutely NO UI panels, no gameplay lanes, no screens, no video controls, no HUD, no people or anime characters, no lettering, no text, no extra props. Full bleed landscape background. Preserve central room corner placement.
+```
+
+## Selected revision prompt
+
+```text
+Edit this studio background plate. Change ONLY the floor height/framing: extend the white walls downward so the floor occupies much LESS vertical space. Keep the exact ceiling, camera, spotlight, top wall decorations and wall corner x=706 unchanged. Currently central floor/wall seam is at pixel y=607; MOVE it DOWN to y=736. Move the far top edge of the black fitness mat from y=703 DOWN to y=789. At left edge wall-floor seam must be at y=810, at center x=720 y=736, at right edge seam y=788. Bottom of image stays y=941, so mat and floor must become much shallower in vertical perspective. Foreground black rubber mat is one broad trapezoid with top corners (438,789) and (1210,789), bottom corners (88,941) and (1590,941). Keep detailed dark pebble rubber texture and thin magenta stripes and cyan accent marks. Keep glossy ivory square tiles and fine tile seams around mat. Pink LED skirting must precisely follow lowered wall-floor seam through those three points. No lettering. Output same landscape 1672x941 composition. Critical correction: most of the image is now WHITE WALL down to at least 78% height; the floor is only bottom 22% of image. Do not change overhead elements or add any props, screens or UI.
+```
