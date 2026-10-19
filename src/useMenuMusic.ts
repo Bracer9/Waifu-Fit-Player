@@ -15,6 +15,8 @@ export const themeTracks = Object.entries(files)
   });
 export type MusicOrder = 'list' | 'random' | 'repeat';
 type Scene = 'theme' | 'preview' | null;
+const FADE_OUT_MS = 500;
+const FADE_IN_MS = 700;
 function preference(key: string, fallback: string) {
   try {
     return localStorage.getItem(key) ?? fallback;
@@ -107,7 +109,8 @@ export function useMenuMusic(
       return new Promise((finish) => {
         const tick = (now: number) => {
           const progress = Math.max(0, Math.min(1, (now - start) / duration));
-          gain.current = from + (target - from) * progress;
+          const eased = progress * progress * (3 - 2 * progress);
+          gain.current = from + (target - from) * eased;
           audio.volume =
             gain.current * (audio === bgm ? levels.current.volume : levels.current.videoVolume);
           if (progress < 1) fading.current = { frame: requestAnimationFrame(tick), finish };
@@ -186,7 +189,7 @@ export function useMenuMusic(
     const startFade = (event: Event) => {
       if (event.target === active.current && fadeIn.current) {
         fadeIn.current = false;
-        void fade(1, 240);
+        void fade(1, FADE_IN_MS);
       }
       update();
     };
@@ -215,7 +218,7 @@ export function useMenuMusic(
     const request = new AbortController();
     fadeIn.current = false;
     void (async () => {
-      if (!(await fade(0, 160)) || cancelled) return;
+      if (!(await fade(0, FADE_OUT_MS)) || cancelled) return;
       active.current?.pause();
       active.current = null;
       clearPreview();
