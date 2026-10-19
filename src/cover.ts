@@ -20,3 +20,15 @@ export async function coverFromFile(file: File): Promise<string> {
     image.close();
   }
 }
+
+/** Album banners keep their original pixels and aspect ratio, unlike song jackets. */
+export async function albumCoverFromFile(file: File): Promise<string> {
+  const image = await createImageBitmap(file);
+  image.close();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}

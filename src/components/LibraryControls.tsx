@@ -8,7 +8,8 @@ import {
   type Edition,
   type Song,
 } from '../library';
-import { coverFromFile, coverFromVideo } from '../cover';
+import { albumCoverFromFile, coverFromFile, coverFromVideo } from '../cover';
+import { ALBUM_ARTWORK, useAlbumArtwork } from '../useAlbumArtwork';
 import { MediaController } from '../media';
 import { CoverArt } from './CoverArt';
 import { ModalBackdrop } from './ModalBackdrop';
@@ -135,6 +136,7 @@ export function AlbumManager({
   notify: (s: string) => void;
 }) {
   const [selected, setSelected] = useState(albums[0]);
+  const artwork = useAlbumArtwork(albums);
   const [saving, setSaving] = useState(false);
   const save = async () => {
     if (!selected.name.trim()) return;
@@ -185,7 +187,13 @@ export function AlbumManager({
           />
         </label>
         <div className="album-cover-preview">
-          <CoverArt src={selected.cover} />
+          <CoverArt
+            src={
+              selected.cover === albums.find((album) => album.id === selected.id)?.cover
+                ? artwork[selected.id]
+                : selected.cover || ALBUM_ARTWORK[selected.id]
+            }
+          />
         </div>
         <div className="modal-actions">
           <label className="button light small">
@@ -200,7 +208,7 @@ export function AlbumManager({
                 e.currentTarget.value = '';
                 if (f)
                   try {
-                    setSelected({ ...selected, cover: await coverFromFile(f) });
+                    setSelected({ ...selected, cover: await albumCoverFromFile(f) });
                   } catch {
                     notify('无法读取封面图片。');
                   }

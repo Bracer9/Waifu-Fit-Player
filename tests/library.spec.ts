@@ -195,8 +195,15 @@ test('自定义专辑封面、分组与曲绘保存', async ({ page }) => {
   await page.getByRole('button', { name: '管理专辑与封面' }).click();
   await page.getByRole('button', { name: '新建专辑' }).click();
   await page.getByLabel('专辑名称').fill('自定义专辑');
-  await page.getByLabel('选择专辑封面').setInputFiles('public/art/special/star.png');
+  await page
+    .getByLabel('选择专辑封面')
+    .setInputFiles('src/assets/albums-illustrations/all_album.png');
   await expect(page.locator('.album-cover-preview img')).toBeVisible();
+  expect(
+    await page
+      .locator('.album-cover-preview img')
+      .evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight]),
+  ).toEqual([2345, 670]);
   await page.getByRole('button', { name: '保存专辑' }).click();
   await expect(page.getByRole('button', { name: '自定义专辑', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '关闭专辑设置' }).click();
@@ -209,7 +216,7 @@ test('自定义专辑封面、分组与曲绘保存', async ({ page }) => {
   expect((await songs(page))[0].released.fitness).toBeTruthy();
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   const album = page.locator('.collection-album').filter({ hasText: '自定义专辑' });
-  await expect(album.locator('img')).toHaveAttribute('src', /^data:image\/webp/);
+  await expect(album.locator('img')).toHaveAttribute('src', /^data:image\/png/);
   await album.click();
   await expect(page.locator('.record-card')).toHaveCount(1);
 });

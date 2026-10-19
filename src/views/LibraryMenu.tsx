@@ -12,6 +12,7 @@ import type { PlayRange } from '../model';
 import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 import { ratingValue, ratingSummary } from '../chart-types';
+import { useAlbumArtwork } from '../useAlbumArtwork';
 
 function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   const center = horizontal
@@ -41,6 +42,17 @@ function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   return closest?.dataset.id;
 }
 
+function updateAlbumThumb(node: HTMLElement) {
+  // Shorten the native thumb's paint, keeping native drag and scroll behavior.
+  // Shift its transparent ends with scroll progress to retain both track endpoints.
+  const height = node.clientHeight;
+  const padding = Number.parseFloat(node.style.getPropertyValue('--album-padding')) || 0;
+  const trim = Math.max(0, (height * height) / node.scrollHeight - padding);
+  const progress = node.scrollTop / Math.max(1, node.scrollHeight - height);
+  node.style.setProperty('--album-thumb-trim', `${trim}px`);
+  node.style.setProperty('--album-scroll-ratio', String(progress));
+}
+
 type Props = {
   page: 'albums' | 'songs';
   albums: Album[];
@@ -65,6 +77,7 @@ export function LibraryMenu(props: Props) {
     props;
   const scroller = useRef<HTMLDivElement>(null);
   const { activate, getCurrent, handlers } = useCardHighlight();
+  const artwork = useAlbumArtwork(albums);
   const scrollFrame = useRef(0);
   const [confirmStart, setConfirmStart] = useState<{ song: Song; chartType: ChartType } | null>(
     null,
@@ -131,6 +144,7 @@ export function LibraryMenu(props: Props) {
         .querySelector<HTMLElement>('[aria-current="true"]')
         ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
       updateScrollFocus(node, page === 'songs');
+      if (page === 'albums') updateAlbumThumb(node);
     };
     centerSelection();
     if (page === 'songs') activate(node.querySelector<HTMLElement>('[aria-current="true"]'));
@@ -279,13 +293,13 @@ export function LibraryMenu(props: Props) {
             .filter(Boolean);
           return [
             a.id,
-            a.cover ||
+            artwork[a.id] ||
               candidates[Math.floor(((seed + index * 0.618) % 1) * candidates.length)] ||
               '',
           ];
         }),
       ),
-    [albums, songs, seed],
+    [albums, songs, seed, artwork],
   );
   const trackScroll = () => {
     if (scrollFrame.current) return;
@@ -294,6 +308,7 @@ export function LibraryMenu(props: Props) {
       const node = scroller.current;
       if (!node || node.closest('.menu-scene[data-exit-to]')) return;
       const id = updateScrollFocus(node, page === 'songs');
+      if (page === 'albums') updateAlbumThumb(node);
       if (id && id !== selectedId) {
         if (page === 'albums') onAlbum(id);
         else onSong(id);
@@ -336,7 +351,9 @@ export function LibraryMenu(props: Props) {
                 className="collection-album"
                 onClick={() => onAlbum(a.id, true)}
               >
-                <CoverArt src={covers[a.id]} eager={index < 2} />
+                <span className="collection-art">
+                  <CoverArt src={covers[a.id]} eager={index < 2} />
+                </span>
                 <span className="album-binding">WFP / {String(index + 1).padStart(2, '0')}</span>
                 <span className="collection-label">
                   <span>

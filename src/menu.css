@@ -1144,6 +1144,12 @@
   }
   .album-shelf::-webkit-scrollbar-thumb {
     background: var(--ink);
+    box-sizing: border-box;
+    min-height: var(--album-padding, 20vh);
+    background-clip: padding-box;
+    border-top: calc(var(--album-thumb-trim, 0px) * var(--album-scroll-ratio, 0)) solid transparent;
+    border-bottom: calc(var(--album-thumb-trim, 0px) * (1 - var(--album-scroll-ratio, 0))) solid
+      transparent;
   }
   .album-shelf::-webkit-scrollbar-track {
     background: transparent;
@@ -1157,7 +1163,7 @@
 .collection-album {
   --album-focus: 0;
   width: 100%;
-  height: clamp(164px, 24.667vh, 274px);
+  height: auto;
   flex: none;
   display: block;
   overflow: hidden;
@@ -1179,12 +1185,20 @@
 .collection-album[data-highlighted] {
   --album-lift: -3px;
 }
-.collection-album > .cover-art,
-.collection-album > .cover-placeholder {
+.collection-art {
+  display: block;
+  position: relative;
+  margin-left: 29px;
+  aspect-ratio: 7 / 2;
+  overflow: hidden;
+}
+.collection-art > .cover-art,
+.collection-art > .cover-placeholder {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: contain;
   filter: saturate(calc(0.88 + var(--album-focus) * 0.12))
     blur(calc((1 - var(--album-focus)) * 1.4px));
   transition: filter 120ms ease-out;
@@ -1257,10 +1271,8 @@
   letter-spacing: 3px;
 }
 .collection-label {
-  position: absolute;
-  left: 29px;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  margin-left: 29px;
   min-height: 84px;
   display: flex;
   align-items: center;
@@ -1658,6 +1670,9 @@
   margin: 20px 0;
   overflow: hidden;
 }
+.album-cover-preview .cover-art {
+  object-fit: contain;
+}
 .song-manager {
   width: min(850px, 90vw);
 }
@@ -1787,8 +1802,8 @@
   .menu-control-back svg,
   .mode-record-face,
   .collection-album,
-  .collection-album > .cover-art,
-  .collection-album > .cover-placeholder,
+  .collection-art > .cover-art,
+  .collection-art > .cover-placeholder,
   .record-card,
   .edit-track svg,
   .cover-trace,
@@ -1806,8 +1821,8 @@
   .collection-album {
     transform: none;
   }
-  .collection-album > .cover-art,
-  .collection-album > .cover-placeholder {
+  .collection-art > .cover-art,
+  .collection-art > .cover-placeholder {
     filter: none;
   }
 }
