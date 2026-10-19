@@ -121,7 +121,7 @@ test('真实谱面：Hard/Normal 独立发布、编辑、撤下、删除与重�
   await expect(page.getByRole('dialog')).toContainText('开始这首曲子？');
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.locator('.music-menu.songs')).toBeVisible();
-  await page.getByRole('button', { name: '开始', exact: true }).click();
+  await page.keyboard.press('Enter');
   // Observing "3" can happen partway through its first second; time from the action.
   const countdownStart = Date.now();
   await page.getByRole('button', { name: '开始游戏', exact: true }).click();

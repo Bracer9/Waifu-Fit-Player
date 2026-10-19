@@ -196,8 +196,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.screenshot({ path: 'artifacts/menu-gear-albums-1080p.png' });
   await page.locator('.collection-album').first().click();
   await page.screenshot({ path: 'artifacts/menu-gear-songs-1080p.png' });
-  const start = await page.getByRole('button', { name: '开始', exact: true }).boundingBox();
-  expect(start!.y + start!.height).toBeLessThan(1080);
+  await expect(page.getByRole('button', { name: '开始', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   await page.keyboard.press('Escape');
@@ -217,9 +216,9 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('Enter');
   await expect(page.locator('.music-menu.albums')).toBeVisible();
-  const shelf = (await page.locator('.album-shelf').boundingBox())!;
-  const arrows = (await page.locator('.menu-control-symbols').boundingBox())!;
-  expect(arrows.x).toBeCloseTo(shelf.x + shelf.width, 0);
+  const enter = (await enterGuide.boundingBox())!;
+  const gearIcon = (await gear.locator('svg').boundingBox())!;
+  expect(enter.x + enter.width).toBeCloseTo(gearIcon.x + gearIcon.width, 0);
   await page.mouse.move(10, 10);
   expect((await page.locator('.menu-control-back svg').boundingBox())!.x).toBe(
     (await page.locator('.menu-back svg').boundingBox())!.x,

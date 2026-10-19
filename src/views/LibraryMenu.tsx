@@ -421,12 +421,6 @@ export function LibraryMenu(props: Props) {
                 </button>
               ))}
             </div>
-            <button
-              className="start-track"
-              onClick={() => selectedDifficulty && confirmSong(selected, selectedDifficulty)}
-            >
-              开始
-            </button>
           </div>
         </>
       )}

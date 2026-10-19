@@ -289,7 +289,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
       .length,
   ).toBeGreaterThan(3);
   await page.locator('.collection-album').first().click();
-  await page.getByRole('button', { name: '开始', exact: true }).click();
+  await page.locator('.record-card[aria-current="true"] .record-select').click();
   await page.getByRole('button', { name: '开始游戏', exact: true }).click();
   await expect(page.getByRole('timer')).toHaveText('3');
   expect(await sound(page)).toMatchObject({

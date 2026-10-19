@@ -684,18 +684,15 @@
   padding-bottom: clamp(20px, 2.8vh, 40px);
   color: var(--ink);
 }
-.menu-controls::before {
-  content: '';
-  /* Align SELECT with the shelf's right edge; yield space on narrower screens. */
-  flex: 0 1 calc(45vw + var(--album-shelf-width) / 2 - 8px);
-}
 .menu-controls-actions {
   display: flex;
   flex: none;
+  margin-left: auto;
+  margin-right: 8px;
   gap: clamp(20px, 2.21vw, 44px);
 }
 .menu-control-label {
-  font-size: var(--control-size);
+  font-size: calc(var(--control-size) * 0.7);
 }
 .title-menu .menu-controls {
   position: fixed;
@@ -1215,26 +1212,6 @@
 .edit-track:active svg {
   transform: translateY(1px);
 }
-.start-track {
-  display: flex;
-  align-items: center;
-  border: 3px solid #1d1c21;
-  box-shadow: 4px 4px 0 #1d1c21;
-  padding: 20px 42px;
-  background: var(--pink);
-  font-size: 24px;
-  font-weight: 900;
-  transition:
-    transform 150ms,
-    box-shadow 150ms;
-}
-.start-track:hover {
-  transform: translateY(-3px);
-}
-.start-track:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0 #1d1c21;
-}
 .start-confirmation {
   animation: start-confirm-enter 180ms ease-out;
 }
@@ -1508,7 +1485,6 @@
   .edit-track svg,
   .cover-trace,
   .music-panel,
-  .start-track,
   .headphone-button,
   .theme-track {
     transition: none;
