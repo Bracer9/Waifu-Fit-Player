@@ -30,6 +30,9 @@ flowchart LR
 | [Player.tsx](../src/views/Player.tsx)、`components/`                                               | 从谱面与当前媒体时间计算画面；音符、长条与特效组件负责呈现。`combo.ts`、`special.ts` 等提供计算规则。   |
 | [local-media.ts](../src/local-media.ts)                                                            | 视频预检、关联解析、文件句柄／文件的 IndexedDB 存储和访问权限恢复。对象 URL 的当前生命周期由 App 管理。 |
 | [usePlayerPreparation.ts](../src/usePlayerPreparation.ts)、[asset-cache.ts](../src/asset-cache.ts) | 前者提供本曲资源清单并协调视频就绪；后者共享图片解码、字体加载任务和成功结果，失败项可重试。            |
+| [library.ts](../src/library.ts)、[useLibrary.ts](../src/useLibrary.ts) | 本地曲库、Normal / Hard 草稿与发布快照、专辑及曲绘；向菜单提供已发布作品。 |
+| [Home.tsx](../src/views/Home.tsx)、[LibraryMenu.tsx](../src/views/LibraryMenu.tsx)、[useCardHighlight.ts](../src/useCardHighlight.ts) | 菜单布局与导航、专辑滚动对焦、最近输入目标的唯一流光；曲目选择仍由 App 保留。 |
+| [useMenuMusic.ts](../src/useMenuMusic.ts)、[MenuMusic.tsx](../src/components/MenuMusic.tsx)、[useMenuSounds.ts](../src/useMenuSounds.ts) | 主题 BGM、单曲试听及淡入淡出、共享频谱与菜单律动、独立 SE 播放；不接管游戏媒体时钟。 |
 
 播放时间通过媒体订阅直接进入需要它的视图，不写回谱面历史。编辑器卸载后临时工具状态会重置；谱面、历史和实际视频仍由 App 保留。
 
@@ -45,7 +48,9 @@ flowchart LR
 
 专辑列表保留原生滚动吸附，首尾留白随列表高度调整，使第一张和最后一张也可居中。按卡片距可视区中心的距离连续对焦：中心为 100%，相邻约 96%；仅封面轻微降饱和及最多 1.4px 模糊，文字和黑边保持清晰。滚动事件每帧最多处理一次，先读取位置再写样式；只在中心所属卡片变化时更新选中状态。点击的 240ms 展开与原有幕布同时进行，不延迟换页；键盘、鼠标点击和返回位置延续原有逻辑，减少动态效果时关闭缩放与模糊。
 
-**菜单音乐**：`useMenuMusic.ts` 分别保留主题 BGM 与单曲试听两个 Audio 元素，同一时间只播放一个。主题曲由 Vite 枚举 `src/assets/menu-bgm/` 并随应用打包，曲目、循环方式与菜单音量保存在 localStorage。当前主题曲用 `Range: bytes=0-` 完整读取压缩文件，以 Blob URL 播放；只保留当前一首，切歌释放旧 URL，未完成的读取可取消。实测原 HTTP 媒体源暂停 25 秒后恢复会再次请求后续字节，但收到 204 空响应并报 `FFmpegDemuxer: data source error`；保留完整文件避免恢复时再走网络续读，也不需要后台静音播放。主菜单到专辑列表不切源；进入单曲页读取当前发布版的视频关联，直接试听 MP4 音轨，过期读取会被丢弃。切换先淡出 160 ms、暂停，再淡入 240 ms；返回时直接继续已暂停的 BGM，不重新加载或跳转 MP3。离开试听释放其临时 URL；非主题音乐页面暂停菜单 AudioContext，进入编辑或游玩停止全部菜单音频，倒计时等淡出完成后开始。游戏／视频音量由 MediaController 独立保存，与播放器滑条同步，单曲试听也使用此音量，不接入游戏媒体时钟或音频链路。
+**菜单输入与流光**：三页共用 `MenuControls.tsx`；主菜单／单曲用左右选择，专辑用上下选择，Enter 确认；专辑和单曲的 Back 按钮、Backspace、Esc 走同一返回流程及音效。`CoverTrace.tsx` 提供流光，`useCardHighlight.ts` 让每组卡片只有最近实际鼠标移动／点击或键盘操作的目标带 `data-highlighted`。原生焦点与视觉高亮分开，停住的鼠标不能因滚动或动画抢回高亮；单曲页初次进入即高亮当前曲目，Enter 可直接确认。此状态用 ref 与 DOM 属性管理，不增加逐帧 React 更新。悬停流光不改变居中选曲或试听来源。
+
+**菜单音乐**：`useMenuMusic.ts` 分别保留主题 BGM 与单曲试听两个 Audio 元素，同一时间只播放一个。主题曲由 Vite 枚举 `src/assets/menu-bgm/` 并随应用打包，曲目、循环方式与菜单音量保存在 localStorage。当前主题曲用 `Range: bytes=0-` 完整读取压缩文件，以 Blob URL 播放；只保留当前一首，切歌释放旧 URL，未完成的读取可取消。实测原 HTTP 媒体源暂停 25 秒后恢复会再次请求后续字节，但收到 204 空响应并报 `FFmpegDemuxer: data source error`；保留完整文件避免恢复时再走网络续读，也不需要后台静音播放。主菜单到专辑列表不切源；进入单曲页读取当前发布版的视频关联，直接试听 MP4 音轨，过期读取会被丢弃。切换先淡出 160 ms、暂停，再淡入 240 ms；返回时直接继续已暂停的 BGM，不重新加载或跳转 MP3。离开试听释放其临时 URL；主题 BGM 和单曲试听都使用菜单 AudioContext，进入编辑／游玩等无菜单音源的页面或手动暂停 BGM 时才暂停它，恢复播放时唤醒。进入编辑或游玩停止全部菜单音频，倒计时等淡出完成后开始。游戏／视频音量由 MediaController 独立保存，与播放器滑条同步，单曲试听也使用此音量，不接入游戏媒体时钟或音频链路。
 
 `MenuMusic.tsx` 提供耳机菜单与真实频谱：FFT 2048 点，将约 80 Hz～12 kHz 映射成 56 个对数频段，低频靠耳机、高频靠外侧；每段独立平滑起落，限制柱高，不使用整体振幅的传播历史。最多 30 次／秒分析，缓冲区复用；首页绘制频谱，专辑和单曲页只更新色块律动，不绘制 Canvas。主题音乐与单曲试听共用一个 AudioContext／Analyser，仍保持同一时刻只有一个音源播放；离开菜单、页面隐藏或暂停时停止更新，减少动态效果偏好下保持静态。
 
