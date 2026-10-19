@@ -7,6 +7,16 @@ import { caloriesAt, createCalorieIndex } from '../calories';
 import { chartTimeAt } from '../timing';
 import { CoverArt } from './CoverArt';
 
+export function PracticeStartupLighting() {
+  return (
+    <div className="studio-startup-lighting" aria-hidden="true">
+      <span className="ready-room-shade" />
+      <span className="ready-lamp-cap" />
+      <span className="ready-light-wash" />
+    </div>
+  );
+}
+
 export function PracticeBackdrop() {
   return (
     <div className="practice-backdrop" aria-hidden="true">

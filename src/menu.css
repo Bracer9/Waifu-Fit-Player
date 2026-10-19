@@ -1565,68 +1565,6 @@
     transform: none;
   }
 }
-.game-countdown {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  outline: none;
-}
-.countdown-card {
-  position: absolute;
-  left: 73%;
-  top: 48%;
-  transform: translate(-50%, -50%) rotate(-5deg);
-  width: 200px;
-  padding: 20px 22px 14px;
-  background: var(--ink);
-  color: var(--cream);
-  border: 3px solid var(--cream);
-  box-shadow:
-    7px 7px 0 var(--pink),
-    -6px -6px 0 var(--cyan);
-  text-align: center;
-}
-.countdown-label {
-  font:
-    800 19px 'Barlow Condensed',
-    sans-serif;
-  letter-spacing: 4px;
-}
-.countdown-card strong {
-  display: block;
-  font:
-    900 138px/1.1 'Barlow Condensed',
-    sans-serif;
-  animation: countdown-beat 700ms ease-out both;
-}
-.countdown-beats {
-  display: flex;
-  gap: 6px;
-  margin: 10px 0 16px;
-}
-.countdown-beats i {
-  height: 5px;
-  flex: 1;
-  background: #5e5962;
-}
-.countdown-beats .lit {
-  background: var(--cyan);
-}
-.countdown-card small {
-  font-size: 10px;
-  color: #d0c9c5;
-}
-@keyframes countdown-beat {
-  from {
-    opacity: 0;
-    transform: scale(1.16);
-  }
-  25%,
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 .publication-fields {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -1841,8 +1779,7 @@
   .music-console[data-open] .music-panel-trace path,
   .mode-record-face,
   .menu-scene[data-exit-to='songs'] .collection-album,
-  .start-confirmation,
-  .countdown-card strong {
+  .start-confirmation {
     animation: none;
   }
   .collection-album {

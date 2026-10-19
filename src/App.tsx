@@ -60,10 +60,16 @@ import { Player } from './views/Player';
 import { Editor, type EditorHandle } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
-import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
+import {
+  PracticeBackdrop,
+  PracticeCover,
+  PracticeMasthead,
+  PracticeStartupLighting,
+} from './components/PracticeArtwork';
 import { PracticePause } from './components/PracticePause';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
+import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
   forgetVideo,
   prepareVideo,
@@ -225,8 +231,12 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [manageAlbums, setManageAlbums] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
-  const [startPending, setStartPending] = useState(false);
+  const [readyPhase, setReadyPhase] = useState<ReadyCountdownPhase | null>(null);
+  const startPending = readyPhase === 'waiting' || readyPhase === 'counting';
   const [gamePauseOpen, setGamePauseOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (mode !== 'player' || gamePauseOpen) setReadyPhase(null);
+  }, [mode, gamePauseOpen]);
   const gamePauseTrigger = useRef<HTMLButtonElement>(null);
   const gameWasPlaying = useRef(false);
   useLayoutEffect(() => {
@@ -291,9 +301,15 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     if (mode === 'player') setNotice('');
   }, [mode]);
   const completeCountdown = useCallback(() => {
-    setStartPending(false);
-    void media.toggle().catch(() => notify('请点击播放开始。'));
-  }, [media, notify]);
+    setReadyPhase('go');
+    playMenuSound('mode');
+    if (media.element?.paused)
+      void media.toggle().catch(() => {
+        setReadyPhase(null);
+        notify('请点击播放开始。');
+      });
+  }, [media, notify, playMenuSound]);
+  const finishCountdown = useCallback(() => setReadyPhase(null), []);
   const edit = useCallback((next: Chart) => dispatch({ type: 'edit', chart: next }), []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []),
     redo = useCallback(() => dispatch({ type: 'redo' }), []);
@@ -408,7 +424,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     deletedSongs.current.delete(paired.songId!);
     setDraftMeta(meta);
     setPlayOrigin(context?.play ? 'library' : 'editor');
-    setStartPending(!!context?.play);
+    setReadyPhase(context?.play ? 'waiting' : null);
     if (!context?.play) {
       try {
         localStorage.setItem(
@@ -577,7 +593,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     playMenuSound('back');
     media.pause();
     setGamePauseOpen(false);
-    setStartPending(false);
+    setReadyPhase(null);
     setSelectedSong(chart.songId ?? selectedSong);
     setSelectedDifficulty(difficulty);
     setMode('songs');
@@ -982,8 +998,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         <div
           className={`album-workspace ${mode === 'editor' ? 'editing' : 'practice'}`}
           hidden={mode !== 'editor' && mode !== 'player'}
+          data-ready={mode === 'player' ? (readyPhase ?? undefined) : undefined}
+          style={readyCountdownStyle}
         >
           {mode === 'player' && <PracticeBackdrop />}
+          {mode === 'player' && readyPhase !== null && <PracticeStartupLighting />}
           <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
             <i />
@@ -1136,6 +1155,22 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       onSound={playMenuSound}
                     />
                   )}
+                  {mode === 'player' && readyPhase !== null && (
+                    <GameStartCountdown
+                      key={projectRevision}
+                      cover={draftMeta.cover}
+                      ready={menuMusic.quiet && !busy && !preparation.pending && status.ready}
+                      onPhase={setReadyPhase}
+                      onComplete={completeCountdown}
+                      onFinished={finishCountdown}
+                      onCancel={() => {
+                        playMenuSound('back');
+                        setReadyPhase(null);
+                        setMode('songs');
+                      }}
+                      onSound={playMenuSound}
+                    />
+                  )}
                 </div>
                 <div className="video-caption" hidden={mode === 'player'}>
                   <span>
@@ -1210,21 +1245,6 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           </div>
         </div>
       </main>
-      {mode === 'player' &&
-        startPending &&
-        menuMusic.quiet &&
-        !busy &&
-        !preparation.pending &&
-        status.ready && (
-          <GameStartCountdown
-            key={projectRevision}
-            onComplete={completeCountdown}
-            onCancel={() => {
-              setStartPending(false);
-              setMode('songs');
-            }}
-          />
-        )}
       {(mode === 'editor' || mode === 'player') &&
         preparation.pending &&
         createPortal(

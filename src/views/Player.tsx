@@ -158,6 +158,7 @@ export function Player({
               style={
                 {
                   '--lane': lane.color,
+                  '--lane-index': i,
                   '--track-surface': `color-mix(in srgb, ${lane.color} 18%, #191a22)`,
                   '--flash': flash,
                   '--impact-pulse': flash ** 2,

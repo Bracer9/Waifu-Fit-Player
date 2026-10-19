@@ -1,0 +1,548 @@
+.ready-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  outline: none;
+  color: #fff4e7;
+  font-family: 'Barlow Condensed', 'Microsoft YaHei', sans-serif;
+}
+.ready-cover,
+.ready-shade,
+.ready-ornaments {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ready-cover {
+  inset: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  filter: blur(var(--ready-cover-blur));
+  transform: scale(1.05);
+  background: var(--album-ink);
+}
+.ready-cover :is(.cover-art, .cover-placeholder) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%;
+}
+.ready-cover .cover-placeholder b {
+  font-size: 7vw;
+}
+.ready-countdown[data-phase='counting'] .ready-cover {
+  animation: ready-cover-drift var(--ready-duration) linear both;
+}
+@keyframes ready-cover-drift {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.ready-shade {
+  background: rgb(4 6 15 / var(--ready-cover-shade));
+}
+.ready-ornaments {
+  color: #ff288b;
+  opacity: 0.85;
+}
+.ready-pink {
+  fill: #ff288b;
+  color: #ff288b;
+}
+.ready-cyan {
+  fill: #00d2e4;
+  color: #00d2e4;
+}
+.ready-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: clamp(12px, 1.6vh, 24px);
+  width: 74%;
+  padding-top: 1%;
+  text-align: center;
+}
+.ready-label {
+  font-size: clamp(20px, 1.7vw, 40px);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  padding-left: 0.3em;
+  text-shadow: 0 2px 3px #0009;
+}
+.ready-number {
+  opacity: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 27vh;
+  font:
+    900 clamp(160px, 14.5vw, 420px)/0.92 'Arial Black',
+    sans-serif;
+  letter-spacing: -0.07em;
+  padding-right: 0.07em;
+  transform: skewX(-6deg);
+  text-shadow:
+    -5px -3px 0 #ff288b,
+    7px 6px 0 #00cfe2,
+    15px 14px 0 #0a0d18;
+}
+.ready-countdown[data-phase='counting'] .ready-number,
+.ready-number.is-go {
+  animation: ready-number-hit 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ready-countdown[data-phase='counting'] .ready-number.is-initial {
+  animation: ready-number-first 240ms ease-out both;
+}
+@keyframes ready-number-first {
+  from {
+    transform: skewX(-6deg) scale(1.035);
+  }
+  to {
+    transform: skewX(-6deg) scale(1);
+  }
+}
+.ready-number.is-go {
+  font-size: clamp(130px, 10.5vw, 300px);
+}
+@keyframes ready-number-hit {
+  0% {
+    transform: skewX(-6deg) scale(1.08);
+  }
+  42% {
+    transform: skewX(-6deg) scale(0.99);
+  }
+  75% {
+    transform: skewX(-6deg) scale(1.01);
+  }
+  100% {
+    transform: skewX(-6deg) scale(1);
+  }
+}
+.ready-progress {
+  width: 64%;
+  max-width: 440px;
+  height: clamp(17px, 2.2vh, 30px);
+  margin-top: 4px;
+  padding: 3px;
+  border: 3px solid;
+  border-image: linear-gradient(90deg, #ff288b, #ff288b 60%, #00d2e4) 1;
+  background: #0a0d18d9;
+  box-shadow: 0 3px 0 #0009;
+}
+.ready-progress > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: repeating-linear-gradient(130deg, #fff4e7 0 8px, #ff288b 8px 15px);
+}
+.ready-countdown[data-phase='counting'] .ready-progress > span {
+  animation: ready-progress-fill var(--ready-duration) linear both;
+}
+@keyframes ready-progress-fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+.ready-cancel {
+  position: absolute;
+  right: 20px;
+  bottom: 15px;
+  font-size: clamp(11px, 0.75vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+.ready-countdown[data-phase='go'] {
+  pointer-events: none;
+}
+.ready-countdown[data-phase='go'] :is(.ready-shade, .ready-ornaments, .ready-cancel) {
+  animation: ready-reveal var(--ready-reveal) ease-out both;
+}
+.ready-countdown[data-phase='go'] .ready-stage {
+  animation: ready-reveal var(--ready-reveal) ease-in both;
+}
+.ready-countdown[data-phase='go'] .ready-cover {
+  animation: ready-cover-glitch var(--ready-reveal) steps(1, end) both;
+}
+.ready-glitch {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(
+      transparent 0 22%,
+      #00d2e455 22% 23%,
+      transparent 23% 68%,
+      #ff288b55 68% 69%,
+      transparent 69%
+    ),
+    repeating-linear-gradient(0deg, #fff3 0 1px, transparent 1px 6px);
+}
+.ready-countdown[data-phase='go'] .ready-glitch {
+  animation: ready-signal-break var(--ready-reveal) steps(1, end) both;
+}
+@keyframes ready-cover-glitch {
+  0% {
+    opacity: 1;
+    transform: translateX(-10px) scale(1.02);
+    clip-path: inset(0);
+  }
+  22% {
+    opacity: 0.9;
+    transform: translateX(18px) scale(1.02);
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% 18%,
+      0 18%,
+      0 29%,
+      100% 29%,
+      100% 44%,
+      0 44%,
+      0 62%,
+      100% 62%,
+      100% 71%,
+      0 71%,
+      0 84%,
+      100% 84%,
+      100% 100%,
+      0 100%
+    );
+  }
+  48% {
+    opacity: 0.55;
+    transform: translateX(-20px) scale(1.02);
+    clip-path: polygon(
+      0 12%,
+      100% 12%,
+      100% 18%,
+      0 18%,
+      0 42%,
+      100% 42%,
+      100% 49%,
+      0 49%,
+      0 74%,
+      100% 74%,
+      100% 80%,
+      0 80%
+    );
+  }
+  72% {
+    opacity: 0.2;
+    transform: translateX(8px);
+    clip-path: inset(46% 0 47%);
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+    clip-path: inset(50% 0 50%);
+  }
+}
+@keyframes ready-signal-break {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.5;
+    transform: translateX(9px);
+    clip-path: inset(12% 0 32%);
+  }
+  42% {
+    opacity: 0.32;
+    transform: translateX(-12px);
+    clip-path: inset(39% 0 10%);
+  }
+  68% {
+    opacity: 0.2;
+    transform: translateX(5px);
+    clip-path: inset(22% 0 75%);
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+.ready-countdown[data-phase='go'] .ready-progress > span {
+  transform: scaleX(1);
+}
+@keyframes ready-reveal {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* This sequence uses the same phase and timing variables as the right screen. */
+.studio-startup-lighting {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+.ready-room-shade,
+.ready-light-wash {
+  position: absolute;
+  inset: 0;
+}
+.ready-room-shade {
+  background: #030713;
+  opacity: var(--ready-room-shade);
+}
+.ready-lamp-cap {
+  position: absolute;
+  left: 40.67%;
+  top: 3.44%;
+  width: 1.65%;
+  height: 1.3%;
+  border-radius: 50%;
+  background: #191b20;
+  opacity: 0.9;
+  transform: translate(-50%, -50%) rotate(18deg);
+}
+.ready-light-wash {
+  /* Three static gradients, composited only by opacity. No scene-wide filter. */
+  background:
+    radial-gradient(ellipse 2.8vw 2.3vh at 40.67% 3.44%, #fffdebb3, #fff1ce26 40%, transparent 75%),
+    radial-gradient(ellipse 28vw 66vh at 40.67% 5%, #fff5e014, transparent 72%),
+    radial-gradient(ellipse 30vw 8vh at 50% 90%, #fff4d81a, transparent 75%);
+  opacity: 0;
+}
+.practice[data-ready='counting'] .ready-room-shade {
+  animation: ready-room-power var(--ready-light-rise) ease-in-out both;
+}
+.practice[data-ready='counting'] .ready-lamp-cap {
+  animation: ready-lamp-on var(--ready-light-rise) ease-in-out both;
+}
+.practice[data-ready='counting'] .ready-light-wash {
+  animation: ready-lamp-wash var(--ready-light-rise) ease-in-out both;
+}
+@keyframes ready-room-power {
+  from {
+    opacity: var(--ready-room-shade);
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ready-lamp-on {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ready-lamp-wash {
+  0% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+.practice[data-ready='go'] :is(.ready-room-shade, .ready-lamp-cap) {
+  opacity: 0;
+}
+.practice[data-ready='go'] .ready-light-wash {
+  animation: ready-light-settle var(--ready-reveal) ease-out both;
+}
+@keyframes ready-light-settle {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.practice[data-ready] .play-lane::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 var(--lane-label-width);
+  z-index: 1;
+  background: #02040a;
+  opacity: 0.58;
+  pointer-events: none;
+}
+.practice[data-ready='counting'] .play-lane::after {
+  animation: ready-track-power var(--ready-lane-sweep) ease-in-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+.practice[data-ready='go'] .play-lane::after {
+  opacity: 0;
+}
+@keyframes ready-track-power {
+  from {
+    opacity: 0.58;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.practice[data-ready='waiting'] :is(.judgement-line, .judgement-ring) {
+  opacity: 0;
+}
+.practice[data-ready='waiting'] .highway-line {
+  opacity: 0.07;
+}
+.practice[data-ready='waiting'] .lane-label {
+  filter: brightness(0.42);
+}
+.practice:is([data-ready='waiting'], [data-ready='counting'])
+  .note-highway
+  > :not(.highway-line, .highway-grid, .judgement-ring, .hit-target),
+.practice:is([data-ready='waiting'], [data-ready='counting']) .special-slot {
+  visibility: hidden;
+}
+.practice[data-ready='counting'] .judgement-line {
+  animation: ready-power-on var(--ready-lane-sweep) ease-in-out both;
+}
+.practice[data-ready='counting'] .judgement-ring {
+  animation: ready-target-power var(--ready-lane-sweep) ease-in-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+.practice[data-ready='counting'] .highway-line {
+  z-index: 2;
+  transform-origin: left;
+  animation: ready-lane-sweep var(--ready-lane-sweep) ease-in-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+.practice[data-ready='counting'] .highway-line::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: 0;
+  width: 14%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #fff8e9);
+  box-shadow: 0 0 8px var(--lane);
+  animation: ready-sweep-tip var(--ready-lane-sweep) ease-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+@keyframes ready-sweep-tip {
+  0%,
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.practice[data-ready='counting'] .lane-label {
+  animation: ready-label-power var(--ready-lane-sweep) ease-in-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+@keyframes ready-power-on {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ready-target-power {
+  0% {
+    opacity: 0;
+    box-shadow: 0 0 0 #fff0;
+  }
+  55% {
+    opacity: 1;
+    box-shadow:
+      0 0 13px #fff9,
+      inset 0 0 8px #fff5;
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 6px #fff4;
+  }
+}
+@keyframes ready-lane-sweep {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.2;
+  }
+  70% {
+    opacity: 1;
+    box-shadow: 0 0 12px var(--lane);
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0.85;
+    box-shadow: 0 0 5px var(--lane);
+  }
+}
+@keyframes ready-label-power {
+  0% {
+    filter: brightness(0.42);
+    box-shadow: inset 0 0 0 #fff0;
+  }
+  65% {
+    filter: brightness(1.2);
+    box-shadow: inset 0 0 25px #fff5;
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow: inset 0 0 0 #fff0;
+  }
+}
+.practice[data-ready='go'] .judgement-ring {
+  animation: ready-target-go var(--ready-reveal) ease-out both;
+}
+@keyframes ready-target-go {
+  from {
+    box-shadow: 0 0 12px #fff9;
+  }
+  to {
+    box-shadow: 0 0 5px #ffffff18;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ready-countdown[data-phase='counting'] :is(.ready-cover, .ready-number),
+  .ready-number.is-go,
+  .ready-countdown[data-phase='counting'] .ready-number.is-initial,
+  .practice[data-ready] :is(.judgement-line, .judgement-ring, .highway-line, .lane-label) {
+    animation: none;
+  }
+  .practice[data-ready='counting'] :is(.judgement-line, .judgement-ring) {
+    opacity: 1;
+  }
+  .practice[data-ready='counting'] .highway-line {
+    transform: none;
+    opacity: 0.8;
+  }
+  .ready-cover {
+    transform: scale(1);
+  }
+  .ready-countdown[data-phase='go'] .ready-cover {
+    animation: ready-reveal var(--ready-reveal) ease-out both;
+  }
+  .ready-glitch {
+    display: none;
+  }
+  .studio-startup-lighting .ready-light-wash,
+  .practice[data-ready] .highway-line::after {
+    display: none;
+  }
+  .practice[data-ready='counting'] :is(.ready-room-shade, .ready-lamp-cap),
+  .practice[data-ready='counting'] .play-lane::after {
+    animation: none;
+    opacity: 0;
+  }
+}
