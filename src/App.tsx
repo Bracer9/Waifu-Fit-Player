@@ -1053,6 +1053,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               key={projectRevision}
               chart={chart}
               media={media}
+              videoSource={source}
               onChange={edit}
               onUndo={undo}
               onRedo={redo}

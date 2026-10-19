@@ -80,10 +80,12 @@ import { isTyping, useRecording } from '../recording';
 import { NoteGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { checkStepPositions } from '../stepping';
 import { ArmActionPicker, ArmHandPicker } from '../components/ArmPicker';
+import { BpmDetectButton } from '../components/BpmDetectButton';
 
 type Props = {
   chart: Chart;
   media: MediaController;
+  videoSource: string;
   onChange: (chart: Chart) => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -191,6 +193,7 @@ function TextField({
 export function Editor({
   chart,
   media,
+  videoSource,
   onChange,
   onUndo,
   onRedo,
@@ -1499,13 +1502,31 @@ export function Editor({
                   </select>
                 </label>
                 <div className="field-pair">
-                  <NumberField
-                    label="BPM"
-                    value={activeSegment.bpm}
-                    min={0.01}
-                    step={0.01}
-                    onCommit={(n) => changeSegment({ bpm: n })}
-                  />
+                  <div className="bpm-field">
+                    <NumberField
+                      label="BPM"
+                      value={activeSegment.bpm}
+                      min={0.01}
+                      step={0.01}
+                      onCommit={(n) => changeSegment({ bpm: n })}
+                    />
+                    <BpmDetectButton
+                      key={activeSegment.id}
+                      source={videoSource}
+                      start={Math.max(0, videoTimeAt(chart, activeSegment.anchorMs)) / 1000}
+                      end={
+                        Math.min(
+                          duration,
+                          ...chart.tempoSegments
+                            .filter((segment) => segment.anchorMs > activeSegment.anchorMs)
+                            .map((segment) => videoTimeAt(chart, segment.anchorMs)),
+                        ) / 1000
+                      }
+                      bpm={activeSegment.bpm}
+                      onDetected={(bpm) => changeSegment({ bpm })}
+                      notify={notify}
+                    />
+                  </div>
                   <label className="field">
                     <span>拍号</span>
                     <select

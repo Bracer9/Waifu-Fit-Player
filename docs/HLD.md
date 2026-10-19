@@ -42,6 +42,8 @@ flowchart LR
 
 **编辑与保存**：操作生成新的 Chart → history reducer 提交／撤销／重做 → 工作台及试玩读取当前草稿。拖动仅更新预览，松开提交历史。编辑后防抖 650 ms 自动存草稿，Ctrl+S 立即存；JSON 下载用于备份，包含可选 `songId` / `difficulty`，仍为 schemaVersion 1。localStorage 只存上次草稿指针与偏好；旧版单份草稿首次进入创作模式时迁移，成功后移除旧记录。
 
+**BPM 检测**：`BpmDetectButton.tsx` 按需启动 `bpm.worker.ts`，用打包到本地的 Mediabunny 按块读取、解码当前 MP4 的音轨；不播放音频、不解码视频。只分析当前节拍段内最多 90 秒，以三频段能量起音包络与自相关估计速度，逐块释放音频样本，读取缓存限 8 MiB。成功后通过原 `onChange` 更新当前段 BPM 并进入撤销历史；不修改锚点、音符或共享视频时钟。换视频、换段、改 BPM、关闭面板时终止 Worker，失败不覆盖原值。
+
 **曲库与发布**：`library.ts` 定义 Song、Edition、Album 及原子读改写；`useLibrary.ts` 持有菜单数据。每首 Song 有 Normal / Hard 两个独立草稿槽与两个发布槽，Edition 保存谱面、专辑归属、曲绘和更新时间。发布校验并深复制所选草稿，只替换该难度的发布槽；音游模式加载发布版，禁用草稿自动保存。撤下发布保留草稿；彻底删除清除整首记录及不再被其他谱面引用的视频关联，不操作磁盘原文件。
 
 `Home.tsx` / `LibraryMenu.tsx` 呈现主菜单、纵向专辑与横向单曲选择，`LibraryControls.tsx` 提供编辑器发布字段和管理弹窗。选曲状态由 App 保留。封面压缩为小图，未指定曲绘时取视频帧；专辑未指定封面时从成员曲绘选取，会话内稳定。菜单显示静态封面，不挂载游戏轨道。IndexedDB `waifu-fit-player-library` 存 songs / albums，原视频库保持不变。
