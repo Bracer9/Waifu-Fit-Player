@@ -283,25 +283,18 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
   const [readyPhase, setReadyPhase] = useState<ReadyCountdownPhase | null>(null);
+  const [countdownOrigin, setCountdownOrigin] = useState<'start' | 'resume'>('start');
   const startPending = readyPhase === 'waiting' || readyPhase === 'counting';
   const [gamePauseOpen, setGamePauseOpen] = useState(false);
   useLayoutEffect(() => {
     if (mode !== 'player' || gamePauseOpen) setReadyPhase(null);
   }, [mode, gamePauseOpen]);
   const gamePauseTrigger = useRef<HTMLButtonElement>(null);
-  const gameWasPlaying = useRef(false);
   useLayoutEffect(() => {
-    const wasPlaying = gameWasPlaying.current;
-    gameWasPlaying.current = mode === 'player' && status.playing;
+    // The full pause menu is an explicit command, not a side effect of stopping media.
     if (mode !== 'player' || startPending || preparation.pending || status.playing)
       setGamePauseOpen(false);
-    else if (
-      wasPlaying &&
-      !media.element?.ended &&
-      media.getTime() < (playEnd ?? status.durationMs)
-    )
-      setGamePauseOpen(true);
-  }, [mode, startPending, preparation.pending, status.playing, status.durationMs, media, playEnd]);
+  }, [mode, startPending, preparation.pending, status.playing]);
   const [previewAsset, setPreviewAsset] = useState<string>();
   const [previewRange, setPreviewRange] = useState<PlayRange>();
   const previewSong = useCallback((assetId: string | undefined, range?: PlayRange) => {
@@ -480,6 +473,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     deletedSongs.current.delete(paired.songId!);
     setDraftMeta(meta);
     setPlayOrigin(context?.play ? 'library' : 'editor');
+    setCountdownOrigin('start');
     setReadyPhase(context?.play ? 'waiting' : null);
     if (!context?.play) {
       try {
@@ -625,16 +619,17 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setGamePauseOpen(true);
   };
   const resumeGame = (sound: 'mode' | 'song' = 'mode') => {
-    if (!status.ready || status.preparing) return;
+    if (!status.ready || status.preparing || startPending) return;
     if (!media.element?.paused) {
       setGamePauseOpen(false);
       return;
     }
     playMenuSound(sound);
-    void media
-      .toggle()
-      .then(() => setGamePauseOpen(false))
-      .catch(() => notify('无法播放，请重试。'));
+    setGamePauseOpen(false);
+    setCountdownOrigin('resume');
+    setReadyPhase('waiting');
+    // Prepare the paused frame without seeking or starting the shared media clock.
+    preparation.retry();
   };
   const toggleGamePlayback = () => {
     if (gamePauseOpen || media.element?.paused) resumeGame();
@@ -646,6 +641,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     media.pause();
     media.seek(playStart ?? 0);
     setGamePauseOpen(false);
+    setCountdownOrigin('start');
     setReadyPhase('waiting');
     // Reuse the opening sequence after the seeked video frame is ready.
     preparation.retry();
@@ -692,10 +688,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         redo();
       } else if (e.code === 'Space' && (mode === 'editor' || mode === 'player')) {
         e.preventDefault();
-        if (!e.repeat) {
-          if (mode === 'player') toggleGamePlayback();
-          else media.toggle().catch(() => notify('Press Play to start.'));
-        }
+        if (!e.repeat && !(mode === 'player' && gamePauseOpen))
+          void media.toggle().catch(() => notify('Press Play to start.'));
       }
     };
     const keyup = (e: KeyboardEvent) => {
@@ -803,8 +797,31 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setManageSongs(false);
     void runTask('正在打开谱面…', async () => {
       if (mode === 'editor') await persistDraft();
-      await openProject(edition.chart, true, { edition });
+      if (mode === 'player' && chart.songId === song.id && chartType === d) {
+        // The playing edition and its media are already loaded. Keep the paused
+        // position while entering its draft, after the existing overwrite guard.
+        media.pause();
+        await persistDraft();
+        setGamePauseOpen(false);
+        setReadyPhase(null);
+        setPlayOrigin('editor');
+        setMode('editor');
+      } else await openProject(edition.chart, true, { edition });
     });
+  };
+  const editCurrentGame = () => {
+    playMenuSound('mode');
+    const song = library.songs.find((s) => s.id === chart.songId);
+    if (playOrigin === 'library' && song) {
+      editSong(song, chartType, true);
+      return;
+    }
+    // A studio playtest returns to the same in-memory draft and undo history.
+    media.pause();
+    setGamePauseOpen(false);
+    setReadyPhase(null);
+    setPlayOrigin('editor');
+    setMode('editor');
   };
   const withdraw = (song: Song, d: ChartType) => {
     if (
@@ -1134,7 +1151,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           style={readyCountdownStyle}
         >
           {mode === 'player' && <PracticeBackdrop />}
-          {mode === 'player' && readyPhase !== null && <PracticeStartupLighting />}
+          {mode === 'player' && (readyPhase !== null || gamePauseOpen) && (
+            <PracticeStartupLighting />
+          )}
           <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
             <i />
@@ -1222,6 +1241,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   onEffectsReady={finishRenderPreparation}
                 />
               )}
+              {mode === 'player' && gamePauseOpen && (
+                <span className="paused-track-shade" aria-hidden="true" />
+              )}
             </div>
             <div className="stage-right">
               {mode === 'player' && <span className="stage-skirt" aria-hidden="true" />}
@@ -1283,7 +1305,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       chart={gameChart}
                       cover={draftMeta.cover}
                       trigger={gamePauseTrigger}
-                      onResume={resumeGame}
+                      onEdit={editCurrentGame}
                       onRestart={restartGame}
                       onBack={backToSelect}
                       onSound={playMenuSound}
@@ -1294,6 +1316,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       key={projectRevision}
                       cover={draftMeta.cover}
                       chartType={chartType}
+                      resuming={countdownOrigin === 'resume'}
                       ready={
                         !menuTransition &&
                         menuMusic.quiet &&
@@ -1306,6 +1329,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       onFinished={finishCountdown}
                       onCancel={() => {
                         playMenuSound('back');
+                        if (countdownOrigin === 'resume') {
+                          setReadyPhase(null);
+                          setGamePauseOpen(true);
+                          return;
+                        }
                         setMenuTransition(null);
                         setReadyPhase(null);
                         setMode('songs');

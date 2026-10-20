@@ -8,6 +8,7 @@ export function GameStartCountdown({
   cover,
   chartType,
   ready,
+  resuming = false,
   onPhase,
   onComplete,
   onFinished,
@@ -17,6 +18,7 @@ export function GameStartCountdown({
   cover: string;
   chartType: ChartType;
   ready: boolean;
+  resuming?: boolean;
   onPhase: (phase: ReadyCountdownPhase) => void;
   onComplete: () => void;
   onFinished: () => void;
@@ -106,6 +108,7 @@ export function GameStartCountdown({
       aria-label="开始倒计时"
       data-phase={phase}
       data-chart-type={chartType}
+      data-resuming={resuming ? '' : undefined}
       ref={root}
       tabIndex={-1}
     >
@@ -173,7 +176,7 @@ export function GameStartCountdown({
           </div>
         </div>
       </div>
-      <small className="ready-cancel">ESC / BACK · 返回选曲</small>
+      <small className="ready-cancel">ESC / BACK · {resuming ? '返回暂停' : '返回选曲'}</small>
     </div>
   );
 }

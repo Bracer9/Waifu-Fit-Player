@@ -1,6 +1,6 @@
 .ready-countdown {
   --ready-accent: var(--fitness-color);
-  --ready-gauge-ease: cubic-bezier(0.42, 0, 1, 1);
+  --ready-gauge-ease: cubic-bezier(0, 0, 0.58, 1);
   position: absolute;
   inset: 0;
   z-index: 6;
@@ -392,6 +392,54 @@
   position: absolute;
   inset: 0;
 }
+.practice[data-paused] .ready-room-shade {
+  animation: paused-room-dim 220ms ease-out both;
+}
+.practice[data-paused] .ready-lamp-cap {
+  animation: paused-lamp-off 180ms ease-out both;
+}
+.practice[data-paused] .studio-startup-lighting {
+  /* The room stays dim behind the folded panels. Shade panel surfaces locally,
+     below the pause console, rather than covering the entire UI. */
+  z-index: -1;
+}
+.practice[data-paused] .transport {
+  position: relative;
+}
+.paused-track-shade,
+.practice[data-paused] :is(.practice-masthead, .transport, .video-viewport)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #030713;
+  opacity: var(--ready-room-shade);
+  pointer-events: none;
+  animation: paused-room-dim 220ms ease-out both;
+}
+.paused-track-shade {
+  z-index: 10;
+  transform: translateZ(1px);
+}
+.practice[data-paused] .video-viewport::after {
+  z-index: 4;
+}
+@keyframes paused-room-dim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: var(--ready-room-shade);
+  }
+}
+@keyframes paused-lamp-off {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
 .practice[data-ready='waiting'] .ready-room-focus {
   backdrop-filter: blur(var(--ready-room-focus-blur));
 }
@@ -490,12 +538,6 @@
 }
 .practice[data-ready='waiting'] .lane-label {
   filter: brightness(0.42);
-}
-.practice:is([data-ready='waiting'], [data-ready='counting'])
-  .note-highway
-  > :not(.highway-line, .highway-grid, .judgement-ring, .hit-target),
-.practice:is([data-ready='waiting'], [data-ready='counting']) .special-slot {
-  visibility: hidden;
 }
 .practice[data-ready='counting'] .judgement-line {
   animation: ready-power-on var(--ready-lane-sweep) ease-in-out both;
@@ -600,6 +642,13 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .practice[data-paused] :is(.ready-room-shade, .ready-lamp-cap) {
+    animation: none;
+  }
+  .paused-track-shade,
+  .practice[data-paused] :is(.practice-masthead, .transport, .video-viewport)::after {
+    animation: none;
+  }
   .practice[data-ready] .ready-room-focus {
     backdrop-filter: none;
     animation: none;

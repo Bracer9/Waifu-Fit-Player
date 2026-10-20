@@ -60,6 +60,8 @@ test('restart replays the countdown at the range start, while seeking only chang
   const originalVideo = (await video.elementHandle())!;
   const seek = page.getByRole('slider', { name: 'Playback position', exact: true });
   await seek.fill('12000');
+  await expect(page.getByRole('button', { name: '暂停游戏', exact: true })).toBeEnabled();
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.seeking)).toBe(false);
   await page.keyboard.press('Escape');
   const dialog = page.getByRole('dialog', { name: 'PAUSED', exact: true });
   await expect(dialog).toBeVisible();
@@ -120,11 +122,38 @@ test('restart replays the countdown at the range start, while seeking only chang
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
 
   await seek.fill('10000');
+  // Space is media transport even when the full-pause button retains focus.
+  await page.getByRole('button', { name: '暂停游戏', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
+  await expect(dialog).toHaveCount(0);
+  await expect(countdown).toHaveCount(0);
+  await expect(page.locator('.album-workspace')).not.toHaveAttribute('data-paused');
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  await page.keyboard.down('Space');
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
+  // Holding Space must not repeatedly toggle playback.
+  await page.keyboard.down('Space');
+  await page.keyboard.up('Space');
+  expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
+  await expect(dialog).toHaveCount(0);
+  await expect(countdown).toHaveCount(0);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'RESUME', exact: true }).click();
+  await page.keyboard.press('Space');
+  await expect(dialog).toBeVisible();
+  expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
+  const pausedAt = await video.evaluate((v: HTMLVideoElement) => v.currentTime);
+  await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  expect(await video.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThanOrEqual(10);
+  await expect(countdown).toHaveAttribute('data-resuming');
+  await expect(countdown.getByRole('timer')).toHaveText('3');
+  expect(await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.paused])).toEqual([
+    pausedAt,
+    true,
+  ]);
+  await expect(countdown).toHaveCount(0);
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
   await page.keyboard.press('Backspace');
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'RESTART', exact: true }).click();
@@ -148,7 +177,6 @@ test('restart replays the countdown at the range start, while seeking only chang
       }),
     )
     .toBe(true);
-  await page.keyboard.press('ArrowUp');
   await expect(dialog.getByRole('button', { name: 'BACK TO SELECT', exact: true })).toHaveAttribute(
     'data-selected',
     'true',
@@ -171,12 +199,15 @@ test('restart replays the countdown at the range start, while seeking only chang
     'mode',
     'settings',
     'settings',
+    'settings',
+    'mode',
+    'settings',
+    'settings',
     'song',
     'settings',
     'settings',
     'settings',
     'mode',
-    'settings',
     'settings',
     'back',
   ];
@@ -206,6 +237,7 @@ test('restart replays the countdown at the range start, while seeking only chang
   await page.getByRole('button', { name: /创作模式/ }).click();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  await expect(page.getByRole('button', { name: '暂停游戏', exact: true })).toBeEnabled();
   await page.keyboard.press('Escape');
   await expect(dialog).toBeVisible();
   await page.keyboard.press('ArrowDown');
@@ -215,7 +247,7 @@ test('restart replays the countdown at the range start, while seeking only chang
   await expect(countdown).toHaveCount(0);
   await page.getByRole('button', { name: '暂停游戏', exact: true }).click();
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'RESUME', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   expect(await soundEvents()).toEqual([]);
   expect(errors).toEqual([]);

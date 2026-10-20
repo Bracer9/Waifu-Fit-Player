@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, CornerDownLeft, Pause, Play, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CornerDownLeft, Pause, Pencil, RotateCcw } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { Chart } from '../model';
 import { CoverArt } from './CoverArt';
@@ -6,16 +6,16 @@ import { ratingSummary } from '../chart-types';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 
 const options = [
-  { label: 'RESUME', Icon: Play },
-  { label: 'RESTART', Icon: RotateCcw },
   { label: 'BACK TO SELECT', Icon: ArrowLeft },
+  { label: 'RESTART', Icon: RotateCcw },
+  { label: 'EDIT IN STUDIO', Icon: Pencil },
 ] as const;
 
 export function PracticePause({
   chart,
   cover,
   trigger,
-  onResume,
+  onEdit,
   onRestart,
   onBack,
   onSound,
@@ -23,7 +23,7 @@ export function PracticePause({
   chart: Chart;
   cover: string;
   trigger: RefObject<HTMLButtonElement | null>;
-  onResume: () => void;
+  onEdit: () => void;
   onRestart: () => void;
   onBack: () => void;
   onSound: MenuSoundPlayer;
@@ -35,8 +35,8 @@ export function PracticePause({
   const root = useRef<HTMLDivElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const actions = useRef([onResume, onRestart, onBack]);
-  actions.current = [onResume, onRestart, onBack];
+  const actions = useRef([onBack, onRestart, onEdit]);
+  actions.current = [onBack, onRestart, onEdit];
 
   const select = (index: number) => {
     if (timer.current !== null || selection.current === index) return;
@@ -148,7 +148,7 @@ export function PracticePause({
               onClick={() => activate(index)}
             >
               <span className="pause-option-content">
-                <Icon aria-hidden="true" fill={index === 0 ? 'currentColor' : 'none'} />
+                <Icon aria-hidden="true" />
                 <span>{label}</span>
                 <ChevronRight className="pause-option-arrow" aria-hidden="true" />
               </span>
