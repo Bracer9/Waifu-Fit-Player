@@ -23,9 +23,10 @@ export function NoteImpact({
     return <CrunchImpact progress={progress} release={release} sustain={note.kind === 'hold'} />;
   const ease = 1 - (1 - progress) ** 3;
   const fade = (1 - progress) ** 1.35;
-  const color = note.pairedPunch
-    ? 'var(--arms-both)'
-    : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot);
+  const color =
+    note.pairedPunch || note.pairedReach
+      ? 'var(--arms-both)'
+      : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot);
   if (baked) {
     const frame =
       Math.min(IMPACT_FRAMES - 1, Math.floor(progress * IMPACT_FRAMES)) +

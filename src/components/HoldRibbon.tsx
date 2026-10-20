@@ -1,7 +1,15 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
 import { noteColor } from '../model';
-import { GlyphLabel, noteGlyphShape, PalmPrint, PunchPair, ShoePrint, SquatDownCue } from './Glyph';
+import {
+  GlyphLabel,
+  noteGlyphShape,
+  PalmPrint,
+  PunchPair,
+  ReachPair,
+  ShoePrint,
+  SquatDownCue,
+} from './Glyph';
 import type { DisplayNote } from '../armDisplay';
 
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
@@ -127,7 +135,9 @@ export function HoldRibbon({
                   opacity={headOpacity}
                   transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                 >
-                  {note.pairedPunch ? (
+                  {note.pairedReach ? (
+                    <ReachPair ribbon />
+                  ) : note.pairedPunch ? (
                     <PunchPair ribbon />
                   ) : (
                     <>
@@ -151,17 +161,21 @@ export function HoldRibbon({
                   transform={`translate(${-size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                   style={
                     {
-                      '--lane': noteColor(
-                        releaseNote.lane,
-                        releaseNote.direction,
-                        releaseNote.hand,
-                        releaseNote.armAction,
-                        releaseNote.foot,
-                      ),
+                      '--lane': releaseNote.pairedReach
+                        ? 'var(--arms-both)'
+                        : noteColor(
+                            releaseNote.lane,
+                            releaseNote.direction,
+                            releaseNote.hand,
+                            releaseNote.armAction,
+                            releaseNote.foot,
+                          ),
                     } as React.CSSProperties
                   }
                 >
-                  {releaseNote.pairedPunch ? (
+                  {releaseNote.pairedReach ? (
+                    <ReachPair ribbon />
+                  ) : releaseNote.pairedPunch ? (
                     <PunchPair ribbon />
                   ) : (
                     <>

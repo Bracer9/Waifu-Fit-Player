@@ -19,6 +19,7 @@ import {
   uid,
 } from './model';
 import { clamp, snapTime } from './timing';
+import { armEventIds } from './armDisplay';
 export type History = { past: Chart[]; present: Chart; future: Chart[] };
 export type HistoryAction =
   { type: 'edit'; chart: Chart } | { type: 'reset'; chart: Chart } | { type: 'undo' | 'redo' };
@@ -135,6 +136,27 @@ export function changeArmAction(note: Note, value: string): Note {
   };
   if (punch) delete next.hand;
   return next;
+}
+/** The centre preset is two ordinary, matching reaches, not a new chart note type. */
+export function changeArmGesture(
+  chart: Chart,
+  id: string,
+  value: string,
+): { chart: Chart; ids: string[] } {
+  const ids = armEventIds(chart.notes, id);
+  const note = chart.notes.find((n) => n.id === ids[0]);
+  if (!note || note.lane !== 'punch') return { chart, ids };
+  const notes = chart.notes.filter((n) => !ids.includes(n.id));
+  if (value === 'spread') {
+    const left: Note = { ...note, direction: 'left', armAction: 'reach', hand: 'left' };
+    const right: Note = { ...left, id: ids[1] ?? uid(), direction: 'right', hand: 'right' };
+    return {
+      chart: sortChart({ ...chart, notes: [...notes, left, right] }),
+      ids: [left.id, right.id],
+    };
+  }
+  const single = changeArmAction(ids.length === 2 ? { ...note, hand: 'both' } : note, value);
+  return { chart: sortChart({ ...chart, notes: [...notes, single] }), ids: [single.id] };
 }
 export function setStepDistance(chart: Chart, selected: string[], distance?: StepDistance): Chart {
   return {

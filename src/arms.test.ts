@@ -13,6 +13,7 @@ import {
 } from './model';
 import {
   changeArmAction,
+  changeArmGesture,
   changeNoteForm,
   flipNotes,
   historyReducer,
@@ -41,6 +42,50 @@ const fixture = () => ({
 });
 
 describe('ARMS direction, hand and gesture remain independent', () => {
+  it('authors an outward two-hand preset as ordinary notes with a single compact display', () => {
+    for (const type of ['tap', 'hold', 'sway'] as const) {
+      const original = changeNoteForm(reach, type, reach.direction, 3000);
+      const source = { ...fixture(), notes: [original, legacy] };
+      const result = changeArmGesture(source, original.id, 'spread');
+      const pair = result.chart.notes.filter((n) => result.ids.includes(n.id));
+      expect(pair).toHaveLength(2);
+      expect(pair[0]).toMatchObject({
+        id: original.id,
+        direction: 'left',
+        hand: 'left',
+        armAction: 'reach',
+        kind: original.kind,
+      });
+      expect(pair[1]).toMatchObject({
+        direction: 'right',
+        hand: 'right',
+        armAction: 'reach',
+        timeMs: original.timeMs,
+      });
+      if (original.kind === 'hold')
+        expect(pair[1]).toMatchObject({
+          endTimeMs: original.endTimeMs,
+          modifier: original.modifier,
+        });
+      expect(armDisplayNotes(pair)).toEqual([{ ...pair[0], pairedReach: pair[1].id }]);
+      expect(parseChart(JSON.parse(serializeChart(result.chart)))).toEqual(result.chart);
+      expect(source.notes).toEqual([original, legacy]);
+      const back = changeArmGesture(result.chart, pair[0].id, 'up');
+      expect(back.chart.notes).toHaveLength(2);
+      expect(back.chart.notes[0]).toMatchObject({
+        direction: 'up',
+        hand: 'both',
+        kind: original.kind,
+      });
+      expect(back.chart.notes[1]).toEqual(legacy);
+      const repeated = changeArmGesture(result.chart, pair[0].id, 'spread');
+      expect(repeated.ids).toEqual(result.ids);
+      expect(repeated.chart).toEqual(result.chart);
+      if (original.kind === 'hold')
+        expect(armDisplayNotes([pair[0], { ...pair[1], endTimeMs: 4000 } as Note])).toHaveLength(2);
+      expect(armDisplayNotes([pair[0], { ...pair[1], timeMs: 1200 }])).toHaveLength(2);
+    }
+  });
   it('pairs simultaneous matching gloves only in the display, never in saved/scored notes', () => {
     const left = changeArmAction(reach, 'punch-left');
     const right = { ...changeArmAction(reach, 'punch-right'), id: 'right' };

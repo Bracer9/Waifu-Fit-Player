@@ -32,9 +32,16 @@ export function ArmActionPicker({
             <NoteGlyph lane="punch" direction={direction} armAction="reach" size={22} />
           </button>
         ))}
-        <span className="compass-center" aria-hidden="true">
-          ✧
-        </span>
+        <button
+          className="compass-center"
+          aria-label={`${label} 双臂展开`}
+          aria-pressed={value === 'spread'}
+          title="双臂向两侧展开 · 左手向左，右手向右"
+          style={{ '--lane': 'var(--arms-both)' } as React.CSSProperties}
+          onClick={() => onChange('spread')}
+        >
+          <NoteGlyph lane="punch" direction="left" armAction="reach" pairedReach size={22} />
+        </button>
       </div>
       <div className="arms-gloves">
         {(['left', 'right'] as const).map((direction) => (
@@ -59,11 +66,13 @@ export function ArmHandPicker({
   onChange,
   label,
   feet = false,
+  disabled = false,
 }: {
   value: ArmHand;
   onChange: (hand: ArmHand) => void;
   label: string;
   feet?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div className="arm-hands" role="group" aria-label={label}>
@@ -73,6 +82,7 @@ export function ArmHandPicker({
             key={hand.value}
             aria-label={`${label} ${hand.label}`}
             aria-pressed={value === hand.value}
+            disabled={disabled}
             style={{ '--hand': hand.color } as React.CSSProperties}
             onClick={() => onChange(hand.value)}
           >

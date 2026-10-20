@@ -90,9 +90,10 @@ export function Player({
   }, [displayNotes]);
   const noteStyle = (note: DisplayNote): React.CSSProperties => {
     return {
-      '--lane': note.pairedPunch
-        ? 'var(--arms-both)'
-        : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot),
+      '--lane':
+        note.pairedPunch || note.pairedReach
+          ? 'var(--arms-both)'
+          : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot),
       ...(note.lane === 'side_crunch'
         ? {
             '--accent-charge': Math.max(0, 1 - Math.max(0, note.timeMs - time) / 650),
@@ -218,6 +219,7 @@ export function Player({
                           direction={note.direction}
                           armAction={note.armAction}
                           pairedPunch={note.pairedPunch}
+                          pairedReach={!!note.pairedReach}
                           distance={note.distance}
                         />
                       </div>
@@ -296,6 +298,7 @@ export function Player({
                           direction={note.direction}
                           armAction={note.armAction}
                           pairedPunch={note.pairedPunch}
+                          pairedReach={!!note.pairedReach}
                           distance={note.distance}
                         />
                       </div>
@@ -329,6 +332,7 @@ export function Player({
                         direction={holding.direction}
                         armAction={holding.armAction}
                         pairedPunch={holding.pairedPunch}
+                        pairedReach={!!holding.pairedReach}
                         distance={holding.distance}
                         size={29}
                       />
