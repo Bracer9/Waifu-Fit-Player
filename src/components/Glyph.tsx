@@ -21,7 +21,7 @@ const laneFigures: Record<Lane, React.ReactNode> = {
   ),
   punch: (
     <>
-      <circle cx="25" cy="8" r="6.5" />
+      <circle cx="25" cy="10" r="6.5" />
       <g fill="none" stroke="currentColor">
         <path d="M23 22L22 33" strokeWidth="9" />
         <path d="M22 33L15 41L11 50M22 33L31 40L34 50" strokeWidth="7.5" />
@@ -37,7 +37,7 @@ const laneFigures: Record<Lane, React.ReactNode> = {
   ),
   side_crunch: (
     <>
-      <circle cx="31" cy="12" r="6" />
+      <circle cx="30" cy="14" r="6" />
       <g fill="none" stroke="currentColor">
         <path d="M24 5L12 12L26 25M40 14L44 23L29 27" strokeWidth="5.5" />
         <path d="M27 25L24 35L23 50M25 36L37 33L31 44" strokeWidth="7" />

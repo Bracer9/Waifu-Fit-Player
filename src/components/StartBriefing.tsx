@@ -11,6 +11,7 @@ import { CoverArt } from './CoverArt';
 import { CoverTrace } from './CoverTrace';
 import { LaneGlyph } from './Glyph';
 import { ModalBackdrop } from './ModalBackdrop';
+import { useBriefingMotion } from '../useBriefingMotion';
 import '../start-briefing.css';
 
 const moveNames = ['深蹲', '提踵', '手臂', '踏步', '侧腹'];
@@ -46,6 +47,7 @@ export function StartBriefing({
     segmentAt(chart.tempoSegments, chartTimeAt(chart, chart.playRange?.startMs ?? 0))?.bpm ??
     chart.tempoSegments[0]?.bpm;
   const root = useRef<HTMLElement>(null);
+  const motion = useBriefingMotion(root, onClose);
   const frame = useRef(0);
   const stopCharge = useRef<(() => void) | null>(null);
   const completion = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -71,12 +73,13 @@ export function StartBriefing({
     completion.current = null;
     owner.current = null;
   };
-  const release = () => {
+  const release = (audible = true) => {
     if (phase.current !== 'holding') return;
+    const from = progress.current;
     clear();
+    if (audible && from > 0.04) callbacks.current.onSound('release');
     phase.current = 'idle';
     setState('idle');
-    const from = progress.current;
     const start = performance.now();
     const rollback = (now: number) => {
       const amount = Math.min(1, (now - start) / START_BRIEFING.releaseMs);
@@ -86,7 +89,7 @@ export function StartBriefing({
     frame.current = requestAnimationFrame(rollback);
   };
   const begin = (source: 'keyboard' | 'pointer') => {
-    if (phase.current !== 'idle') return;
+    if (phase.current !== 'idle' || motion.isClosing()) return;
     clear();
     owner.current = source;
     phase.current = 'holding';
@@ -101,6 +104,27 @@ export function StartBriefing({
       paint(1 - (1 - value) ** 3);
       if (value < 1) frame.current = requestAnimationFrame(charge);
       else {
+        const button = root.current?.querySelector<HTMLElement>('.start-charge');
+        const ring = root.current?.querySelector<HTMLElement>('.start-charge-arrow');
+        if (button && ring) {
+          const panelStyle = getComputedStyle(button);
+          const ringStyle = getComputedStyle(ring);
+          root.current!.style.setProperty('--start-rest-transform', panelStyle.transform);
+          root.current!.style.setProperty(
+            '--start-locked-beat',
+            panelStyle.getPropertyValue('--start-beat'),
+          );
+          root.current!.style.setProperty('--start-ring-scale', ringStyle.scale);
+          root.current!.style.setProperty('--start-ring-rotate', ringStyle.rotate);
+          const [ringX, ringY = '0px'] =
+            ringStyle.translate === 'none' ? ['0px', '0px'] : ringStyle.translate.split(' ');
+          root.current!.style.setProperty('--start-ring-x', ringX);
+          root.current!.style.setProperty('--start-ring-y', ringY);
+          root.current!.style.setProperty(
+            '--start-slide-distance',
+            `${Math.max(0, button.clientWidth - ring.offsetWidth - 50)}px`,
+          );
+        }
         owner.current = null;
         phase.current = 'complete';
         setState('complete');
@@ -116,11 +140,18 @@ export function StartBriefing({
     frame.current = requestAnimationFrame(charge);
   };
   const cancel = () => {
+    if (motion.isClosing()) return;
     clear();
-    callbacks.current.onClose();
+    callbacks.current.onSound('back');
+    motion.close();
   };
   const selectType = (type: ChartType) => {
-    if (phase.current === 'complete' || !callbacks.current.available.includes(type)) return;
+    if (
+      motion.isClosing() ||
+      phase.current === 'complete' ||
+      !callbacks.current.available.includes(type)
+    )
+      return;
     clear();
     phase.current = 'idle';
     setState('idle');
@@ -152,7 +183,7 @@ export function StartBriefing({
         phase.current = 'idle';
         setState('idle');
         paint(0);
-      } else release();
+      } else release(false);
     };
     const visibility = () => {
       if (document.hidden) blur();
@@ -362,7 +393,7 @@ export function StartBriefing({
               event.currentTarget.releasePointerCapture(event.pointerId);
           }}
           onPointerCancel={() => {
-            if (owner.current === 'pointer') release();
+            if (owner.current === 'pointer') release(false);
           }}
           onLostPointerCapture={() => {
             if (owner.current === 'pointer') release();
@@ -400,9 +431,17 @@ export function StartBriefing({
             <ArrowRight />
           </span>
           <span className="start-charge-content">
-            <small>READY TO MOVE?</small>
+            <small>{state === 'complete' ? 'READY. LET’S MOVE!' : 'READY TO MOVE?'}</small>
             <strong>
-              HOLD <em>ENTER</em> TO START
+              {state === 'complete' ? (
+                <>
+                  LET’S <em>GO!</em>
+                </>
+              ) : (
+                <>
+                  HOLD <em>ENTER</em> TO START
+                </>
+              )}
             </strong>
             <span className="start-charge-meter" aria-hidden="true">
               <span className="start-charge-aura">
@@ -415,7 +454,8 @@ export function StartBriefing({
               </span>
             </span>
           </span>
-          <span className="start-charge-streaks" aria-hidden="true" />
+          <span className="start-charge-ignition" aria-hidden="true" />
+          <span className="start-charge-backlight" aria-hidden="true" />
         </button>
         <span className="sr-only" id={`${titleId}-hold`}>
           按住 Enter 或鼠标约一秒充能开始，松开取消充能。

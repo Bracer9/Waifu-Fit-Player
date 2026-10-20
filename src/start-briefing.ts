@@ -4,7 +4,12 @@ import { playableChart } from './play-range';
 export const START_BRIEFING = {
   holdMs: 1150,
   releaseMs: 180,
-  completionMs: 220,
+  completionMs: 420,
+  openMs: 320,
+  closeMs: 240,
+  prepareFrames: 4,
+  prepareOpacity: 0.03,
+  enterEase: 'cubic-bezier(0.4, 0, 0.2, 1)',
 } as const;
 
 /** Count authored notes once each, regardless of tap/hold/sway shape. */

@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { blankChart, type Note } from '../src/model';
 import { createCalorieIndex } from '../src/calories';
 import { START_BRIEFING } from '../src/start-briefing';
-import { importDemo, holdStart } from './helpers/project';
+import { insertAlbum, importDemo, holdStart } from './helpers/project';
 
 const notes = (counts: number[]): Note[] =>
   counts.flatMap((count, lane) =>
@@ -79,6 +79,7 @@ async function fixture(page: Page) {
   await page.reload();
   await page.getByRole('button', { name: /音游模式/ }).click();
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   return { dance, fitness, cover };
 }
@@ -87,6 +88,130 @@ const chargeValue = (page: Page) =>
   page
     .locator('.start-briefing')
     .evaluate((root) => Number(getComputedStyle(root).getPropertyValue('--start-charge')));
+
+test('briefing fades as one layer without moving covers or flashing back on cancel', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.evaluate(() => {
+    const state = { running: true, frames: [] as { x: number; y: number }[] };
+    Object.assign(window, { libraryArrowMotion: state });
+    const sample = () => {
+      const arrow = document.querySelector('.menu-back');
+      if (arrow && document.querySelector('.menu-curtain')) {
+        const { x, y } = arrow.getBoundingClientRect();
+        state.frames.push({ x, y });
+      }
+      if (state.running) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+  // Exercise the shared header both ways, including while its page is entering/leaving.
+  await page.locator('.menu-back').click();
+  await expect(page.locator('.music-menu.albums')).toBeVisible();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  const arrowFrames = await page.evaluate(() => {
+    const state = (
+      window as unknown as {
+        libraryArrowMotion: { running: boolean; frames: { x: number; y: number }[] };
+      }
+    ).libraryArrowMotion;
+    state.running = false;
+    return state.frames;
+  });
+  expect(arrowFrames.length).toBeGreaterThan(8);
+  for (const frame of arrowFrames) {
+    expect(Math.abs(frame.x - 1920 * 0.05)).toBeLessThanOrEqual(12.1);
+    expect(frame.y).toBeCloseTo(28, 0);
+  }
+  await page.evaluate(() => {
+    const samples: number[] = [];
+    const exits: number[][] = [];
+    Object.assign(window, {
+      briefingExitSamples: samples,
+      briefingBackdropFrames: exits,
+    });
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...args) {
+      const animation = animate.apply(this, args);
+      if (this.matches('.start-briefing, .start-briefing-backdrop')) {
+        const element = this;
+        const shadeFrames: number[] = [];
+        const sampleExit = () => {
+          if (animation.id !== 'briefing-close' || !element.isConnected) return;
+          if (!shadeFrames.length) exits.push(shadeFrames);
+          shadeFrames.push(Number(getComputedStyle(element).opacity));
+          if (animation.playState === 'running') requestAnimationFrame(sampleExit);
+        };
+        requestAnimationFrame(sampleExit);
+        void animation.finished
+          .then(() =>
+            queueMicrotask(() => {
+              if (animation.id === 'briefing-close' && element.isConnected)
+                samples.push(Number(getComputedStyle(element).opacity));
+            }),
+          )
+          .catch(() => {});
+      }
+      return animation;
+    };
+  });
+  for (const action of ['Escape', 'Backspace', 'mouse', 'early']) {
+    await page.locator('.record-select').click();
+    const briefing = page.locator('.start-briefing');
+    if (action !== 'early') await expect(briefing).toHaveAttribute('data-motion', 'ready');
+    await expect(page.locator('.briefing-cover-flight')).toHaveCount(0);
+    await expect(briefing.locator('.briefing-cover > img')).toHaveCSS('visibility', 'visible');
+    await expect(briefing.locator('.briefing-cover-grain')).toHaveCSS('opacity', '0.68');
+    await expect(page.locator('.record-jacket > img')).toHaveCSS('visibility', 'visible');
+    if (action === 'mouse') await page.locator('.briefing-cancel').click();
+    else await page.keyboard.press(action === 'early' ? 'Escape' : action);
+    await expect(briefing).toHaveCount(0);
+  }
+  const samples = await page.evaluate(
+    () => (window as unknown as { briefingExitSamples: number[] }).briefingExitSamples,
+  );
+  expect(samples).toEqual([0, 0, 0, 0]);
+  const backdropFrames = await page.evaluate(
+    () => (window as unknown as { briefingBackdropFrames: number[][] }).briefingBackdropFrames,
+  );
+  expect(backdropFrames).toHaveLength(4);
+  for (const frames of backdropFrames) {
+    expect(frames.some((opacity) => opacity > 0.05 && opacity < 0.95)).toBe(true);
+    for (let index = 1; index < frames.length; index++)
+      expect(frames[index]).toBeLessThanOrEqual(frames[index - 1]);
+  }
+  await page.locator('.record-select').click();
+  await expect(page.locator('.start-briefing')).toHaveAttribute('data-motion', 'ready');
+  await page.locator('.start-briefing').evaluate((element) => {
+    const fade = element.getAnimations().find((animation) => animation.id === 'briefing-enter')!;
+    fade.pause();
+    fade.currentTime = Number(fade.effect!.getTiming().duration) * 0.35;
+  });
+  const partialOpacity = await page
+    .locator('.start-briefing')
+    .evaluate((element) => Number(getComputedStyle(element).opacity));
+  expect(partialOpacity).toBeGreaterThan(0.2);
+  expect(partialOpacity).toBeLessThan(0.8);
+  await page.screenshot({ path: 'artifacts/start-briefing-motion-1080p.png' });
+  await page.locator('.start-briefing').evaluate((element) =>
+    element
+      .getAnimations()
+      .find((animation) => animation.id === 'briefing-enter')!
+      .finish(),
+  );
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.start-briefing')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('.record-select').click();
+  await expect(page.locator('.start-briefing')).toHaveAttribute('data-motion', 'ready');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.start-briefing')).toHaveCount(0);
+});
 
 test('reference layout uses real cover, credits, range statistics and synchronized chart types', async ({
   page,
@@ -223,6 +348,28 @@ test('charge eases out without changing the hold duration; mouse and keyboard sh
   await expect.poll(chargePaused).toBe(true);
   await expect.poll(() => chargeValue(page)).toBe(0);
   await page.keyboard.down('Enter');
+  await expect.poll(() => chargeValue(page), { intervals: [16] }).toBeGreaterThan(0.25);
+  await page.keyboard.up('Enter');
+  await expect.poll(() => chargeValue(page)).toBe(0);
+  // Hold only the completion handoff so the real completed state can be inspected.
+  await page.evaluate((completionMs) => {
+    const original = window.setTimeout;
+    window.setTimeout = function (handler: TimerHandler, timeout?: number, ...args: unknown[]) {
+      if (timeout === completionMs && document.querySelector('.start-briefing')) {
+        window.setTimeout = original;
+        const id = original(() => {}, 60000);
+        Object.assign(window, {
+          finishBriefingFeedback: () => {
+            clearTimeout(id);
+            if (typeof handler === 'function') handler(...args);
+          },
+        });
+        return id;
+      }
+      return original(handler, timeout, ...args);
+    } as typeof window.setTimeout;
+  }, START_BRIEFING.completionMs);
+  await page.keyboard.down('Enter');
   await page.waitForTimeout(500);
   expect(await chargeValue(page)).toBeGreaterThan(0.75); // Linear fill would still be below 0.5.
   await expect(page.locator('.start-briefing')).toHaveAttribute('data-state', 'holding');
@@ -237,13 +384,23 @@ test('charge eases out without changing the hold duration; mouse and keyboard sh
       briefingAudio: Map<string, HTMLMediaElement>;
     };
     return {
-      sounds: state.briefingSounds.filter((event) => ['charge', 'charged'].includes(event.name)),
+      sounds: state.briefingSounds.filter((event) =>
+        ['charge', 'release', 'charged'].includes(event.name),
+      ),
       played: state.briefingPlayed,
       paused: state.briefingAudio.get('charge')?.paused,
     };
   });
-  expect(result.sounds.map((sound) => sound.name)).toEqual(['charge', 'charge', 'charged']);
-  const elapsed = result.sounds[2].at - result.sounds[1].at;
+  expect(result.sounds.map((sound) => sound.name)).toEqual([
+    'charge',
+    'release',
+    'charge',
+    'release',
+    'charge',
+    'charged',
+  ]);
+  const elapsed =
+    result.sounds.at(-1)!.at - result.sounds.filter((sound) => sound.name === 'charge').at(-1)!.at;
   expect(elapsed).toBeGreaterThanOrEqual(START_BRIEFING.holdMs - 20);
   expect(elapsed).toBeLessThan(START_BRIEFING.holdMs + 200);
   expect(result.sounds.every((sound) => sound.volume === 0.5)).toBe(true);
@@ -254,6 +411,76 @@ test('charge eases out without changing the hold duration; mouse and keyboard sh
     )
     .toContain('charged');
   expect(result.played).toContain('charge');
+  expect(result.played).toContain('release');
+  const briefing = page.locator('.start-briefing');
+  await expect(button).toHaveCSS('animation-name', 'none');
+  await expect(briefing).toHaveCSS('animation-name', 'none');
+  await briefing.evaluate((root, completionMs) => {
+    root.getAnimations({ subtree: true }).forEach((animation) => {
+      if (animation instanceof CSSAnimation && animation.animationName.startsWith('start-')) {
+        animation.pause();
+        animation.currentTime = completionMs * 0.45;
+      }
+    });
+  }, START_BRIEFING.completionMs);
+  expect(
+    await briefing
+      .locator('.start-charge-backlight')
+      .evaluate((node) => getComputedStyle(node).boxShadow),
+  ).toContain('50px');
+  await expect(briefing.locator('.start-charge-content > strong')).toHaveText('LET’S GO!');
+  expect(
+    await button.evaluate((node) => {
+      // The component retains its dark face while its backlight turns on.
+      const context = document.createElement('canvas').getContext('2d')!;
+      context.fillStyle = getComputedStyle(node).backgroundColor;
+      context.fillRect(0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3);
+    }),
+  ).toEqual([36, 35, 41]);
+  expect(
+    await briefing
+      .locator('.start-charge-arrow > svg:last-child')
+      .evaluate((node) => getComputedStyle(node).filter),
+  ).toContain('12px');
+  await expect(briefing.locator('.start-charge-arrow')).toHaveCSS(
+    'animation-name',
+    'start-ring-slide',
+  );
+  expect(
+    await briefing
+      .locator('.start-charge-backlight')
+      .evaluate((node) => Number(getComputedStyle(node).opacity)),
+  ).toBeGreaterThan(0.8);
+  const ring = briefing.locator('.start-charge-arrow');
+  const positions = [];
+  for (const fraction of [0, 0.4, 0.75, 1]) {
+    await ring.evaluate((node, time) => {
+      node
+        .getAnimations()
+        .find(
+          (animation) =>
+            animation instanceof CSSAnimation && animation.animationName === 'start-ring-slide',
+        )!.currentTime = time;
+    }, START_BRIEFING.completionMs * fraction);
+    positions.push((await ring.boundingBox())!);
+  }
+  expect(positions[1].x).toBeGreaterThan(positions[0].x + 300);
+  expect(positions[2].x).toBeCloseTo(positions[3].x, 0);
+  for (const position of positions) {
+    expect(position.y).toBeCloseTo(positions[0].y, 0);
+    expect(position.height).toBeCloseTo(positions[0].height, 0);
+    expect(position.width).toBeCloseTo(positions[0].width, 0);
+  }
+  const panel = (await button.boundingBox())!;
+  expect(Math.abs(panel.x + panel.width - positions[3].x - positions[3].width - 25)).toBeLessThan(
+    16,
+  );
+  await page.screenshot({ path: 'artifacts/start-briefing-complete-1080p.png' });
+  await page.evaluate(() =>
+    (window as unknown as { finishBriefingFeedback: () => void }).finishBriefingFeedback(),
+  );
+  await expect(page.locator('.game-entrance')).toHaveAttribute('data-phase', 'cover');
 });
 
 test('fresh Enter hold connects a dedicated black entrance, then powers the room and starts the original countdown', async ({

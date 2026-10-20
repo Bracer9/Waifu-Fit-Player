@@ -17,7 +17,7 @@
   color: var(--ink);
   font-family: 'Barlow Condensed', 'Microsoft YaHei', sans-serif;
   isolation: isolate;
-  animation: briefing-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity;
 }
 .start-briefing[data-chart-type='fitness'] {
   --briefing-accent: var(--fitness-color);
@@ -473,6 +473,7 @@
   background: var(--briefing-accent);
 }
 .start-charge {
+  --start-beat: var(--menu-music-beat, 0);
   container-type: inline-size;
   display: flex;
   align-items: center;
@@ -490,21 +491,23 @@
   touch-action: none;
   user-select: none;
   cursor: pointer;
+  transform: translateY(calc(var(--start-beat) * -2.5px)) scale(calc(1 + var(--start-beat) * 0.02));
+  transform-origin: center;
   box-shadow:
     8px 10px 0 #0008,
     inset 0 0 0 1px color-mix(in srgb, var(--briefing-accent) 50.2%, transparent);
   transition:
     box-shadow 160ms,
-    transform 160ms;
+    transform 60ms ease-out;
 }
 .start-charge > .cover-trace {
   inset: -2px;
   width: calc(100% + 4px);
   height: calc(100% + 4px);
   overflow: visible;
-  opacity: calc(0.68 + var(--menu-music-beat, 0) * 0.25);
+  opacity: calc(0.55 + var(--start-beat) * 0.45);
   visibility: visible;
-  scale: calc(1 + var(--menu-music-beat, 0) * 0.004);
+  scale: calc(1 + var(--start-beat) * 0.009);
   transition:
     opacity 80ms ease-out,
     scale 100ms ease-out;
@@ -569,9 +572,9 @@
 .start-charge-content {
   display: block;
   width: 100%;
-  scale: calc(1 + var(--menu-music-beat, 0) * 0.003);
+  scale: calc(1 + var(--start-beat) * 0.012);
   transform-origin: left center;
-  transition: scale 120ms ease-out;
+  transition: scale 60ms ease-out;
 }
 .start-charge-content > small {
   display: block;
@@ -603,13 +606,13 @@
   width: clamp(225px, 14.5vw, 280px);
   aspect-ratio: 1;
   transform: translateY(-50%);
-  translate: calc(var(--menu-music-beat, 0) * 0.6px) calc(var(--menu-music-beat, 0) * -0.5px);
-  rotate: calc(var(--menu-music-beat, 0) * 0.45deg);
-  scale: calc(1 + var(--menu-music-beat, 0) * 0.009);
+  translate: calc(var(--start-beat) * 1.8px) calc(var(--start-beat) * -1.2px);
+  rotate: calc(var(--start-beat) * 1.2deg);
+  scale: calc(1 + var(--start-beat) * 0.045);
   transition:
-    translate 80ms ease-out,
-    rotate 80ms ease-out,
-    scale 80ms ease-out;
+    translate 60ms ease-out,
+    rotate 60ms ease-out,
+    scale 60ms ease-out;
   border-radius: 50%;
   background: var(--ink);
   box-shadow:
@@ -679,6 +682,8 @@
   height: 36px;
   margin-top: 11px;
   isolation: isolate;
+  scale: 1 calc(1 + var(--start-beat) * 0.12);
+  transition: scale 60ms ease-out;
 }
 .start-charge-track {
   display: block;
@@ -736,54 +741,91 @@
     4px 0 8px var(--briefing-accent);
 }
 .start-briefing[data-state='holding'] .start-charge {
-  transform: scale(calc(1 + var(--start-charge) * 0.007 + var(--menu-music-beat, 0) * 0.004));
+  transform: translateY(calc(var(--start-beat) * -2.5px))
+    scale(calc(1 + var(--start-charge) * 0.007 + var(--start-beat) * 0.02));
   box-shadow:
     8px 10px 0 #0008,
     inset 0 0 0 2px var(--briefing-accent),
-    0 0 25px color-mix(in srgb, var(--briefing-accent) 16.86%, transparent);
+    0 0 25px color-mix(in srgb, var(--briefing-accent) 17%, transparent);
 }
 .start-briefing[data-state='complete'] .start-charge {
-  animation: start-charge-complete var(--start-complete) ease-out both;
-}
-.start-briefing[data-state='complete'] {
-  animation: briefing-launch var(--start-complete) cubic-bezier(0.16, 1, 0.3, 1) both;
+  --start-beat: var(--start-locked-beat, 0);
+  transform: var(--start-rest-transform, none);
+  transition: none;
+  border-color: var(--briefing-accent);
+  background: var(--ink);
+  box-shadow:
+    8px 12px 0 #0008,
+    inset 0 0 0 2px var(--briefing-paper),
+    inset 0 -5px 26px color-mix(in srgb, var(--briefing-accent) 25%, transparent);
 }
 .start-briefing[data-state='complete'] .start-charge-arrow {
-  animation: start-arrow-complete var(--start-complete) cubic-bezier(0.16, 1, 0.3, 1) both;
+  z-index: 5;
+  translate: var(--start-ring-x, 0px) var(--start-ring-y, 0px);
+  rotate: var(--start-ring-rotate, none);
+  scale: var(--start-ring-scale, 1);
+  transition: none;
+  box-shadow:
+    0 0 0 4px var(--ink),
+    0 0 18px var(--briefing-accent),
+    0 0 40px color-mix(in srgb, var(--briefing-accent) 55%, transparent);
+  animation: start-ring-slide var(--start-complete) cubic-bezier(0.18, 0.72, 0.2, 1) both;
 }
-.start-briefing[data-state='complete'] .start-charge-meter {
-  filter: brightness(1.6);
+.start-briefing[data-state='complete'] .start-charge-arrow > svg:last-child {
+  filter: drop-shadow(0 0 3px var(--briefing-paper)) drop-shadow(0 0 12px var(--briefing-accent));
+}
+.start-briefing[data-state='complete'] .start-charge-ring-lit {
+  filter: drop-shadow(0 0 4px var(--briefing-paper)) drop-shadow(0 0 14px var(--briefing-accent));
+}
+.start-briefing[data-state='complete'] .start-charge-content > strong {
+  padding-right: clamp(225px, 14.5vw, 280px);
+  text-align: center;
+  text-shadow: 0 0 16px color-mix(in srgb, var(--briefing-accent) 55%, transparent);
+}
+.start-briefing[data-state='complete'] .start-charge-dots,
+.start-briefing[data-state='complete'] .start-charge > .cover-trace {
+  opacity: 1;
+}
+.start-briefing[data-state='complete'] .start-charge > .cover-trace rect {
+  animation-play-state: paused;
+  filter: drop-shadow(0 0 5px var(--briefing-accent));
 }
 .start-briefing[data-state='complete'] .start-charge-aura {
   opacity: 1;
-  filter: blur(12px);
+  filter: blur(12px) brightness(1.5);
 }
-.start-charge-streaks {
+.start-charge-backlight {
   position: absolute;
-  right: 0;
-  bottom: 28px;
-  width: 0;
-  height: 0;
+  inset: -4px;
+  z-index: -1;
+  border: 2px solid var(--briefing-accent);
+  box-shadow:
+    0 0 18px var(--briefing-accent),
+    0 0 50px color-mix(in srgb, var(--briefing-accent) 65%, transparent),
+    0 14px 38px color-mix(in srgb, var(--briefing-accent) 55%, transparent);
   pointer-events: none;
-}
-.start-charge-streaks::before,
-.start-charge-streaks::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  width: 42px;
-  height: 4px;
-  background: var(--briefing-accent);
   opacity: 0;
 }
-.start-charge-streaks::after {
-  top: 10px;
-  width: 28px;
-  background: var(--briefing-accent);
+.start-briefing[data-state='complete'] .start-charge-backlight {
+  animation: start-backlight-on var(--start-complete) ease-out both;
 }
-.start-briefing[data-state='complete'] .start-charge-streaks::before,
-.start-briefing[data-state='complete'] .start-charge-streaks::after {
-  animation: start-streak var(--start-complete) ease-out both;
+.start-charge-ignition {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+.start-charge-ignition::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8%;
+  background: var(--briefing-paper);
+  opacity: 0;
+}
+.start-briefing[data-state='complete'] .start-charge-ignition::before {
+  animation: start-ignition-sweep var(--start-complete) cubic-bezier(0.18, 0.72, 0.2, 1) both;
 }
 .briefing-cancel {
   display: flex;
@@ -818,67 +860,47 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-@keyframes briefing-enter {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.96) rotate(-0.5deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotate(0);
-  }
-}
-@keyframes start-charge-complete {
+@keyframes start-ring-slide {
   0% {
-    transform: scale(1.007);
+    translate: var(--start-ring-x, 0px) var(--start-ring-y, 0px);
   }
-  35% {
-    transform: scale(1.015);
-    background: #36303c;
-    box-shadow: 0 0 30px color-mix(in srgb, var(--briefing-accent) 41.96%, transparent);
-  }
+  75%,
   100% {
-    transform: scale(1);
+    translate: calc(var(--start-ring-x, 0px) + var(--start-slide-distance, 0px))
+      var(--start-ring-y, 0px);
   }
 }
-@keyframes briefing-launch {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.02);
-  }
-}
-@keyframes start-arrow-complete {
-  0% {
-    transform: translateY(-50%) scale(1);
-  }
-  35% {
-    transform: translateY(-50%) scale(1.13);
-  }
-  70% {
-    transform: translateY(-50%) scale(0.97);
-  }
-  100% {
-    transform: translateY(-50%) scale(1);
-  }
-}
-@keyframes start-streak {
+@keyframes start-backlight-on {
   0% {
     opacity: 0;
-    transform: translateX(-20px);
   }
-  35% {
+  32% {
+    opacity: 0.8;
+  }
+  100% {
     opacity: 1;
   }
+}
+@keyframes start-ignition-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-160%) skewX(-20deg);
+  }
+  20% {
+    opacity: 0.3;
+  }
+  75% {
+    opacity: 0.15;
+  }
   100% {
     opacity: 0;
-    transform: translateX(40px);
+    transform: translateX(1450%) skewX(-20deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .start-charge > .cover-trace,
-  .start-charge-content {
+  .start-charge-content,
+  .start-charge-meter {
     scale: 1;
     transition: none;
   }
@@ -894,12 +916,17 @@
   .start-charge {
     transform: none;
   }
-  .start-briefing,
-  .start-briefing[data-state='complete'],
-  .start-briefing[data-state='complete'] :is(.start-charge, .start-charge-arrow),
-  .start-briefing[data-state='complete'] .start-charge-streaks::before,
-  .start-briefing[data-state='complete'] .start-charge-streaks::after {
+  .start-briefing[data-state='complete'] .start-charge-arrow,
+  .start-briefing[data-state='complete'] .start-charge-backlight,
+  .start-briefing[data-state='complete'] .start-charge-ignition::before {
     animation: none;
+  }
+  .start-briefing[data-state='complete'] .start-charge-backlight {
+    opacity: 1;
+  }
+  .start-briefing[data-state='complete'] .start-charge-arrow {
+    translate: calc(var(--start-ring-x, 0px) + var(--start-slide-distance, 0px))
+      var(--start-ring-y, 0px);
   }
   .start-briefing[data-state='holding'] .start-charge {
     transform: none;
