@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { Song } from '../src/library';
 import { blankChart } from '../src/model';
-import { importDemo, holdStart } from './helpers/project';
+import { insertAlbum, importDemo, holdStart } from './helpers/project';
 import { createCalorieIndex } from '../src/calories';
 
 async function songs(page: Page): Promise<Song[]> {
@@ -80,6 +80,7 @@ test('健身与舞蹈谱独立发布、编辑、撤下、删除与重开', async
   await expect(page.locator('.collection-album').first()).toContainText('全部曲目');
   await page.screenshot({ path: 'artifacts/menu-albums.png' });
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.getByRole('button', { name: 'DANCE', exact: true })).toContainText('8.5');
   await expect(page.getByRole('button', { name: 'FITNESS', exact: true })).toContainText('MEDIUM');
   await page.getByRole('button', { name: 'FITNESS', exact: true }).click();
@@ -178,6 +179,7 @@ test('健身与舞蹈谱独立发布、编辑、撤下、删除与重开', async
   await page.getByRole('button', { name: '关闭本地作品' }).click();
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.getByRole('heading', { name: '这张专辑还没有歌曲' })).toBeVisible();
   await page.reload();
   expect(await songs(page)).toEqual([]);
@@ -218,6 +220,7 @@ test('自定义专辑封面、分组与曲绘保存', async ({ page }) => {
   const album = page.locator('.collection-album').filter({ hasText: '自定义专辑' });
   await expect(album.locator('img')).toHaveAttribute('src', /^data:image\/png/);
   await album.click();
+  await insertAlbum(page);
   await expect(page.locator('.record-card')).toHaveCount(1);
 });
 
@@ -256,7 +259,9 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
   await page.reload();
   await page.getByRole('button', { name: /音游模式/ }).click();
   await page.locator('.collection-album').filter({ hasText: '东方' }).click();
+  await insertAlbum(page);
   await expect(page.locator('.record-card')).toHaveCount(5);
+  await expect(page.getByRole('button', { name: '上一首', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '下一首' }).click();
   await expect(page.locator('.record-card[aria-current="true"]')).toContainText('Test song 3');
   await expect
@@ -268,11 +273,40 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
       }),
     )
     .toBeLessThan(3);
+  await expect(page.getByRole('button', { name: '上一首', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '下一首', exact: true })).toBeVisible();
+  const gapButtons = await page.locator('.record-card[aria-current="true"]').evaluate((card) => {
+    const box = card.getBoundingClientRect();
+    const left = card.previousElementSibling!.getBoundingClientRect();
+    const right = card.nextElementSibling!.getBoundingClientRect();
+    const previous = document.querySelector('.carousel-arrow.previous')!.getBoundingClientRect();
+    const next = document.querySelector('.carousel-arrow.next')!.getBoundingClientRect();
+    return (
+      previous.left > left.right &&
+      previous.right < box.left &&
+      next.left > box.right &&
+      next.right < right.left
+    );
+  });
+  expect(gapButtons).toBe(true);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.locator('.collection-album[aria-current="true"]')).toContainText('东方');
+  await expect(page.locator('.collection-album[data-id="touhou"]')).toHaveAttribute(
+    'data-highlighted',
+  );
   await page.locator('.collection-album[aria-current="true"]').click();
+  await insertAlbum(page);
   await expect(page.locator('.record-card[aria-current="true"]')).toContainText('Test song 3');
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/menu-carousel.png' });
+  await page.getByRole('button', { name: '下一首', exact: true }).hover();
+  await page.mouse.wheel(0, 120);
+  await expect(page.locator('.record-card[aria-current="true"]')).toContainText('Test song 2');
+  await expect(page.locator('.song-carousel')).not.toHaveAttribute('data-wheel-scrolling');
+  await page.locator('.record-card[aria-current="true"]').hover();
+  await page.mouse.wheel(0, -120);
+  await expect(page.locator('.record-card[aria-current="true"]')).toContainText('Test song 3');
+  await expect(page.locator('.song-carousel')).not.toHaveAttribute('data-wheel-scrolling');
   expect(
     await page.locator('.record-card[aria-current="true"] .record-overline').evaluate((el) => {
       const stats = el.getBoundingClientRect();
@@ -285,4 +319,11 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
   await expect(
     page.locator('.record-card[aria-current="true"] .cover-trace rect').first(),
   ).toHaveCSS('animation-name', 'none');
+  for (let index = 0; index < 3; index++) await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('button', { name: '下一首', exact: true })).toHaveCount(0);
+  const previous = page.getByRole('button', { name: '上一首', exact: true });
+  await previous.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: '下一首', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });

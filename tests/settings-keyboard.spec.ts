@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
 
 test('settings keyboard navigation adjusts shared audio and note speed on home, albums and songs', async ({
@@ -107,6 +107,7 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   for (const scene of ['albums', 'songs']) {
     if (scene === 'songs') {
       await page.locator('.collection-album').first().click();
+      await insertAlbum(page);
       await expect(page.locator('.menu-curtain')).toHaveCount(0);
     }
     await gear.click();

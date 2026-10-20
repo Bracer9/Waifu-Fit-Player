@@ -70,7 +70,8 @@ export function Home({
         if (event.key === 'ArrowUp') next = current === headphone ? modes[lastMode.current] : gear;
         activate(next);
         if (next && document.activeElement !== next) {
-          onSound('settings');
+          // Entering the headphone menu already sounds when its first track is selected.
+          if (next !== headphone) onSound('settings');
           next.focus({ preventScroll: true });
         }
       } else if (event.key === 'Enter' && (current || target.tagName !== 'BUTTON')) {
@@ -117,10 +118,21 @@ export function Home({
           </span>
         </button>
       </div>
-      <MenuMusicConsole music={music} onSound={onSound}>
+      <MenuMusicConsole
+        music={music}
+        onSound={onSound}
+        onNavigateUp={() => {
+          const card =
+            records.current?.querySelectorAll<HTMLButtonElement>('.mode-record')[lastMode.current];
+          if (!card) return;
+          activate(card);
+          card.focus({ preventScroll: true });
+          onSound('settings');
+        }}
+      >
         <MainMenuDownHint />
       </MenuMusicConsole>
-      <MenuControls />
+      <MenuControls showBack />
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { holdStart } from './helpers/project';
+import { insertAlbum, holdStart } from './helpers/project';
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -129,6 +129,7 @@ test('保存游玩范围，终点红线跟随偏移，发布、试听和音游�
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   const card = page.locator('.record-card[aria-current="true"]');
   await expect(card.locator('.record-timing')).toContainText('00:07');

@@ -1,10 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Disc3, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Disc3, Pencil } from 'lucide-react';
 import { editionsIn, type Album, type ChartType, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
 import { CoverTrace } from '../components/CoverTrace';
 import { StartBriefing } from '../components/StartBriefing';
 import { MenuControls } from '../components/MenuControls';
+import { AlbumBackdrop } from '../components/AlbumBackdrop';
+import { AlbumCover } from '../components/AlbumCover';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
 import { playableChart, playDuration } from '../play-range';
@@ -13,6 +15,9 @@ import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 import { ratingValue, ratingSummary } from '../chart-types';
 import { useAlbumArtwork } from '../useAlbumArtwork';
+import { useMenuWheel } from '../useMenuWheel';
+import type { MenuMusic } from '../useMenuMusic';
+import { AlbumDeck, ALBUM_DECK_TIMING } from '../components/AlbumDeck';
 
 function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   const center = horizontal
@@ -42,17 +47,6 @@ function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   return closest?.dataset.id;
 }
 
-function updateAlbumThumb(node: HTMLElement) {
-  // Shorten the native thumb's paint, keeping native drag and scroll behavior.
-  // Shift its transparent ends with scroll progress to retain both track endpoints.
-  const height = node.clientHeight;
-  const padding = Number.parseFloat(node.style.getPropertyValue('--album-padding')) || 0;
-  const trim = Math.max(0, (height * height) / node.scrollHeight - padding);
-  const progress = node.scrollTop / Math.max(1, node.scrollHeight - height);
-  node.style.setProperty('--album-thumb-trim', `${trim}px`);
-  node.style.setProperty('--album-scroll-ratio', String(progress));
-}
-
 type Props = {
   page: 'albums' | 'songs';
   albums: Album[];
@@ -61,6 +55,11 @@ type Props = {
   songId: string;
   chartType: ChartType;
   seed: number;
+  musicPlaying: boolean;
+  music: MenuMusic;
+  playerOpen: boolean;
+  onPlayerOpen: (open: boolean) => void;
+  onInsertStart: () => void;
   onAlbum: (id: string, enter?: boolean) => void;
   onSong: (id: string) => void;
   onChartType: (chartType: ChartType) => void;
@@ -79,15 +78,29 @@ export function LibraryMenu(props: Props) {
   const { activate, getCurrent, handlers } = useCardHighlight();
   const artwork = useAlbumArtwork(albums);
   const scrollFrame = useRef(0);
-  const [confirmStart, setConfirmStart] = useState<{ song: Song; chartType: ChartType } | null>(
-    null,
-  );
+  const centering = useRef<string | null>(null);
+  const [inserting, setInserting] = useState(false);
+  const [deckReady, setDeckReady] = useState(false);
+  const open = page === 'albums' && props.playerOpen;
+  const menu = useRef<HTMLElement>(null);
+  const closePlayer = () => {
+    if (inserting) return;
+    props.onSound('back');
+    props.onPlayerOpen(false);
+    const card = scroller.current?.querySelector<HTMLElement>('[aria-current="true"]');
+    activate(card ?? null);
+    card?.focus({ preventScroll: true });
+  };
+  const back = () => (open ? closePlayer() : props.onBack());
+  const [confirmStart, setConfirmStart] = useState<{
+    song: Song;
+    chartType: ChartType;
+  } | null>(null);
   const confirmSong = (song: Song, chartType: ChartType) => {
     props.onSound('song');
     setConfirmStart({ song, chartType });
   };
   const closeConfirmation = () => {
-    props.onSound('back');
     setConfirmStart(null);
   };
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
@@ -103,6 +116,11 @@ export function LibraryMenu(props: Props) {
     [songs, albumId],
   );
   const selected = inAlbum.find((s) => s.id === songId) ?? inAlbum[0];
+  useMenuWheel(
+    scroller,
+    page === 'songs' ? 'x' : 'y',
+    !inserting && (page === 'albums' || !!selected),
+  );
   // Compile each released chart once when the library changes, never during playback/scroll.
   const totalCalories = useMemo(
     () =>
@@ -119,19 +137,146 @@ export function LibraryMenu(props: Props) {
   const available = selected ? editionsIn(selected, albumId) : [];
   const selectedChartType = available.includes(chartType) ? chartType : available.at(-1);
   const edition = selected && selectedChartType ? selected.released[selectedChartType] : undefined;
-  const previewAsset = page === 'songs' ? edition?.chart.videoHint.assetId : undefined;
-  const previewRange = page === 'songs' ? edition?.chart.playRange : undefined;
+  const previewAsset = page === 'songs' || open ? edition?.chart.videoHint.assetId : undefined;
+  const previewRange = page === 'songs' || open ? edition?.chart.playRange : undefined;
   useEffect(
     () => props.onPreview(previewAsset, previewRange),
     [previewAsset, previewRange, props.onPreview],
   );
   const cards = page === 'albums' ? albums : inAlbum;
   const selectedId = page === 'albums' ? album.id : selected?.id;
+  useEffect(() => {
+    setDeckReady(false);
+    if (!open) return;
+    const timer = setTimeout(
+      () => setDeckReady(true),
+      matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ALBUM_DECK_TIMING.unfold,
+    );
+    return () => clearTimeout(timer);
+  }, [open, album.id]);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const card = scroller.current?.querySelector<HTMLElement>('[aria-current="true"]');
+      if (!card || !menu.current) return;
+      const shelf = scroller.current!.getBoundingClientRect();
+      const lift = Number.parseFloat(getComputedStyle(card).getPropertyValue('--album-lift')) || 0;
+      menu.current.style.setProperty('--deck-slot-y', `${shelf.y + shelf.height / 2 + lift}px`);
+      // Use the settled focus size even when a newly clicked card is still scrolling into place.
+      menu.current.style.setProperty('--deck-slot-height', `${card.offsetHeight * 1.12 + 18}px`);
+      // Use layout dimensions and the final shelf offset, never animated rectangles.
+      const shelfNode = scroller.current!;
+      const cardRight =
+        shelfNode.offsetLeft +
+        shelfNode.offsetWidth / 2 -
+        innerWidth * 0.1 +
+        card.offsetWidth * 0.56;
+      const slotLeft = innerWidth * 0.71;
+      menu.current.style.setProperty('--deck-insert-hint-x', `${(cardRight + slotLeft) / 2}px`);
+    };
+    measure();
+    const timer = setTimeout(measure, ALBUM_DECK_TIMING.unfold);
+    window.addEventListener('resize', measure);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measure);
+    };
+  }, [open, album.id]);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => {
+      if (
+        !(event.target instanceof Element) ||
+        event.target.closest(
+          '.collection-album, .album-deck, .menu-settings, .corner-settings, .menu-back, .menu-control-back',
+        )
+      )
+        return;
+      closePlayer();
+    };
+    document.addEventListener('pointerdown', outside);
+    return () => document.removeEventListener('pointerdown', outside);
+  });
+  const confirmAlbum = (id: string) => {
+    if (inserting) return;
+    if (!open || id !== album.id) {
+      select(id);
+      props.onPlayerOpen(true);
+      props.onSound('settings');
+    } else if (deckReady) {
+      setInserting(true);
+      props.onInsertStart();
+    }
+  };
+  const changePreviewTrack = (delta: number) => {
+    if (!inAlbum.length) return;
+    const index = Math.max(
+      0,
+      inAlbum.findIndex((song) => song.id === selected?.id),
+    );
+    onSong(inAlbum[(index + delta + inAlbum.length) % inAlbum.length].id);
+    props.onSound('settings');
+  };
+  useEffect(() => {
+    if (!inserting) return;
+    const card = scroller.current?.querySelector<HTMLElement>('[aria-current="true"]');
+    const slot = menu.current?.querySelector<HTMLElement>('.album-deck-slot');
+    if (!card || !slot) {
+      setInserting(false);
+      props.onPlayerOpen(false);
+      return;
+    }
+    const box = card.getBoundingClientRect();
+    const edge = slot.getBoundingClientRect().left + 8;
+    const mask = document.createElement('div');
+    mask.className = 'album-flight';
+    mask.style.clipPath = `inset(0 ${Math.max(0, innerWidth - edge)}px 0 0)`;
+    const copy = card.cloneNode(true) as HTMLElement;
+    copy.classList.add('album-flight-card');
+    copy.setAttribute('aria-hidden', 'true');
+    copy.inert = true;
+    Object.assign(copy.style, {
+      left: `${box.left}px`,
+      top: `${box.top}px`,
+      width: `${box.width}px`,
+      height: `${box.height}px`,
+    });
+    mask.append(copy);
+    document.body.append(mask);
+    const previous = card.style.visibility;
+    card.style.visibility = 'hidden';
+    let cancelled = false;
+    const animation = copy.animate(
+      [{ translate: '0 0' }, { translate: `${edge - box.left + 30}px 0` }],
+      {
+        duration: matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 1
+          : ALBUM_DECK_TIMING.insert,
+        easing: 'cubic-bezier(0.45, 0, 0.2, 1)',
+        fill: 'forwards',
+      },
+    );
+    void animation.finished
+      .then(() => {
+        if (!cancelled) {
+          props.onSound('insert');
+          props.onAlbum(album.id, true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      animation.cancel();
+      mask.remove();
+      card.style.visibility = previous;
+    };
+  }, [inserting]);
 
   useLayoutEffect(() => {
     const node = scroller.current;
     if (!node) return;
     const centerSelection = () => {
+      centering.current = null;
       if (page === 'albums') {
         const card = node.firstElementChild as HTMLElement | null;
         if (card)
@@ -144,10 +289,10 @@ export function LibraryMenu(props: Props) {
         .querySelector<HTMLElement>('[aria-current="true"]')
         ?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
       updateScrollFocus(node, page === 'songs');
-      if (page === 'albums') updateAlbumThumb(node);
     };
     centerSelection();
-    if (page === 'songs') activate(node.querySelector<HTMLElement>('[aria-current="true"]'));
+    const current = node.querySelector<HTMLElement>('[aria-current="true"]');
+    activate(current);
     const resize = new ResizeObserver(centerSelection);
     if (page === 'albums') resize.observe(node);
     return () => {
@@ -157,19 +302,6 @@ export function LibraryMenu(props: Props) {
     };
   }, [page, albums, activate]);
 
-  useEffect(() => {
-    const node = scroller.current;
-    if (!node || page !== 'songs') return;
-    const wheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-        event.preventDefault();
-        node.scrollLeft += event.deltaY;
-      }
-    };
-    node.addEventListener('wheel', wheel, { passive: false });
-    return () => node.removeEventListener('wheel', wheel);
-  }, [page]);
-
   const select = (id: string) => {
     if (page === 'albums') onAlbum(id);
     else onSong(id);
@@ -177,6 +309,10 @@ export function LibraryMenu(props: Props) {
       (c) => (c as HTMLElement).dataset.id === id,
     );
     const focusTarget = child?.querySelector<HTMLButtonElement>('.record-select') ?? child;
+    centering.current =
+      page === 'albums' && child && !matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? id
+        : null;
     activate((child as HTMLElement | undefined) ?? null);
     (focusTarget as HTMLElement | undefined)?.focus({ preventScroll: true });
     child?.scrollIntoView({
@@ -205,13 +341,35 @@ export function LibraryMenu(props: Props) {
       const gear = document.querySelector<HTMLButtonElement>('.menu-settings');
       if (
         e.defaultPrevented ||
+        inserting ||
         document.querySelector('.menu-curtain') ||
         (document.querySelector('[role="dialog"]') && current !== gear) ||
         target.closest('.corner-settings') ||
-        /INPUT|SELECT|TEXTAREA/.test(target.tagName) ||
+        (/INPUT|SELECT|TEXTAREA/.test(target.tagName) &&
+          !(
+            open &&
+            (['Escape', 'Backspace'].includes(e.key) || e.code === 'Space') &&
+            target.matches('input[type="range"]')
+          )) ||
         target.isContentEditable
       )
         return;
+      if (open && (e.key === 'Escape' || e.key === 'Backspace')) {
+        e.preventDefault();
+        if (!e.repeat) closePlayer();
+        return;
+      }
+      if (open && e.code === 'Space') {
+        e.preventDefault();
+        if (!e.repeat) props.music.togglePreview();
+        return;
+      }
+      if (open && current !== gear && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        if (!e.repeat) changePreviewTrack(e.key === 'ArrowLeft' ? -1 : 1);
+        return;
+      }
+      if (open && target.closest('.album-deck')) return;
       const focusGear = () => {
         activate(gear);
         if (gear && document.activeElement !== gear) {
@@ -261,13 +419,13 @@ export function LibraryMenu(props: Props) {
         e.preventDefault();
         focusGear();
       } else if (
-        e.key === 'Enter' &&
-        !target.closest('.edit-track') &&
+        (e.key === 'Enter' || (page === 'albums' && e.code === 'Space')) &&
+        !target.closest('.edit-track, .carousel-arrow') &&
         (current?.matches('.collection-album, .record-card') || target.tagName !== 'BUTTON')
       ) {
         e.preventDefault();
         if (e.repeat) return;
-        if (page === 'albums') onAlbum(current?.dataset.id ?? album.id, true);
+        if (page === 'albums') confirmAlbum(current?.dataset.id ?? album.id);
         else {
           const song = inAlbum.find((song) => song.id === current?.dataset.id) ?? selected;
           if (!song) return;
@@ -306,9 +464,9 @@ export function LibraryMenu(props: Props) {
     scrollFrame.current = requestAnimationFrame(() => {
       scrollFrame.current = 0;
       const node = scroller.current;
-      if (!node || node.closest('.menu-scene[data-exit-to]')) return;
+      if (!node || inserting || node.closest('.menu-scene[data-exit-to]')) return;
       const id = updateScrollFocus(node, page === 'songs');
-      if (page === 'albums') updateAlbumThumb(node);
+      if (centering.current) return;
       if (id && id !== selectedId) {
         if (page === 'albums') onAlbum(id);
         else onSong(id);
@@ -318,14 +476,17 @@ export function LibraryMenu(props: Props) {
 
   return (
     <section
+      ref={menu}
       className={`music-menu ${page}`}
+      data-player-open={open || undefined}
+      data-inserting={inserting || undefined}
       aria-label={page === 'albums' ? '选择专辑' : '选择单曲'}
     >
       <header className="music-menu-header">
         <button
           className="menu-back"
           aria-label={page === 'albums' ? '主菜单' : '选择专辑'}
-          onClick={props.onBack}
+          onClick={back}
         >
           <ArrowLeft viewBox="3 3 18 18" />
         </button>
@@ -336,11 +497,19 @@ export function LibraryMenu(props: Props) {
       </header>
       {page === 'albums' ? (
         <>
+          <AlbumBackdrop album={album} index={albums.indexOf(album)} />
           <div
             key="albums"
             className="album-shelf"
             ref={scroller}
             onScroll={trackScroll}
+            onScrollEnd={() => {
+              centering.current = null;
+            }}
+            onWheelCapture={() => {
+              centering.current = null;
+            }}
+            inert={inserting}
             {...handlers}
           >
             {albums.map((a, index) => (
@@ -349,11 +518,15 @@ export function LibraryMenu(props: Props) {
                 data-id={a.id}
                 aria-current={a.id === album.id}
                 className="collection-album"
-                onClick={() => onAlbum(a.id, true)}
+                onClick={() => confirmAlbum(a.id)}
               >
-                <span className="collection-art">
-                  <CoverArt src={covers[a.id]} eager={index < 2} />
-                </span>
+                <AlbumCover
+                  src={covers[a.id]}
+                  albumId={a.id}
+                  selected={a.id === album.id}
+                  playing={props.musicPlaying}
+                  eager={index < 2}
+                />
                 <span className="album-binding">WFP / {String(index + 1).padStart(2, '0')}</span>
                 <span className="collection-label">
                   <span>
@@ -370,6 +543,20 @@ export function LibraryMenu(props: Props) {
               </button>
             ))}
           </div>
+          <AlbumDeck
+            open={open}
+            ready={deckReady}
+            inserting={inserting}
+            edition={edition}
+            count={inAlbum.length}
+            index={Math.max(
+              0,
+              inAlbum.findIndex((song) => song.id === selected?.id),
+            )}
+            music={props.music}
+            onTrack={changePreviewTrack}
+            onInsert={() => confirmAlbum(album.id)}
+          />
         </>
       ) : !selected ? (
         <div className="library-empty">
@@ -383,94 +570,94 @@ export function LibraryMenu(props: Props) {
         </div>
       ) : (
         <>
-          <div
-            key="songs"
-            className="song-carousel"
-            ref={scroller}
-            onScroll={trackScroll}
-            {...handlers}
-          >
-            {inAlbum.map((song) => {
-              const ds = editionsIn(song, albumId);
-              const d = ds.includes(chartType) ? chartType : ds.at(-1)!;
-              const release = song.released[d]!;
-              return (
-                <div
-                  className="record-card"
-                  key={song.id}
-                  data-id={song.id}
-                  aria-current={song.id === selected.id}
-                >
-                  <button
-                    className="record-select"
-                    onClick={() => {
-                      select(song.id);
-                      confirmSong(song, d);
-                    }}
-                    aria-label={`选择 ${release.chart.title}`}
-                  />
-                  <span className="record-overline">
-                    <span>
-                      <small>{d === 'fitness' ? 'INTENSITY' : 'LEVEL'}</small>
-                      <b>{ratingValue(release.chart)}</b>
-                    </span>
-                    <span>
-                      <b>{totalCalories.get(release.chart)?.toFixed(1)}</b>
-                      <small>KCAL</small>
-                    </span>
-                  </span>
-                  <span className="record-jacket">
-                    <CoverArt src={release.cover} eager={song.id === selected.id} />
-                    <CoverTrace />
-                  </span>
-                  <span className="record-caption">
-                    <span className="record-title">
-                      <strong>{release.chart.title}</strong>
-                      <span className="record-chart-types">
-                        {ds.map((level) => (
-                          <i className={`chart-type-tag ${level}`} key={level}>
-                            {level.toUpperCase()}
-                          </i>
-                        ))}
-                        <button
-                          className="edit-track"
-                          aria-label="编辑谱面"
-                          title="编辑谱面"
-                          onClick={() => props.onEdit(song, d)}
-                        >
-                          <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
-                        </button>
-                      </span>
-                    </span>
-                    <span className="record-timing">
+          <div className="song-picker" data-chart-type={selectedChartType}>
+            <div
+              key="songs"
+              className="song-carousel"
+              ref={scroller}
+              onScroll={trackScroll}
+              {...handlers}
+            >
+              {inAlbum.map((song) => {
+                const ds = editionsIn(song, albumId);
+                const d = ds.includes(chartType) ? chartType : ds.at(-1)!;
+                const release = song.released[d]!;
+                return (
+                  <div
+                    className="record-card"
+                    key={song.id}
+                    data-id={song.id}
+                    aria-current={song.id === selected.id}
+                  >
+                    <button
+                      className="record-select"
+                      onClick={() => {
+                        select(song.id);
+                        confirmSong(song, d);
+                      }}
+                      aria-label={`选择 ${release.chart.title}`}
+                    />
+                    <span className="record-overline">
                       <span>
-                        <small>BPM</small> {release.chart.tempoSegments[0]?.bpm ?? '—'}
+                        <small>{d === 'fitness' ? 'INTENSITY' : 'LEVEL'}</small>
+                        <b>{ratingValue(release.chart)}</b>
                       </span>
                       <span>
-                        <small>TIME</small> {formatTime(playDuration(release.chart))}
+                        <b>{totalCalories.get(release.chart)?.toFixed(1)}</b>
+                        <small>KCAL</small>
                       </span>
                     </span>
-                  </span>
-                </div>
-              );
-            })}
+                    <span className="record-jacket">
+                      <CoverArt src={release.cover} eager={song.id === selected.id} />
+                      <CoverTrace />
+                    </span>
+                    <span className="record-caption">
+                      <span className="record-title">
+                        <strong>{release.chart.title}</strong>
+                        <span className="record-chart-types">
+                          {ds.map((level) => (
+                            <i className={`chart-type-tag ${level}`} key={level}>
+                              {level.toUpperCase()}
+                            </i>
+                          ))}
+                          <button
+                            className="edit-track"
+                            aria-label="编辑谱面"
+                            title="编辑谱面"
+                            onClick={() => props.onEdit(song, d)}
+                          >
+                            <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
+                          </button>
+                        </span>
+                      </span>
+                      <span className="record-timing">
+                        <span>
+                          <small>BPM</small> {release.chart.tempoSegments[0]?.bpm ?? '—'}
+                        </span>
+                        <span>
+                          <small>TIME</small> {formatTime(playDuration(release.chart))}
+                        </span>
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {selected.id !== inAlbum[0].id && (
+              <button
+                className="carousel-arrow previous"
+                aria-label="上一首"
+                onClick={() => move(-1)}
+              >
+                <ArrowLeft aria-hidden="true" />
+              </button>
+            )}
+            {selected.id !== inAlbum.at(-1)?.id && (
+              <button className="carousel-arrow next" aria-label="下一首" onClick={() => move(1)}>
+                <ArrowRight aria-hidden="true" />
+              </button>
+            )}
           </div>
-          <button
-            className="carousel-arrow previous"
-            aria-label="上一首"
-            disabled={selected.id === inAlbum[0].id}
-            onClick={() => move(-1)}
-          >
-            <ChevronLeft />
-          </button>
-          <button
-            className="carousel-arrow next"
-            aria-label="下一首"
-            disabled={selected.id === inAlbum.at(-1)?.id}
-            onClick={() => move(1)}
-          >
-            <ChevronRight />
-          </button>
           <div className="selection-details">
             <div className="selection-title">
               <span className="eyebrow">SELECTED TRACK</span>
@@ -496,7 +683,7 @@ export function LibraryMenu(props: Props) {
           </div>
         </>
       )}
-      <MenuControls onBack={props.onBack} />
+      <MenuControls onBack={back} />
       {confirmStart && (
         <StartBriefing
           song={confirmStart.song}

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
 
 test('右上几何设置在三页一致，悬停切换等宽标签，共享音量且不挤压主卡片', async ({ page }) => {
@@ -112,6 +112,7 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   await page.screenshot({ path: 'artifacts/settings-albums-1080p.png' });
   await close();
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await open();
   expect(await settings.boundingBox()).toEqual(homeBounds);

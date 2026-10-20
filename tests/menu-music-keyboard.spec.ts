@@ -42,10 +42,39 @@ test('BGM console arrows and Enter operate playback, tracks, modes, mute and con
   await expect.poll(async () => (await audio()).paused).toBe(false);
   await expect(headphone).toHaveAttribute('aria-pressed', 'false');
   await page.keyboard.press('ArrowUp');
+  await expect(page.locator('.play-mode')).toBeFocused();
+  await expect(panel).toBeHidden();
+  await page.keyboard.press('ArrowDown');
+  await focused('track-0');
+  await page.keyboard.press('ArrowLeft');
+  await focused('play');
+  await page.keyboard.press('ArrowDown');
   await expect(headphone).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(headphone).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('ArrowUp');
+  const trackCount = await panel.locator('.theme-track').count();
+  await focused(`track-${trackCount - 1}`);
+  for (let index = trackCount - 2; index >= 0; index--) {
+    await page.keyboard.press('ArrowUp');
+    await focused(`track-${index}`);
+  }
+  await page.keyboard.press('ArrowUp');
+  await expect(page.locator('.play-mode')).toBeFocused();
+  await expect(panel).toBeVisible();
+  await expect(headphone).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('ArrowDown');
+  await focused('track-0');
+  for (const id of ['play', 'order-2']) {
+    await panel.locator(`[data-music-control="${id}"]`).focus();
+    await page.keyboard.press('ArrowUp');
+    await expect(page.locator('.play-mode')).toBeFocused();
+    await expect(panel).toBeVisible();
+    await expect(headphone).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('ArrowDown');
+    await focused('track-0');
+  }
+  await page.keyboard.press('ArrowLeft');
   await focused('play');
   await expect.poll(async () => (await audio()).paused).toBe(false);
   await page.keyboard.press('Enter');

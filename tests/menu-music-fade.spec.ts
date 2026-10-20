@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
 
 type FadeProbe = {
   audio: HTMLAudioElement[];
@@ -63,7 +64,10 @@ test('专辑与单曲试听往返有完整的平滑淡出淡入，快速返回�
   await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.7');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.7');
   await page.keyboard.press('Escape');
-  await importDemo(page);
+  await importDemo(page, {
+    ...blankChart('Menu fade QA'),
+    notes: [{ id: 'fade-note', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1000 }],
+  });
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByLabel('所属专辑').selectOption('touhou');
@@ -75,6 +79,7 @@ test('专辑与单曲试听往返有完整的平滑淡出淡入，快速返回�
   await expect.poll(async () => (await levels())[0].volume).toBe(0.7);
   await clear();
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect.poll(async () => (await levels())[1].volume).toBe(0.7);
   await verifyFade(0, 1);
   await clear();
@@ -83,8 +88,7 @@ test('专辑与单曲试听往返有完整的平滑淡出淡入，快速返回�
   await verifyFade(1, 0);
   // Reverse navigation while the outgoing track is still fading.
   await page.locator('.collection-album').first().click();
-  await expect(page.getByRole('button', { name: '选择专辑', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: '选择专辑', exact: true }).click();
+  await page.keyboard.press('Escape');
   await expect.poll(async () => (await levels())[0]).toMatchObject({ volume: 0.7, paused: false });
   await expect.poll(async () => (await levels())[1].paused).toBe(true);
   const overlaps = await page.evaluate(

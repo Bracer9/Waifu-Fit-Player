@@ -1,0 +1,99 @@
+.liquid-menu-curtain {
+  color: var(--cream);
+}
+.liquid-menu-curtain > svg {
+  display: block;
+}
+.liquid-menu-curtain[data-intro]:not([data-type-ready]) .liquid-briefing {
+  visibility: hidden;
+}
+.liquid-prints {
+  color: var(--cream);
+}
+.liquid-surface-highlight {
+  fill: none;
+  stroke: var(--cream);
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-dasharray: 8 21 13 58;
+}
+.liquid-briefing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+}
+.liquid-briefing-stamp {
+  position: relative;
+  width: min(940px, 80vw);
+  padding: 28px 60px 24px;
+}
+.liquid-briefing-stamp::before,
+.liquid-briefing-stamp::after {
+  content: '';
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-color: currentColor;
+  border-style: solid;
+  opacity: 0.65;
+}
+.liquid-briefing-stamp::before {
+  top: 0;
+  left: 0;
+  border-width: 3px 0 0 3px;
+}
+.liquid-briefing-stamp::after {
+  right: 0;
+  bottom: 0;
+  border-width: 0 3px 3px 0;
+}
+.liquid-briefing-eyebrow {
+  display: block;
+  font:
+    700 16px / 1 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 6px;
+  margin-bottom: 22px;
+}
+.liquid-briefing h2 {
+  margin: 0;
+  font:
+    italic 900 clamp(64px, 7vw, 112px) / 0.88 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 1px;
+}
+.liquid-briefing h2 > span {
+  display: block;
+}
+.liquid-beat-bar {
+  display: flex;
+  width: 220px;
+  height: 10px;
+  gap: 8px;
+  margin: 28px auto 16px;
+  transform: skewX(-16deg);
+}
+.liquid-beat-bar > i {
+  position: relative;
+  flex: 1;
+  background: #faf6ed33;
+}
+.liquid-beat-bar > i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--cream);
+  transform: scaleX(clamp(0, calc(var(--liquid-meter, 0) * 5 - var(--cell)), 1));
+  transform-origin: left;
+}
+.liquid-briefing-signature {
+  font:
+    600 11px / 1 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 4px;
+  opacity: 0.75;
+}

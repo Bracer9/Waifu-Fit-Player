@@ -11,6 +11,15 @@ export const MAIN_MENU_DOWN_HINT = {
 // Offer the idle nudge once per app session, rather than on every return home.
 let offeredIdleHint = false;
 
+export function MenuHintArrows() {
+  return (
+    <svg className="main-menu-down-hint-arrows" viewBox="0 0 40 44" focusable="false">
+      <path className="main-menu-down-hint-pink" d="M6 8 20 20 34 8" />
+      <path className="main-menu-down-hint-cyan" d="M6 26 20 38 34 26" />
+    </svg>
+  );
+}
+
 export function MainMenuDownHint() {
   const [accent, setAccent] = useState(false);
   useEffect(() => {
@@ -54,10 +63,7 @@ export function MainMenuDownHint() {
             if (event.target === event.currentTarget) setAccent(false);
           }}
         >
-          <svg className="main-menu-down-hint-arrows" viewBox="0 0 40 44" focusable="false">
-            <path className="main-menu-down-hint-pink" d="M6 8 20 20 34 8" />
-            <path className="main-menu-down-hint-cyan" d="M6 26 20 38 34 26" />
-          </svg>
+          <MenuHintArrows />
         </span>
       </span>
     </div>

@@ -5,6 +5,7 @@ import type { Chart } from '../../src/model';
 
 // Import the test chart through the same local-project entry point as real charts.
 export async function importDemo(page: Page, chart?: Chart) {
+  await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
   const metadata = await (await page.request.get('/demo-media.json')).json();
   const next = chart ?? demoChart(metadata.fileName);
   next.videoHint.assetId = `demo-${createHash('sha256')
@@ -25,8 +26,20 @@ export async function openDemo(page: Page) {
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
 }
 
+/** Album confirmation opens the player; inserting is a separate command. */
+export async function insertAlbum(page: Page) {
+  await page.getByRole('button', { name: /INSERT ALBUM/ }).click();
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+}
+
 export async function holdStart(page: Page) {
-  await page.getByRole('button', { name: '按住 Enter 开始游戏', exact: true }).hover();
+  const button = page.getByRole('button', { name: '按住 Enter 开始游戏', exact: true });
+  await expect(button).toBeVisible();
+  // The whole bar follows the music, so its bounds intentionally never settle.
+  // Move a real pointer to its centre instead of waiting for hover's stable-box check.
+  const box = (await button.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   try {
     await page.waitForFunction(

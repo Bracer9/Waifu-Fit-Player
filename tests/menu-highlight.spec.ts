@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
 
 test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) => {
@@ -84,6 +84,7 @@ test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) 
   await expect(page.locator('.cover-trace:visible')).toHaveCount(1);
 
   await albums.nth(0).click();
+  await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   const songs = page.locator('.record-card');
   await expect(songs).toHaveCount(2);

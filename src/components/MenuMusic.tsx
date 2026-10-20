@@ -68,14 +68,20 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
       // The start briefing is portaled outside .menu-app. Share this same FFT beat
       // with its charge control without another analyser, RAF or React render.
       document.body.style.setProperty('--menu-music-beat', beat.toFixed(3));
-      if (!ctx) return;
-      ctx.clearRect(0, 0, width, height);
+      const coverBars = animate
+        ? menu?.querySelectorAll<SVGRectElement>(
+            '.collection-album[aria-current="true"] .album-wave-bar',
+          )
+        : undefined;
+      if (!ctx && !coverBars?.length) return;
+      ctx?.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
         const { start, end } = bands[i];
         let total = 0;
         for (let bin = start; bin < end; bin++) total += bins[bin];
         const level = (total / ((end - start) * 255)) ** 2;
         if (animate) smooth[i] += (level - smooth[i]) * (level > smooth[i] ? 0.55 : 0.25);
+        if (!ctx) continue;
         const amplitude = 2 + smooth[i] * height * 0.28;
         const offset = 54 + (i * (width / 2 - 55.5)) / (count - 1);
         ctx.globalAlpha = 0.95 - (i / count) * 0.3;
@@ -84,6 +90,14 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
         ctx.fillStyle = '#35c9db';
         ctx.fillRect(width / 2 + offset - 1.5, height / 2 - amplitude, 3, amplitude * 2);
       }
+      // The collection artwork shares this FFT read and clock with the existing waveform.
+      coverBars?.forEach((bar, index) => {
+        const band = Math.round((index * (count - 1)) / Math.max(1, coverBars.length - 1));
+        bar.style.setProperty(
+          '--spectrum',
+          Math.min(1.3, 0.35 + Math.sqrt(smooth[band]) * 1.7).toFixed(3),
+        );
+      });
     };
     const tick = (now: number) => {
       if (now - last >= 1000 / 30) {
@@ -233,17 +247,19 @@ function BgmNowPlaying({
 export function MenuMusicConsole({
   music,
   onSound,
+  onNavigateUp,
   children,
 }: {
   music: MenuMusic;
   onSound: MenuSoundPlayer;
+  onNavigateUp: () => void;
   children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
-  const navigation = useMusicPanelNavigation({ root, panel, open, music, onSound });
+  const navigation = useMusicPanelNavigation({ root, panel, open, music, onSound, onNavigateUp });
   const pendingKeyboardEntry = useRef(false);
   const keyboardEntryFrame = useRef(0);
   const closeTimer = useRef<number | undefined>(undefined);

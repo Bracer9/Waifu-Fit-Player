@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
 
-test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async ({ page }) => {
+test('菜单齿轮归位一致，前进返回动画与菜单操作音效', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addInitScript(() => {
@@ -47,64 +47,126 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   );
   await page.screenshot({ path: 'artifacts/menu-gear-home.png' });
   await gear.click();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { uiSoundsPlayed: string[] }).uiSoundsPlayed.at(-1),
+      ),
+    )
+    .toBe('settings');
   await expect(page.getByLabel('音效（SE）音量', { exact: true })).toHaveValue('0.5');
   await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.4');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.2');
   await page.getByLabel('音效（SE）音量', { exact: true }).fill('0.3');
   await page.keyboard.press('Escape');
-  const freeze = await page.addStyleTag({
-    content: '.menu-curtain-sheet { animation-play-state: paused !important; }',
+  // Let the close sound start before the next gesture interrupts the shared SE player.
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { uiSoundsPlayed: string[] }).uiSoundsPlayed.at(-1),
+      ),
+    )
+    .toBe('back');
+  const beat = await page.addStyleTag({ content: '.menu-app { --music-beat: 0.73 !important; }' });
+  await page.evaluate(() => {
+    const animate = Element.prototype.animate;
+    Object.assign(window, { originalMenuAnimate: animate });
+    Element.prototype.animate = function (...args) {
+      const animation = animate.apply(this, args);
+      if (
+        this.classList.contains('menu-scene') ||
+        this.classList.contains('ambient-shape') ||
+        this.classList.contains('liquid-menu-curtain')
+      )
+        animation.pause();
+      return animation;
+    };
   });
   await page.getByRole('button', { name: /音游模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveAttribute('data-direction', 'forward');
   await expect(page.locator('.menu-curtain')).toHaveAttribute('data-phase', 'cover');
-  await page.evaluate(() => {
+  await expect(page.locator('.liquid-menu-curtain')).toBeVisible();
+  await expect(page.locator('.menu-scene')).toHaveCSS('opacity', '1');
+  expect(await gear.boundingBox()).toEqual(bounds);
+  await page.evaluate(() =>
     document.getAnimations().forEach((animation) => {
-      if ((animation as CSSAnimation).animationName === 'menu-curtain-cover')
-        animation.currentTime = 130;
-    });
-  });
+      if (
+        animation.id.startsWith('menu-scene-') ||
+        animation.id.startsWith('menu-corner-') ||
+        animation.id.startsWith('menu-liquid-')
+      )
+        animation.currentTime = 70;
+    }),
+  );
   await expect(page.locator('.title-menu')).toBeVisible();
   await expect(page.locator('.music-menu')).toHaveCount(0);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.menu-curtain')).toHaveCount(1);
   await page.screenshot({ path: 'artifacts/menu-curtain-closing.png' });
-  const finishCurtain = () =>
+  const finishMenu = () =>
     page.evaluate(() =>
       document.getAnimations().forEach((animation) => {
-        if ((animation as CSSAnimation).animationName?.startsWith('menu-curtain-'))
+        if (
+          animation.id.startsWith('menu-scene-') ||
+          animation.id.startsWith('menu-corner-') ||
+          animation.id.startsWith('menu-liquid-')
+        )
           animation.finish();
       }),
     );
-  await finishCurtain();
+  await finishMenu();
   await expect(page.locator('.menu-curtain')).toHaveAttribute('data-phase', 'reveal');
   await expect(page.locator('.title-menu')).toHaveCount(0);
-  await expect(page.locator('.music-menu.albums')).toBeVisible();
-  expect(
-    await page.locator('.menu-curtain-sheet').evaluate((sheet: HTMLElement) => {
-      const box = sheet.getBoundingClientRect();
-      const matrix = new DOMMatrix(getComputedStyle(sheet).transform);
-      return [0, innerHeight].every((y) => {
-        const center = box.x + box.width / 2 + matrix.c * (y - box.y - box.height / 2);
-        return center - sheet.offsetWidth / 2 <= 0 && center + sheet.offsetWidth / 2 >= innerWidth;
-      });
-    }),
-  ).toBe(true);
+  await expect(page.locator('.music-menu.albums')).toBeAttached();
+  await expect(page.locator('.menu-scene')).toHaveCSS('opacity', '1');
+  // The liquid retreat now returns the gear attached to the pink corner from offscreen.
+  const coveredGear = (await gear.boundingBox())!;
+  expect(coveredGear.x).toBe(bounds!.x);
+  expect(coveredGear.y + coveredGear.height).toBeLessThan(0);
   await page.screenshot({ path: 'artifacts/menu-curtain-covered.png' });
   await page.evaluate(() =>
     document.getAnimations().forEach((animation) => {
-      if ((animation as CSSAnimation).animationName === 'menu-curtain-reveal')
-        animation.currentTime = 210;
+      if (
+        animation.id.startsWith('menu-scene-') ||
+        animation.id.startsWith('menu-corner-') ||
+        animation.id.startsWith('menu-liquid-')
+      )
+        animation.currentTime = 100;
     }),
   );
   await page.screenshot({ path: 'artifacts/menu-curtain-revealing.png' });
-  await finishCurtain();
+  await finishMenu();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
-  await freeze.evaluate((node) => node.parentNode?.removeChild(node));
+  await expect(page.locator('.menu-scene')).toHaveCSS('opacity', '1');
+  await page.evaluate(() => {
+    Element.prototype.animate = (
+      window as unknown as { originalMenuAnimate: typeof Element.prototype.animate }
+    ).originalMenuAnimate;
+  });
+  await beat.evaluate((node) => node.parentNode?.removeChild(node));
+  expect(
+    await page.locator('.menu-app > .ambient-shape').evaluateAll((nodes) =>
+      nodes.every((node) => {
+        const style = (node as HTMLElement).style;
+        return (
+          !style.transform &&
+          !style.scale &&
+          !style.visibility &&
+          !style.translate &&
+          !style.transition
+        );
+      }),
+    ),
+  ).toBe(true);
   await page.mouse.move(10, 10);
   expect(await gear.boundingBox()).toEqual(bounds);
   expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(guideBounds);
   await page.screenshot({ path: 'artifacts/menu-gear-albums.png' });
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.getByRole('region', { name: '选择单曲' })).toBeVisible();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
   expect(await gear.boundingBox()).toEqual(bounds);
   expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(guideBounds);
   await page.locator('.record-card').first().click();
@@ -126,13 +188,29 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
         }
       ).uiSoundEvents,
   );
-  const expected = ['settings', 'back', 'mode', 'album', 'song', 'back', 'back', 'back'];
+  const expected = [
+    'settings',
+    'back',
+    'mode',
+    'liquid',
+    'settings',
+    'insert',
+    'song',
+    'back',
+    'back',
+    'back',
+    'liquid',
+  ];
   expect(sounds.map((s) => s.name)).toEqual(expected);
   await expect
     .poll(() =>
-      page.evaluate(() => (window as unknown as { uiSoundsPlayed: string[] }).uiSoundsPlayed),
+      page.evaluate(() =>
+        (window as unknown as { uiSoundsPlayed: string[] }).uiSoundsPlayed.filter(
+          (name) => name !== 'liquid',
+        ),
+      ),
     )
-    .toEqual(expected);
+    .toEqual(expected.filter((name) => name !== 'liquid'));
   expect(sounds[0].volume).toBe(0.5);
   expect(sounds.slice(1).every((s) => Math.abs(s.volume - 0.3) < 0.001)).toBe(true);
 
@@ -199,6 +277,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/menu-gear-albums-1080p.png' });
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await page.screenshot({ path: 'artifacts/menu-gear-songs-1080p.png' });
   await expect(page.getByRole('button', { name: '开始', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
@@ -230,6 +309,7 @@ test('菜单齿轮固定一致，前进返回动画与菜单操作音效', async
   expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(wideGuides);
   await page.screenshot({ path: 'artifacts/menu-controls-albums-2560.png' });
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(wideGuides);
   await page.screenshot({ path: 'artifacts/menu-controls-songs-2560.png' });

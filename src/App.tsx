@@ -45,6 +45,7 @@ import {
 } from './library';
 import { coverFromVideo } from './cover';
 import { LibraryMenu } from './views/LibraryMenu';
+import { AlbumTuning } from './components/AlbumDeck';
 import {
   AlbumManager,
   PublicationFields,
@@ -56,6 +57,7 @@ import { MenuSettings, SettingsGearHalo } from './components/MenuSettings';
 import { MenuHighlightContext, useMenuHighlight } from './useCardHighlight';
 import { useMenuMusic } from './useMenuMusic';
 import { useMenuSounds } from './useMenuSounds';
+import { useMenuCardPress } from './useMenuCardPress';
 import { Player } from './views/Player';
 import { Editor, type EditorHandle } from './views/Editor';
 import { Home } from './views/Home';
@@ -71,6 +73,8 @@ import { PracticePause } from './components/PracticePause';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
 import { GameEntrance } from './components/GameEntrance';
+import { MenuTransition } from './components/MenuTransition';
+import { LiquidMenuTransition } from './components/LiquidMenuTransition';
 import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
   forgetVideo,
@@ -138,9 +142,22 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     next: 'home' | 'albums' | 'songs' | 'player';
     direction: 'forward' | 'back';
     phase: 'cover' | 'hold' | 'reveal';
-  } | null>(null);
+    liquid?: boolean;
+    intro?: boolean;
+  } | null>(() =>
+    matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? null
+      : {
+          next: 'home',
+          direction: 'back',
+          phase: 'hold',
+          liquid: true,
+          intro: true,
+        },
+  );
   const playOnCovered = useRef<(() => void) | null>(null);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
+  useMenuCardPress(menuPage);
   const playStart = chart.playRange?.startMs;
   const playEnd = chart.playRange?.endMs;
   useLayoutEffect(() => {
@@ -162,6 +179,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       next,
       direction: pages.indexOf(next) > pages.indexOf(mode) ? 'forward' : 'back',
       phase: 'cover',
+      liquid: (mode === 'home' && next === 'albums') || (mode === 'albums' && next === 'home'),
     });
   };
   const [settings, setSettings] = useState(false);
@@ -227,6 +245,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [draftMeta, setDraftMeta] = useState({ albumId: '', cover: '' });
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
   const [albumId, setAlbumId] = useState('all');
+  const [albumPlayerOpen, setAlbumPlayerOpen] = useState(false);
+  const [albumTuning, setAlbumTuning] = useState<'insert' | 'cover' | 'reveal' | null>(null);
   const [selectedSong, setSelectedSong] = useState('');
   const [selectedChartType, setSelectedChartType] = useState<ChartType>('dance');
   const [coverSeed] = useState(Math.random);
@@ -261,7 +281,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setPreviewRange(range);
   }, []);
   const menuMusic = useMenuMusic(
-    mode === 'home' || mode === 'albums' ? 'theme' : mode === 'songs' ? 'preview' : null,
+    mode === 'songs' || (mode === 'albums' && albumPlayerOpen)
+      ? 'preview'
+      : mode === 'home' || mode === 'albums'
+        ? 'theme'
+        : null,
     previewAsset,
     notify,
     status.volume,
@@ -269,6 +293,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   );
   const playMenuSound = useMenuSounds(seVolume);
   const openSettings = () => {
+    setAlbumPlayerOpen(false);
     playMenuSound('settings');
     setSettings(true);
   };
@@ -861,9 +886,20 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       className={`app ${mode === 'player' ? 'practice-app' : mode === 'editor' ? '' : 'menu-app'}`}
       data-workbench-theme={mode === 'editor' && workbenchDark ? 'dark' : undefined}
       data-menu-settings={menuPage && settings ? 'open' : undefined}
+      data-album-player={mode === 'albums' && albumPlayerOpen ? 'open' : undefined}
+      data-album-tuning={albumTuning === 'reveal' || undefined}
       {...(menuPage ? menuHighlight.handlers : {})}
     >
-      <div className="ambient-shape pink" />
+      <div className="ambient-shape pink">
+        <svg
+          className="album-housing-outline"
+          viewBox="0 0 1000 1000"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <polyline vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
       {menuPage && (
@@ -873,14 +909,27 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           aria-label="全局设置"
           aria-expanded={settings}
           aria-controls="menu-settings-panel"
-          inert={!!menuTransition}
+          inert={!!menuTransition || !!albumTuning}
           onClick={settings ? closeSettings : openSettings}
         >
           <SettingsGearHalo />
           <Settings size={96} />
         </button>
       )}
-      {menuTransition &&
+      {menuTransition?.liquid ? (
+        <LiquidMenuTransition
+          phase={menuTransition.phase}
+          direction={menuTransition.direction}
+          intro={menuTransition.intro}
+          onSound={playMenuSound}
+          onCovered={() => {
+            setMode(menuTransition.next);
+            setMenuTransition({ ...menuTransition, phase: 'reveal' });
+          }}
+          onRevealed={() => setMenuTransition(null)}
+        />
+      ) : (
+        menuTransition &&
         createPortal(
           menuTransition.next === 'player' ? (
             <GameEntrance
@@ -894,24 +943,31 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               onRevealed={() => setMenuTransition(null)}
             />
           ) : (
-            <div
-              className="menu-curtain"
-              data-direction={menuTransition.direction}
-              data-phase={menuTransition.phase}
-              aria-hidden="true"
-            >
-              <div
-                className="menu-curtain-sheet"
-                onAnimationEnd={() => {
-                  if (menuTransition.phase === 'cover') {
-                    // Menu navigation keeps its existing geometric curtain.
-                    setMode(menuTransition.next);
-                    setMenuTransition({ ...menuTransition, phase: 'reveal' });
-                  } else if (menuTransition.phase === 'reveal') setMenuTransition(null);
-                }}
-              />
-            </div>
+            <MenuTransition
+              phase={menuTransition.phase}
+              direction={menuTransition.direction}
+              onCovered={() => {
+                setMode(menuTransition.next);
+                setMenuTransition({ ...menuTransition, phase: 'reveal' });
+              }}
+              onRevealed={() => setMenuTransition(null)}
+            />
           ),
+          document.body,
+        )
+      )}
+      {albumTuning &&
+        albumTuning !== 'insert' &&
+        createPortal(
+          <AlbumTuning
+            phase={albumTuning}
+            onCovered={() => {
+              setAlbumPlayerOpen(false);
+              setMode('songs');
+              setAlbumTuning('reveal');
+            }}
+            onRevealed={() => setAlbumTuning(null)}
+          />,
           document.body,
         )}
       <header className="app-header" hidden={mode !== 'editor'}>
@@ -972,7 +1028,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         {menuPage && (
           <div
             className="menu-scene"
-            inert={!!menuTransition}
+            inert={!!menuTransition || !!albumTuning}
             data-exit-to={menuTransition?.phase === 'cover' ? menuTransition.next : undefined}
             key={mode}
           >
@@ -1002,11 +1058,18 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                 songId={selectedSong}
                 chartType={selectedChartType}
                 seed={coverSeed}
+                musicPlaying={menuMusic.playing}
+                music={menuMusic}
+                playerOpen={albumPlayerOpen}
+                onPlayerOpen={(open) => {
+                  setAlbumPlayerOpen(open);
+                  if (!open) setAlbumTuning(null);
+                }}
+                onInsertStart={() => setAlbumTuning('insert')}
                 onAlbum={(id, enter) => {
                   setAlbumId(id);
                   if (enter) {
-                    playMenuSound('album');
-                    navigateMenu('songs');
+                    setAlbumTuning('cover');
                   }
                 }}
                 onSong={setSelectedSong}

@@ -18,12 +18,14 @@ export function useMusicPanelNavigation({
   open,
   music,
   onSound,
+  onNavigateUp,
 }: {
   panel: RefObject<HTMLElement | null>;
   root: RefObject<HTMLDivElement | null>;
   open: boolean;
   music: MenuMusic;
   onSound: MenuSoundPlayer;
+  onNavigateUp: () => void;
 }) {
   const current = useRef<HTMLElement | null>(null);
   const adjusting = useRef(false);
@@ -99,9 +101,14 @@ export function useMusicPanelNavigation({
     if (!open) return;
     const target = event.target as HTMLElement;
     if (target.closest('.headphone-button')) {
-      if (event.key !== 'ArrowDown') return;
+      if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
       event.preventDefault();
-      focus('play');
+      event.stopPropagation();
+      focus(
+        event.key === 'ArrowUp' && music.tracks.length
+          ? `track-${music.tracks.length - 1}`
+          : 'play',
+      );
       return;
     }
     const id = target.closest<HTMLElement>('[data-music-control]')?.dataset.musicControl;
@@ -146,12 +153,13 @@ export function useMusicPanelNavigation({
     if (id === 'play') {
       if (event.key === 'ArrowRight')
         next = selectedTrack === 'play' ? selectedOrder : selectedTrack;
-      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') next = 'headphone';
+      if (event.key === 'ArrowUp') next = 'main';
+      if (event.key === 'ArrowDown') next = 'headphone';
     } else if (id.startsWith('track-')) {
       const index = Number(id.slice(6));
       if (event.key === 'ArrowLeft') next = 'play';
       if (event.key === 'ArrowRight') next = selectedOrder;
-      if (event.key === 'ArrowUp') next = index ? `track-${index - 1}` : 'headphone';
+      if (event.key === 'ArrowUp') next = index ? `track-${index - 1}` : 'main';
       if (event.key === 'ArrowDown')
         next = index + 1 < music.tracks.length ? `track-${index + 1}` : 'headphone';
     } else if (id.startsWith('order-')) {
@@ -159,7 +167,7 @@ export function useMusicPanelNavigation({
       if (event.key === 'ArrowLeft') next = index ? `order-${index - 1}` : selectedTrack;
       if (event.key === 'ArrowRight') next = `order-${Math.min(2, index + 1)}`;
       if (event.key === 'ArrowDown') next = 'volume';
-      if (event.key === 'ArrowUp') next = 'headphone';
+      if (event.key === 'ArrowUp') next = 'main';
     } else if (id === 'mute') {
       if (event.key === 'ArrowRight') next = 'volume';
       if (event.key === 'ArrowLeft') next = selectedTrack;
@@ -174,7 +182,10 @@ export function useMusicPanelNavigation({
       if (event.key === 'ArrowUp') next = selectedOrder;
       if (event.key === 'ArrowDown') next = 'headphone';
     }
-    if (next !== id) focus(next);
+    if (next === 'main') {
+      release();
+      onNavigateUp();
+    } else if (next !== id) focus(next);
   };
   return {
     onFocus,

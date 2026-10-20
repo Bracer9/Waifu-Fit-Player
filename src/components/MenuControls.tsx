@@ -1,6 +1,12 @@
 import { ArrowLeft, CornerDownLeft } from 'lucide-react';
 
-export function MenuControls({ onBack }: { onBack?: () => void }) {
+export function MenuControls({
+  onBack,
+  showBack = false,
+}: {
+  onBack?: () => void;
+  showBack?: boolean;
+}) {
   return (
     <div className="menu-controls" aria-label="键盘操作提示">
       {onBack && (
@@ -12,6 +18,12 @@ export function MenuControls({ onBack }: { onBack?: () => void }) {
           <ArrowLeft aria-hidden="true" />
           <span className="menu-control-label">Back</span>
         </button>
+      )}
+      {showBack && !onBack && (
+        <span className="menu-control menu-control-back">
+          <ArrowLeft aria-hidden="true" />
+          <span className="menu-control-label">Back</span>
+        </span>
       )}
       <div className="menu-controls-actions">
         <span className="menu-control menu-control-select" aria-label="方向键选择">

@@ -1,4 +1,4 @@
-import { holdStart } from './helpers/project';
+import { insertAlbum, holdStart } from './helpers/project';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
@@ -148,6 +148,7 @@ test('v1 library upgrades both types and restores the exact last draft, without 
 
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await page.getByRole('button', { name: 'FITNESS', exact: true }).click();
   await expect(page.locator('.record-overline')).toContainText('INTENSITYHIGH');
   await expect(page.getByRole('button', { name: 'DANCE', exact: true })).toContainText('难度 8.5');

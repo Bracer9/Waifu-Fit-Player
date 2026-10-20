@@ -7,6 +7,66 @@ async function albums(page: Page) {
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
 }
 
+test('centred albums show the next caption with its bottom beside the footer controls at 1080p', async ({
+  page,
+}) => {
+  await albums(page);
+  await page.mouse.move(10, 10);
+  for (const id of ['all', 'touhou', 'anime', 'vocaloid']) {
+    const current = page.locator(`.collection-album[data-id="${id}"]`);
+    await expect(current).toHaveAttribute('aria-current', 'true');
+    await expect
+      .poll(() =>
+        current.evaluate((card: HTMLElement) => {
+          const shelf = card.parentElement!;
+          return Math.abs(
+            card.offsetTop + card.offsetHeight / 2 - shelf.scrollTop - shelf.clientHeight / 2,
+          );
+        }),
+      )
+      .toBeLessThan(6);
+    await expect
+      .poll(() =>
+        current.evaluate((card) => {
+          const shelf = card.parentElement!.getBoundingClientRect();
+          const next = card
+            .nextElementSibling!.querySelector('.collection-label')!
+            .getBoundingClientRect();
+          return shelf.bottom - next.bottom;
+        }),
+      )
+      .toBeGreaterThanOrEqual(0);
+    await expect
+      .poll(() =>
+        current.evaluate((card) => {
+          const next = card.nextElementSibling!;
+          const bounds = next.getBoundingClientRect();
+          const footer = document.querySelector('.menu-controls-actions')!.getBoundingClientRect();
+          return Math.abs(bounds.bottom - footer.bottom);
+        }),
+      )
+      .toBeLessThan(12);
+    expect(
+      await current.evaluate((card) => {
+        const next = card.nextElementSibling!;
+        const label = next.querySelector('.collection-label')!.getBoundingClientRect();
+        return (
+          document
+            .elementFromPoint(label.x + label.width / 2, label.bottom - 8)
+            ?.closest('.collection-album') === next
+        );
+      }),
+    ).toBe(true);
+    await page.keyboard.press('ArrowDown');
+  }
+  await page.keyboard.press('ArrowUp');
+  await expect(page.locator('.collection-album[data-id="vocaloid"]')).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  await page.screenshot({ path: 'artifacts/album-focus-1080p.png' });
+});
+
 test('album originals occupy a full 7:2 picture area; only neighbouring cards have depth blur', async ({
   page,
 }) => {
@@ -16,7 +76,7 @@ test('album originals occupy a full 7:2 picture area; only neighbouring cards ha
   const blur = (index: number) =>
     cards
       .nth(index)
-      .locator('img')
+      .locator('.album-cover-scene')
       .evaluate((image) => {
         return Number(getComputedStyle(image).filter.match(/blur\(([\d.]+)/)?.[1] ?? 0);
       });

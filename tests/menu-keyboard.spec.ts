@@ -1,11 +1,37 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { importDemo, insertAlbum } from './helpers/project';
 import { blankChart } from '../src/model';
 
 async function only(page: Page, target: Locator) {
   await expect(target).toHaveAttribute('data-highlighted', '');
   await expect(page.locator('[data-highlighted]')).toHaveCount(1);
 }
+
+test('ArrowDown into the headphone menu plays one selection sound', async ({ page }) => {
+  await page.addInitScript(() => {
+    const events: string[] = [];
+    Object.assign(window, { headphoneSounds: events });
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.dataset.menuSound) events.push(this.dataset.menuSound);
+      return play.call(this);
+    };
+  });
+  await page.goto('/');
+  await page.mouse.move(5, 5);
+  const sounds = () =>
+    page.evaluate(() => (window as unknown as { headphoneSounds: string[] }).headphoneSounds);
+  for (const source of ['.play-mode', '.create-mode']) {
+    await page.locator(source).focus();
+    const before = (await sounds()).length;
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.theme-track').first()).toBeFocused();
+    expect((await sounds()).slice(before)).toEqual(['settings']);
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.theme-track').nth(1)).toBeFocused();
+    expect((await sounds()).slice(before)).toEqual(['settings', 'settings']);
+  }
+});
 
 test('headphone opens only over its button or through keyboard selection; the open bridge still works', async ({
   page,
@@ -47,6 +73,15 @@ test('home initially selects play and restores that selection after returning fr
   await page.keyboard.press('Enter');
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await only(page, page.locator('.collection-album[data-id="all"]'));
+  await page.keyboard.press('ArrowDown');
+  await only(page, page.locator('.collection-album[data-id="touhou"]'));
+  await page.keyboard.press('Backspace');
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await only(page, page.locator('.play-mode'));
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await only(page, page.locator('.collection-album[data-id="touhou"]'));
   await page.keyboard.press('Backspace');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await only(page, page.locator('.play-mode'));
@@ -108,15 +143,26 @@ test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回�
   await expect(headphone).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('.theme-track').first()).toBeFocused();
   await page.keyboard.press('ArrowUp');
+  await only(page, create);
+  await expect(music).toBeHidden();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('.theme-track').first()).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(headphone).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('ArrowUp');
+  await expect(page.locator('.theme-track').last()).toBeFocused();
+  for (let index = (await page.locator('.theme-track').count()) - 1; index > 0; index--)
+    await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await only(page, create);
   await expect(music).toBeVisible();
   await page.keyboard.press('ArrowDown');
   await only(page, headphone);
   await expect(page.locator('.theme-track').first()).toBeFocused();
-  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(headphone).toHaveAttribute('aria-pressed', 'false');
   await expect(music).toBeHidden();
@@ -127,8 +173,6 @@ test('主页方向键选择齿轮和耳机，后输入接管唯一高亮，回�
   await page.keyboard.press('ArrowDown');
   await only(page, headphone);
   await expect(music).toBeVisible();
-  await page.keyboard.press('ArrowUp');
-  await expect(headphone).toBeFocused();
   await page.keyboard.press('ArrowUp');
   await only(page, play);
   await expect(music).toBeHidden();
@@ -207,6 +251,7 @@ test('专辑顶端和单曲按上通往齿轮，单曲左右只选曲，鼠标�
   await page.mouse.move(box.x + box.width * 0.55, box.y + box.height * 0.5);
   await only(page, albums.first());
   await page.keyboard.press('Enter');
+  await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   const song = page.locator('.record-card[aria-current="true"]');
   await only(page, song);
