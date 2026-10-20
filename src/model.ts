@@ -26,14 +26,6 @@ export const ARM_HANDS = [
   { value: 'both', label: 'BOTH', color: 'var(--arms-both)' },
 ] as const;
 export const LANES = [
-  { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: 'var(--pink)' },
-  {
-    id: 'calf_raise',
-    name: '提踵',
-    english: 'CALF RAISE',
-    directions: ['up', 'down'],
-    color: 'var(--miku)',
-  },
   {
     id: 'punch',
     name: '手臂',
@@ -53,6 +45,14 @@ export const LANES = [
     name: '侧收腹',
     english: 'SIDE CRUNCH',
     directions: ['left', 'right'],
+    color: 'var(--miku)',
+  },
+  { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: 'var(--pink)' },
+  {
+    id: 'calf_raise',
+    name: '提踵',
+    english: 'CALF RAISE',
+    directions: ['up', 'down'],
     color: 'var(--miku)',
   },
 ] as const;

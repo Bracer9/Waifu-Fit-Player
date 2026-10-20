@@ -14,11 +14,11 @@ describe('start briefing data', () => {
     ];
     const original = structuredClone(chart);
     const moves = focusMoves(chart);
-    expect(moves.map((move) => move.count)).toEqual([3, 0, 1, 0, 0]);
-    expect(moves.map((move) => move.share)).toEqual([0.75, 0, 0.25, 0, 0]);
+    expect(moves.map((move) => move.count)).toEqual([1, 0, 0, 3, 0]);
+    expect(moves.map((move) => move.share)).toEqual([0.25, 0, 0, 0.75, 0]);
     expect(moves.filter((move) => move.prominent).map((move) => move.id)).toEqual([
-      'squat',
       'punch',
+      'squat',
     ]);
     expect(chart).toEqual(original);
   });

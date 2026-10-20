@@ -186,10 +186,10 @@ test('音符与跟练统一英文，兼容旧 SPECIAL 名称并保持大小屏�
   await seek(page, 3.5);
   await expect(page.locator('.hold-caption')).toHaveText([
     'HOLD',
-    'SWAY',
-    'HOLD',
     'BALANCE HOLD',
     'FREE SWAY',
+    'SWAY',
+    'HOLD',
     'SWAY',
   ]);
   await expect(page.locator('.lane-label strong')).toHaveText(LANES.map((lane) => lane.english));
@@ -369,14 +369,14 @@ test('SPECIAL 五轨同步飞入与爆发，持续结束、暂停回拖、连续
 
 test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往返', async ({ page }) => {
   await emptyEditor(page);
-  await page.getByRole('button', { name: '3 手臂', exact: true }).click();
+  await page.getByRole('button', { name: '1 手臂', exact: true }).click();
   await page.getByRole('button', { name: '绘制手臂动作 →', exact: true }).click();
-  await draw(page, 3000, 2);
+  await draw(page, 3000, 0);
   await expect(page.getByTestId('editor-note')).toHaveCount(1);
   let chart = await exportChart(page);
   expect(chart.notes[0].direction).toBe('right');
   expect(chart.notes[0].timeMs).toBe(3000);
-  await draw(page, 1000, 0, 2500);
+  await draw(page, 1000, 3, 2500);
   await expect(page.getByTestId('editor-note')).toHaveCount(2);
   await page.getByLabel('选中事件类型').selectOption('sway');
   chart = await exportChart(page);
@@ -420,7 +420,7 @@ test('鼠标做谱、长条属性、拖动缩放、撤销、复制和 JSON 往�
 
 test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和一次撤销', async ({ page }) => {
   await emptyEditor(page);
-  await draw(page, 1000, 0);
+  await draw(page, 1000, 3);
   const tap = (await exportChart(page)).notes[0];
   const handle = page.getByTestId('extend-note');
   await expect(handle).toBeVisible();
@@ -447,9 +447,9 @@ test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和�
   await expect(handle).toBeVisible();
   await page.getByRole('button', { name: '重做', exact: true }).click();
   expect((await exportChart(page)).notes).toEqual([extended]);
-  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
   await stepChoice(page, 'draw', 'right-tap');
-  await draw(page, 4000, 3);
+  await draw(page, 4000, 1);
   const step = (await exportChart(page)).notes[1];
   await expect(handle).toBeVisible();
   const stepBox = (await handle.boundingBox())!;
@@ -488,7 +488,7 @@ test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和�
     buffer: Buffer.from(JSON.stringify(chart)),
   });
   expect(await exportChart(page)).toEqual(chart);
-  await draw(page, 6500, 1);
+  await draw(page, 6500, 4);
   await page.keyboard.down('Shift');
   await page
     .getByTestId('editor-note')
@@ -501,7 +501,7 @@ test('选中单个 TAP 直接拉长为 HOLD，支持 STEP、吸附、取消和�
 
 test('分段节拍、唯一 SPECIAL 重复事件、网格修改不移动音符', async ({ page }) => {
   await emptyEditor(page);
-  await draw(page, 2000, 1);
+  await draw(page, 2000, 4);
   await page.getByRole('button', { name: '节拍段', exact: true }).click();
   await page.getByLabel('BPM', { exact: true }).fill('150');
   await page.getByLabel('BPM', { exact: true }).press('Tab');
@@ -539,7 +539,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
   await seek(page, 10);
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await page.keyboard.press('3');
+  await page.keyboard.press('1');
   await page.keyboard.down('ArrowLeft');
   await page.keyboard.down('ArrowLeft');
   await page.waitForTimeout(60);
@@ -552,9 +552,9 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
   expect(chart.notes[0].timeMs).toBeLessThan(12000);
   await seek(page, 12);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await page.keyboard.press('1');
+  await page.keyboard.press('4');
   await page.keyboard.down('ArrowDown');
-  await page.keyboard.press('2');
+  await page.keyboard.press('5');
   await page.waitForTimeout(650);
   await page.keyboard.up('ArrowDown');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
@@ -563,7 +563,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
   expect(chart.notes[1]).toMatchObject({ lane: 'squat', kind: 'hold', modifier: 'none' });
   expect((chart.notes[1] as any).endTimeMs - chart.notes[1].timeMs).toBeGreaterThan(200);
   expect((chart.notes[1] as any).endTimeMs - chart.notes[1].timeMs).toBeLessThan(1000);
-  await expect(page.getByRole('button', { name: '2 提踵', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: '5 提踵', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -574,7 +574,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
   await page.keyboard.up('Control');
   await page.waitForTimeout(650);
   await page.keyboard.up('ArrowUp');
-  await page.keyboard.press('5');
+  await page.keyboard.press('3');
   await page.keyboard.press('ArrowRight');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   chart = await exportChart(page);
@@ -616,7 +616,7 @@ test('自动 TAP / HOLD / Ctrl+SWAY、12345 切轨、慢放时长与未完成录
 
 test('方向翻转按钮和 F、多选撤销、同轴跨轨拖动与长条属性保留', async ({ page }) => {
   await emptyEditor(page);
-  await draw(page, 1000, 0, 2000);
+  await draw(page, 1000, 3, 2000);
   await page.getByLabel('选中事件类型').selectOption('sway');
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
   expect((await exportChart(page)).notes[0]).toMatchObject({ direction: 'up', modifier: 'sway' });
@@ -643,12 +643,12 @@ test('方向翻转按钮和 F、多选撤销、同轴跨轨拖动与长条属性
   await page.keyboard.press('Control+Shift+z');
   await dragLane(page.getByTestId('editor-note').first(), -1);
   expect((await exportChart(page)).notes[0].lane).toBe('squat');
-  await dragLane(page.getByTestId('editor-note').first(), 2);
+  await dragLane(page.getByTestId('editor-note').first(), -3);
   expect((await exportChart(page)).notes[0]).toMatchObject({ lane: 'punch', armAction: 'reach' });
-  await dragLane(page.getByTestId('editor-note').first(), -2);
+  await dragLane(page.getByTestId('editor-note').first(), 3);
   await page.locator('.lane-picks [data-lane="punch"]').click();
   await page.getByRole('button', { name: '绘制手臂动作 ←', exact: true }).click();
-  await draw(page, 3000, 2);
+  await draw(page, 3000, 0);
   await dragLane(page.getByTestId('editor-note').last(), 2);
   expect((await exportChart(page)).notes[1].lane).toBe('side_crunch');
   await dragLane(page.getByTestId('editor-note').last(), -2);
@@ -668,7 +668,7 @@ test('跟随默认锁定，编辑与空格暂停不取消，解锁后可手动�
   await expect(lock).toHaveAttribute('aria-pressed', 'true');
   await expect(follow).toBeChecked();
   await expect(follow).toBeDisabled();
-  await draw(page, 1000, 0);
+  await draw(page, 1000, 3);
   await expect(follow).toBeChecked();
   await seek(page, 30);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -698,11 +698,11 @@ test('跟随默认锁定，编辑与空格暂停不取消，解锁后可手动�
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   for (const [key, label] of [
-    ['1', '1 蹲起'],
-    ['2', '2 提踵'],
-    ['3', '3 手臂'],
-    ['4', '4 踏步'],
-    ['5', '5 侧收腹'],
+    ['4', '4 蹲起'],
+    ['5', '5 提踵'],
+    ['1', '1 手臂'],
+    ['2', '2 踏步'],
+    ['3', '3 侧收腹'],
   ]) {
     await page.keyboard.press(key);
     await expect(page.getByRole('button', { name: label, exact: true })).toHaveAttribute(
@@ -714,7 +714,7 @@ test('跟随默认锁定，编辑与空格暂停不取消，解锁后可手动�
 
 test('非法谱面不丢编辑、未保存保护、自动草稿、720p 和 1080p 布局', async ({ page }) => {
   await emptyEditor(page);
-  await draw(page, 2000, 0);
+  await draw(page, 2000, 3);
   await page.getByRole('button', { name: '新建', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.getByRole('button', { name: '取消', exact: true }).click();
@@ -757,13 +757,13 @@ test('非法谱面不丢编辑、未保存保护、自动草稿、720p 和 1080p
 
 test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({ page }) => {
   await emptyEditor(page);
-  await draw(page, 1000, 0);
-  await draw(page, 1500, 1);
+  await draw(page, 1000, 3);
+  await draw(page, 1500, 4);
   await page.getByRole('button', { name: '选择工具', exact: true }).click();
   const box = (await page.locator('.timeline-surface').boundingBox())!;
-  await page.mouse.move(box.x + 195, box.y + 34);
+  await page.mouse.move(box.x + 195, box.y + 196);
   await page.mouse.down();
-  await page.mouse.move(box.x + 315, box.y + 135, { steps: 6 });
+  await page.mouse.move(box.x + 315, box.y + 297, { steps: 6 });
   await page.mouse.up();
   await expect(page.locator('.timeline-event.selected')).toHaveCount(2);
   await page.keyboard.press('Control+c');
@@ -795,13 +795,13 @@ test('框选、键盘粘贴、输入框隔离和浏览器草稿恢复', async ({
 
 test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失反馈', async ({ page }) => {
   await emptyEditor(page);
-  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
   await stepChoice(page, 'draw', 'left-tap');
-  await draw(page, 1000, 3);
+  await draw(page, 1000, 1);
   await stepChoice(page, 'draw', 'right-tap');
-  await draw(page, 2000, 3, 3000);
+  await draw(page, 2000, 1, 3000);
   await stepChoice(page, 'draw', 'left-tap');
-  await draw(page, 4000, 3, 5000);
+  await draw(page, 4000, 1, 5000);
   await stepChoice(page, 'selected', 'left-sway');
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
   expect((await exportChart(page)).notes[2]).toMatchObject({
@@ -872,7 +872,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
     await page.getByRole('button', { name: '关闭提示', exact: true }).click();
   expect(
     await lanes.evaluateAll((elements) => elements.map((el) => el.getAttribute('data-lane'))),
-  ).toEqual(['squat', 'calf_raise', 'punch', 'step', 'side_crunch']);
+  ).toEqual(['punch', 'step', 'side_crunch', 'squat', 'calf_raise']);
   const pink = await page
     .locator('.play-button')
     .evaluate((el) => getComputedStyle(el).backgroundColor);
@@ -963,7 +963,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
 
 test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做', async ({ page }) => {
   await emptyEditor(page);
-  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
   const drawing = page.getByLabel('绘制类型');
   const selected = page.getByLabel('选中事件类型');
   await expect(drawing.locator('option')).toHaveText([
@@ -975,7 +975,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   ]);
   await stepChoice(page, 'draw', 'right-hold');
   await page.getByLabel('绘制踏步跨度').selectOption('2');
-  await draw(page, 1000, 3, 3000);
+  await draw(page, 1000, 1, 3000);
   const original = (await exportChart(page)).notes[0];
   await expect(page.getByLabel('选中音符方向')).toHaveCount(0);
   for (const value of ['left-hold', 'right-sway', 'left-sway', 'free-sway', 'right-hold']) {
@@ -1011,7 +1011,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   await expect(page.getByLabel('结束 / ms')).toHaveValue('1500');
   await drawing.selectOption('free-sway');
   await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
-  await draw(page, 4000, 3, 6000);
+  await draw(page, 4000, 1, 6000);
   const chart = await exportChart(page);
   expect(chart.notes[1]).toMatchObject({
     direction: 'free',
@@ -1029,7 +1029,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   if (await page.getByRole('button', { name: '关闭提示', exact: true }).isVisible())
     await page.getByRole('button', { name: '关闭提示', exact: true }).click();
   await page.getByTestId('editor-note').last().click();
-  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
   await page.screenshot({ path: 'artifacts/unified-step-editor.png', fullPage: true });
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await page.setViewportSize({ width: 1920, height: 1080 });
@@ -1047,11 +1047,11 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
 test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显示虚线箭头', async ({ page }) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
-  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
   const selected = page.getByLabel('选中事件类型');
   await stepChoice(page, 'draw', 'left-follow');
   await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
-  await draw(page, 500, 3, 1800);
+  await draw(page, 500, 1, 1800);
   await expect(page.getByTestId('extend-note')).toHaveCount(0);
   await expect(page.getByLabel('结束 / ms')).toHaveCount(0);
   await page.getByRole('button', { name: '反转方向', exact: true }).click();
@@ -1066,7 +1066,7 @@ test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显
     ['right-follow', 4500],
   ] as const) {
     await stepChoice(page, 'draw', type);
-    await draw(page, time, 3);
+    await draw(page, time, 1);
   }
   let chart = await exportChart(page);
   expect(chart.notes[0]).toMatchObject({
@@ -1120,8 +1120,8 @@ test('STEP 按键录入 TAP、HOLD 和 Ctrl+SWAY，拒绝上方向', async ({ pa
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
-  await page.keyboard.press('4');
-  await expect(page.getByRole('button', { name: '4 踏步', exact: true })).toHaveAttribute(
+  await page.keyboard.press('2');
+  await expect(page.getByRole('button', { name: '2 踏步', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -1224,7 +1224,7 @@ test('导入旧谱彻底删除 C 三种形式，独立 FREE SWAY 和左右不受
   const saved = await exportChart(page);
   expect(saved.notes).toEqual(kept);
   expect(JSON.stringify(saved)).not.toContain('close');
-  await page.getByRole('button', { name: '4 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
   await expect(page.getByLabel('绘制类型').locator('option')).not.toContainText(['CLOSE']);
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   for (const time of [2, 3.2, 4.2]) {
@@ -1240,7 +1240,7 @@ test('STEP 独立自由 SWAY、Shift 两格、Ctrl+Shift 摇摆，组合键与�
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
-  await page.keyboard.press('4');
+  await page.keyboard.press('2');
   const start = async (seconds: number) => {
     await seek(page, seconds);
     await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -1268,11 +1268,11 @@ test('STEP 独立自由 SWAY、Shift 两格、Ctrl+Shift 摇摆，组合键与�
   await page.keyboard.down('ArrowLeft');
   await page.keyboard.up('Shift');
   await page.keyboard.up('Control');
-  await page.keyboard.press('5');
+  await page.keyboard.press('3');
   await page.waitForTimeout(400);
   await page.keyboard.up('ArrowLeft');
   await stop();
-  await page.keyboard.press('4');
+  await page.keyboard.press('2');
   await start(6);
   await page.keyboard.press('ArrowDown');
   await stop();
@@ -1283,7 +1283,7 @@ test('STEP 独立自由 SWAY、Shift 两格、Ctrl+Shift 摇摆，组合键与�
   await page.keyboard.up('ArrowRight');
   await page.keyboard.up('Shift');
   await stop();
-  await page.keyboard.press('3');
+  await page.keyboard.press('1');
   await start(8);
   await page.keyboard.press('Shift+ArrowLeft');
   await stop();
@@ -1312,7 +1312,7 @@ test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async 
   await (await chooser).setFiles('public/demo.mp4');
   await expect(page.getByRole('heading', { name: 'demo', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await draw(page, 2000, 3);
+  await draw(page, 2000, 1);
   const chart = await exportChart(page);
   expect(chart.notes).toHaveLength(1);
   expect(chart.videoHint.fileName).toBe('demo.mp4');
@@ -1332,7 +1332,7 @@ test('实际本地 MP4 导入，新建第二首与全屏保留工作区', async 
 test('五轨录谱方向键不被下拉框或滑块吞掉，保留点按长按与 Ctrl 摇摆', async ({ page }) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
-  await draw(page, 500, 0);
+  await draw(page, 500, 3);
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await seek(page, 1);
   await page.getByLabel('吸附', { exact: true }).focus();

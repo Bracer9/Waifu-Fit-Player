@@ -246,6 +246,21 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
     createCalorieIndex(dance.notes).at(-1)!.kcal.toFixed(1),
   );
   await expect(briefing.locator('.briefing-move[data-prominent="true"]')).toHaveCount(2);
+  const expectedMoves = [
+    ['punch', 'ARMS', '手臂'],
+    ['step', 'STEP', '踏步'],
+    ['side_crunch', 'SIDE CRUNCH', '侧腹'],
+    ['squat', 'SQUAT', '深蹲'],
+    ['calf_raise', 'CALF RAISE', '提踵'],
+  ];
+  await expect(briefing.locator('.briefing-move > strong')).toHaveText(
+    expectedMoves.map(([, english]) => english),
+  );
+  for (const [lane, english, chinese] of expectedMoves) {
+    const move = briefing.locator(`.briefing-move[data-lane="${lane}"]`);
+    await expect(move.locator('strong')).toHaveText(english);
+    await expect(move.locator(':scope > span')).toHaveText(chinese);
+  }
   await expect(briefing.locator('[data-lane="step"]')).toHaveAttribute('aria-label', 'STEP 70%');
   await expect(briefing.locator('[data-lane="calf_raise"]')).toHaveAttribute('data-empty', 'true');
   expect(await briefing.locator('.briefing-move-icon svg').count()).toBe(5);
@@ -282,6 +297,11 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
     createCalorieIndex(fitness.notes).at(-1)!.kcal.toFixed(1),
   );
   await expect(briefing.locator('.briefing-move[data-prominent="true"]')).toHaveCount(3);
+  for (const [lane, english, chinese] of expectedMoves) {
+    const move = briefing.locator(`.briefing-move[data-lane="${lane}"]`);
+    await expect(move.locator('strong')).toHaveText(english);
+    await expect(move.locator(':scope > span')).toHaveText(chinese);
+  }
   await expect(briefing.locator('[data-lane="squat"]')).toHaveAttribute('aria-label', 'SQUAT 50%');
   await expect(briefing.locator('[data-lane="step"]')).toHaveAttribute('aria-label', 'STEP 20%');
   await expect(briefing).not.toContainText(/HARD|NORMAL/);

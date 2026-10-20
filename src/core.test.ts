@@ -290,9 +290,12 @@ describe('编辑与历史', () => {
     );
     // ARMS now accepts vertical arrows as well; multi-selection still preserves row spacing.
     chart.notes.push({ ...hold, id: 'other', lane: 'calf_raise' });
-    const group = shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'calf_raise');
-    expect(group.notes[0].lane).toBe('calf_raise');
-    expect(group.notes[2]).toMatchObject({ lane: 'punch', armAction: 'reach', direction: 'down' });
+    const group = shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'side_crunch');
+    // SIDE CRUNCH rejects vertical arrows, so the entire group remains in place.
+    expect(group).toBe(chart);
+    const upper = shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'punch');
+    // The second note would land on STEP, which rejects down as well.
+    expect(upper).toBe(chart);
   });
   it('左右三轨支持 STEP，批量移动保留行距并拒绝越出方向组', () => {
     const chart = fixture();

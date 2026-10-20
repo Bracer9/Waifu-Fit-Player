@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowRight, ArrowUpRight, Dumbbell, PersonStanding } from 'lucide-react';
 import type { ChartType, Song } from '../library';
+import type { Lane } from '../model';
 import { INTENSITY_LABELS, ratingValue } from '../chart-types';
 import { chartArtist, focusMoves, START_BRIEFING } from '../start-briefing';
 import { createCalorieIndex } from '../calories';
@@ -14,7 +15,13 @@ import { ModalBackdrop } from './ModalBackdrop';
 import { useBriefingMotion } from '../useBriefingMotion';
 import '../start-briefing.css';
 
-const moveNames = ['深蹲', '提踵', '手臂', '踏步', '侧腹'];
+const moveNames: Record<Lane, string> = {
+  punch: '手臂',
+  step: '踏步',
+  side_crunch: '侧腹',
+  squat: '深蹲',
+  calf_raise: '提踵',
+};
 const cells = Array.from({ length: 112 }, (_, index) => <i key={index} />);
 
 export function StartBriefing({
@@ -352,7 +359,7 @@ export function StartBriefing({
               <span>主要动作</span>
             </div>
             <div className="briefing-focus" aria-label="主要动作构成">
-              {moves.map((move, index) => (
+              {moves.map((move) => (
                 <div
                   className="briefing-move"
                   key={move.id}
@@ -365,7 +372,7 @@ export function StartBriefing({
                     <LaneGlyph lane={move.id} />
                   </div>
                   <strong>{move.english}</strong>
-                  <span>{moveNames[index]}</span>
+                  <span>{moveNames[move.id]}</span>
                   <i
                     className="briefing-move-share"
                     style={{ '--move-share': move.share } as CSSProperties}

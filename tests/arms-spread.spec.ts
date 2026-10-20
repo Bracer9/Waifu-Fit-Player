@@ -79,12 +79,26 @@ test('drawing from the centre creates a linked spread with the same game glyph',
   await importDemo(page, blankChart('Draw a spread'));
   await page.locator('.lane-picks [data-lane="punch"]').click();
   await page.getByRole('button', { name: '绘制手臂动作 双臂展开', exact: true }).click();
-  await page.locator('.timeline-surface').click({ position: { x: 324, y: 165 } });
+  await expect(page.locator('.lane-picks > button')).toHaveText([
+    '1手臂',
+    '2踏步',
+    '3侧收腹',
+    '4蹲起',
+    '5提踵',
+  ]);
+  await page.locator('.timeline-surface').click({ position: { x: 324, y: 57 } });
   const saved = await exported(page);
   expect(saved.notes).toHaveLength(2);
   expect(saved.notes[0].timeMs).toBe(saved.notes[1].timeMs);
   await expect(page.locator('.timeline-event .reach-pair')).toHaveCount(1);
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  await expect(page.locator('.practice .lane-label strong')).toHaveText([
+    'ARMS',
+    'STEP',
+    'SIDE CRUNCH',
+    'SQUAT',
+    'CALF RAISE',
+  ]);
   const note = page.locator('.practice .play-lane[data-lane="punch"] .player-note');
   await expect(note).toHaveCount(1);
   await expect(note.locator('[data-symbol="↔"]')).toHaveCount(1);
