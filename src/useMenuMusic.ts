@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveVideo } from './local-media';
 import { audioOutputErrorMessage } from './media';
 import type { PlayRange } from './model';
+import { loadMenuBgm } from './menu-bgm-source';
 
 const files = import.meta.glob<string>('./assets/menu-bgm/*.{mp3,ogg,wav,m4a,MP3,OGG,WAV,M4A}', {
   eager: true,
@@ -62,6 +63,7 @@ export function useMenuMusic(
     [bgm],
   );
   const [selected, setSelected] = useState(() => preference('waifu-menu-track', ''));
+  const [themeRetry, setThemeRetry] = useState(0);
   const [order, setOrder] = useState<MusicOrder>(() => {
     const saved = preference('waifu-menu-order', 'list');
     return saved === 'random' || saved === 'repeat' ? saved : 'list';
@@ -74,6 +76,8 @@ export function useMenuMusic(
     if (volume > 0) unmutedVolume.current = volume;
   }, [volume]);
   const [playing, setPlaying] = useState(false);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
   const [quiet, setQuiet] = useState(true);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const graph = useRef<{ context: AudioContext; sources: MediaElementAudioSourceNode[] } | null>(
@@ -83,6 +87,37 @@ export function useMenuMusic(
   const manuallyPaused = useRef(false);
   const previewUrl = useRef<string | undefined>(undefined);
   const previewBounds = useRef<{ start: number; end: number } | null>(null);
+  const previewPaused = useRef(false);
+  const previewTransport = useMemo(
+    () => ({
+      position: () => {
+        const bounds = previewBounds.current;
+        return {
+          time: Math.max(0, preview.currentTime - (bounds?.start ?? 0)),
+          duration: bounds
+            ? bounds.end - bounds.start
+            : Number.isFinite(preview.duration)
+              ? preview.duration
+              : 0,
+        };
+      },
+      subscribe: (update: () => void) => {
+        const events = ['timeupdate', 'durationchange', 'loadedmetadata', 'emptied', 'seeked'];
+        events.forEach((event) => preview.addEventListener(event, update));
+        return () => events.forEach((event) => preview.removeEventListener(event, update));
+      },
+      seek: (time: number) => {
+        const bounds = previewBounds.current;
+        const end = bounds?.end ?? preview.duration;
+        if (Number.isFinite(end))
+          preview.currentTime = Math.max(
+            bounds?.start ?? 0,
+            Math.min(end, time + (bounds?.start ?? 0)),
+          );
+      },
+    }),
+    [preview],
+  );
   const themeSource = useRef<{ url: string; objectUrl: string } | null>(null);
   const levels = useRef({ volume, videoVolume });
   levels.current = { volume, videoVolume };
@@ -141,18 +176,27 @@ export function useMenuMusic(
   }, [preview]);
   const play = useCallback(() => {
     const audio = active.current;
-    if (!audio?.getAttribute('src') || (audio === bgm && manuallyPaused.current)) return;
+    if (
+      !audio?.getAttribute('src') ||
+      (audio === bgm && manuallyPaused.current) ||
+      (audio === preview && previewPaused.current)
+    )
+      return;
     if (graph.current?.context.state === 'suspended')
       void graph.current.context.resume().catch(() => {});
     if (audio.paused)
       void audio.play().catch(() => {
         /* Wait for a user gesture if autoplay is blocked. */
       });
-  }, [bgm]);
+  }, [bgm, preview]);
 
   useEffect(() => {
     const unlock = () => {
-      if (active.current === bgm && manuallyPaused.current) return;
+      if (
+        (active.current === bgm && manuallyPaused.current) ||
+        (active.current === preview && previewPaused.current)
+      )
+        return;
       if (!graph.current && active.current?.getAttribute('src')) {
         const context = new AudioContext();
         try {
@@ -191,6 +235,10 @@ export function useMenuMusic(
     const update = () => {
       const audio = active.current;
       setPlaying(!!audio && !audio.paused && !audio.ended && audio.readyState >= 3);
+      setPreviewPlaying(
+        audio === preview && !preview.paused && !preview.ended && preview.readyState >= 3,
+      );
+      setPreviewReady(audio === preview && preview.readyState >= 1 && !preview.error);
     };
     const startFade = (event: Event) => {
       if (event.target === active.current && fadeIn.current) {
@@ -200,11 +248,12 @@ export function useMenuMusic(
       update();
     };
     const error = (event: Event) => {
+      update();
       const audio = event.target as HTMLAudioElement;
       if (audio === active.current)
         notify(audioOutputErrorMessage(audio.error) || '音乐无法播放，请检查音频或关联视频。');
     };
-    const events = ['pause', 'waiting', 'ended'];
+    const events = ['pause', 'waiting', 'ended', 'loadedmetadata', 'canplay', 'emptied'];
     for (const audio of [bgm, preview]) {
       events.forEach((name) => audio.addEventListener(name, update));
       audio.addEventListener('playing', startFade);
@@ -221,6 +270,9 @@ export function useMenuMusic(
 
   useEffect(() => {
     let cancelled = false;
+    previewPaused.current = false;
+    setPreviewPlaying(false);
+    setPreviewReady(false);
     const request = new AbortController();
     fadeIn.current = false;
     void (async () => {
@@ -235,17 +287,11 @@ export function useMenuMusic(
       let next: HTMLAudioElement;
       if (themeUrl) {
         next = bgm;
-        if (themeSource.current?.url !== themeUrl) {
+        if (themeSource.current?.url !== themeUrl || bgm.error) {
           try {
             // Chromium may discard its HTTP media buffer during a long pause.
             // Retain only this track's compressed file so resume needs no range request.
-            const response = await fetch(themeUrl, {
-              signal: request.signal,
-              headers: { Range: 'bytes=0-' },
-            });
-            if (!response.ok) throw new Error(`BGM HTTP ${response.status}`);
-            const file = await response.blob();
-            if (!file.size) throw new Error('Empty BGM response');
+            const file = await loadMenuBgm(themeUrl, request.signal);
             if (cancelled) return;
             const previous = themeSource.current;
             const objectUrl = URL.createObjectURL(file);
@@ -286,6 +332,7 @@ export function useMenuMusic(
   }, [
     scene,
     themeUrl,
+    themeRetry,
     assetId,
     previewStart,
     previewEnd,
@@ -372,6 +419,21 @@ export function useMenuMusic(
   );
   return {
     transport,
+    previewTransport,
+    previewPlaying: scene === 'preview' && previewPlaying,
+    previewReady: scene === 'preview' && previewReady && !quiet,
+    togglePreview: () => {
+      if (scene !== 'preview') return;
+      if (active.current !== preview) {
+        previewPaused.current = !previewPaused.current;
+        return;
+      }
+      previewPaused.current = !preview.paused;
+      if (previewPaused.current) {
+        preview.pause();
+        void graph.current?.context.suspend().catch(() => {});
+      } else play();
+    },
     tracks: themeTracks,
     track,
     order,
@@ -385,8 +447,10 @@ export function useMenuMusic(
       } else setVolume(unmutedVolume.current);
     },
     select: (id: string) => {
-      if (id !== track?.id) manuallyPaused.current = false;
-      setSelected(id);
+      manuallyPaused.current = false;
+      if (id !== track?.id) setSelected(id);
+      else if (active.current !== bgm || bgm.error) setThemeRetry((value) => value + 1);
+      else play();
     },
     toggle: () => {
       if (active.current !== bgm) return;
