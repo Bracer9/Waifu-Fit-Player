@@ -147,15 +147,11 @@ export const noteColor = (
     ? ARM_HANDS.find(
         (item) => item.value === armHand({ lane, direction, hand, armAction: action }),
       )!.color
-    : lane === 'step'
+    : lane === 'step' || lane === 'side_crunch'
       ? stepFoot({ direction, foot }) === 'left'
         ? 'var(--cyan)'
         : 'var(--pink)'
-      : lane === 'side_crunch'
-        ? direction === 'left'
-          ? 'var(--cyan)'
-          : 'var(--pink)'
-        : LANES.find((item) => item.id === lane)!.color;
+      : LANES.find((item) => item.id === lane)!.color;
 export const isFollowStep = (note: Note) =>
   note.lane === 'step' && note.kind === 'tap' && note.follow === true;
 export const isStepMove = (note: Note) =>
@@ -362,9 +358,10 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
         errors.push(`${label}：用手颜色仅适用于 ARMS 箭头，拳套的左右手由 L/R 决定。`);
       if (
         note.foot !== undefined &&
-        (note.lane !== 'step' || (note.foot !== 'left' && note.foot !== 'right'))
+        ((note.lane !== 'step' && note.lane !== 'side_crunch') ||
+          (note.foot !== 'left' && note.foot !== 'right'))
       )
-        errors.push(`${label}：用脚颜色仅适用于 STEP，必须为 left 或 right。`);
+        errors.push(`${label}：用脚／腿颜色仅适用于 STEP 或 SIDE CRUNCH，必须为 left 或 right。`);
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
       if (

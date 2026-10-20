@@ -1340,7 +1340,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
             />
           )}
           <div className="workspace-bottom" hidden={mode !== 'editor'}>
-            <span>EDITOR / 空格 播放暂停 · Ctrl+S 保存</span>
+            <span>EDITOR / 空格 播放暂停 · N 最后音符 · B 开头 · Ctrl+S 保存</span>
             <button
               disabled={!source}
               onClick={() => {

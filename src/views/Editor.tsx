@@ -334,7 +334,9 @@ export function Editor({
   }, [time, follow, status.playing, px]);
   const selectedNote = chart.notes.find((n) => selected.includes(n.id));
   const selectedStep = chart.notes.find((n) => selected.includes(n.id) && isStepMove(n));
-  const selectedFoot = chart.notes.find((n) => selected.includes(n.id) && n.lane === 'step');
+  const selectedFoot = chart.notes.find(
+    (n) => selected.includes(n.id) && (n.lane === 'step' || n.lane === 'side_crunch'),
+  );
   const selectedArm = chart.notes.find(
     (n) =>
       selected.includes(n.id) &&
@@ -375,7 +377,7 @@ export function Editor({
     if ((selectedArm || selectedFoot) && !recording)
       onChange(setStepFoot(setArmHand(chart, selected), selected));
     else if (lane === 'punch') setDrawHand((hand) => nextArmHand(hand));
-    else if (lane === 'step') setDrawFoot(nextStepFoot);
+    else if (lane === 'step' || lane === 'side_crunch') setDrawFoot(nextStepFoot);
   };
   const duplicate = () => {
     const notes = chart.notes.filter((n) => selected.includes(n.id)),
@@ -418,6 +420,26 @@ export function Editor({
           case 'd':
             duplicate();
             break;
+        }
+      } else if (!modifier && !e.altKey && ['n', 'b'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        if (!e.repeat && !drag.current && status.ready) {
+          media.pause();
+          const last = [...chart.notes, ...chart.specialEvents].reduce(
+            (end, event) =>
+              Math.max(
+                end,
+                'endTimeMs' in event ? (event.endTimeMs ?? event.timeMs) : event.timeMs,
+              ),
+            0,
+          );
+          const target = e.key.toLowerCase() === 'n' ? videoTimeAt(chart, last) : 0;
+          media.seek(target);
+          if (scrollRef.current)
+            scrollRef.current.scrollLeft = Math.max(
+              0,
+              chartTimeAt(chart, media.getTime()) * px - 160,
+            );
         }
       } else if (!modifier && !e.altKey && ['s', 'e'].includes(e.key.toLowerCase())) {
         e.preventDefault();
@@ -650,7 +672,7 @@ export function Editor({
           ...(isFollow ? { follow: true } : {}),
         };
     if (d.lane === 'step' && dir !== 'free' && stepDistance === 2 && !isFollow) note.distance = 2;
-    if (d.lane === 'step') note.foot = drawFoot;
+    if (d.lane === 'step' || d.lane === 'side_crunch') note.foot = drawFoot;
     if (d.lane === 'punch') {
       note.armAction = drawArmAction;
       if (drawArmAction === 'reach' && drawHand !== 'any') note.hand = drawHand;
@@ -892,8 +914,14 @@ export function Editor({
         <button
           className="tool-button flip-button"
           aria-label="切换用手或用脚颜色"
-          title="H：ARMS 循环用手；STEP 切换 L/R 用脚颜色；拳套用 F 互换"
-          disabled={!selectedArm && !selectedFoot && lane !== 'punch' && lane !== 'step'}
+          title="H：ARMS 循环用手；STEP / SIDE CRUNCH 切换 L/R 用脚或腿颜色；拳套用 F 互换"
+          disabled={
+            !selectedArm &&
+            !selectedFoot &&
+            lane !== 'punch' &&
+            lane !== 'step' &&
+            lane !== 'side_crunch'
+          }
           onClick={toggleHand}
         >
           换色 <kbd>H</kbd>
@@ -1088,10 +1116,10 @@ export function Editor({
             )}
           </>
         )}
-        {lane === 'step' && (
+        {(lane === 'step' || lane === 'side_crunch') && (
           <ArmHandPicker
             feet
-            label="录入用脚"
+            label={lane === 'side_crunch' ? '录入用腿' : '录入用脚'}
             value={drawFoot}
             onChange={(foot) => setDrawFoot(foot as StepFoot)}
           />
@@ -1141,7 +1169,9 @@ export function Editor({
               ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
               : lane === 'punch'
                 ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · H 换手 · 长按 HOLD · Ctrl+长按 SWAY'
-                : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
+                : lane === 'side_crunch'
+                  ? '←/→ 动作方向 · H 换腿颜色 · 长按 HOLD · Ctrl + 长按 SWAY'
+                  : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
             : lane === 'step' && drawType === 'follow'
               ? 'FOLLOW：指定脚同方向跟上并拢 · H 换脚颜色 · 仅 TAP'
               : '点击放置 · 拖动拉长 · Shift 多选'}
@@ -1364,20 +1394,20 @@ export function Editor({
                       onCommit={(n) => patchEvent({ endTimeMs: Math.round(n) })}
                     />
                   )}
-                  {selectedNote?.lane === 'step' && (
+                  {(selectedNote?.lane === 'step' || selectedNote?.lane === 'side_crunch') && (
                     <div className="arm-inspector">
-                      <span>移动方向</span>
+                      <span>{selectedNote.lane === 'side_crunch' ? '动作方向' : '移动方向'}</span>
                       <div className="direction-picks">
                         {(['left', 'right'] as const).map((direction) => (
                           <button
                             key={direction}
-                            aria-label={`选中踏步方向 ${direction === 'left' ? '←' : '→'}`}
+                            aria-label={`选中${selectedNote.lane === 'side_crunch' ? '侧收腹' : '踏步'}方向 ${direction === 'left' ? '←' : '→'}`}
                             aria-pressed={selectedNote.direction === direction}
                             className={selectedNote.direction === direction ? 'active' : ''}
                             style={
                               {
                                 '--lane': noteColor(
-                                  'step',
+                                  selectedNote.lane,
                                   direction,
                                   undefined,
                                   undefined,
@@ -1387,20 +1417,29 @@ export function Editor({
                             }
                             onClick={() => changeKind(noteType(selectedNote), direction)}
                           >
-                            <NoteGlyph lane="step" direction={direction} size={20} />
+                            <NoteGlyph lane={selectedNote.lane} direction={direction} size={20} />
                           </button>
                         ))}
                       </div>
-                      <span>用脚颜色 · H{selected.length > 1 ? ' · 批量' : ''}</span>
+                      <span>
+                        {selectedNote.lane === 'side_crunch' ? '用腿' : '用脚'}颜色 · H
+                        {selected.length > 1 ? ' · 批量' : ''}
+                      </span>
                       <ArmHandPicker
                         feet
-                        label="选中踏步用脚"
+                        label={
+                          selectedNote.lane === 'side_crunch' ? '选中侧收腹用腿' : '选中踏步用脚'
+                        }
                         value={stepFoot(selectedNote)}
                         onChange={(foot) =>
                           onChange(setStepFoot(chart, selected, foot as StepFoot))
                         }
                       />
-                      <p className="inspector-tip">L 左脚蓝色，R 右脚红色；箭头表示移动方向。</p>
+                      <p className="inspector-tip">
+                        {selectedNote.lane === 'side_crunch'
+                          ? 'L 左腿蓝色，R 右腿红色；箭头独立表示动作方向。'
+                          : 'L 左脚蓝色，R 右脚红色；箭头表示移动方向。'}
+                      </p>
                     </div>
                   )}
                   {selectedNote?.lane === 'punch' && (
@@ -1439,6 +1478,7 @@ export function Editor({
                   )}
                   {selectedNote &&
                     selectedNote.lane !== 'step' &&
+                    selectedNote.lane !== 'side_crunch' &&
                     selectedNote.lane !== 'punch' && (
                       <label className="field">
                         <span>动作方向</span>

@@ -88,7 +88,7 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
         ? {
             ...n,
             direction: opposite[n.direction],
-            ...(n.lane === 'step' ? { foot: stepFoot(n) } : {}),
+            ...(n.lane === 'step' || n.lane === 'side_crunch' ? { foot: stepFoot(n) } : {}),
           }
         : n,
     ),
@@ -114,11 +114,12 @@ export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Ch
   };
 }
 export const nextStepFoot = (foot: StepFoot): StepFoot => (foot === 'left' ? 'right' : 'left');
+/** STEP feet and SIDE CRUNCH legs share colour selection, independent of direction. */
 export function setStepFoot(chart: Chart, selected: string[], foot?: StepFoot): Chart {
   return {
     ...chart,
     notes: chart.notes.map((note) =>
-      selected.includes(note.id) && note.lane === 'step'
+      selected.includes(note.id) && (note.lane === 'step' || note.lane === 'side_crunch')
         ? { ...note, foot: foot ?? nextStepFoot(stepFoot(note)) }
         : note,
     ),
@@ -161,7 +162,7 @@ export function changeNoteForm(
     direction,
     timeMs: note.timeMs,
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
-    ...(note.lane === 'step' ? { foot: stepFoot(note) } : {}),
+    ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
     ...(note.lane === 'step' && direction !== 'free' && type !== 'follow' && note.distance
       ? { distance: note.distance }
       : {}),
@@ -201,8 +202,8 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
       const next = { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id };
       if (next.lane !== 'step') {
         delete next.distance;
-        delete next.foot;
       }
+      if (next.lane !== 'step' && next.lane !== 'side_crunch') delete next.foot;
       if (next.lane !== 'punch') {
         delete next.armAction;
         delete next.hand;
