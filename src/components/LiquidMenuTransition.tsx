@@ -27,6 +27,7 @@ export function LiquidMenuTransition({
   onRevealed,
   onSound,
   intro = false,
+  introLoad,
 }: {
   phase: 'cover' | 'hold' | 'reveal';
   direction: 'forward' | 'back';
@@ -34,6 +35,7 @@ export function LiquidMenuTransition({
   onRevealed: () => void;
   onSound: MenuSoundPlayer;
   intro?: boolean;
+  introLoad?: () => Promise<void>;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -58,19 +60,48 @@ export function LiquidMenuTransition({
   const [introTypeReady, setIntroTypeReady] = useState(
     () => !intro || INTRO_FONTS.every((font) => document.fonts.check(font)),
   );
+  const [introLoadProgress, setIntroLoadProgress] = useState(intro ? 0 : 1);
+  const loadProgress = useRef(introLoadProgress);
+  loadProgress.current = introLoadProgress;
+  const [introHoldComplete, setIntroHoldComplete] = useState(false);
 
   useEffect(() => {
-    if (introTypeReady) return;
+    if (!intro) return;
     let alive = true;
-    // Show the cyan artwork immediately, but never paint a temporary title face.
-    // Start its readable hold only after the three briefing weights have settled.
-    void Promise.allSettled(INTRO_FONTS.map((font) => document.fonts.load(font))).then(() => {
+    let done = 0;
+    const tasks = [
+      ...INTRO_FONTS.map((font) => document.fonts.load(font)),
+      Promise.resolve().then(() => introLoad?.()),
+    ];
+    // The library hook reports storage errors itself. A failed job must settle
+    // the opening too, so its existing notification remains accessible on home.
+    tasks.forEach((task) => {
+      void task
+        .catch(() => {})
+        .then(() => {
+          if (alive) setIntroLoadProgress(++done / tasks.length);
+        });
+    });
+    // Keep the title's original no-font-swap guarantee.
+    void Promise.allSettled(tasks.slice(0, INTRO_FONTS.length)).then(() => {
       if (alive) setIntroTypeReady(true);
     });
     return () => {
       alive = false;
     };
-  }, [introTypeReady]);
+  }, [intro, introLoad]);
+
+  useLayoutEffect(() => {
+    if (intro && phase === 'hold' && introHoldComplete)
+      briefing.current?.style.setProperty('--liquid-meter', String(introLoadProgress));
+  }, [intro, phase, introHoldComplete, introLoadProgress]);
+
+  useEffect(() => {
+    if (!intro || phase !== 'hold' || !introHoldComplete || introLoadProgress < 1) return;
+    // Let the final cell finish filling before the wave reveals the home menu.
+    const timer = setTimeout(() => callbacks.current.onCovered(), 160);
+    return () => clearTimeout(timer);
+  }, [intro, phase, introHoldComplete, introLoadProgress]);
 
   useEffect(() => {
     // The opening is visual only; do not attempt sound before a user gesture.
@@ -182,10 +213,11 @@ export function LiquidMenuTransition({
           : 1 - easeBetween(0.04, 0.25, progress);
       briefing.current!.style.opacity = String(message);
       briefing.current!.style.translate = `0 ${14 * (1 - message)}px`;
-      briefing.current!.style.setProperty(
-        '--liquid-meter',
-        String(phase === 'cover' ? easeBetween(0.62, 1, progress) : 1),
-      );
+      if (!intro || phase !== 'hold')
+        briefing.current!.style.setProperty(
+          '--liquid-meter',
+          String(phase === 'cover' ? easeBetween(0.62, 1, progress) : 1),
+        );
       // The gear returns attached to the pink shape; the remaining HUD hints fade normally.
       document
         .querySelectorAll<HTMLElement>('.menu-app .menu-settings, .menu-app .menu-controls')
@@ -225,7 +257,13 @@ export function LiquidMenuTransition({
     animation.id = `menu-liquid-${phase}`;
     const tick = () => {
       if (!alive) return;
-      if (phase !== 'hold') draw(Math.min(1, Number(animation.currentTime ?? 0) / duration));
+      const progress = Math.min(1, Number(animation.currentTime ?? 0) / duration);
+      if (phase !== 'hold') draw(progress);
+      else if (intro)
+        briefing.current!.style.setProperty(
+          '--liquid-meter',
+          String(Math.min(loadProgress.current, progress)),
+        );
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -234,7 +272,8 @@ export function LiquidMenuTransition({
         if (!alive) return;
         cancelAnimationFrame(frame);
         if (phase === 'hold') {
-          callbacks.current.onCovered();
+          if (intro) setIntroHoldComplete(true);
+          else callbacks.current.onCovered();
         } else if (phase === 'cover') {
           draw(1);
           if (!reduced.matches) {
@@ -271,7 +310,7 @@ export function LiquidMenuTransition({
       window.removeEventListener('resize', finish);
       reduced.removeEventListener('change', finish);
     };
-  }, [phase, reverse, introTypeReady]);
+  }, [phase, reverse, introTypeReady, intro]);
 
   return (
     <div
@@ -381,7 +420,9 @@ export function LiquidMenuTransition({
               <i key={i} style={{ '--cell': i } as React.CSSProperties} />
             ))}
           </div>
-          <span className="liquid-briefing-signature">WAIFU FIT PLAYER // LET'S MOVE</span>
+          <span className="liquid-briefing-signature">
+            {intro ? 'LOADING // LET’S MOVE' : "WAIFU FIT PLAYER // LET'S MOVE"}
+          </span>
         </div>
       </div>
     </div>

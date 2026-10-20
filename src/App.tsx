@@ -967,6 +967,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           phase={menuTransition.phase}
           direction={menuTransition.direction}
           intro={menuTransition.intro}
+          introLoad={library.load}
           onSound={playMenuSound}
           onCovered={() => {
             setMode(menuTransition.next);

@@ -76,6 +76,49 @@ test('opening starts fully cyan, reveals home without flooding again, and restor
   await expect(page.locator('.play-mode')).toHaveAttribute('data-highlighted', '');
 });
 
+test('opening meter waits for library reads and fills before revealing home', async ({ page }) => {
+  await page.addInitScript(() => {
+    const held: (() => void)[] = [];
+    Object.assign(window, { releaseStartupReads: () => held.splice(0).forEach((read) => read()) });
+    const descriptor = Object.getOwnPropertyDescriptor(IDBTransaction.prototype, 'oncomplete')!;
+    Object.defineProperty(IDBTransaction.prototype, 'oncomplete', {
+      ...descriptor,
+      set(handler: (event: Event) => void) {
+        descriptor.set!.call(this, (event: Event) => {
+          const read = () => handler.call(this, event);
+          if (this.mode === 'readonly') held.push(read);
+          else read();
+        });
+      },
+    });
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...args) {
+      const animation = animate.apply(this, args);
+      if (this.classList.contains('liquid-menu-curtain')) animation.pause();
+      return animation;
+    };
+  });
+  await page.goto('/');
+  const intro = page.locator('.liquid-menu-curtain[data-intro]');
+  const meter = intro.locator('.liquid-briefing');
+  await expect(intro).toHaveAttribute('data-type-ready', 'true');
+  await expect(meter).toHaveCSS('--liquid-meter', '0');
+  await page.evaluate(() =>
+    document
+      .getAnimations()
+      .find((a) => a.id === 'menu-liquid-hold')!
+      .finish(),
+  );
+  await expect(meter).toHaveCSS('--liquid-meter', '0.75');
+  await page.waitForTimeout(250);
+  await expect(intro).toHaveAttribute('data-phase', 'hold');
+  await page.evaluate(() =>
+    (window as unknown as { releaseStartupReads: () => void }).releaseStartupReads(),
+  );
+  await expect(meter).toHaveCSS('--liquid-meter', '1');
+  await expect(intro).toHaveAttribute('data-phase', 'reveal');
+});
+
 test('cold font loading keeps the cyan opening intact without showing a temporary title face', async ({
   page,
 }) => {

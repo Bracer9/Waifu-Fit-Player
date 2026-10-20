@@ -4,6 +4,12 @@
 .liquid-menu-curtain > svg {
   display: block;
 }
+.liquid-menu-curtain[data-intro] .liquid-briefing {
+  --liquid-meter: 0;
+}
+.liquid-menu-curtain[data-intro] .liquid-beat-bar > i::after {
+  transition: transform 140ms ease-out;
+}
 .liquid-menu-curtain[data-intro]:not([data-type-ready]) .liquid-briefing {
   visibility: hidden;
 }
