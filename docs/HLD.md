@@ -39,6 +39,12 @@ flowchart LR
 
 ## 主要数据流
 
+**可移植曲包**：`scripts/maps-library.ts` 在 Vite dev／preview 安装只读本地目录桥接。`GET /__wfp/maps` 递归扫描 `maps/` 中的 `song.json`，通过 `song-pack.ts` 校验清单与真实谱面，组合 FITNESS／DANCE 已发布快照；旧同目录 `.wfp.json` 按 `videoHint.fileName` 精确匹配视频。`/__wfp/map-file/` 仅服务 maps 内受支持的文件，realpath 检查阻止越界与外部符号链接；MP4 支持 HTTP Range，扫描不读入整段视频，也不将曲包灌入 IndexedDB。资源 ID 以歌曲 ID＋包内路径生成，移动整个项目或重命名完整曲包文件夹保持关联。`map-library.ts` 在页面启动加载一次索引，`local-media.ts` 将 pack 视频接入既有预检、试听和共享媒体时钟。文件或坏谱面只影响对应包。
+
+**曲包与本地编辑**：`useLibrary.ts` 合并目录快照与 IndexedDB，同 ID 的本地记录完整优先；第一次编辑目录歌曲时以目录快照作为原子更新的初值，保留另一类型和已发布版本，之后正常自动存草稿。扫描不写入原文件／本地草稿。目录歌曲的本机删除保存 `Song.hidden` 墓碑，刷新不重新出现；撤下使用既有草稿／发布逻辑。纯目录歌曲随文件刷新更新，本地改过的歌曲保持本地优先。
+
+**导出分享曲包**：`export-song-pack.ts` 从一首歌的已发布快照收集两种谱面、关联视频、曲绘、专辑元数据及自定义封面，以相对路径写入 `song.json`；不导出未发布草稿，不带设备绝对路径或浏览器视频 ID。`zip.ts` 输出标准 UTF-8 STORE ZIP，原 MP4／图片直接作为 Blob 分片，CRC32 分块计算并让出主线程，不转码、不压缩大视频；单包上限 4 GB。入口在本地作品的“导出曲包”。`npm run test:e2e:packs` 使用独立目录与端口验证空白浏览器游玩和导出后在另一目录恢复。
+
 **界面尺寸适配**：`menu-viewport.ts` 以 1920×1080 为较小窗口的逻辑舞台，菜单与 Gameplay 等比缩放 `#root` 并居中留边；宽高均达到设计尺寸时保持原有响应式布局。CSS 的 `--menu-vw`／`--menu-vh` 将画面内尺寸绑定到同一逻辑舞台，未启用时回退原生视口单位；物理窗口的紧凑布局断点在拟合时停用，避免二次缩小。`useMenuViewport` 仅在模式变化及窗口 resize 时同步，捕获阶段先更新，再让转场、插槽读几何。菜单 Portal、确认卡片和插入副本挂在同一根节点；`menuRect` 把屏幕矩形转换回逻辑坐标，潮水和机身轮廓读取 `menuViewport`。进入游戏的黑场仍覆盖真实窗口，原媒体元素与时间轴保持不变。工作室不启用整体缩放，`workbench-viewport.css` 在较矮窗口压缩顶部预览、在较窄窗口允许操作栏换行，并限制弹窗高度；保留时间轴的原生像素／毫秒换算和正常滚动。
 
 **轨道顺序**：`model.ts` 的 `LANES` 统一定义 ARMS → STEP → SIDE CRUNCH → SQUAT → CALF RAISE，游戏、工作台与数字选轨共用；确认页动作名称、图标及占比按动作 ID 对应，不依赖另一份平行数组。谱面仍保存动作 ID，不迁移或改写音符时间。

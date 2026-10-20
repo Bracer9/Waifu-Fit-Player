@@ -119,6 +119,7 @@ test('健身与舞蹈谱独立发布、编辑、撤下、删除与重开', async
   await card.click();
   await expect(page.getByRole('dialog')).toContainText('HOLD ENTER TO START');
   await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await page.keyboard.press('Enter');
   // Observing "3" can happen partway through its first second; time from the action.

@@ -310,7 +310,7 @@ export function useMenuMusic(
         next = preview;
         const { asset } = result;
         preview.src =
-          asset.kind === 'demo'
+          asset.kind !== 'file'
             ? asset.url
             : (previewUrl.current = URL.createObjectURL(asset.file));
         preview.loop = previewEnd === undefined;

@@ -1,4 +1,5 @@
 import type { Chart } from './model';
+import { mapVideo } from './map-library';
 
 export type VideoFileHandle = FileSystemFileHandle & {
   queryPermission?: (options: { mode: 'read' }) => Promise<PermissionState>;
@@ -6,7 +7,7 @@ export type VideoFileHandle = FileSystemFileHandle & {
 };
 export type VideoAsset =
   | { id: string; kind: 'file'; file: File; handle?: VideoFileHandle }
-  | { id: string; kind: 'demo'; fileName: string; url: string };
+  | { id: string; kind: 'demo' | 'pack'; fileName: string; url: string };
 export type StoredVideo = {
   id: string;
   fileName: string;
@@ -75,7 +76,7 @@ async function storedVideo(id: string, value?: StoredVideo): Promise<StoredVideo
 
 /** Forget WAIFU's reference/cached File; never delete the original filesystem file. */
 export async function forgetVideo(id: string): Promise<void> {
-  if (id.startsWith('demo-')) return;
+  if (id.startsWith('demo-') || id.startsWith('pack-')) return;
   const db = await database();
   return new Promise((resolve, reject) => {
     const tx = db.transaction('videos', 'readwrite');
@@ -92,7 +93,7 @@ export async function forgetVideo(id: string): Promise<void> {
 }
 
 export async function rememberVideo(asset: VideoAsset): Promise<void> {
-  if (asset.kind === 'demo') return;
+  if (asset.kind !== 'file') return;
   const { file, handle, id } = asset;
   try {
     await storedVideo(id, {
@@ -157,10 +158,18 @@ export async function resolveVideo(assetId?: string): Promise<VideoResolution> {
       return { reason: '这份作品的示例视频不在当前目录，请重新定位视频。' };
     }
   }
-  const record = await storedVideo(assetId);
-  return record
-    ? readStoredVideo(record)
-    : { reason: '当前浏览器没有此作品的视频关联，请重新定位一次视频。' };
+  if (!assetId.startsWith('pack-')) {
+    const record = await storedVideo(assetId);
+    if (record) return readStoredVideo(record);
+  }
+  const packed = await mapVideo(assetId).catch(() => undefined);
+  return packed
+    ? { asset: { ...packed, kind: 'pack' } }
+    : {
+        reason: assetId.startsWith('pack-')
+          ? '没有找到曲包视频。请确认曲包已解压到 maps，或重新定位视频。'
+          : '当前浏览器没有此作品的视频关联，请重新定位一次视频。',
+      };
 }
 
 /** Probe before replacing the current project: failures and cancelled pickers leave it intact. */

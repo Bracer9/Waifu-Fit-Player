@@ -278,7 +278,7 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     record(input.videoHint) &&
     input.videoHint.assetId !== undefined &&
     (typeof input.videoHint.assetId !== 'string' ||
-      !/^(?:[a-f0-9-]{36}|demo-[a-f0-9]{64})$/.test(input.videoHint.assetId))
+      !/^(?:[a-f0-9-]{36}|(?:demo|pack)-[a-f0-9]{64})$/.test(input.videoHint.assetId))
   )
     errors.push('videoHint 的视频关联 ID 无效。');
   const limit =

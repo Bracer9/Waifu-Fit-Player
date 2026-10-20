@@ -77,6 +77,7 @@ import { MenuTransition } from './components/MenuTransition';
 import { LiquidMenuTransition } from './components/LiquidMenuTransition';
 import { useMenuViewport } from './useMenuViewport';
 import { menuPortalRoot } from './menu-viewport';
+import { exportSongPack } from './export-song-pack';
 import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
   forgetVideo,
@@ -460,7 +461,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           },
           released: previous?.released ?? {},
         }));
-      else if (JSON.stringify(next.videoHint) !== JSON.stringify(paired.videoHint))
+      else if (
+        next.videoHint.assetId !== paired.videoHint.assetId ||
+        next.videoHint.fileName !== paired.videoHint.fileName ||
+        next.videoHint.durationMs !== paired.videoHint.durationMs
+      )
         await updateSong(paired.songId!, (previous) => {
           if (!previous) return previous;
           const d = paired.chartType ?? 'dance';
@@ -498,6 +503,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setSource(video.src);
     setProjectRevision((revision) => revision + 1);
     reset(paired, isSaved);
+    // A directly opened JSON can finish while the initial library scan/intro is still pending.
+    // Its late home callback must not replace the project we just installed.
+    setMenuTransition((current) => (current?.intro ? null : current));
     setMode(context?.play ? 'player' : 'editor');
     setBinding(null);
   };
@@ -874,6 +882,22 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         /* Nothing to clear. */
       }
       notify('作品已从 WAIFU 删除，原始文件保留。');
+    });
+  };
+  const exportPack = (song: Song) => {
+    media.pause();
+    setManageSongs(false);
+    void runTask('正在准备曲包视频与图片…', async () => {
+      const result = await exportSongPack(song, library.albums, (progress) =>
+        setBusy(`正在打包曲目… ${Math.round(progress * 100)}%`),
+      );
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.fileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      notify('曲包已导出。解压到另一台设备的 maps 目录，启动或刷新游戏即可识别。');
     });
   };
   const updatePublication = async (values: {
@@ -1601,6 +1625,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           onOpen={editSong}
           onWithdraw={withdraw}
           onDelete={deleteSong}
+          onExport={exportPack}
         />
       )}
       {manageAlbums && (

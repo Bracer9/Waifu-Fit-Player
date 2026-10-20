@@ -11,6 +11,8 @@ export type Edition = {
 };
 export type Song = {
   id: string;
+  /** A local removal of a folder song; never deletes its original files. */
+  hidden?: true;
   drafts: Partial<Record<ChartType, Edition>>;
   released: Partial<Record<ChartType, Edition>>;
 };

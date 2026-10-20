@@ -240,12 +240,14 @@ export function SongManager({
   onOpen,
   onWithdraw,
   onDelete,
+  onExport,
 }: {
   songs: Song[];
   onClose: () => void;
   onOpen: (song: Song, chartType: ChartType, published: boolean) => void;
   onWithdraw: (song: Song, chartType: ChartType) => void;
   onDelete: (song: Song) => void;
+  onExport: (song: Song) => void;
 }) {
   return (
     <ModalBackdrop onClose={onClose}>
@@ -259,7 +261,7 @@ export function SongManager({
           <X />
         </button>
         <h2 id="song-manager-title">本地作品</h2>
-        <p>草稿留在创作模式；已发布的健身谱与舞蹈谱出现在音游模式。</p>
+        <p>草稿留在创作模式；已发布的谱面可导出为含视频、曲绘的分享曲包。</p>
         <div className="managed-songs">
           {[...songs]
             .sort((a, b) => latestEdition(b).updatedAt - latestEdition(a).updatedAt)
@@ -268,6 +270,12 @@ export function SongManager({
                 <div className="managed-song-title">
                   <CoverArt src={latestEdition(song).cover} />
                   <strong>{latestEdition(song).chart.title}</strong>
+                  <button
+                    disabled={!CHART_TYPES.some((type) => song.released[type])}
+                    onClick={() => onExport(song)}
+                  >
+                    导出曲包
+                  </button>
                   <button className="danger-link" onClick={() => onDelete(song)}>
                     从 WAIFU 删除
                   </button>
