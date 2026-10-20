@@ -91,7 +91,7 @@ export function useRecording(options: Options) {
         return;
       }
       if (
-        (o.lane === 'punch' || o.lane === 'step') &&
+        (o.lane === 'punch' || o.lane === 'step' || o.lane === 'side_crunch') &&
         e.code === 'KeyH' &&
         !e.ctrlKey &&
         !e.altKey
@@ -100,7 +100,7 @@ export function useRecording(options: Options) {
         e.stopPropagation();
         if (e.target instanceof HTMLSelectElement) e.target.blur();
         if (!e.repeat) {
-          if (o.lane === 'step') o.onFoot();
+          if (o.lane === 'step' || o.lane === 'side_crunch') o.onFoot();
           else o.onHand();
         }
         return;
@@ -168,7 +168,7 @@ export function useRecording(options: Options) {
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
         ...(armAction ? { armAction } : {}),
         ...(armAction === 'reach' && o.hand !== 'any' ? { hand: o.hand } : {}),
-        ...(o.lane === 'step' ? { foot: o.foot } : {}),
+        ...(o.lane === 'step' || o.lane === 'side_crunch' ? { foot: o.foot } : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {

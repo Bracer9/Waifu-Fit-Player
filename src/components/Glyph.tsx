@@ -21,7 +21,7 @@ const laneFigures: Record<Lane, React.ReactNode> = {
   ),
   punch: (
     <>
-      <circle cx="25" cy="8" r="6.5" />
+      <circle cx="25" cy="10" r="6.5" />
       <g fill="none" stroke="currentColor">
         <path d="M23 22L22 33" strokeWidth="9" />
         <path d="M22 33L15 41L11 50M22 33L31 40L34 50" strokeWidth="7.5" />
@@ -37,7 +37,7 @@ const laneFigures: Record<Lane, React.ReactNode> = {
   ),
   side_crunch: (
     <>
-      <circle cx="31" cy="12" r="6" />
+      <circle cx="30" cy="14" r="6" />
       <g fill="none" stroke="currentColor">
         <path d="M24 5L12 12L26 25M40 14L44 23L29 27" strokeWidth="5.5" />
         <path d="M27 25L24 35L23 50M25 36L37 33L31 44" strokeWidth="7" />
@@ -144,6 +144,22 @@ export function PunchPair({
   );
 }
 
+export function ReachPair({
+  joined = false,
+  ribbon = false,
+}: {
+  joined?: boolean;
+  ribbon?: boolean;
+}) {
+  const path = 'M12 8L0 20L12 32V25H28V32L40 20L28 8V15H12Z';
+  return (
+    <g className="reach-pair">
+      {!joined && !ribbon && <path className="glyph-edge" d={path} />}
+      <path className={ribbon ? 'ribbon-pair-body' : 'glyph-body'} d={path} />
+    </g>
+  );
+}
+
 /** A shoe-sole print with a rounded toe, tread grooves and a separate heel. */
 export function ShoePrint() {
   return (
@@ -178,6 +194,7 @@ export function NoteGlyph({
   follow = false,
   armAction,
   pairedPunch = false,
+  pairedReach = false,
 }: {
   lane: Lane;
   direction: Direction;
@@ -188,19 +205,32 @@ export function NoteGlyph({
   follow?: boolean;
   armAction?: ArmAction;
   pairedPunch?: boolean;
+  pairedReach?: boolean;
 }) {
   const { shape, angle, path } = noteGlyphShape(lane, direction, distance, armAction);
   return (
     <svg
       className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}${follow ? ' glyph--follow' : ''}`}
-      data-symbol={`${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`}
+      data-symbol={
+        pairedReach
+          ? '↔'
+          : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
+      }
       width={size}
       height={size}
       viewBox="0 0 40 40"
       aria-hidden="true"
     >
-      <g transform={shape === 'free' || shape === 'glove' ? undefined : `rotate(${angle} 20 20)`}>
-        {pairedPunch ? (
+      <g
+        transform={
+          pairedReach || shape === 'free' || shape === 'glove'
+            ? undefined
+            : `rotate(${angle} 20 20)`
+        }
+      >
+        {pairedReach ? (
+          <ReachPair joined={joined} />
+        ) : pairedPunch ? (
           <PunchPair joined={joined} />
         ) : follow ? (
           // Keep the arrow tip intact; only the hollow stem is broken into clear segments.

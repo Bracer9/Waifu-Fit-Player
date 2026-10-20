@@ -1,32 +1,47 @@
 import { Play, Pause, SkipBack, Volume2, VolumeX } from 'lucide-react';
 import { MediaController, useMediaStatus, useTime } from '../media';
 import { formatTime } from '../timing';
+import type { PlayRange } from '../model';
 export function Transport({
   media,
   notify,
+  playRange,
+  onToggle,
+  onRestart,
+  disabled = false,
 }: {
   media: MediaController;
   notify: (text: string) => void;
+  playRange?: PlayRange;
+  onToggle?: () => void;
+  onRestart?: () => void;
+  disabled?: boolean;
 }) {
   const status = useMediaStatus(media),
     time = useTime(media);
+  const start = playRange?.startMs ?? 0;
+  const end = playRange?.endMs ?? status.durationMs;
+  const duration = Math.max(0, end - start);
+  const position = Math.max(start, Math.min(end, time));
   return (
     <div className="transport">
       <button
         className="icon-button"
         title="Restart"
         aria-label="Restart"
-        disabled={!status.ready}
-        onClick={() => media.seek(0)}
+        disabled={disabled || !status.ready}
+        onClick={onRestart ?? (() => media.seek(start))}
       >
         <SkipBack size={19} />
       </button>
       <button
         className="play-button"
         aria-label={status.playing ? 'Pause' : 'Play'}
-        disabled={!status.ready || status.preparing}
+        disabled={disabled || !status.ready || status.preparing}
         onClick={() =>
-          media.toggle().catch(() => notify('Unable to start. Press Play to try again.'))
+          onToggle
+            ? onToggle()
+            : media.toggle().catch(() => notify('Unable to start. Press Play to try again.'))
         }
       >
         {status.playing ? (
@@ -36,25 +51,25 @@ export function Transport({
         )}
       </button>
       <span className="time-readout" data-testid="current-time">
-        {formatTime(time)}
+        {formatTime(position - start)}
       </span>
       <input
         className="seek"
         aria-label="Playback position"
         type="range"
-        min={0}
-        max={status.durationMs || 1}
+        min={start}
+        max={end || 1}
         step={1}
-        value={Math.min(time, status.durationMs)}
-        disabled={!status.ready}
+        value={position}
+        disabled={disabled || !status.ready}
         style={
           {
-            '--progress': `${status.durationMs ? (time / status.durationMs) * 100 : 0}%`,
+            '--progress': `${duration ? ((position - start) / duration) * 100 : 0}%`,
           } as React.CSSProperties
         }
         onChange={(e) => media.seek(Number(e.target.value))}
       />
-      <span className="time-readout total">{formatTime(status.durationMs)}</span>
+      <span className="time-readout total">{formatTime(duration)}</span>
       <button
         className="icon-button volume-toggle"
         aria-label={status.volume ? 'Mute' : 'Unmute'}

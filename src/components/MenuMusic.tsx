@@ -1,8 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
-import { Check, Headphones, ListMusic, Pause, Play, Repeat1, Shuffle, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Headphones,
+  ListMusic,
+  Pause,
+  Play,
+  Repeat,
+  Shuffle,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import type { MenuMusic } from '../useMenuMusic';
 import type { MenuSoundPlayer } from '../useMenuSounds';
-import { ModalBackdrop } from './ModalBackdrop';
+import { useMusicPanelNavigation } from '../useMusicPanelNavigation';
 
 export function MusicPulse({ music, waveform = true }: { music: MenuMusic; waveform?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -56,14 +65,23 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
         beat += (target - beat) * (target > beat ? 0.45 : 0.13);
       } else average = beat = 0;
       menu?.style.setProperty('--music-beat', beat.toFixed(3));
-      if (!ctx) return;
-      ctx.clearRect(0, 0, width, height);
+      // The start briefing is portaled outside .menu-app. Share this same FFT beat
+      // with its charge control without another analyser, RAF or React render.
+      document.body.style.setProperty('--menu-music-beat', beat.toFixed(3));
+      const coverBars = animate
+        ? menu?.querySelectorAll<SVGRectElement>(
+            '.collection-album[aria-current="true"] .album-wave-bar',
+          )
+        : undefined;
+      if (!ctx && !coverBars?.length) return;
+      ctx?.clearRect(0, 0, width, height);
       for (let i = 0; i < count; i++) {
         const { start, end } = bands[i];
         let total = 0;
         for (let bin = start; bin < end; bin++) total += bins[bin];
         const level = (total / ((end - start) * 255)) ** 2;
         if (animate) smooth[i] += (level - smooth[i]) * (level > smooth[i] ? 0.55 : 0.25);
+        if (!ctx) continue;
         const amplitude = 2 + smooth[i] * height * 0.28;
         const offset = 54 + (i * (width / 2 - 55.5)) / (count - 1);
         ctx.globalAlpha = 0.95 - (i / count) * 0.3;
@@ -72,6 +90,14 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
         ctx.fillStyle = '#35c9db';
         ctx.fillRect(width / 2 + offset - 1.5, height / 2 - amplitude, 3, amplitude * 2);
       }
+      // The collection artwork shares this FFT read and clock with the existing waveform.
+      coverBars?.forEach((bar, index) => {
+        const band = Math.round((index * (count - 1)) / Math.max(1, coverBars.length - 1));
+        bar.style.setProperty(
+          '--spectrum',
+          Math.min(1.3, 0.35 + Math.sqrt(smooth[band]) * 1.7).toFixed(3),
+        );
+      });
     };
     const tick = (now: number) => {
       if (now - last >= 1000 / 30) {
@@ -107,144 +133,382 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
       document.removeEventListener('visibilitychange', refresh);
       reduced.removeEventListener('change', refresh);
       menu?.style.removeProperty('--music-beat');
+      document.body.style.removeProperty('--menu-music-beat');
     };
   }, [music.analyser, music.playing, audible, waveform]);
   return <canvas className="music-pulse" ref={canvas} hidden={!waveform} aria-hidden="true" />;
 }
 
 const orders = [
-  { id: 'list', label: '列表循环', Icon: ListMusic },
-  { id: 'random', label: '随机', Icon: Shuffle },
-  { id: 'repeat', label: '单曲循环', Icon: Repeat1 },
+  { id: 'random', label: '随机', caption: 'SHUFFLE', Icon: Shuffle },
+  { id: 'repeat', label: '单曲循环', caption: 'REPEAT', Icon: Repeat },
+  { id: 'list', label: '列表循环', caption: 'SEQUENTIAL', Icon: ListMusic },
 ] as const;
 
-export function AudioVolumeControl({
-  label,
-  volume,
-  onChange,
-}: {
-  label: string;
-  volume: number;
-  onChange: (volume: number) => void;
-}) {
+const panelOutline = 'M3 23 23 3H977L997 23V177L977 197H518L500 215 482 197H23L3 177Z';
+
+function MusicPanelFrame() {
   return (
-    <label className="field menu-music-volume">
-      <span>
-        {label} · {Math.round(volume * 100)}%
-      </span>
-      <input
-        aria-label={label}
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={volume}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-    </label>
+    <div className="music-panel-art" aria-hidden="true">
+      <svg className="music-panel-frame" viewBox="0 0 1000 220" preserveAspectRatio="none">
+        <path
+          className="music-panel-accent pink"
+          d="M0 51V20L20 0H49M0 151V180L20 200H49M482 201 500 219 518 201"
+        />
+        <path
+          className="music-panel-accent cyan"
+          d="M951 0H980L1000 20V51M1000 151V180L980 200H951"
+        />
+        <path className="music-panel-outline" d={panelOutline} />
+        <g className="music-panel-trace">
+          <path d={panelOutline} pathLength="100" />
+          <path d={panelOutline} pathLength="100" />
+        </g>
+      </svg>
+      <i className="music-halftone top" />
+      <i className="music-halftone bottom" />
+      <i className="music-panel-stripes" />
+    </div>
+  );
+}
+
+const clock = (seconds: number) =>
+  `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+
+function BgmNowPlaying({
+  music,
+  open,
+  onSound,
+}: {
+  music: MenuMusic;
+  open: boolean;
+  onSound: MenuSoundPlayer;
+}) {
+  const [position, setPosition] = useState(music.transport.position);
+  useEffect(() => {
+    if (!open) return;
+    const update = () => setPosition(music.transport.position());
+    update();
+    return music.transport.subscribe(update);
+  }, [music.transport, open]);
+  return (
+    <div className="music-panel-section music-now-playing">
+      <h2 className="music-section-heading">NOW PLAYING</h2>
+      <strong className="music-now-title" title={music.track?.title}>
+        {music.track?.title ?? 'MENU MUSIC'}
+      </strong>
+      <div className="music-progress-controls">
+        <button
+          className="music-play-toggle"
+          data-music-control="play"
+          aria-label={music.playing ? '暂停菜单 BGM' : '播放菜单 BGM'}
+          onClick={() => {
+            onSound('settings');
+            music.toggle();
+          }}
+        >
+          {music.playing ? (
+            <Pause size={22} fill="currentColor" />
+          ) : (
+            <Play size={22} fill="currentColor" />
+          )}
+        </button>
+        <input
+          className="music-range"
+          aria-label="菜单 BGM 进度"
+          tabIndex={-1}
+          aria-valuetext={`${clock(position.time)} / ${clock(position.duration)}`}
+          type="range"
+          min="0"
+          max={position.duration || 1}
+          step="0.1"
+          disabled={!position.duration}
+          value={Math.min(position.time, position.duration)}
+          style={
+            {
+              '--range-progress': `${position.duration ? (position.time / position.duration) * 100 : 0}%`,
+            } as React.CSSProperties
+          }
+          onChange={(event) => {
+            const time = Number(event.target.value);
+            music.transport.seek(time);
+            setPosition((previous) => ({ ...previous, time }));
+          }}
+        />
+      </div>
+      <div className="music-progress-times" aria-hidden="true">
+        <span>{clock(position.time)}</span>
+        <span>{clock(position.duration)}</span>
+      </div>
+    </div>
   );
 }
 
 export function MenuMusicConsole({
   music,
   onSound,
+  onNavigateUp,
+  children,
 }: {
   music: MenuMusic;
   onSound: MenuSoundPlayer;
+  onNavigateUp: () => void;
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  const navigation = useMusicPanelNavigation({ root, panel, open, music, onSound, onNavigateUp });
+  const pendingKeyboardEntry = useRef(false);
+  const keyboardEntryFrame = useRef(0);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const cancelClose = () => window.clearTimeout(closeTimer.current);
+  const show = () => {
+    cancelClose();
+    setOpen(true);
+  };
+  const enterFromKeyboard = () => {
+    show();
+    pendingKeyboardEntry.current = true;
+    if (open) queueKeyboardEntry();
+  };
+  const queueKeyboardEntry = () => {
+    cancelAnimationFrame(keyboardEntryFrame.current);
+    // Finish the headphone focus event and expose the panel before moving focus inside.
+    const enter = () => {
+      if (!pendingKeyboardEntry.current) return;
+      if (
+        !panel.current ||
+        panel.current.inert ||
+        getComputedStyle(panel.current).visibility !== 'visible'
+      ) {
+        keyboardEntryFrame.current = requestAnimationFrame(enter);
+        return;
+      }
+      pendingKeyboardEntry.current = false;
+      navigation.enter();
+    };
+    keyboardEntryFrame.current = requestAnimationFrame(enter);
+  };
+  useLayoutEffect(() => {
+    if (!open) {
+      pendingKeyboardEntry.current = false;
+      cancelAnimationFrame(keyboardEntryFrame.current);
+    } else if (pendingKeyboardEntry.current) queueKeyboardEntry();
+  }, [open]);
   const close = () => {
-    onSound('back');
+    pendingKeyboardEntry.current = false;
+    cancelClose();
+    setPinned(false);
+    if (panel.current?.contains(document.activeElement))
+      (document.activeElement as HTMLElement)?.blur();
     setOpen(false);
   };
+  const armClose = () => {
+    cancelClose();
+    if (pinned) return;
+    closeTimer.current = window.setTimeout(close, 100);
+  };
+  const scheduleClose = () => {
+    if (panel.current?.contains(document.activeElement)) return;
+    armClose();
+  };
+  useEffect(
+    () => () => {
+      window.clearTimeout(closeTimer.current);
+      cancelAnimationFrame(keyboardEntryFrame.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    const button = root.current?.querySelector('.headphone-button');
+    const highlight = (event: Event) => {
+      if ((event as CustomEvent<boolean>).detail) show();
+      else {
+        pendingKeyboardEntry.current = false;
+        navigation.release();
+        armClose();
+      }
+    };
+    button?.addEventListener('menu-highlight-change', highlight);
+    return () => button?.removeEventListener('menu-highlight-change', highlight);
+  }, [pinned]);
   return (
-    <div className="music-console">
+    <div
+      className="music-console"
+      ref={root}
+      data-open={open ? '' : undefined}
+      onPointerLeave={scheduleClose}
+      onBlurCapture={(event) => {
+        if (!pinned && !event.currentTarget.contains(event.relatedTarget)) {
+          cancelClose();
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (
+          !open &&
+          event.key === 'ArrowDown' &&
+          (event.target as HTMLElement).closest('.headphone-button')
+        ) {
+          event.preventDefault();
+          enterFromKeyboard();
+          return;
+        }
+        navigation.onKeyDown(event);
+        if (event.key === 'Escape' || event.key === 'Backspace') {
+          event.preventDefault();
+          event.stopPropagation();
+          onSound('back');
+          root.current?.querySelector<HTMLButtonElement>('.headphone-button')?.focus();
+          close();
+        }
+      }}
+    >
+      {children}
       <div className="music-console-line">
         <MusicPulse music={music} />
         <button
           className="headphone-button"
           aria-label="选择主界面 BGM"
           aria-expanded={open}
+          aria-pressed={pinned}
+          aria-controls="theme-music-panel"
+          onPointerLeave={scheduleClose}
+          onFocus={(event) => {
+            if (
+              event.currentTarget.matches(':focus-visible') &&
+              !panel.current?.contains(event.relatedTarget)
+            )
+              enterFromKeyboard();
+            else show();
+          }}
           onClick={() => {
             onSound('settings');
-            setOpen(true);
+            if (pinned) close();
+            else {
+              show();
+              setPinned(true);
+            }
           }}
         >
+          {pinned && (
+            <svg
+              className="headphone-pin-rays"
+              data-muted={music.volume === 0 ? '' : undefined}
+              viewBox="0 0 100 76"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M11 9 20 18M31 1 35 11M3 34 15 36M89 9 80 18M69 1 65 11M97 34 85 36" />
+            </svg>
+          )}
           <Headphones size={60} strokeWidth={2.5} />
         </button>
       </div>
-      <span className="music-console-title">{music.track?.title ?? 'MENU MUSIC'}</span>
-      {open && (
-        <ModalBackdrop onClose={close}>
-          <section
-            className="modal theme-music-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="theme-music-title"
-          >
-            <button className="modal-close icon-button" aria-label="关闭主界面音乐" onClick={close}>
-              <X />
-            </button>
-            <span className="eyebrow">MENU MIX / WAIFU FIT</span>
-            <h2 id="theme-music-title">主界面音乐</h2>
+      <section
+        className="music-panel"
+        id="theme-music-panel"
+        ref={panel}
+        role="region"
+        aria-label="主界面音乐"
+        aria-hidden={!open}
+        inert={!open}
+        onPointerEnter={show}
+        onPointerLeave={scheduleClose}
+        onFocusCapture={(event) => {
+          show();
+          navigation.onFocus(event);
+        }}
+        onPointerMoveCapture={navigation.onPointer}
+        onPointerDownCapture={navigation.onPointer}
+      >
+        <MusicPanelFrame />
+        <div className="music-panel-columns">
+          <BgmNowPlaying music={music} open={open} onSound={onSound} />
+          <div className="music-panel-section music-track-select">
+            <h2 className="music-section-heading">TRACK SELECT</h2>
+            <div className="theme-track-list">
+              {music.tracks.length ? (
+                music.tracks.map((track, index) => (
+                  <button
+                    className="theme-track"
+                    data-music-control={`track-${index}`}
+                    key={track.id}
+                    aria-pressed={music.track?.id === track.id}
+                    onClick={() => {
+                      onSound('settings');
+                      music.select(track.id);
+                    }}
+                  >
+                    <small>{String(index + 1).padStart(2, '0')}</small>
+                    <i aria-hidden="true" />
+                    <span title={track.title}>{track.title}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="music-empty">还没有主题音乐</p>
+              )}
+            </div>
+          </div>
+          <div className="music-panel-section music-playback-settings">
+            <h2 className="music-section-heading">PLAYBACK MODE</h2>
             <div className="music-order" aria-label="音乐播放方式">
-              {orders.map(({ id, label, Icon }) => (
+              {orders.map(({ id, label, caption, Icon }, index) => (
                 <button
                   key={id}
+                  aria-label={label}
+                  data-music-control={`order-${index}`}
                   aria-pressed={music.order === id}
                   onClick={() => {
                     onSound('settings');
                     music.setOrder(id);
                   }}
                 >
-                  <Icon size={16} />
-                  {label}
+                  <Icon size={22} />
+                  <span>{caption}</span>
                 </button>
               ))}
             </div>
-            <div className="theme-track-list">
-              {music.tracks.length ? (
-                music.tracks.map((track, index) => (
-                  <div className="theme-track-row" key={track.id}>
-                    <button
-                      className="theme-track"
-                      aria-pressed={music.track?.id === track.id}
-                      onClick={() => {
-                        onSound('settings');
-                        music.select(track.id);
-                      }}
-                    >
-                      <small>{String(index + 1).padStart(2, '0')}</small>
-                      <span>{track.title}</span>
-                      {music.track?.id === track.id && <Check size={17} />}
-                    </button>
-                    {music.track?.id === track.id && (
-                      <button
-                        className="theme-track-toggle"
-                        aria-label={music.playing ? '暂停菜单 BGM' : '播放菜单 BGM'}
-                        title={music.playing ? '暂停' : '播放'}
-                        onClick={() => {
-                          onSound('settings');
-                          music.toggle();
-                        }}
-                      >
-                        {music.playing ? <Pause size={18} /> : <Play size={18} />}
-                      </button>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="music-empty">还没有主题音乐</p>
-              )}
+            <h2 className="music-section-heading music-volume-heading">VOLUME</h2>
+            <div className="music-volume-controls">
+              <button
+                className="music-mute-toggle"
+                data-music-control="mute"
+                aria-label={music.volume === 0 ? '取消菜单 BGM 静音' : '静音菜单 BGM'}
+                aria-pressed={music.volume === 0}
+                onClick={() => {
+                  onSound('settings');
+                  music.toggleMute();
+                }}
+              >
+                {music.volume === 0 ? <VolumeX size={24} /> : <Volume2 size={24} />}
+              </button>
+              <input
+                className="music-range"
+                aria-label="菜单 BGM 音量"
+                data-music-control="volume"
+                aria-description="左右调节音量，Enter 确认；确认后左移至静音，上移至播放模式。"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={music.volume}
+                style={{ '--range-progress': `${music.volume * 100}%` } as React.CSSProperties}
+                onChange={(event) => music.setVolume(Number(event.target.value))}
+              />
+              <span>{Math.round(music.volume * 100)}%</span>
             </div>
-            <AudioVolumeControl
-              label="菜单 BGM 音量"
-              volume={music.volume}
-              onChange={music.setVolume}
-            />
-          </section>
-        </ModalBackdrop>
-      )}
+          </div>
+        </div>
+      </section>
+      <div
+        className="music-panel-bridge"
+        onPointerEnter={show}
+        onPointerLeave={scheduleClose}
+        aria-hidden="true"
+      />
     </div>
   );
 }

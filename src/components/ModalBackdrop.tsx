@@ -1,7 +1,15 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-export function ModalBackdrop({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+export function ModalBackdrop({
+  children,
+  onClose,
+  className = '',
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  className?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -45,7 +53,7 @@ export function ModalBackdrop({ children, onClose }: { children: ReactNode; onCl
     };
   }, []);
   return createPortal(
-    <div className="modal-backdrop" ref={ref}>
+    <div className={`modal-backdrop ${className}`} ref={ref}>
       {children}
     </div>,
     document.body,

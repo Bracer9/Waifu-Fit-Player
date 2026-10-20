@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { writeFile, unlink } from 'node:fs/promises';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo, holdStart } from './helpers/project';
 
 // This suite runs against Vite dev so the temporary assets enter its normal glob.
 // Fixtures never enter the user's music library or the committed asset folder.
@@ -75,7 +75,12 @@ async function sound(page: Page) {
   });
 }
 
-test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠音', async ({ page }) => {
+async function closeMusic(page: Page) {
+  await page.mouse.move(10, 10);
+  await expect(page.getByRole('region', { name: '主界面音乐' })).toBeHidden();
+}
+
+test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠音', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addInitScript(() => {
@@ -114,11 +119,11 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   });
   await page.goto('/');
   await page.getByRole('button', { name: '全局设置', exact: true }).click();
-  await expect(page.getByLabel('菜单 BGM 音量', { exact: true })).toHaveValue('0.9');
+  await expect(page.getByRole('slider', { name: '菜单 BGM 音量', exact: true })).toHaveValue('0.9');
   await page.getByLabel('游戏／视频音量', { exact: true }).fill('0.25');
-  await page.getByRole('button', { name: '完成', exact: true }).click();
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
-  await expect(page.getByRole('dialog', { name: '主界面音乐' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
+  await expect(page.getByRole('region', { name: '主界面音乐' })).toBeVisible();
   await page.getByRole('button', { name: /__qa_theme_a/ }).click();
   await expect.poll(async () => (await sound(page)).paused).toBe(false);
   await expect.poll(async () => (await sound(page)).reads).toBeGreaterThan(2);
@@ -141,7 +146,7 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(async () => (await sound(page)).selectedTrack).not.toContain('__qa_theme_b');
   await page.getByRole('button', { name: /__qa_theme_a/ }).click();
   await expect.poll(async () => (await sound(page)).selectedTrack).toContain('__qa_theme_a');
-  await page.getByLabel('菜单 BGM 音量', { exact: true }).fill('0.5');
+  await page.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.5');
   await expect.poll(async () => (await sound(page)).volume).toBe(0.5);
   const waveHeights = () =>
     page.locator('.music-pulse').evaluate((node: HTMLCanvasElement) => {
@@ -205,8 +210,8 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   );
   const pausedAt = (await sound(page)).time;
   await page.getByRole('button', { name: '单曲循环', exact: true }).click();
-  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
+  await closeMusic(page);
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
   expect((await sound(page)).paused).toBe(true);
   expect((await sound(page)).time).toBe(pausedAt);
   expect((await sound(page)).context).toBe('suspended');
@@ -214,16 +219,16 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(pausedAt + 0.1);
   expect((await sound(page)).context).toBe('running');
   await page.screenshot({ path: 'artifacts/menu-music-popup.png' });
-  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
+  await closeMusic(page);
   await page.screenshot({ path: 'artifacts/menu-music-home.png' });
   const button = await page.getByRole('button', { name: '选择主界面 BGM' }).boundingBox();
-  expect(Math.abs(button!.x + button!.width / 2 - 720)).toBeLessThan(1);
+  expect(Math.abs(button!.x + button!.width / 2 - page.viewportSize()!.width / 2)).toBeLessThan(1);
   const wave = await page.locator('.music-pulse').boundingBox();
   const cards = await page.locator('.mode-records').boundingBox();
   expect(wave!.x).toBeCloseTo(cards!.x, 0);
   expect(wave!.width).toBeCloseTo(cards!.width, 0);
   await expect(page.locator('.headphone-button svg')).toHaveAttribute('width', '60');
-  expect((await page.locator('.menu-settings svg').boundingBox())!.width).toBe(96);
+  expect((await page.locator('.menu-settings > svg').boundingBox())!.width).toBe(96);
   await expect(page.getByText('WAIFU FIT PLAYER — PERSONAL MUSIC COLLECTION')).toHaveCount(0);
 
   // Create a real released MP4-backed chart in this isolated browser profile.
@@ -238,9 +243,9 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
   await page.getByRole('button', { name: '单曲循环', exact: true }).click();
-  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
+  await closeMusic(page);
   await page.evaluate(() => {
     (window as Probes).menuAudio[0].currentTime = 2;
   });
@@ -256,6 +261,7 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(beat).toBeGreaterThan(0.05);
   const theme = await sound(page);
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect.poll(async () => (await sound(page)).src).toBe('/demo.mp4');
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(0);
   await expect.poll(async () => (await sound(page)).volume).toBe(0.25);
@@ -284,8 +290,9 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
       .length,
   ).toBeGreaterThan(3);
   await page.locator('.collection-album').first().click();
-  await page.getByRole('button', { name: '开始', exact: true }).click();
-  await page.getByRole('button', { name: '开始游戏', exact: true }).click();
+  await insertAlbum(page);
+  await page.locator('.record-card[aria-current="true"] .record-select').click();
+  await holdStart(page);
   await expect(page.getByRole('timer')).toHaveText('3');
   expect(await sound(page)).toMatchObject({
     paused: true,
@@ -301,24 +308,25 @@ test('居中音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   expect(await page.locator('video').evaluate((video: HTMLVideoElement) => video.volume)).toBe(0.2);
 
   await page.reload();
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
   await expect(page.getByRole('button', { name: '单曲循环', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(page.getByLabel('菜单 BGM 音量', { exact: true })).toHaveValue('0.5');
-  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
+  await expect(page.getByRole('slider', { name: '菜单 BGM 音量', exact: true })).toHaveValue('0.5');
+  await closeMusic(page);
   await page.getByRole('button', { name: '全局设置', exact: true }).click();
   await expect(page.getByLabel('游戏／视频音量', { exact: true })).toHaveValue('0.2');
-  await page.getByRole('button', { name: '完成', exact: true }).click();
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.screenshot({ path: 'artifacts/menu-music-720.png' });
-  const compact = await page.getByRole('button', { name: '选择主界面 BGM' }).boundingBox();
-  expect(Math.abs(compact!.x + compact!.width / 2 - 640)).toBeLessThan(1);
-  expect(compact!.y + compact!.height).toBeLessThan(720);
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
-  const popup = await page.getByRole('dialog', { name: '主界面音乐' }).boundingBox();
+  await page.keyboard.press('Escape');
+  await page.screenshot({ path: 'artifacts/menu-music-1080p.png' });
+  const headphone = await page.getByRole('button', { name: '选择主界面 BGM' }).boundingBox();
+  expect(
+    Math.abs(headphone!.x + headphone!.width / 2 - page.viewportSize()!.width / 2),
+  ).toBeLessThan(1);
+  expect(headphone!.y + headphone!.height).toBeLessThan(page.viewportSize()!.height);
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
+  const popup = await page.getByRole('region', { name: '主界面音乐' }).boundingBox();
   expect(popup!.y).toBeGreaterThanOrEqual(0);
-  await page.screenshot({ path: 'artifacts/menu-music-popup-720.png', animations: 'disabled' });
+  await page.screenshot({ path: 'artifacts/menu-music-popup-1080p.png', animations: 'disabled' });
   expect(errors).toEqual([]);
 });

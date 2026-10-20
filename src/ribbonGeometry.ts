@@ -27,6 +27,7 @@ export function ribbonOutline({
   headGap,
   sway,
   connected = false,
+  visibleStart = 0,
 }: {
   durationMs: number;
   fullWidth: number;
@@ -36,12 +37,14 @@ export function ribbonOutline({
   headGap: number;
   sway: boolean;
   connected?: boolean;
+  /** Skip the part outside the highway; coordinates and wave phase stay note-relative. */
+  visibleStart?: number;
 }): string {
   // Reach the release point; a following note's head covers this junction.
-  const start = 0;
-  const end = Math.max(start, visibleWidth - headGap);
+  const start = Math.max(0, visibleStart);
+  const end = Math.max(0, visibleWidth - headGap);
   if (end - start < 1) return '';
-  const taper = Math.min(bandWidth * 1.4, (end - start) * 0.4);
+  const taper = Math.min(bandWidth * 1.4, end * 0.4);
   const top: Point[] = [];
   const bottom: Point[] = [];
   const xs = [start];

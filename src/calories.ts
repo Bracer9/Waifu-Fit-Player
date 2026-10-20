@@ -1,6 +1,7 @@
 import { isPunchAction, type Note } from './model';
 
-// Fixed once from the user's Sunlight chart: 507.2051 effort points ≈ 21 kcal.
+// Initially calibrated from Sunlight: 507.2051 effort points ≈ 21 kcal.
+// Keep this conversion when tuning individual action weights.
 // Other charts use the same conversion; their totals are not normalized to 21.
 const KCAL_PER_EFFORT = 0.0414;
 
@@ -9,7 +10,8 @@ function effortFor(note: Note): [number, number] {
   const sway = note.kind === 'hold' && note.modifier === 'sway';
   switch (note.lane) {
     case 'squat':
-      return note.direction === 'down' ? [3, 2] : [1.5, 0];
+      // Static holds carry more sustained effort than swaying in the squat.
+      return note.direction === 'down' ? [3, sway ? 3 : 3.5] : [1.5, 0];
     case 'calf_raise':
       return note.direction === 'up' ? [0.4, 0.25] : [0.2, 0];
     case 'punch':

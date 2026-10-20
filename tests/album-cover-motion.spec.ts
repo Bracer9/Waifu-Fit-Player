@@ -1,0 +1,258 @@
+import { expect, test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+async function openAuthoredCovers(page: Page) {
+  await page.addInitScript(() => {
+    const tracks: HTMLAudioElement[] = [];
+    Object.assign(window, { albumAudio: tracks });
+    const Native = window.Audio;
+    window.Audio = class extends Native {
+      constructor() {
+        super();
+        tracks.push(this);
+      }
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  const covers = [
+    { id: 'touhou', name: '东方', file: 'touhou_album - 4.png' },
+    { id: 'anime', name: '动漫', file: 'anime_album2.png' },
+    { id: 'vocaloid', name: '虚拟歌姬', file: 'vocaloid_album2.png' },
+  ].map(({ file, ...album }) => ({
+    ...album,
+    cover: `data:image/png;base64,${readFileSync(`src/assets/albums-illustrations/${file}`).toString('base64')}`,
+  }));
+  await page.evaluate(async (covers) => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('waifu-fit-player-library');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction('albums', 'readwrite');
+        for (const album of covers) transaction.objectStore('albums').put(album);
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      };
+    });
+  }, covers);
+  await page.reload();
+  await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await page.mouse.move(10, 10);
+}
+
+test('selected covers show visible sunset light and vinyl motion without moving the caption', async ({
+  page,
+}) => {
+  await openAuthoredCovers(page);
+  await expect(page.locator('.collection-art[data-cover-motion]')).toHaveCount(1);
+  await page.keyboard.press('ArrowDown');
+  const anime = page.locator('.collection-album[data-id="anime"]');
+  await expect(anime).toHaveAttribute('aria-current', 'true');
+  await expect(anime.locator('.album-cover-detail.sunset-window')).toBeVisible();
+  await expect(page.locator('.album-curtain-sway')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      anime.evaluate((card: HTMLElement) => {
+        const shelf = card.parentElement!;
+        return Math.abs(
+          card.offsetTop + card.offsetHeight / 2 - shelf.scrollTop - shelf.clientHeight / 2,
+        );
+      }),
+    )
+    .toBeLessThan(5);
+  const titleWidth = await anime
+    .locator('.collection-label')
+    .evaluate((label: HTMLElement) => label.offsetWidth);
+  await anime.locator('.album-cover-scene').evaluate((scene) => {
+    const drift = scene.getAnimations().find((animation) => animation.id === 'album-cover-drift')!;
+    drift.pause();
+    drift.currentTime = 6000;
+  });
+  await expect
+    .poll(() =>
+      anime
+        .locator('.album-cover-scene')
+        .evaluate((scene) => new DOMMatrix(getComputedStyle(scene).transform).a),
+    )
+    .toBeCloseTo(1.02, 3);
+  expect(
+    await anime.locator('.collection-label').evaluate((label: HTMLElement) => label.offsetWidth),
+  ).toBe(titleWidth);
+  await anime.locator('.album-sunset-glow').evaluate((glow) => {
+    const animation = glow.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = 0;
+  });
+  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('opacity', '0.08');
+  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('fill', 'rgb(255, 183, 107)');
+  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('mix-blend-mode', 'normal');
+  await anime
+    .locator('.album-sunset-aura, .album-sunset-glow, .album-sunset-ray, .album-sunset-water')
+    .evaluateAll((lights) => {
+      for (const light of lights) {
+        const animation = light.getAnimations()[0];
+        animation.pause();
+        animation.currentTime = 1664;
+      }
+    });
+  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('opacity', '0.32');
+  await page.screenshot({ path: 'artifacts/album-cover-anime-1080p.png' });
+
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  const vinyl = page.locator('.collection-album[data-id="vocaloid"]');
+  await expect(vinyl).toHaveAttribute('aria-current', 'true');
+  await expect
+    .poll(() =>
+      vinyl.evaluate((card: HTMLElement) => {
+        const shelf = card.parentElement!;
+        return Math.abs(
+          card.offsetTop + card.offsetHeight / 2 - shelf.scrollTop - shelf.clientHeight / 2,
+        );
+      }),
+    )
+    .toBeLessThan(5);
+  await expect(vinyl.locator('.album-cover-detail.vinyl')).toBeVisible();
+  await expect(vinyl.locator('.album-vinyl-spin')).toHaveCount(1);
+  await expect(vinyl.locator('.album-vinyl-spin .album-vinyl-disc')).toHaveCount(1);
+  await expect(
+    vinyl.locator('.album-vinyl-reflection, .album-vinyl-grooves, .album-vinyl-label-mark'),
+  ).toHaveCount(0);
+  await expect(anime.locator('.album-cover-detail')).toHaveCSS('opacity', '0');
+  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('animation-play-state', 'paused');
+  await expect(vinyl.locator('.album-vinyl-spin').first()).toHaveCSS(
+    'animation-play-state',
+    'running',
+  );
+  await vinyl.locator('.album-vinyl-spin').evaluateAll((elements) => {
+    for (const element of elements) {
+      const animation = element.getAnimations()[0];
+      animation.pause();
+      animation.currentTime = 3500;
+    }
+  });
+  await expect(vinyl.locator('.album-vinyl-foreground')).toHaveCSS('transform', 'none');
+  await page.screenshot({ path: 'artifacts/album-cover-vinyl-1080p.png' });
+  await page.evaluate(() =>
+    (window as unknown as { albumAudio: HTMLAudioElement[] }).albumAudio[0].pause(),
+  );
+  await expect(vinyl.locator('.album-cover-detail')).not.toHaveAttribute('data-playing');
+  await expect(vinyl.locator('.album-vinyl-spin').first()).toHaveCSS(
+    'animation-play-state',
+    'paused',
+  );
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.collection-art[data-cover-motion]')).toHaveCount(0);
+  await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('display', 'block');
+  await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
+  await expect(vinyl.locator('.album-vinyl-spin')).toHaveCSS('animation-name', 'none');
+  expect(
+    await vinyl.locator('.album-cover-scene').evaluate((scene) => scene.getAnimations().length),
+  ).toBe(0);
+});
+
+test('album-specific scenes keep their static layers, animate only the selection and share live BGM spectrum', async ({
+  page,
+}) => {
+  await openAuthoredCovers(page);
+  const all = page.locator('.collection-album[data-id="all"]');
+  const moon = page.locator('.collection-album[data-id="touhou"]');
+  const vinyl = page.locator('.collection-album[data-id="vocaloid"]');
+  const pop = page.locator('.collection-album[data-id="pop"]');
+  await expect(vinyl.locator('.album-cover-detail')).toHaveAttribute('data-persistent', 'true');
+  await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
+  await expect(vinyl.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
+  const idleFace = await vinyl.locator('.album-vinyl-disc').getAttribute('href');
+  await expect(all.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'running');
+  await expect
+    .poll(() =>
+      all
+        .locator('.album-wave-bar')
+        .evaluateAll(
+          (bars) =>
+            bars.filter((bar) => (bar as SVGElement).style.getPropertyValue('--spectrum')).length,
+        ),
+    )
+    .toBe(18);
+  const levels = await all
+    .locator('.album-wave-bar')
+    .evaluateAll((bars) =>
+      bars.map((bar) => Number((bar as SVGElement).style.getPropertyValue('--spectrum'))),
+    );
+  expect(Math.max(...levels) - Math.min(...levels)).toBeGreaterThan(0.01);
+  await all.locator('.album-vinyl-spin').evaluate((node) => {
+    const animation = node.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = 1750;
+  });
+  await page.screenshot({ path: 'artifacts/album-cover-all-1080p.png' });
+
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  await expect(moon).toHaveAttribute('aria-current', 'true');
+  await expect(moon.locator('.album-ribbon-sway')).toHaveCSS('animation-play-state', 'running');
+  await expect(all.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
+  await expect
+    .poll(() =>
+      moon.evaluate((card: HTMLElement) => {
+        const shelf = card.parentElement!;
+        return Math.abs(
+          card.offsetTop + card.offsetHeight / 2 - shelf.scrollTop - shelf.clientHeight / 2,
+        );
+      }),
+    )
+    .toBeLessThan(5);
+  await moon.locator('.album-ribbon-sway').evaluate((node) => {
+    const animation = node.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = 2112;
+  });
+  await moon.locator('.album-moon-halo').evaluate((node) => {
+    const animation = node.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = 2048;
+  });
+  await page.screenshot({ path: 'artifacts/album-cover-touhou-1080p.png' });
+
+  await page.keyboard.press('ArrowUp');
+  await expect(vinyl).toHaveAttribute('aria-current', 'true');
+  await expect(vinyl.locator('.album-vinyl-disc')).toHaveAttribute('href', idleFace!);
+  await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
+  await expect(moon.locator('.album-ribbon-sway')).toHaveCSS('animation-play-state', 'paused');
+
+  await page.keyboard.press('ArrowUp');
+  await expect(pop).toHaveAttribute('aria-current', 'true');
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('animation-play-state', 'running');
+  await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
+  await expect(vinyl.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
+  await expect
+    .poll(() =>
+      pop.evaluate((card: HTMLElement) => {
+        const shelf = card.parentElement!;
+        return Math.abs(
+          card.offsetTop + card.offsetHeight / 2 - shelf.scrollTop - shelf.clientHeight / 2,
+        );
+      }),
+    )
+    .toBeLessThan(5);
+  await pop
+    .locator('.album-cover-detail')
+    .evaluate((node) => (node as SVGElement).style.setProperty('--music-beat', '.7'));
+  await pop.locator('.album-earring-glint').evaluate((node) => {
+    const animation = node.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = 896;
+  });
+  await page.screenshot({ path: 'artifacts/album-cover-pop-1080p.png' });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(pop.locator('.album-cover-detail')).toHaveCSS('display', 'none');
+  await expect(moon.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
+});

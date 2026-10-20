@@ -36,7 +36,7 @@ test('首次等待图片解码，白底进度条完成后可玩，普通编辑�
   const count = requests.length;
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await page.keyboard.press('5');
+  await page.keyboard.press('3');
   await page.keyboard.press('ArrowLeft');
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
   await expect(progress).toHaveCount(0);

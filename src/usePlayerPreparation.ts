@@ -1,12 +1,24 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import type { Chart } from './model';
 import { MediaController, audioOutputErrorMessage } from './media';
 import { prepareAssets, type AssetManifest } from './asset-cache';
+import { IMPACT_TINTS, impactTint } from './note-impact';
+import { armDisplayNotes } from './armDisplay';
 
-export function playerAssets(chart: Chart): AssetManifest {
-  // Common actions stay ready while recording adds notes. Only the song's
-  // configured SPECIAL changes the manifest, not every chart edit.
-  const images = ['/art/studio-scene-v4.png', '/art/crunch/impact.png', '/art/crunch/trail.png'];
+export function playerAssets(chart: Chart, gameplay = false): AssetManifest {
+  // Editor assets stay stable while recording adds notes. Only gameplay needs
+  // the baked impact atlases, and it prepares only the displayed note palettes.
+  const images = ['/art/studio-scene-v5.png', '/art/crunch/impact.png', '/art/crunch/trail.png'];
+  if (gameplay) {
+    const used = new Set(
+      armDisplayNotes(chart.notes)
+        .filter((note) => note.lane !== 'side_crunch')
+        .map(impactTint),
+    );
+    images.push(
+      ...IMPACT_TINTS.filter((tint) => used.has(tint)).map((tint) => `/art/impact/${tint}.png`),
+    );
+  }
   if (chart.specialMove) {
     const icon = chart.specialMove.icon;
     images.push(
@@ -51,8 +63,16 @@ function prepareVideoFrame(video: HTMLVideoElement, signal: AbortSignal): Promis
   });
 }
 
-export function usePlayerPreparation(media: MediaController, source: string, chart: Chart) {
-  const manifestKey = JSON.stringify(playerAssets(chart));
+export function usePlayerPreparation(
+  media: MediaController,
+  source: string,
+  chart: Chart,
+  gameplay = false,
+) {
+  const manifestKey = useMemo(
+    () => JSON.stringify(playerAssets(chart, gameplay)),
+    [chart, gameplay],
+  );
   const [attempt, setAttempt] = useState(0);
   const key = JSON.stringify([source, manifestKey, attempt]);
   const [state, setState] = useState({ key: '', progress: 0, done: false, error: '' });

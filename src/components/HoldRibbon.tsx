@@ -1,7 +1,15 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
 import { noteColor } from '../model';
-import { GlyphLabel, noteGlyphShape, PalmPrint, PunchPair, ShoePrint, SquatDownCue } from './Glyph';
+import {
+  GlyphLabel,
+  noteGlyphShape,
+  PalmPrint,
+  PunchPair,
+  ReachPair,
+  ShoePrint,
+  SquatDownCue,
+} from './Glyph';
 import type { DisplayNote } from '../armDisplay';
 
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
@@ -9,6 +17,7 @@ export function HoldRibbon({
   durationMs,
   fullWidth,
   visibleFraction,
+  offscreenWidth,
   size,
   note,
   headOpacity,
@@ -19,6 +28,7 @@ export function HoldRibbon({
   durationMs: number;
   fullWidth: number;
   visibleFraction: number;
+  offscreenWidth: number;
   size: number;
   note: DisplayNote;
   headOpacity: number;
@@ -29,6 +39,11 @@ export function HoldRibbon({
   const outline = useId();
   const cueClip = useId();
   const width = Math.max(1, fullWidth * visibleFraction);
+  // Keep one marker of overscan for the glow. A long hold must not allocate an
+  // SVG/filter surface or rebuild curve segments for its entire offscreen tail.
+  // Snap to the original 6 px sampling grid to preserve the wave's exact phase.
+  const visibleStart = Math.floor(Math.max(0, offscreenWidth - size) / 6) * 6;
+  const drawWidth = Math.max(1, width - visibleStart);
   const height = size * 1.08;
   const connected = headOpacity > 0;
   // Meet the left junction of the free-sway loop without filling its open centres.
@@ -63,14 +78,19 @@ export function HoldRibbon({
         headGap,
         sway,
         connected,
+        visibleStart,
       }),
-    [durationMs, fullWidth, width, height, size, headGap, sway, connected],
+    [durationMs, fullWidth, width, height, size, headGap, sway, connected, visibleStart],
   );
   return (
     <>
-      <span className="hold-ribbon" aria-hidden="true">
+      <span
+        className="hold-ribbon"
+        aria-hidden="true"
+        style={{ left: visibleStart, width: drawWidth, right: 'auto' }}
+      >
         <svg
-          viewBox={`0 0 ${width} ${height}`}
+          viewBox={`${visibleStart} 0 ${drawWidth} ${height}`}
           preserveAspectRatio="none"
           data-full-width={fullWidth}
           data-visible-fraction={visibleFraction}
@@ -78,15 +98,20 @@ export function HoldRibbon({
           <defs>
             {showCue && (
               <clipPath id={cueClip} clipPathUnits="userSpaceOnUse">
-                <rect x={-size} y={-size} width={width + size} height={height + size * 2} />
+                <rect
+                  x={visibleStart - size}
+                  y={-size}
+                  width={drawWidth + size}
+                  height={height + size * 2}
+                />
               </clipPath>
             )}
             <filter
               id={outline}
               filterUnits="userSpaceOnUse"
-              x={-size}
+              x={visibleStart - size}
               y={-size}
-              width={width + size * 2}
+              width={drawWidth + size * 2}
               height={height + size * 2}
               colorInterpolationFilters="sRGB"
             >
@@ -110,7 +135,9 @@ export function HoldRibbon({
                   opacity={headOpacity}
                   transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                 >
-                  {note.pairedPunch ? (
+                  {note.pairedReach ? (
+                    <ReachPair ribbon />
+                  ) : note.pairedPunch ? (
                     <PunchPair ribbon />
                   ) : (
                     <>
@@ -134,17 +161,21 @@ export function HoldRibbon({
                   transform={`translate(${-size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                   style={
                     {
-                      '--lane': noteColor(
-                        releaseNote.lane,
-                        releaseNote.direction,
-                        releaseNote.hand,
-                        releaseNote.armAction,
-                        releaseNote.foot,
-                      ),
+                      '--lane': releaseNote.pairedReach
+                        ? 'var(--arms-both)'
+                        : noteColor(
+                            releaseNote.lane,
+                            releaseNote.direction,
+                            releaseNote.hand,
+                            releaseNote.armAction,
+                            releaseNote.foot,
+                          ),
                     } as React.CSSProperties
                   }
                 >
-                  {releaseNote.pairedPunch ? (
+                  {releaseNote.pairedReach ? (
+                    <ReachPair ribbon />
+                  ) : releaseNote.pairedPunch ? (
                     <PunchPair ribbon />
                   ) : (
                     <>

@@ -19,6 +19,7 @@ import {
   uid,
 } from './model';
 import { clamp, snapTime } from './timing';
+import { armEventIds } from './armDisplay';
 export type History = { past: Chart[]; present: Chart; future: Chart[] };
 export type HistoryAction =
   { type: 'edit'; chart: Chart } | { type: 'reset'; chart: Chart } | { type: 'undo' | 'redo' };
@@ -88,7 +89,7 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
         ? {
             ...n,
             direction: opposite[n.direction],
-            ...(n.lane === 'step' ? { foot: stepFoot(n) } : {}),
+            ...(n.lane === 'step' || n.lane === 'side_crunch' ? { foot: stepFoot(n) } : {}),
           }
         : n,
     ),
@@ -114,11 +115,12 @@ export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Ch
   };
 }
 export const nextStepFoot = (foot: StepFoot): StepFoot => (foot === 'left' ? 'right' : 'left');
+/** STEP feet and SIDE CRUNCH legs share colour selection, independent of direction. */
 export function setStepFoot(chart: Chart, selected: string[], foot?: StepFoot): Chart {
   return {
     ...chart,
     notes: chart.notes.map((note) =>
-      selected.includes(note.id) && note.lane === 'step'
+      selected.includes(note.id) && (note.lane === 'step' || note.lane === 'side_crunch')
         ? { ...note, foot: foot ?? nextStepFoot(stepFoot(note)) }
         : note,
     ),
@@ -134,6 +136,27 @@ export function changeArmAction(note: Note, value: string): Note {
   };
   if (punch) delete next.hand;
   return next;
+}
+/** The centre preset is two ordinary, matching reaches, not a new chart note type. */
+export function changeArmGesture(
+  chart: Chart,
+  id: string,
+  value: string,
+): { chart: Chart; ids: string[] } {
+  const ids = armEventIds(chart.notes, id);
+  const note = chart.notes.find((n) => n.id === ids[0]);
+  if (!note || note.lane !== 'punch') return { chart, ids };
+  const notes = chart.notes.filter((n) => !ids.includes(n.id));
+  if (value === 'spread') {
+    const left: Note = { ...note, direction: 'left', armAction: 'reach', hand: 'left' };
+    const right: Note = { ...left, id: ids[1] ?? uid(), direction: 'right', hand: 'right' };
+    return {
+      chart: sortChart({ ...chart, notes: [...notes, left, right] }),
+      ids: [left.id, right.id],
+    };
+  }
+  const single = changeArmAction(ids.length === 2 ? { ...note, hand: 'both' } : note, value);
+  return { chart: sortChart({ ...chart, notes: [...notes, single] }), ids: [single.id] };
 }
 export function setStepDistance(chart: Chart, selected: string[], distance?: StepDistance): Chart {
   return {
@@ -161,7 +184,7 @@ export function changeNoteForm(
     direction,
     timeMs: note.timeMs,
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
-    ...(note.lane === 'step' ? { foot: stepFoot(note) } : {}),
+    ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
     ...(note.lane === 'step' && direction !== 'free' && type !== 'follow' && note.distance
       ? { distance: note.distance }
       : {}),
@@ -201,8 +224,8 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
       const next = { ...n, lane: LANES[LANES.findIndex((l) => l.id === n.lane) + delta].id };
       if (next.lane !== 'step') {
         delete next.distance;
-        delete next.foot;
       }
+      if (next.lane !== 'step' && next.lane !== 'side_crunch') delete next.foot;
       if (next.lane !== 'punch') {
         delete next.armAction;
         delete next.hand;

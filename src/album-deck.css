@@ -1,0 +1,485 @@
+/* The existing pink corner keeps its live music transform throughout the unfold. */
+.menu-app .ambient-shape.pink {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 50%, 0 0);
+  translate: 0 0;
+  rotate: 0deg;
+  /* The shadow supplies paint beyond the old rectangle, bounded by the same clip.
+     This lets the outline unfold without rotating the whole corner. */
+  box-shadow: 0 0 0 50vmax var(--pink);
+  transition:
+    transform 80ms linear,
+    scale 460ms cubic-bezier(0.22, 0.7, 0.2, 1),
+    translate 620ms cubic-bezier(0.22, 0.75, 0.2, 1),
+    clip-path 620ms cubic-bezier(0.22, 0.75, 0.2, 1);
+}
+.menu-app[data-album-player='open'] .ambient-shape.pink {
+  translate: 2vw 83vh;
+  clip-path: var(--album-deck-clip);
+}
+.menu-app[data-album-tuning] .ambient-shape.pink {
+  /* Reset the housing only while the tuning screen is fully opaque. */
+  transition: transform 80ms linear;
+}
+.album-housing-outline {
+  overflow: visible;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.3;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+.menu-app[data-album-player='open'] .album-housing-outline {
+  opacity: 0.85;
+  transition-delay: 180ms;
+}
+.menu-app[data-album-player='open'] .ambient-shape.pink::before {
+  opacity: 0.48;
+  clip-path: inset(0);
+  inset: 24% auto auto 7%;
+  height: 50%;
+  width: 42px;
+  background: radial-gradient(circle, #fff 1px, transparent 1.3px) 0 0 / 7px 7px;
+}
+.music-menu.albums .album-shelf,
+.music-menu.albums .album-category {
+  translate: 0 0;
+  transition: translate 620ms cubic-bezier(0.22, 0.75, 0.2, 1);
+}
+.music-menu.albums[data-player-open] .album-shelf {
+  translate: -10vw 0;
+}
+.music-menu.albums[data-player-open] .album-category {
+  translate: -3vw 0;
+}
+.album-deck {
+  position: fixed;
+  z-index: 5;
+  top: 20vh;
+  right: 2.8vw;
+  width: 23vw;
+  height: 65vh;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  translate: 0 -34vh;
+  transition:
+    translate 620ms cubic-bezier(0.22, 0.75, 0.2, 1),
+    opacity 180ms ease;
+}
+.album-deck[data-open] {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  transition:
+    translate 620ms cubic-bezier(0.22, 0.75, 0.2, 1),
+    opacity 320ms 130ms ease;
+}
+.album-deck-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6vh, 22px);
+  padding: 0 10px;
+}
+.album-deck header {
+  text-align: right;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ffffff80;
+}
+.album-deck header > span {
+  font:
+    700 clamp(20px, 1.7vw, 34px) 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.08em;
+}
+.album-deck header small {
+  display: block;
+  margin-top: 4px;
+  font:
+    500 13px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.18em;
+}
+.album-deck-insert-hint {
+  position: fixed;
+  z-index: 5;
+  left: var(--deck-insert-hint-x);
+  top: var(--deck-slot-y, 57vh);
+  translate: -50% -50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.music-menu[data-player-open] > .album-deck-insert-hint {
+  animation: album-insert-hint-in 160ms var(--deck-hint-delay, 400ms) ease-out both;
+}
+@keyframes album-insert-hint-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+.album-deck-insert-hint-direction {
+  display: block;
+  transform: rotate(-90deg);
+}
+.album-deck-insert-hint > small {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  translate: -50% 0;
+  font:
+    700 11px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+}
+.album-deck-quick-hint {
+  position: absolute;
+  top: calc(100% + 30px);
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  font:
+    600 9px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  opacity: 0.65;
+}
+.album-deck-insert-hint-beat {
+  display: block;
+  /* Local down becomes right after rotation: each beat nudges toward the slot. */
+  transform: translateY(calc(var(--music-beat, 0) * 10px))
+    scale(calc(1 + var(--music-beat, 0) * 0.18));
+  opacity: calc(0.65 + var(--music-beat, 0) * 0.35);
+  transition:
+    transform 70ms linear,
+    opacity 70ms linear;
+}
+.album-deck-insert-hint .main-menu-down-hint-arrows {
+  scale: 1;
+  opacity: 1;
+}
+.album-deck-insert-hint .main-menu-down-hint-arrows path {
+  animation: none;
+}
+.album-deck-slot {
+  position: fixed;
+  left: -3.2vw;
+  top: calc(var(--deck-slot-y, 57vh) - 20vh - var(--deck-slot-height, 32vh) / 2);
+  width: 15px;
+  height: var(--deck-slot-height, 32vh);
+  background: var(--ink);
+  border: 1px solid #fff;
+  box-shadow:
+    inset 3px 0 #100f14,
+    4px 0 #ffffff35;
+  transform: skewY(-16deg);
+  pointer-events: none;
+}
+.album-deck-slot i {
+  position: absolute;
+  width: 1px;
+  inset: 5px auto 5px 4px;
+  background: #fff6;
+}
+.album-deck-slot > span {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  writing-mode: vertical-rl;
+  translate: 0 -50%;
+  font:
+    600 10px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.2em;
+  transform: skewY(16deg);
+}
+.album-deck[data-inserting] .album-deck-slot {
+  box-shadow:
+    -5px 0 24px #fff8,
+    inset 3px 0 #100f14;
+}
+.album-deck-screen {
+  display: block;
+  min-height: 0;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #ffffffb0;
+  background: #242329;
+}
+.album-deck-cover {
+  overflow: hidden;
+  min-height: 0;
+  position: absolute;
+  inset: 0;
+}
+.album-deck-cover .cover-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+.album-deck-cover .cover-placeholder {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+}
+.album-deck-cover .cover-placeholder b {
+  font-size: 20px;
+}
+.album-deck-track small {
+  font:
+    600 12px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.16em;
+}
+.album-deck-track h2 {
+  margin: 7px 0 5px;
+  font-size: clamp(20px, 1.7vw, 30px);
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.album-deck-track p {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.8;
+}
+.album-deck-progress input {
+  width: 100%;
+  height: 4px;
+  margin: 4px 0 8px;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    #fff var(--range-progress),
+    #ffffff48 var(--range-progress)
+  );
+  border-radius: 0;
+}
+.album-deck-progress input::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+}
+.album-deck-progress input::-moz-range-thumb {
+  border: 0;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+}
+.album-deck-progress > div {
+  display: flex;
+  justify-content: space-between;
+  font:
+    500 13px 'Barlow Condensed',
+    sans-serif;
+}
+.album-deck-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  justify-items: center;
+}
+.album-deck-controls button {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 160ms,
+    background 160ms;
+}
+.album-deck-controls button svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
+}
+.album-deck-controls button:hover {
+  transform: scale(1.08);
+  background: #ffffff20;
+}
+.album-deck-controls button:active {
+  transform: scale(0.95);
+}
+.album-deck-controls .album-deck-play {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  color: var(--pink);
+  background: #fff;
+}
+.album-deck-controls .album-deck-play:hover {
+  background: var(--cream);
+}
+.album-deck-insert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid #ffffff90;
+  border-bottom: 1px solid #ffffff90;
+  padding: 12px 0;
+  font:
+    700 19px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.1em;
+}
+.album-deck-insert svg {
+  margin-left: auto;
+  width: 23px;
+  transition: translate 180ms;
+}
+.album-deck-insert:hover svg {
+  translate: 5px 0;
+}
+.album-deck-insert small {
+  font-size: 11px;
+  border: 1px solid #fff9;
+  padding: 3px 5px;
+}
+.album-deck footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font:
+    500 10px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.12em;
+}
+.album-deck :is(button, input):focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 5px;
+}
+.album-flight {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+.album-flight-card {
+  position: absolute;
+  margin: 0;
+  transform: none !important;
+  transition: none !important;
+  pointer-events: none;
+}
+.album-flight-card .cover-trace {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+.album-tuning {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: #242329;
+  color: var(--cream);
+  display: grid;
+  place-items: center;
+  animation: album-tuning-in 240ms ease-out both;
+}
+.album-tuning[data-phase='reveal'] {
+  animation: album-tuning-out var(--album-reveal-duration) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.album-tuning-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, #fff5 3px 4px);
+}
+.album-tuning-station {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 300px;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.album-tuning-station > small {
+  font-size: 13px;
+  letter-spacing: 0.24em;
+}
+.album-tuning-station > b {
+  font-size: 58px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+}
+.album-tuning-station > b span {
+  color: var(--pink);
+}
+.album-tuning-station > i {
+  height: 3px;
+  background: var(--pink);
+  transform-origin: left;
+  animation: album-tuning-fill var(--album-tune-duration) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.album-tuning-station > span {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  opacity: 0.6;
+}
+@keyframes album-tuning-fill {
+  from {
+    transform: scaleX(0.05);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes album-tuning-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes album-tuning-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .album-deck-insert-hint-beat {
+    transform: none;
+    opacity: 0.88;
+    transition: none;
+  }
+  .music-menu[data-player-open] > .album-deck-insert-hint {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+  .menu-app .ambient-shape.pink,
+  .music-menu.albums .album-shelf,
+  .music-menu.albums .album-category,
+  .album-deck,
+  .album-deck[data-open],
+  .album-housing-outline {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+  }
+  .album-tuning,
+  .album-tuning[data-phase='reveal'],
+  .album-tuning-station > i {
+    animation-duration: 1ms;
+  }
+}

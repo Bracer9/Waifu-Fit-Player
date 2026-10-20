@@ -35,7 +35,7 @@ test('专辑首尾居中，滚轮与键盘对焦，点击邻近专辑后返回�
     await page.keyboard.press('ArrowDown');
     await centered();
   }
-  await expect(current).toHaveAttribute('data-id', 'pop');
+  await expect(current).toHaveAttribute('data-id', 'touhou');
   await centered();
   await page.setViewportSize({ width: 1280, height: 720 });
   await centered();
@@ -43,14 +43,14 @@ test('专辑首尾居中，滚轮与键盘对焦，点击邻近专辑后返回�
   // A non-focused card still opens on a single click, during the existing curtain.
   const neighbor = page.locator('.collection-album[data-id="vocaloid"]');
   await neighbor.click();
-  await expect(page.locator('.music-menu.songs h1')).toHaveText('Vocaloid');
+  await expect(page.locator('.music-menu.songs h1')).toHaveText('虚拟歌姬');
   await page.getByRole('button', { name: '选择专辑', exact: true }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(current).toHaveAttribute('data-id', 'vocaloid');
   await centered();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.keyboard.press('ArrowUp');
-  await expect(current).toHaveAttribute('data-id', 'anime');
+  await expect(current).toHaveAttribute('data-id', 'pop');
   await centered();
   await expect(current).toHaveCSS('transform', 'none');
   await expect(unfocused.locator('.cover-placeholder')).toHaveCSS('filter', 'none');

@@ -43,9 +43,28 @@ const sounds = {
     ],
   },
 };
+function writeWav(name, samples, level = 0.55) {
+  const peak = Math.max(...samples.map(Math.abs));
+  const wav = Buffer.alloc(44 + samples.length * 2);
+  wav.write('RIFF');
+  wav.writeUInt32LE(wav.length - 8, 4);
+  wav.write('WAVEfmt ', 8);
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(rate, 24);
+  wav.writeUInt32LE(rate * 2, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write('data', 36);
+  wav.writeUInt32LE(samples.length * 2, 40);
+  samples.forEach((sample, i) =>
+    wav.writeInt16LE(Math.round((sample / peak) * level * 32767), 44 + i * 2),
+  );
+  writeFileSync(new URL(`${name}.wav`, directory), wav);
+}
 for (const [name, { length, tones }] of Object.entries(sounds)) {
   const samples = new Float64Array(Math.ceil(rate * length));
-  let peak = 0;
   for (let i = 0; i < samples.length; i++) {
     const time = i / rate;
     let sample = 0;
@@ -61,24 +80,31 @@ for (const [name, { length, tones }] of Object.entries(sounds)) {
       sample += envelope * (Math.sin(phase) + 0.14 * Math.sin(phase * 2));
     }
     samples[i] = sample;
-    peak = Math.max(peak, Math.abs(sample));
   }
-  const wav = Buffer.alloc(44 + samples.length * 2);
-  wav.write('RIFF');
-  wav.writeUInt32LE(wav.length - 8, 4);
-  wav.write('WAVEfmt ', 8);
-  wav.writeUInt32LE(16, 16);
-  wav.writeUInt16LE(1, 20);
-  wav.writeUInt16LE(1, 22);
-  wav.writeUInt32LE(rate, 24);
-  wav.writeUInt32LE(rate * 2, 28);
-  wav.writeUInt16LE(2, 32);
-  wav.writeUInt16LE(16, 34);
-  wav.write('data', 36);
-  wav.writeUInt32LE(samples.length * 2, 40);
-  samples.forEach((sample, i) =>
-    wav.writeInt16LE(Math.round((sample / peak) * 0.55 * 32767), 44 + i * 2),
-  );
-  writeFileSync(new URL(`${name}.wav`, directory), wav);
+  writeWav(name, samples);
 }
-console.log(`Generated ${Object.keys(sounds).length} menu sounds in ${fileURLToPath(directory)}`);
+// A rising, softly gated electronic charge, followed by a short resolving chord.
+// Baked assets only: no synthesis or looping work during gameplay.
+const chargeDuration = 1.15; // Matches START_BRIEFING.holdMs.
+const charge = Float64Array.from({ length: Math.ceil(rate * chargeDuration) }, (_, i) => {
+  const t = i / rate;
+  const phase = 2 * Math.PI * (220 * t + (340 * t * t) / chargeDuration);
+  const envelope = Math.min(1, t / 0.018) * Math.min(1, (chargeDuration - t) / 0.03);
+  const pulse = 0.72 + 0.28 * Math.sin(2 * Math.PI * (7 * t + (7 * t * t) / chargeDuration));
+  return (
+    envelope *
+    pulse *
+    (0.25 + (0.75 * t) / chargeDuration) *
+    (Math.sin(phase) + 0.18 * Math.sin(phase * 2))
+  );
+});
+writeWav('charge', charge, 0.48);
+const charged = Float64Array.from({ length: Math.ceil(rate * 0.22) }, (_, i) => {
+  const t = i / rate;
+  const envelope = Math.min(1, t / 0.002) * Math.exp(-18 * t) * Math.min(1, (0.22 - t) / 0.015);
+  return envelope * [880, 1320, 1760].reduce((sum, hz) => sum + Math.sin(2 * Math.PI * hz * t), 0);
+});
+writeWav('charged', charged, 0.58);
+console.log(
+  `Generated ${Object.keys(sounds).length + 2} menu sounds in ${fileURLToPath(directory)}`,
+);

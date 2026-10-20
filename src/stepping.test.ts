@@ -13,6 +13,7 @@ import {
   changeNoteForm,
   extendTap,
   flipNotes,
+  pasteEvents,
   setStepDistance,
   setStepFoot,
   shiftNoteLanes,
@@ -44,6 +45,64 @@ const STEP_VARIANTS = [
   ),
   { direction: 'free', type: 'sway' } as const,
 ];
+
+describe('SIDE CRUNCH 独立用腿和方向', () => {
+  it('左右腿可分别朝左右两个方向，TAP / HOLD / SWAY、反向、复制和存档均保留腿色', () => {
+    for (const direction of ['left', 'right'] as const)
+      for (const foot of ['left', 'right'] as const)
+        for (const type of ['tap', 'hold', 'sway'] as const) {
+          const original: Note = { ...tap('crunch', direction, 1000), lane: 'side_crunch' };
+          const note = changeNoteForm(original, type, direction, 3000);
+          const chart = setStepFoot(chartOf([note]), ['crunch'], foot);
+          expect(noteColor('side_crunch', direction, undefined, undefined, foot)).toBe(
+            foot === 'left' ? 'var(--cyan)' : 'var(--pink)',
+          );
+          expect(chart.notes[0]).toMatchObject({ direction, foot });
+          const flipped = flipNotes(chart, ['crunch']);
+          expect(flipped.notes[0]).toMatchObject({
+            foot,
+            direction: direction === 'left' ? 'right' : 'left',
+          });
+          expect(changeNoteForm(chart.notes[0], 'tap', direction, 4000).foot).toBe(foot);
+          expect(parseChart(JSON.parse(serializeChart(flipped)))).toEqual(flipped);
+          const pasted = pasteEvents(chart, chart.notes, [], 6000, 20000);
+          expect(pasted.chart.notes.find((n) => pasted.ids.includes(n.id))).toMatchObject({
+            lane: 'side_crunch',
+            direction,
+            foot,
+            kind: chart.notes[0].kind,
+          });
+        }
+  });
+  it('旧谱面保留原本左右颜色，单独反向不再改变腿色', () => {
+    for (const direction of ['left', 'right'] as const) {
+      const note: Note = { ...tap('legacy', direction, 1000), lane: 'side_crunch' };
+      const original = chartOf([note]);
+      expect(parseChart(original)).toEqual(original);
+      const color = noteColor(note.lane, direction);
+      expect(color).toBe(direction === 'left' ? 'var(--cyan)' : 'var(--pink)');
+      const flipped = flipNotes(original, ['legacy']).notes[0];
+      expect(flipped.foot).toBe(direction);
+      expect(noteColor(flipped.lane, flipped.direction, undefined, undefined, flipped.foot)).toBe(
+        color,
+      );
+      expect(setStepFoot(original, ['legacy']).notes[0]).toMatchObject({
+        direction,
+        foot: direction === 'left' ? 'right' : 'left',
+      });
+      const changed = changeNoteForm(note, 'hold', direction === 'left' ? 'right' : 'left', 2000);
+      expect(changed.foot).toBe(direction);
+      const crossed = shiftNoteLanes(
+        chartOf([{ ...note, foot: 'right' }]),
+        ['legacy'],
+        'side_crunch',
+        'punch',
+      );
+      expect(crossed.notes[0].foot).toBeUndefined();
+      expect(parseChart(crossed)).toEqual(crossed);
+    }
+  });
+});
 
 describe('统一 STEP 动作', () => {
   it('所有 STEP 类型的用脚颜色独立于方向，转换、反向和保存均保留', () => {

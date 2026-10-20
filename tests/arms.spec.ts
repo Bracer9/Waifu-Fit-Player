@@ -91,7 +91,7 @@ test('ARMS authoring, F/H, quick recording and save round trip', async ({ page }
   await page.screenshot({ path: 'artifacts/arms-editor.png', fullPage: true });
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
-  await page.keyboard.press('3');
+  await page.keyboard.press('1');
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await seek(page, 20);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -116,7 +116,7 @@ test('ARMS authoring, F/H, quick recording and save round trip', async ({ page }
   await page.keyboard.down('j');
   await page.waitForTimeout(300);
   await page.keyboard.up('j');
-  await page.keyboard.press('4');
+  await page.keyboard.press('2');
   await page.keyboard.press('ArrowLeft');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   saved = await exportChart(page);

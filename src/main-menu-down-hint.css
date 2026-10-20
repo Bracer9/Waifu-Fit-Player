@@ -1,0 +1,102 @@
+.main-menu-down-hint {
+  position: relative;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.85;
+  transition: opacity 240ms ease-out;
+}
+.main-menu-down-hint-label {
+  padding-left: 4px;
+  color: var(--ink);
+  font:
+    700 12px / 1 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 4px;
+}
+.main-menu-down-hint-float,
+.main-menu-down-hint-accent {
+  display: block;
+}
+.main-menu-down-hint-float {
+  animation: main-menu-hint-float var(--hint-pulse-duration) ease-in-out infinite;
+}
+.main-menu-down-hint-arrows {
+  display: block;
+  width: 40px;
+  height: 44px;
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  scale: calc(1 + var(--music-beat, 0) * 0.028);
+  opacity: calc(0.82 + var(--music-beat, 0) * 0.12);
+  transition:
+    scale 100ms linear,
+    opacity 100ms linear;
+}
+.main-menu-down-hint-pink {
+  stroke: var(--hint-pink, var(--pink));
+  animation: main-menu-hint-step var(--hint-pulse-duration) ease-in-out infinite;
+}
+.main-menu-down-hint-cyan {
+  stroke: var(--hint-cyan, var(--cyan));
+  animation: main-menu-hint-step var(--hint-pulse-duration) 170ms ease-in-out infinite;
+}
+.main-menu-down-hint-accent[data-idle-accent] {
+  animation: main-menu-hint-discover 1100ms ease-in-out;
+}
+.music-console:is([data-open], :focus-within) .main-menu-down-hint {
+  opacity: 0.12;
+}
+@keyframes main-menu-hint-float {
+  0%,
+  100% {
+    transform: translateY(calc(var(--hint-float-distance) * -0.5));
+  }
+  50% {
+    transform: translateY(var(--hint-float-distance));
+  }
+}
+@keyframes main-menu-hint-step {
+  0%,
+  35%,
+  100% {
+    transform: translateY(0);
+  }
+  55% {
+    transform: translateY(1.5px);
+  }
+}
+@keyframes main-menu-hint-discover {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(4px) scale(1.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-menu-down-hint-float,
+  .main-menu-down-hint-arrows,
+  .main-menu-down-hint-accent,
+  .main-menu-down-hint-accent[data-idle-accent],
+  .main-menu-down-hint-arrows path {
+    animation: none;
+    transition: none;
+    transform: none;
+    scale: 1;
+  }
+  .main-menu-down-hint-arrows {
+    opacity: 0.88;
+  }
+  .main-menu-down-hint {
+    transition: none;
+  }
+}

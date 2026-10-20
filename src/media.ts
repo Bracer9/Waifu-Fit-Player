@@ -32,6 +32,7 @@ export class MediaController {
   private nextFrameAt = 0;
   private cleanup?: () => void;
   private loopRange: LoopRange | null = null;
+  private playbackRange: LoopRange | null = null;
   constructor() {
     try {
       const saved = localStorage.getItem('waifu-video-volume');
@@ -62,8 +63,18 @@ export class MediaController {
     this.statusListeners.forEach((fn) => fn());
   };
   private positionInLoop = (timeMs: number) => {
+    if (this.playbackRange) return timeMs;
     const range = this.loopRange;
     return range && (timeMs < range.startMs || timeMs >= range.endMs) ? range.startMs : timeMs;
+  };
+  /** Game-only bounds. Editor looping remains a separate, temporary command. */
+  setPlaybackRange = (range: LoopRange | null) => {
+    this.playbackRange = range;
+    const video = this.element;
+    if (range && video && video.readyState >= 1) {
+      const time = video.currentTime * 1000;
+      if (time < range.startMs || time >= range.endMs) this.seek(range.startMs);
+    }
   };
   setLoopRange = (range: LoopRange | null) => {
     const next = range && range.endMs > range.startMs ? range : null;
@@ -79,7 +90,17 @@ export class MediaController {
   };
   private readTime = () => {
     const video = this.element;
-    const range = this.loopRange;
+    const range = this.playbackRange ? null : this.loopRange;
+    const playbackEnd = this.playbackRange?.endMs;
+    if (
+      video &&
+      playbackEnd !== undefined &&
+      !video.paused &&
+      video.currentTime * 1000 >= playbackEnd
+    ) {
+      video.currentTime = playbackEnd / 1000;
+      video.pause();
+    }
     // Seek the actual video (and its audio), never rewind a separate chart clock.
     if (video && range && !video.paused && !video.seeking && !video.ended) {
       // Playback only watches the END boundary. A seek may land just before the
@@ -94,13 +115,15 @@ export class MediaController {
     }
   };
   private onEnded = () => {
-    if (!this.loopRange || !this.element) return;
+    if (this.playbackRange || !this.loopRange || !this.element) return;
     this.seek(this.loopRange.startMs);
     void this.element.play().catch(this.readStatus);
   };
-  private readStatus = () => {
+  private readStatus = (event?: Event) => {
     const v = this.element;
     if (!v) return;
+    if (event?.type === 'loadedmetadata' && this.playbackRange)
+      v.currentTime = this.playbackRange.startMs / 1000;
     const next: MediaStatus = {
       ready: v.readyState >= 1 && !v.error,
       playing: !v.paused && !v.ended,
@@ -118,7 +141,7 @@ export class MediaController {
     }
     this.readTime();
     cancelAnimationFrame(this.frame);
-    if (next.playing) this.frame = requestAnimationFrame(this.tick);
+    if (!v.paused && !v.ended) this.frame = requestAnimationFrame(this.tick);
   };
   private tick = (timestamp: number) => {
     // High-refresh displays must not rebuild all SVG tracks 120/144 times per second.
@@ -163,7 +186,9 @@ export class MediaController {
   seek = (timeMs: number) => {
     if (this.element && this.status.ready) {
       const target = this.element.paused ? timeMs : this.positionInLoop(timeMs);
-      this.element.currentTime = Math.max(0, Math.min(this.status.durationMs, target)) / 1000;
+      const min = this.playbackRange?.startMs ?? 0;
+      const max = this.playbackRange?.endMs ?? this.status.durationMs;
+      this.element.currentTime = Math.max(min, Math.min(max, target)) / 1000;
       this.readTime();
     }
   };
@@ -172,7 +197,11 @@ export class MediaController {
     if (this.element.paused) {
       if (this.status.preparing) return;
       const timeMs = this.element.currentTime * 1000;
-      const target = this.positionInLoop(timeMs);
+      const range = this.playbackRange;
+      const target =
+        range && (timeMs < range.startMs || timeMs >= range.endMs)
+          ? range.startMs
+          : this.positionInLoop(timeMs);
       if (target !== timeMs) this.seek(target);
       await this.element.play();
     } else this.element.pause();

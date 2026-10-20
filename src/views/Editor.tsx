@@ -1,11 +1,14 @@
 import {
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
+import { EXERCISE_INTENSITIES, INTENSITY_LABELS, type ExerciseIntensity } from '../chart-types';
 import {
   ArrowLeftRight,
   Circle,
@@ -70,7 +73,6 @@ import {
   shiftNoteLanes,
   setStepDistance,
   changeNoteForm,
-  changeArmAction,
   nextArmHand,
   setArmHand,
   nextStepFoot,
@@ -80,10 +82,18 @@ import { isTyping, useRecording } from '../recording';
 import { NoteGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { checkStepPositions } from '../stepping';
 import { ArmActionPicker, ArmHandPicker } from '../components/ArmPicker';
+import { armDisplayNotes, armEventIds, type DisplayNote } from '../armDisplay';
+import { changeArmGesture } from '../editing';
+import { BpmDetectButton } from '../components/BpmDetectButton';
+import { PlayRangeFields } from '../components/PlayRangeFields';
+import { chartPlayRange } from '../play-range';
+
+export type EditorHandle = { locateEvent: (id: string) => void };
 
 type Props = {
   chart: Chart;
   media: MediaController;
+  videoSource: string;
   onChange: (chart: Chart) => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -91,6 +101,7 @@ type Props = {
   canRedo: boolean;
   notify: (text: string) => void;
   publication?: ReactNode;
+  ref?: Ref<EditorHandle>;
 };
 type Drag = {
   mode: 'move' | 'start' | 'end' | 'extend' | 'draw' | 'marquee';
@@ -191,6 +202,7 @@ function TextField({
 export function Editor({
   chart,
   media,
+  videoSource,
   onChange,
   onUndo,
   onRedo,
@@ -198,6 +210,7 @@ export function Editor({
   canRedo,
   notify,
   publication,
+  ref,
 }: Props) {
   const time = chartTimeAt(chart, useTime(media)),
     status = useMediaStatus(media);
@@ -232,6 +245,7 @@ export function Editor({
   const [lane, setLane] = useState<Lane>('squat');
   const [direction, setDirection] = useState<Direction>('down');
   const [drawArmAction, setDrawArmAction] = useState<ArmAction>('reach');
+  const [drawSpread, setDrawSpread] = useState(false);
   const [drawHand, setDrawHand] = useState<ArmHand>('any');
   const [drawFoot, setDrawFoot] = useState<StepFoot>('left');
   const [stepDistance, setDrawDistance] = useState<StepDistance>(1);
@@ -257,8 +271,33 @@ export function Editor({
     specials: [],
   });
   const px = zoom / 1000,
-    width = Math.max(duration * px + LABEL + 60, viewport);
+    width = Math.max(
+      Math.max(duration, chart.playRange ? chartPlayRange(chart).endMs : 0) * px + LABEL + 60,
+      viewport,
+    );
+  const locateEvent = (id: string) => {
+    const event =
+      chart.notes.find((note) => note.id === id) ??
+      chart.specialEvents.find((event) => event.id === id);
+    if (!event) return;
+    media.pause();
+    media.seek(videoTimeAt(chart, event.timeMs));
+    setSelected(armEventIds(chart.notes, id));
+    setTab('note');
+    if (scrollRef.current) scrollRef.current.scrollLeft = Math.max(0, event.timeMs * px - 160);
+  };
+  useImperativeHandle(ref, () => ({ locateEvent }));
   const shown = draft || chart;
+  const displayed = useMemo(() => armDisplayNotes(shown.notes, false), [shown.notes]);
+  const spreadIds = useMemo(
+    () =>
+      new Set(
+        armDisplayNotes(chart.notes, false)
+          .filter((n) => n.pairedReach)
+          .flatMap((n) => [n.id, n.pairedReach!]),
+      ),
+    [chart.notes],
+  );
   const stepIssues = useMemo(() => checkStepPositions(shown), [shown]);
   const pickLane = (newLane: Lane) => {
     setLane(newLane);
@@ -306,15 +345,21 @@ export function Editor({
       element.scrollLeft = Math.max(0, time * px - 120);
   }, [time, follow, status.playing, px]);
   const selectedNote = chart.notes.find((n) => selected.includes(n.id));
+  const selectedSpread = selectedNote && spreadIds.has(selectedNote.id);
   const selectedStep = chart.notes.find((n) => selected.includes(n.id) && isStepMove(n));
-  const selectedFoot = chart.notes.find((n) => selected.includes(n.id) && n.lane === 'step');
+  const selectedFoot = chart.notes.find(
+    (n) => selected.includes(n.id) && (n.lane === 'step' || n.lane === 'side_crunch'),
+  );
   const selectedArm = chart.notes.find(
     (n) =>
       selected.includes(n.id) &&
       n.lane === 'punch' &&
+      !spreadIds.has(n.id) &&
       !isPunchAction(n.lane, n.direction, n.armAction),
   );
-  const canFlip = chart.notes.some((n) => selected.includes(n.id) && n.direction !== 'free');
+  const canFlip = chart.notes.some(
+    (n) => selected.includes(n.id) && n.direction !== 'free' && !spreadIds.has(n.id),
+  );
   const selectedSpecial = chart.specialEvents.find((n) => selected.includes(n.id));
   const event = selectedNote || selectedSpecial;
   const activeSegment =
@@ -342,13 +387,20 @@ export function Editor({
     onChange(deleteEvents(chart, selected));
     setSelected([]);
   };
-  const flip = () => onChange(flipNotes(chart, selected));
+  const flip = () =>
+    onChange(
+      flipNotes(
+        chart,
+        selected.filter((id) => !spreadIds.has(id)),
+      ),
+    );
   const toggleDistance = () => onChange(setStepDistance(chart, selected));
   const toggleHand = () => {
+    if (selectedSpread && !recording) return;
     if ((selectedArm || selectedFoot) && !recording)
       onChange(setStepFoot(setArmHand(chart, selected), selected));
-    else if (lane === 'punch') setDrawHand((hand) => nextArmHand(hand));
-    else if (lane === 'step') setDrawFoot(nextStepFoot);
+    else if (lane === 'punch' && !drawSpread) setDrawHand((hand) => nextArmHand(hand));
+    else if (lane === 'step' || lane === 'side_crunch') setDrawFoot(nextStepFoot);
   };
   const duplicate = () => {
     const notes = chart.notes.filter((n) => selected.includes(n.id)),
@@ -392,6 +444,26 @@ export function Editor({
             duplicate();
             break;
         }
+      } else if (!modifier && !e.altKey && ['n', 'b'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        if (!e.repeat && !drag.current && status.ready) {
+          media.pause();
+          const last = [...chart.notes, ...chart.specialEvents].reduce(
+            (end, event) =>
+              Math.max(
+                end,
+                'endTimeMs' in event ? (event.endTimeMs ?? event.timeMs) : event.timeMs,
+              ),
+            0,
+          );
+          const target = e.key.toLowerCase() === 'n' ? videoTimeAt(chart, last) : 0;
+          media.seek(target);
+          if (scrollRef.current)
+            scrollRef.current.scrollLeft = Math.max(
+              0,
+              chartTimeAt(chart, media.getTime()) * px - 160,
+            );
+        }
       } else if (!modifier && !e.altKey && ['s', 'e'].includes(e.key.toLowerCase())) {
         e.preventDefault();
         if (!e.repeat && !drag.current) setTool(e.key.toLowerCase() === 's' ? 'select' : 'draw');
@@ -427,10 +499,11 @@ export function Editor({
   );
   const patchEvent = (changes: Record<string, unknown>) => {
     if (!event) return;
+    const ids = new Set(armEventIds(chart.notes, event.id));
     if (selectedNote)
       onChange({
         ...chart,
-        notes: chart.notes.map((n) => (n.id === event.id ? ({ ...n, ...changes } as Note) : n)),
+        notes: chart.notes.map((n) => (ids.has(n.id) ? ({ ...n, ...changes } as Note) : n)),
       });
     else
       onChange({
@@ -451,6 +524,16 @@ export function Editor({
       return;
     }
     if (selectedNote && direction) {
+      if (selectedSpread) {
+        const ids = armEventIds(chart.notes, selectedNote.id);
+        onChange({
+          ...chart,
+          notes: chart.notes.map((n) =>
+            ids.includes(n.id) ? changeNoteForm(n, type, n.direction, end) : n,
+          ),
+        });
+        return;
+      }
       const note = changeNoteForm(selectedNote, type, direction, end);
       onChange({ ...chart, notes: chart.notes.map((n) => (n.id === note.id ? note : n)) });
     } else if (type === 'hold') patchEvent({ endTimeMs: end });
@@ -516,13 +599,14 @@ export function Editor({
     e.currentTarget.setPointerCapture(e.pointerId);
     if (!followLocked) setFollow(false);
     if (id) {
+      const pair = armEventIds(chart.notes, id);
       const ids = e.shiftKey
         ? selected.includes(id)
-          ? selected.filter((v) => v !== id)
-          : [...selected, id]
+          ? selected.filter((v) => !pair.includes(v))
+          : [...new Set([...selected, ...pair])]
         : selected.includes(id)
           ? selected
-          : [id];
+          : pair;
       setSelected(ids);
       setTab('note');
       const handle = (e.target as HTMLElement).closest<HTMLElement>('[data-handle]')?.dataset
@@ -623,10 +707,15 @@ export function Editor({
           ...(isFollow ? { follow: true } : {}),
         };
     if (d.lane === 'step' && dir !== 'free' && stepDistance === 2 && !isFollow) note.distance = 2;
-    if (d.lane === 'step') note.foot = drawFoot;
+    if (d.lane === 'step' || d.lane === 'side_crunch') note.foot = drawFoot;
     if (d.lane === 'punch') {
       note.armAction = drawArmAction;
       if (drawArmAction === 'reach' && drawHand !== 'any') note.hand = drawHand;
+      if (drawSpread) {
+        const left: Note = { ...note, direction: 'left', armAction: 'reach', hand: 'left' };
+        const right: Note = { ...left, id: `${d.id}-right`, direction: 'right', hand: 'right' };
+        return { ...d.original, notes: [...d.original.notes, left, right] };
+      }
     }
     return { ...d.original, notes: [...d.original.notes, note] };
   };
@@ -647,10 +736,18 @@ export function Editor({
         moved = shiftNoteLanes(moved, d.ids, d.lane, targetLane);
       updateDraft(moved);
     } else if (d.mode === 'extend') {
-      updateDraft(x > d.x + 4 ? extendTap(d.original, d.id!, t, duration) : d.original);
+      updateDraft(
+        x > d.x + 4
+          ? armEventIds(d.original.notes, d.id!).reduce(
+              (value, id) => extendTap(value, id, t, duration),
+              d.original,
+            )
+          : d.original,
+      );
     } else if (d.mode === 'start' || d.mode === 'end') {
+      const resizeIds = new Set(armEventIds(d.original.notes, d.id!));
       const resize = <T extends Note | SpecialEvent>(n: T): T => {
-        if (n.id !== d.id || !('endTimeMs' in n) || n.endTimeMs === undefined) return n;
+        if (!resizeIds.has(n.id) || !('endTimeMs' in n) || n.endTimeMs === undefined) return n;
         return d.mode === 'start'
           ? { ...n, timeMs: Math.min(t, n.endTimeMs - 1) }
           : { ...n, endTimeMs: Math.max(t, n.timeMs + 1) };
@@ -687,7 +784,7 @@ export function Editor({
     if (d.mode === 'draw') {
       const result = draftRef.current || drawEvent(d, d.time);
       onChange(result);
-      setSelected([d.id!]);
+      setSelected(armEventIds(result.notes, d.id!));
       setTab('note');
     } else if (draftRef.current) onChange(draftRef.current);
     drag.current = null;
@@ -701,7 +798,7 @@ export function Editor({
     setDraft(null);
     setMarquee(null);
   };
-  const renderEvent = (n: Note | SpecialEvent, index: number) => {
+  const renderEvent = (n: DisplayNote | SpecialEvent, index: number) => {
     const end = 'endTimeMs' in n ? n.endTimeMs : undefined;
     if (
       (end ?? n.timeMs) * px + LABEL < scroll - 40 ||
@@ -733,7 +830,9 @@ export function Editor({
                   : 29,
             '--lane': isSpecial
               ? '#d3b5ff'
-              : noteColor(n.lane, n.direction, n.hand, n.armAction, n.foot),
+              : n.pairedReach
+                ? 'var(--arms-both)'
+                : noteColor(n.lane, n.direction, n.hand, n.armAction, n.foot),
           } as React.CSSProperties
         }
       >
@@ -749,6 +848,7 @@ export function Editor({
               distance={n.distance}
               follow={isFollowStep(n)}
               size={18}
+              pairedReach={!!n.pairedReach}
             />
           </span>
         )}
@@ -782,7 +882,7 @@ export function Editor({
         {!isSpecial &&
           n.kind === 'tap' &&
           !isFollowStep(n) &&
-          selected.length === 1 &&
+          (selected.length === 1 || (!isSpecial && !!n.pairedReach && selected.length === 2)) &&
           selected[0] === n.id &&
           n.timeMs < duration && (
             <span
@@ -865,8 +965,14 @@ export function Editor({
         <button
           className="tool-button flip-button"
           aria-label="切换用手或用脚颜色"
-          title="H：ARMS 循环用手；STEP 切换 L/R 用脚颜色；拳套用 F 互换"
-          disabled={!selectedArm && !selectedFoot && lane !== 'punch' && lane !== 'step'}
+          title="H：ARMS 循环用手；STEP / SIDE CRUNCH 切换 L/R 用脚或腿颜色；拳套用 F 互换"
+          disabled={
+            !selectedArm &&
+            !selectedFoot &&
+            lane !== 'punch' &&
+            lane !== 'step' &&
+            lane !== 'side_crunch'
+          }
           onClick={toggleHand}
         >
           换色 <kbd>H</kbd>
@@ -1048,23 +1154,39 @@ export function Editor({
             {!recording && (
               <ArmActionPicker
                 label="绘制手臂动作"
-                value={armActionValue({ lane, direction, armAction: drawArmAction })}
+                value={
+                  drawSpread
+                    ? 'spread'
+                    : armActionValue({ lane, direction, armAction: drawArmAction })
+                }
                 hand={drawHand}
                 onChange={(value) => {
+                  setDrawSpread(value === 'spread');
+                  if (value === 'spread') {
+                    setDrawArmAction('reach');
+                    setDrawHand('both');
+                    setDirection('left');
+                    return;
+                  }
                   setDrawArmAction(value.startsWith('punch-') ? 'punch' : 'reach');
                   setDirection((value.startsWith('punch-') ? value.slice(6) : value) as Direction);
                 }}
               />
             )}
             {(recording || drawArmAction === 'reach') && (
-              <ArmHandPicker label="录入用手" value={drawHand} onChange={setDrawHand} />
+              <ArmHandPicker
+                label="录入用手"
+                value={drawHand}
+                onChange={setDrawHand}
+                disabled={drawSpread && !recording}
+              />
             )}
           </>
         )}
-        {lane === 'step' && (
+        {(lane === 'step' || lane === 'side_crunch') && (
           <ArmHandPicker
             feet
-            label="录入用脚"
+            label={lane === 'side_crunch' ? '录入用腿' : '录入用脚'}
             value={drawFoot}
             onChange={(foot) => setDrawFoot(foot as StepFoot)}
           />
@@ -1114,7 +1236,9 @@ export function Editor({
               ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
               : lane === 'punch'
                 ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · H 换手 · 长按 HOLD · Ctrl+长按 SWAY'
-                : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
+                : lane === 'side_crunch'
+                  ? '←/→ 动作方向 · H 换腿颜色 · 长按 HOLD · Ctrl + 长按 SWAY'
+                  : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
             : lane === 'step' && drawType === 'follow'
               ? 'FOLLOW：指定脚同方向跟上并拢 · H 换脚颜色 · 仅 TAP'
               : '点击放置 · 拖动拉长 · Shift 多选'}
@@ -1168,7 +1292,17 @@ export function Editor({
                   </span>
                 </div>
               ))}
-              {shown.notes.map((n) =>
+              {chart.playRange && (
+                <div
+                  className="play-range-end"
+                  role="img"
+                  aria-label={`游玩终点 ${formatTime(chart.playRange.endMs, true)}`}
+                  style={{ left: LABEL + chartPlayRange(chart).endMs * px }}
+                >
+                  <span>终点 {formatTime(chart.playRange.endMs)}</span>
+                </div>
+              )}
+              {displayed.map((n) =>
                 renderEvent(
                   n,
                   LANES.findIndex((l) => l.id === n.lane),
@@ -1258,11 +1392,13 @@ export function Editor({
               event ? (
                 <>
                   <div className="inspector-title">
-                    {selected.length > 1
-                      ? `已选 ${selected.length} 个 · 属性修改首项`
-                      : selectedNote
-                        ? LANES.find((l) => l.id === selectedNote.lane)!.name
-                        : 'SPECIAL'}
+                    {selectedSpread && selected.length === 2
+                      ? '双臂向两侧展开'
+                      : selected.length > 1
+                        ? `已选 ${selected.length} 个 · 属性修改首项`
+                        : selectedNote
+                          ? LANES.find((l) => l.id === selectedNote.lane)!.name
+                          : 'SPECIAL'}
                   </div>
                   <NumberField
                     label="开始 / ms"
@@ -1327,20 +1463,20 @@ export function Editor({
                       onCommit={(n) => patchEvent({ endTimeMs: Math.round(n) })}
                     />
                   )}
-                  {selectedNote?.lane === 'step' && (
+                  {(selectedNote?.lane === 'step' || selectedNote?.lane === 'side_crunch') && (
                     <div className="arm-inspector">
-                      <span>移动方向</span>
+                      <span>{selectedNote.lane === 'side_crunch' ? '动作方向' : '移动方向'}</span>
                       <div className="direction-picks">
                         {(['left', 'right'] as const).map((direction) => (
                           <button
                             key={direction}
-                            aria-label={`选中踏步方向 ${direction === 'left' ? '←' : '→'}`}
+                            aria-label={`选中${selectedNote.lane === 'side_crunch' ? '侧收腹' : '踏步'}方向 ${direction === 'left' ? '←' : '→'}`}
                             aria-pressed={selectedNote.direction === direction}
                             className={selectedNote.direction === direction ? 'active' : ''}
                             style={
                               {
                                 '--lane': noteColor(
-                                  'step',
+                                  selectedNote.lane,
                                   direction,
                                   undefined,
                                   undefined,
@@ -1350,20 +1486,29 @@ export function Editor({
                             }
                             onClick={() => changeKind(noteType(selectedNote), direction)}
                           >
-                            <NoteGlyph lane="step" direction={direction} size={20} />
+                            <NoteGlyph lane={selectedNote.lane} direction={direction} size={20} />
                           </button>
                         ))}
                       </div>
-                      <span>用脚颜色 · H{selected.length > 1 ? ' · 批量' : ''}</span>
+                      <span>
+                        {selectedNote.lane === 'side_crunch' ? '用腿' : '用脚'}颜色 · H
+                        {selected.length > 1 ? ' · 批量' : ''}
+                      </span>
                       <ArmHandPicker
                         feet
-                        label="选中踏步用脚"
+                        label={
+                          selectedNote.lane === 'side_crunch' ? '选中侧收腹用腿' : '选中踏步用脚'
+                        }
                         value={stepFoot(selectedNote)}
                         onChange={(foot) =>
                           onChange(setStepFoot(chart, selected, foot as StepFoot))
                         }
                       />
-                      <p className="inspector-tip">L 左脚蓝色，R 右脚红色；箭头表示移动方向。</p>
+                      <p className="inspector-tip">
+                        {selectedNote.lane === 'side_crunch'
+                          ? 'L 左腿蓝色，R 右腿红色；箭头独立表示动作方向。'
+                          : 'L 左脚蓝色，R 右脚红色；箭头表示移动方向。'}
+                      </p>
                     </div>
                   )}
                   {selectedNote?.lane === 'punch' && (
@@ -1371,16 +1516,13 @@ export function Editor({
                       <span>动作方向 / 拳套</span>
                       <ArmActionPicker
                         label="选中手臂动作"
-                        value={armActionValue(selectedNote)}
-                        hand={armHand(selectedNote)}
-                        onChange={(value) =>
-                          onChange({
-                            ...chart,
-                            notes: chart.notes.map((n) =>
-                              n.id === selectedNote.id ? changeArmAction(n, value) : n,
-                            ),
-                          })
-                        }
+                        value={selectedSpread ? 'spread' : armActionValue(selectedNote)}
+                        hand={selectedSpread ? 'both' : armHand(selectedNote)}
+                        onChange={(value) => {
+                          const next = changeArmGesture(chart, selectedNote.id, value);
+                          onChange(next.chart);
+                          setSelected(next.ids);
+                        }}
                       />
                       {!isPunchAction(
                         selectedNote.lane,
@@ -1391,7 +1533,8 @@ export function Editor({
                           <span>用手颜色 · H{selected.length > 1 ? ' · 批量' : ''}</span>
                           <ArmHandPicker
                             label="选中手臂用手"
-                            value={armHand(selectedNote)}
+                            value={selectedSpread ? 'both' : armHand(selectedNote)}
+                            disabled={!!selectedSpread}
                             onChange={(hand) => onChange(setArmHand(chart, selected, hand))}
                           />
                         </>
@@ -1402,6 +1545,7 @@ export function Editor({
                   )}
                   {selectedNote &&
                     selectedNote.lane !== 'step' &&
+                    selectedNote.lane !== 'side_crunch' &&
                     selectedNote.lane !== 'punch' && (
                       <label className="field">
                         <span>动作方向</span>
@@ -1499,13 +1643,31 @@ export function Editor({
                   </select>
                 </label>
                 <div className="field-pair">
-                  <NumberField
-                    label="BPM"
-                    value={activeSegment.bpm}
-                    min={0.01}
-                    step={0.01}
-                    onCommit={(n) => changeSegment({ bpm: n })}
-                  />
+                  <div className="bpm-field">
+                    <NumberField
+                      label="BPM"
+                      value={activeSegment.bpm}
+                      min={0.01}
+                      step={0.01}
+                      onCommit={(n) => changeSegment({ bpm: n })}
+                    />
+                    <BpmDetectButton
+                      key={activeSegment.id}
+                      source={videoSource}
+                      start={Math.max(0, videoTimeAt(chart, activeSegment.anchorMs)) / 1000}
+                      end={
+                        Math.min(
+                          duration,
+                          ...chart.tempoSegments
+                            .filter((segment) => segment.anchorMs > activeSegment.anchorMs)
+                            .map((segment) => videoTimeAt(chart, segment.anchorMs)),
+                        ) / 1000
+                      }
+                      bpm={activeSegment.bpm}
+                      onDetected={(bpm) => changeSegment({ bpm })}
+                      notify={notify}
+                    />
+                  </div>
                   <label className="field">
                     <span>拍号</span>
                     <select
@@ -1560,14 +1722,52 @@ export function Editor({
                   value={chart.title}
                   onCommit={(title) => onChange({ ...chart, title })}
                 />
-                {publication}
-                <NumberField
-                  label="难度系数"
-                  value={chart.difficultyRating}
-                  step={0.1}
-                  onCommit={(difficultyRating) => onChange({ ...chart, difficultyRating })}
-                  onClear={() => onChange({ ...chart, difficultyRating: undefined })}
+                <PlayRangeFields
+                  chart={chart}
+                  media={media}
+                  durationMs={status.durationMs || chart.videoHint.durationMs}
+                  onChange={(playRange) => {
+                    const next = { ...chart };
+                    if (playRange) next.playRange = playRange;
+                    else delete next.playRange;
+                    onChange(next);
+                  }}
+                  onLocate={locateEvent}
+                  notify={notify}
                 />
+                {publication}
+                {chart.chartType === 'fitness' ? (
+                  <label className="field">
+                    <span>运动强度</span>
+                    <select
+                      aria-label="运动强度"
+                      value={chart.intensity ?? ''}
+                      onChange={(event) =>
+                        onChange({
+                          ...chart,
+                          intensity: (event.target.value || undefined) as
+                            ExerciseIntensity | undefined,
+                        })
+                      }
+                    >
+                      <option value="">未标注</option>
+                      {EXERCISE_INTENSITIES.map((value, index) => (
+                        <option key={value} value={value}>
+                          {['低', '中', '高'][index]} / {INTENSITY_LABELS[value]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <NumberField
+                    label="舞蹈难度"
+                    value={chart.danceDifficulty}
+                    min={0}
+                    step={0.1}
+                    onCommit={(danceDifficulty) => onChange({ ...chart, danceDifficulty })}
+                    onClear={() => onChange({ ...chart, danceDifficulty: undefined })}
+                  />
+                )}
                 <NumberField
                   label="视频偏移 / ms"
                   value={chart.videoOffsetMs ?? 0}

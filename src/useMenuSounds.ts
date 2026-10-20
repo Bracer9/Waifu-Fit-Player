@@ -4,10 +4,15 @@ import album from './assets/menu-sfx/album.wav';
 import song from './assets/menu-sfx/song.wav';
 import settings from './assets/menu-sfx/settings.wav';
 import back from './assets/menu-sfx/back.wav';
+import charge from './assets/menu-sfx/charge.wav';
+import charged from './assets/menu-sfx/charged.wav';
+import release from './assets/menu-sfx/release.wav';
+import liquid from './assets/menu-sfx/liquid.wav';
+import insert from './assets/menu-sfx/insert.wav';
 
-const sources = { mode, album, song, settings, back };
+const sources = { mode, album, song, settings, back, charge, charged, release, liquid, insert };
 type MenuSound = keyof typeof sources;
-export type MenuSoundPlayer = (name: MenuSound) => void;
+export type MenuSoundPlayer = (name: MenuSound) => void | (() => void);
 
 export function useMenuSounds(volume: number) {
   const [sounds] = useState(
@@ -22,7 +27,11 @@ export function useMenuSounds(volume: number) {
         }),
       ) as Record<MenuSound, HTMLAudioElement>,
   );
-  const current = useRef<HTMLAudioElement | null>(null);
+  const current = useRef<{ ui: HTMLAudioElement | null; liquid: HTMLAudioElement | null }>({
+    ui: null,
+    liquid: null,
+  });
+  const playback = useRef({ ui: 0, liquid: 0 });
   useEffect(
     () => () => {
       Object.values(sounds).forEach((audio) => {
@@ -35,15 +44,21 @@ export function useMenuSounds(volume: number) {
   );
   return useCallback(
     (name: MenuSound) => {
-      current.current?.pause();
+      // Water is a quiet transition bed; it must not interrupt the triggering UI click.
+      const channel = name === 'liquid' ? 'liquid' : 'ui';
+      current.current[channel]?.pause();
+      const token = ++playback.current[channel];
       if (volume === 0) return;
       const audio = sounds[name];
-      current.current = audio;
+      current.current[channel] = audio;
       audio.volume = volume;
       audio.currentTime = 0;
       void audio.play().catch(() => {
         /* A missing UI sound must not block navigation. */
       });
+      return () => {
+        if (playback.current[channel] === token) audio.pause();
+      };
     },
     [sounds, volume],
   );

@@ -1,23 +1,39 @@
-import { useCallback, useRef, type HTMLAttributes } from 'react';
+import { createContext, useCallback, useContext, useRef, type HTMLAttributes } from 'react';
 
-const cards = '.mode-record, .collection-album, .record-card';
+const cards = '.mode-record, .collection-album, .record-card, .menu-settings, .headphone-button';
 
-export function useCardHighlight() {
+export function useMenuHighlight() {
   const current = useRef<HTMLElement | null>(null);
   const source = useRef<'pointer' | 'keyboard'>('keyboard');
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const activate = useCallback(
     (card: HTMLElement | null, input: 'pointer' | 'keyboard' = 'keyboard') => {
       source.current = input;
-      if (current.current === card) return;
-      current.current?.removeAttribute('data-highlighted');
+      if (current.current === card) {
+        // A new pointer gesture can reopen an explicitly folded headphone menu.
+        if (input === 'pointer')
+          card?.dispatchEvent(new CustomEvent('menu-highlight-change', { detail: true }));
+        return;
+      }
+      const previous = current.current;
+      previous?.removeAttribute('data-highlighted');
       current.current = card;
       card?.setAttribute('data-highlighted', '');
+      previous?.dispatchEvent(new CustomEvent('menu-highlight-change', { detail: false }));
+      card?.dispatchEvent(new CustomEvent('menu-highlight-change', { detail: true }));
     },
     [],
   );
   const cardAt = (target: EventTarget | null, root: HTMLElement) => {
-    const card = target instanceof Element ? target.closest<HTMLElement>(cards) : null;
+    if (!(target instanceof Element)) return null;
+    const card =
+      target.closest<HTMLElement>(cards) ??
+      (target.closest('.music-panel, .music-panel-bridge')?.closest('.music-console[data-open]')
+        ? root.querySelector<HTMLElement>('.headphone-button')
+        : null) ??
+      (target.closest('.corner-settings')
+        ? root.querySelector<HTMLElement>('.menu-settings')
+        : null);
     return card && root.contains(card) ? card : null;
   };
   const handlers: HTMLAttributes<HTMLDivElement> = {
@@ -35,15 +51,23 @@ export function useCardHighlight() {
     onPointerLeave: () => {
       if (source.current === 'pointer') activate(null, 'pointer');
     },
-    onFocusCapture: (event) => activate(cardAt(event.target, event.currentTarget)),
+    onFocusCapture: (event) => {
+      if (source.current === 'keyboard' || event.target.matches(':focus-visible'))
+        activate(cardAt(event.target, event.currentTarget));
+    },
     onBlurCapture: (event) => {
       if (source.current === 'keyboard' && !event.currentTarget.contains(event.relatedTarget))
         activate(null);
     },
-    onKeyDownCapture: (event) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key))
-        activate(cardAt(event.target, event.currentTarget));
-    },
   };
-  return { activate, handlers };
+  const getCurrent = useCallback(() => (current.current?.isConnected ? current.current : null), []);
+  return { activate, getCurrent, handlers };
+}
+
+export const MenuHighlightContext = createContext<ReturnType<typeof useMenuHighlight> | null>(null);
+
+export function useCardHighlight() {
+  const shared = useContext(MenuHighlightContext);
+  if (!shared) throw new Error('Menu highlight requires MenuHighlightContext.');
+  return { activate: shared.activate, getCurrent: shared.getCurrent, handlers: {} };
 }

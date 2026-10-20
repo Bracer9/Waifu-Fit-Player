@@ -28,4 +28,15 @@ describe('long-note contours', () => {
     expect(ribbonOutline({ ...shape, visibleWidth: 10 })).toBe('');
     expect(ribbonOutline({ ...shape, visibleWidth: 40 })).not.toMatch(/NaN|Infinity/);
   });
+  it('bounds long holds to the visible window without changing the wave or head taper', () => {
+    const long = { ...shape, durationMs: 60000, fullWidth: 10000, visibleWidth: 10000 };
+    const full = ribbonOutline(long);
+    const cropped = ribbonOutline({ ...long, visibleStart: 9402 });
+    const segments = (path: string) => path.split(' C ');
+    // Control points at the crop boundary are outside the viewport overscan.
+    const interior = segments(cropped).slice(2, -2);
+    for (const segment of interior) expect(full).toContain(` C ${segment}`);
+    expect(cropped.length).toBeLessThan(full.length / 10);
+    expect(cropped).not.toMatch(/NaN|Infinity/);
+  });
 });

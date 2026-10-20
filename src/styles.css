@@ -6,6 +6,8 @@
   font-weight: 400;
   --pink: #f64e93;
   --cyan: #35c9db;
+  --fitness-color: var(--cyan);
+  --dance-color: var(--pink);
   --miku: #39c5bb;
   --step-free: #73ded1;
   --arms-any: #e7edf2;
@@ -702,6 +704,7 @@ nav button.active:after {
 }
 .player-hold {
   position: absolute;
+  z-index: 1;
   top: 50%;
   height: 27px;
   border-radius: 20px;
@@ -960,6 +963,7 @@ nav button.active:after {
   top: 50%;
   background-size: 100% 100%;
   background-repeat: no-repeat;
+  opacity: 0.5;
   will-change: transform;
 }
 .special-hold-strip {
@@ -973,7 +977,8 @@ nav button.active:after {
   width: calc(var(--special-size) * 0.88);
   height: calc(var(--special-size) * 0.88);
   background-image: url('/art/special/hold-tail.png');
-  z-index: 2;
+  /* Both trail pieces stay behind TAPs and ordinary HOLDs, including the editor preview. */
+  z-index: 0;
 }
 .special-burst {
   position: absolute;
@@ -2180,11 +2185,140 @@ nav button.active:after {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+.bpm-field {
+  position: relative;
+  min-width: 0;
+}
+.bpm-detect {
+  position: absolute;
+  top: -3px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 3px;
+  font-size: 9px;
+  line-height: 13px;
+  color: #ae3b68;
+  border-radius: 3px;
+}
+.bpm-detect:hover {
+  background: #f64e9315;
+}
+.app[data-workbench-theme='dark'] .bpm-detect {
+  color: #f58bb4;
+}
 .inspector-title {
   font-size: 10px;
   font-weight: 600;
   color: #806657;
   margin-bottom: 9px;
+}
+.play-range-fields {
+  margin: 0 0 14px;
+  padding: 10px;
+  border: 1px solid #ddcbb8;
+  border-radius: 3px;
+  color: #806657;
+}
+.play-range-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 10px;
+}
+.play-range-heading small {
+  margin-left: 4px;
+  font-size: 8px;
+  font-weight: 400;
+}
+.play-range-heading button {
+  font-size: 9px;
+  padding: 3px 0 3px 6px;
+}
+.play-range-fields .field {
+  margin-bottom: 4px;
+}
+.play-range-fields input {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.play-range-current {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  padding: 3px 0;
+}
+.play-range-current:hover,
+.play-range-heading button:hover {
+  color: var(--pink);
+}
+.play-range-duration {
+  margin: 9px 0 0;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.play-range-duration span {
+  opacity: 0.7;
+}
+.play-range-warnings {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #ce3852;
+}
+.play-range-warnings p {
+  margin: 10px 0 5px;
+  color: inherit;
+  font-size: inherit;
+}
+.play-range-issue-list {
+  max-height: 110px;
+  overflow-y: auto;
+}
+.play-range-issue-list button {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 0;
+  font-size: inherit;
+  border-top: 1px solid #d9466428;
+  font-variant-numeric: tabular-nums;
+}
+.play-range-issue-list button:hover {
+  text-decoration: underline;
+}
+.app[data-workbench-theme='dark'] .play-range-fields {
+  border-color: var(--wb-border);
+  color: var(--wb-muted);
+}
+.app[data-workbench-theme='dark'] .play-range-warnings {
+  color: #ff8d9c;
+}
+.play-range-end {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ff3b4f;
+  z-index: 4;
+  pointer-events: none;
+}
+.play-range-end > span {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  color: #fff;
+  background: #bb233a;
+  font-size: 9px;
+  line-height: 14px;
+  white-space: nowrap;
 }
 .inspector-check {
   margin: 10px 0 12px;
@@ -2324,41 +2458,6 @@ nav button.active:after {
   position: absolute;
   right: 14px;
   top: 14px;
-}
-.modal-backdrop:has(.settings-modal) {
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding-top: 80px;
-  background: #20192330;
-  backdrop-filter: none;
-}
-.settings-modal {
-  width: min(380px, 90vw);
-  padding: 28px;
-}
-.note-speed-setting {
-  display: grid;
-  gap: 10px;
-  margin-top: 24px;
-}
-.note-speed-heading,
-.note-speed-scale {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.note-speed-heading output {
-  font-size: 24px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--pink);
-}
-.note-speed-setting input {
-  width: 100%;
-  accent-color: var(--pink);
-}
-.note-speed-scale {
-  font-size: 12px;
 }
 .help-modal {
   max-height: 90vh;
@@ -2532,9 +2631,6 @@ nav button.active:after {
 .practice .workspace-title h1 {
   font-size: 20px;
   margin: 0;
-}
-.return-workspace {
-  flex-shrink: 0;
 }
 .practice .stage-grid {
   height: clamp(518px, 68vh, 720px);

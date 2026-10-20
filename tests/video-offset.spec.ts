@@ -96,7 +96,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await seek(8);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await page.keyboard.press('1');
+  await page.keyboard.press('4');
   await page.keyboard.press('ArrowDown');
   await page.keyboard.down('ArrowUp');
   await page.waitForTimeout(300);

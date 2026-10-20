@@ -1,0 +1,44 @@
+.game-entrance {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: #000;
+  opacity: 1;
+  animation: game-entrance-darken var(--entrance-fade-out) cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+.game-entrance[data-phase='hold'] {
+  animation: none;
+  /* Avoid fully opaque occlusion during best-effort render preparation. */
+  opacity: 0.995;
+}
+.game-entrance[data-phase='reveal'] {
+  animation: game-entrance-reveal var(--entrance-fade-in) cubic-bezier(0.33, 0, 0.67, 1)
+    var(--entrance-black-hold) both;
+}
+.practice[data-render-preparing] .ready-countdown {
+  /* Let the paused, prepared video frame reach the compositor too. The black
+     entrance still covers the screen; the cover returns before it reveals. */
+  visibility: hidden;
+}
+@keyframes game-entrance-darken {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes game-entrance-reveal {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-entrance {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}

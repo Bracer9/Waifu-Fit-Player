@@ -1,6 +1,7 @@
-import { openDemo } from './helpers/project';
+import { importDemo } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { blankChart } from '../src/model';
 
 test('global note speed preserves media timing, scales taps and ribbons, and persists', async ({
   page,
@@ -8,9 +9,9 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await openDemo(page);
+  await importDemo(page, blankChart());
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await expect(page.getByRole('button', { name: '全局设置', exact: true })).toHaveCount(0);
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));
@@ -54,7 +55,17 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   expect(original.tap).toBeCloseTo(88 - 88 / 3.6);
   expect(original.hold).toBeCloseTo((88 * 2) / 3.6);
   const settings = page.getByRole('button', { name: '全局设置', exact: true });
-  await settings.click();
+  const openSettings = async () => {
+    await page.getByRole('button', { name: '主菜单', exact: true }).click();
+    await settings.click();
+    await page.getByRole('tab', { name: 'SYSTEM', exact: true }).hover();
+  };
+  const returnToEditor = async () => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /创作模式/ }).click();
+    await expect(settings).toHaveCount(0);
+  };
+  await openSettings();
   const speed = page.getByRole('slider', { name: '音符流速', exact: true });
   await expect(speed).toHaveValue('3');
   await expect(speed).toHaveAttribute('min', '0.5');
@@ -62,10 +73,10 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   await speed.focus();
   await speed.press('End');
   await expect(speed).toHaveValue('10');
+  await page.screenshot({ path: 'artifacts/note-speed-settings.png', fullPage: true });
+  await returnToEditor();
   await expect.poll(async () => (await geometry()).hold).toBeCloseTo((original.hold * 10) / 3);
   expect(88 - (await geometry()).tap).toBeCloseTo(((88 - original.tap) * 10) / 3);
-  await page.screenshot({ path: 'artifacts/note-speed-settings.png', fullPage: true });
-  await page.getByRole('button', { name: '完成', exact: true }).click();
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   expect((await geometry()).hold).toBeCloseTo((original.hold * 10) / 3);
   await expect(page.locator('[data-note-id="speed-future"]')).toHaveCount(0);
@@ -81,16 +92,19 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
     await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.playbackRate, v.paused]),
   ).toEqual([1, 1, true]);
   await page.screenshot({ path: 'artifacts/note-speed-game.png', fullPage: true });
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: /创作模式/ }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await seek(1);
   await page.getByRole('button', { name: '切换日夜主题', exact: true }).click();
-  await settings.click();
+  await openSettings();
   await speed.focus();
   await speed.press('Home');
   await expect(speed).toHaveValue('0.5');
+  await returnToEditor();
   await expect.poll(async () => (await geometry()).hold).toBeCloseTo(original.hold / 6);
   expect(88 - (await geometry()).tap).toBeCloseTo((88 - original.tap) / 6);
   await page.screenshot({ path: 'artifacts/note-speed-settings-dark.png', fullPage: true });
-  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(page.locator('[data-note-id="speed-future"]')).toHaveCount(1);
   await seek(2);
@@ -102,12 +116,14 @@ test('global note speed preserves media timing, scales taps and ribbons, and per
   await expect(page.locator('.player-hold[data-note-id="speed-hold"]')).toHaveCount(0);
   await page.reload();
   await settings.click();
+  await page.getByRole('tab', { name: 'SYSTEM', exact: true }).hover();
   await expect(speed).toHaveValue('0.5');
-  await page.getByRole('button', { name: '恢复默认', exact: true }).click();
+  await speed.fill('3');
   await expect(speed).toHaveValue('3');
   await page.keyboard.press('Escape');
   await page.reload();
   await settings.click();
+  await page.getByRole('tab', { name: 'SYSTEM', exact: true }).hover();
   await expect(speed).toHaveValue('3');
   expect(errors).toEqual([]);
 });

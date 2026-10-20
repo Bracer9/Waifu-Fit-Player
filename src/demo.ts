@@ -2,6 +2,7 @@ import { sortChart, type Chart, type Lane, type Direction } from './model';
 export function demoChart(fileName: string): Chart {
   const chart: Chart = {
     schemaVersion: 1,
+    chartType: 'dance',
     title: '爽快奪回 Sunlight',
     videoHint: { fileName, durationMs: 266775 },
     specialMove: { name: 'HEART POSE', icon: 'heart', previewBeats: 3 },

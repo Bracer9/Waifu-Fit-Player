@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { importDemo } from './helpers/project';
+import { insertAlbum, importDemo } from './helpers/project';
+import { blankChart } from '../src/model';
 
 test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', async ({ page }) => {
   test.setTimeout(90000);
@@ -42,7 +43,10 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
       };
     });
   await page.goto('/');
-  await importDemo(page);
+  await importDemo(page, {
+    ...blankChart('Menu resume QA'),
+    notes: [{ id: 'resume-note', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1000 }],
+  });
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByLabel('所属专辑').selectOption('touhou');
@@ -50,14 +54,15 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: '选择主界面 BGM' }).click();
+  await page.getByRole('button', { name: '选择主界面 BGM' }).hover();
   const tracks = page.locator('.theme-track');
   test.skip((await tracks.count()) === 0, '需要游戏 BGM 资源');
   await tracks.first().click();
   await page.getByRole('button', { name: '单曲循环', exact: true }).click();
   await expect.poll(async () => (await sound()).time).toBeGreaterThan(0);
   const theme = (await sound()).src;
-  await page.getByRole('button', { name: '关闭主界面音乐' }).click();
+  await page.mouse.move(10, 10);
+  await expect(page.getByRole('region', { name: '主界面音乐' })).toBeHidden();
   await expect.poll(async () => (await sound()).time).toBeGreaterThan(2.5);
   await page.screenshot({ path: 'artifacts/menu-music-real-track.png', animations: 'disabled' });
   await page.waitForTimeout(350);
@@ -69,6 +74,7 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
   const requestsBeforePreview = bgmRequests.length;
   for (let i = 0; i < 6; i++) {
     await page.locator('.collection-album').first().click();
+    await insertAlbum(page);
     await expect.poll(async () => (await sound()).src).toBe('/demo.mp4');
     await expect.poll(async () => (await sound()).time).toBeGreaterThan(0.1);
     expect(await sound()).toMatchObject({ count: 2, playing: 1 });

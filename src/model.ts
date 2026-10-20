@@ -1,3 +1,11 @@
+import {
+  CHART_TYPES,
+  EXERCISE_INTENSITIES,
+  migrateChartMetadata,
+  type ChartType,
+  type ExerciseIntensity,
+} from './chart-types';
+
 export const ARM_DIRECTIONS = [
   'up_left',
   'up',
@@ -18,14 +26,6 @@ export const ARM_HANDS = [
   { value: 'both', label: 'BOTH', color: 'var(--arms-both)' },
 ] as const;
 export const LANES = [
-  { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: 'var(--pink)' },
-  {
-    id: 'calf_raise',
-    name: '提踵',
-    english: 'CALF RAISE',
-    directions: ['up', 'down'],
-    color: 'var(--miku)',
-  },
   {
     id: 'punch',
     name: '手臂',
@@ -45,6 +45,14 @@ export const LANES = [
     name: '侧收腹',
     english: 'SIDE CRUNCH',
     directions: ['left', 'right'],
+    color: 'var(--miku)',
+  },
+  { id: 'squat', name: '蹲起', english: 'SQUAT', directions: ['down', 'up'], color: 'var(--pink)' },
+  {
+    id: 'calf_raise',
+    name: '提踵',
+    english: 'CALF RAISE',
+    directions: ['up', 'down'],
     color: 'var(--miku)',
   },
 ] as const;
@@ -72,13 +80,17 @@ export type Note = {
 } & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
 export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '4/4' | '3/4' };
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
+/** Absolute video positions, independent of the chart's video/audio offset. */
+export type PlayRange = { startMs: number; endMs: number };
 export type Chart = {
   schemaVersion: 1;
   songId?: string;
-  difficulty?: 'normal' | 'hard';
-  difficultyRating?: number;
+  chartType?: ChartType;
+  intensity?: ExerciseIntensity;
+  danceDifficulty?: number;
   title: string;
   videoOffsetMs?: number;
+  playRange?: PlayRange;
   videoHint: { fileName: string; durationMs: number; assetId?: string };
   specialMove: { name: string; icon: 'heart' | 'star' | 'sparkles'; previewBeats: number } | null;
   tempoSegments: TempoSegment[];
@@ -135,15 +147,11 @@ export const noteColor = (
     ? ARM_HANDS.find(
         (item) => item.value === armHand({ lane, direction, hand, armAction: action }),
       )!.color
-    : lane === 'step'
+    : lane === 'step' || lane === 'side_crunch'
       ? stepFoot({ direction, foot }) === 'left'
         ? 'var(--cyan)'
         : 'var(--pink)'
-      : lane === 'side_crunch'
-        ? direction === 'left'
-          ? 'var(--cyan)'
-          : 'var(--pink)'
-        : LANES.find((item) => item.id === lane)!.color;
+      : LANES.find((item) => item.id === lane)!.color;
 export const isFollowStep = (note: Note) =>
   note.lane === 'step' && note.kind === 'tap' && note.follow === true;
 export const isStepMove = (note: Note) =>
@@ -191,6 +199,7 @@ export function specialMoveLabel(move: NonNullable<Chart['specialMove']>): strin
 export function blankChart(title = '我的新作品'): Chart {
   return {
     schemaVersion: 1,
+    chartType: 'dance',
     title,
     videoHint: { fileName: '', durationMs: 0 },
     specialMove: null,
@@ -219,14 +228,16 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     !!value && typeof value === 'object' && !Array.isArray(value);
   if (!record(source)) throw new ChartError(['谱面必须是一个 JSON 对象。']);
   // Retired C actions are discarded, including their hold and sway variants.
-  const input = Array.isArray(source.notes)
-    ? {
-        ...source,
-        notes: source.notes.filter(
-          (note) => !record(note) || note.lane !== 'step' || note.direction !== 'close',
-        ),
-      }
-    : source;
+  const input = migrateChartMetadata(
+    Array.isArray(source.notes)
+      ? {
+          ...source,
+          notes: source.notes.filter(
+            (note) => !record(note) || note.lane !== 'step' || note.direction !== 'close',
+          ),
+        }
+      : source,
+  );
   if (input.schemaVersion !== 1)
     throw new ChartError(['不支持此谱面版本，当前仅支持 schemaVersion: 1。']);
   if (typeof input.title !== 'string' || !input.title.trim()) errors.push('作品名称不能为空。');
@@ -235,15 +246,22 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     (typeof input.songId !== 'string' || !/^[a-f0-9-]{36}$/.test(input.songId))
   )
     errors.push('曲目 ID 无效。');
-  if (input.difficulty !== undefined && !['normal', 'hard'].includes(String(input.difficulty)))
-    errors.push('难度必须为 normal 或 hard。');
+  if (!CHART_TYPES.includes(input.chartType as ChartType))
+    errors.push('谱面类型必须为 fitness 或 dance。');
+  if (source.difficulty !== undefined && !['normal', 'hard'].includes(String(source.difficulty)))
+    errors.push('旧谱面类型无效。');
   if (
-    input.difficultyRating !== undefined &&
-    (typeof input.difficultyRating !== 'number' ||
-      !Number.isFinite(input.difficultyRating) ||
-      input.difficultyRating < 0)
+    input.intensity !== undefined &&
+    !EXERCISE_INTENSITIES.includes(input.intensity as ExerciseIntensity)
   )
-    errors.push('难度系数必须为不小于 0 的数字。');
+    errors.push('运动强度必须为 low、medium 或 high。');
+  if (
+    input.danceDifficulty !== undefined &&
+    (typeof input.danceDifficulty !== 'number' ||
+      !Number.isFinite(input.danceDifficulty) ||
+      input.danceDifficulty < 0)
+  )
+    errors.push('舞蹈难度必须为不小于 0 的数字。');
   if (
     input.videoOffsetMs !== undefined &&
     (!Number.isInteger(input.videoOffsetMs) || Math.abs(Number(input.videoOffsetMs)) > 1000)
@@ -275,6 +293,18 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
     if (!Number.isInteger(value) || Number(value) < 0 || Number(value) > limit)
       errors.push(`${label}：时间必须为视频范围内的非负整数毫秒。`);
   };
+  if (input.playRange !== undefined) {
+    const range = input.playRange;
+    if (
+      !record(range) ||
+      !Number.isInteger(range.startMs) ||
+      !Number.isInteger(range.endMs) ||
+      Number(range.startMs) < 0 ||
+      Number(range.endMs) <= Number(range.startMs) ||
+      Number(range.endMs) > limit
+    )
+      errors.push('游玩区间无效：起止位置必须为视频范围内的整数毫秒，终点必须晚于起点。');
+  }
   if (!Array.isArray(input.tempoSegments) || !input.tempoSegments.length)
     errors.push('至少需要一个节拍段。');
   else {
@@ -328,9 +358,10 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
         errors.push(`${label}：用手颜色仅适用于 ARMS 箭头，拳套的左右手由 L/R 决定。`);
       if (
         note.foot !== undefined &&
-        (note.lane !== 'step' || (note.foot !== 'left' && note.foot !== 'right'))
+        ((note.lane !== 'step' && note.lane !== 'side_crunch') ||
+          (note.foot !== 'left' && note.foot !== 'right'))
       )
-        errors.push(`${label}：用脚颜色仅适用于 STEP，必须为 left 或 right。`);
+        errors.push(`${label}：用脚／腿颜色仅适用于 STEP 或 SIDE CRUNCH，必须为 left 或 right。`);
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
       if (

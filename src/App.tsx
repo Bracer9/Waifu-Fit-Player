@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowUpRight,
@@ -17,7 +25,8 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { blankChart, parseChart, serializeChart, type Chart } from './model';
+import { blankChart, parseChart, serializeChart, type Chart, type PlayRange } from './model';
+import { playableChart } from './play-range';
 import { historyReducer } from './editing';
 import { MediaController, audioOutputErrorMessage, useMediaStatus } from './media';
 import { usePlayerPreparation } from './usePlayerPreparation';
@@ -30,28 +39,43 @@ import {
   readLibrary,
   unpublishSong,
   videoIds,
-  type Difficulty,
+  type ChartType,
   type Edition,
   type Song,
 } from './library';
 import { coverFromVideo } from './cover';
 import { LibraryMenu } from './views/LibraryMenu';
+import { AlbumTuning } from './components/AlbumDeck';
 import {
   AlbumManager,
   PublicationFields,
   PublishDialog,
   SongManager,
 } from './components/LibraryControls';
-import { AudioVolumeControl, MusicPulse } from './components/MenuMusic';
+import { MusicPulse } from './components/MenuMusic';
+import { MenuSettings, SettingsGearHalo } from './components/MenuSettings';
+import { MenuHighlightContext, useMenuHighlight } from './useCardHighlight';
 import { useMenuMusic } from './useMenuMusic';
 import { useMenuSounds } from './useMenuSounds';
+import { useMenuCardPress } from './useMenuCardPress';
 import { Player } from './views/Player';
-import { Editor } from './views/Editor';
+import { Editor, type EditorHandle } from './views/Editor';
 import { Home } from './views/Home';
 import { Transport } from './components/Transport';
-import { PracticeBackdrop, PracticeCover, PracticeMasthead } from './components/PracticeArtwork';
+import { chartTypeFrom } from './chart-types';
+import {
+  PracticeBackdrop,
+  PracticeCover,
+  PracticeMasthead,
+  PracticeStartupLighting,
+} from './components/PracticeArtwork';
+import { PracticePause } from './components/PracticePause';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
+import { GameEntrance } from './components/GameEntrance';
+import { MenuTransition } from './components/MenuTransition';
+import { LiquidMenuTransition } from './components/LiquidMenuTransition';
+import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
   forgetVideo,
   prepareVideo,
@@ -83,6 +107,15 @@ type VideoRequest = {
 };
 
 export default function App() {
+  const menuHighlight = useMenuHighlight();
+  return (
+    <MenuHighlightContext.Provider value={menuHighlight}>
+      <AppContent menuHighlight={menuHighlight} />
+    </MenuHighlightContext.Provider>
+  );
+}
+
+function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMenuHighlight> }) {
   const [initial] = useState(() => blankChart());
   const [history, dispatch] = useReducer(historyReducer, {
     past: [],
@@ -90,25 +123,79 @@ export default function App() {
     future: [],
   });
   const chart = history.present;
+  const gameChart = useMemo(() => playableChart(chart), [chart]);
+  const editor = useRef<EditorHandle>(null);
   const [saved, setSaved] = useState(JSON.stringify(initial));
   const dirty = JSON.stringify(chart) !== saved;
   const [media] = useState(() => new MediaController());
   const status = useMediaStatus(media);
   const [source, setSource] = useState('');
-  const preparation = usePlayerPreparation(media, source, chart);
+  const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
+  const preparation = usePlayerPreparation(
+    media,
+    source,
+    mode === 'player' ? gameChart : chart,
+    mode === 'player',
+  );
   const objectUrl = useRef<string | null>(null);
   const activeVideo = useRef<PreparedVideo | null>(null);
   const [projectRevision, setProjectRevision] = useState(0);
   const [binding, setBinding] = useState<VideoRequest | null>(null);
   const [busy, setBusy] = useState('');
   const working = useRef(false);
-  const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
   const [menuTransition, setMenuTransition] = useState<{
-    next: 'home' | 'albums' | 'songs';
+    next: 'home' | 'albums' | 'songs' | 'player';
     direction: 'forward' | 'back';
-    phase: 'cover' | 'reveal';
-  } | null>(null);
+    phase: 'cover' | 'hold' | 'reveal';
+    liquid?: boolean;
+    intro?: boolean;
+  } | null>(() =>
+    matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? null
+      : {
+          next: 'home',
+          direction: 'back',
+          phase: 'hold',
+          liquid: true,
+          intro: true,
+        },
+  );
+  const playOnCovered = useRef<(() => void) | null>(null);
+  const [playLoadComplete, setPlayLoadComplete] = useState(false);
+  const renderPreparing =
+    menuTransition?.next === 'player' &&
+    menuTransition.phase === 'hold' &&
+    mode === 'player' &&
+    playLoadComplete &&
+    !preparation.pending;
+  const finishRenderPreparation = useCallback(() => {
+    setMenuTransition((current) =>
+      current?.next === 'player' && current.phase === 'hold'
+        ? { ...current, phase: 'reveal' }
+        : current,
+    );
+  }, []);
+  useEffect(() => {
+    if (
+      playLoadComplete &&
+      menuTransition?.next === 'player' &&
+      menuTransition.phase === 'hold' &&
+      (mode !== 'player' || preparation.error)
+    )
+      finishRenderPreparation();
+  }, [playLoadComplete, menuTransition, mode, preparation.error, finishRenderPreparation]);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
+  useMenuCardPress(menuPage);
+  const playStart = chart.playRange?.startMs;
+  const playEnd = chart.playRange?.endMs;
+  useLayoutEffect(() => {
+    media.setPlaybackRange(
+      mode === 'player' && playStart !== undefined && playEnd !== undefined
+        ? { startMs: playStart, endMs: playEnd }
+        : null,
+    );
+    return () => media.setPlaybackRange(null);
+  }, [media, mode, source, playStart, playEnd]);
   const navigateMenu = (next: 'home' | 'albums' | 'songs') => {
     if (menuTransition || next === mode) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -120,9 +207,11 @@ export default function App() {
       next,
       direction: pages.indexOf(next) > pages.indexOf(mode) ? 'forward' : 'back',
       phase: 'cover',
+      liquid: (mode === 'home' && next === 'albums') || (mode === 'albums' && next === 'home'),
     });
   };
   const [settings, setSettings] = useState(false);
+  const menuSettingsTrigger = useRef<HTMLButtonElement>(null);
   const [seVolume, setSeVolume] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(SE_VOLUME_KEY) ?? 0.5);
@@ -184,23 +273,48 @@ export default function App() {
   const [draftMeta, setDraftMeta] = useState({ albumId: '', cover: '' });
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
   const [albumId, setAlbumId] = useState('all');
+  const [albumPlayerOpen, setAlbumPlayerOpen] = useState(false);
+  const [albumTuning, setAlbumTuning] = useState<'cover' | 'reveal' | null>(null);
   const [selectedSong, setSelectedSong] = useState('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('hard');
+  const [selectedChartType, setSelectedChartType] = useState<ChartType>('dance');
   const [coverSeed] = useState(Math.random);
   const [manageSongs, setManageSongs] = useState(false);
   const [manageAlbums, setManageAlbums] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const deletedSongs = useRef(new Set<string>());
-  const [startPending, setStartPending] = useState(false);
+  const [readyPhase, setReadyPhase] = useState<ReadyCountdownPhase | null>(null);
+  const [countdownOrigin, setCountdownOrigin] = useState<'start' | 'resume'>('start');
+  const startPending = readyPhase === 'waiting' || readyPhase === 'counting';
+  const [gamePauseOpen, setGamePauseOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (mode !== 'player' || gamePauseOpen) setReadyPhase(null);
+  }, [mode, gamePauseOpen]);
+  const gamePauseTrigger = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    // The full pause menu is an explicit command, not a side effect of stopping media.
+    if (mode !== 'player' || startPending || preparation.pending || status.playing)
+      setGamePauseOpen(false);
+  }, [mode, startPending, preparation.pending, status.playing]);
   const [previewAsset, setPreviewAsset] = useState<string>();
+  const [previewRange, setPreviewRange] = useState<PlayRange>();
+  const previewSong = useCallback((assetId: string | undefined, range?: PlayRange) => {
+    setPreviewAsset(assetId);
+    setPreviewRange(range);
+  }, []);
   const menuMusic = useMenuMusic(
-    mode === 'home' || mode === 'albums' ? 'theme' : mode === 'songs' ? 'preview' : null,
+    mode === 'songs' || (mode === 'albums' && albumPlayerOpen)
+      ? 'preview'
+      : mode === 'home' || mode === 'albums'
+        ? 'theme'
+        : null,
     previewAsset,
     notify,
     status.volume,
+    previewRange,
   );
   const playMenuSound = useMenuSounds(seVolume);
   const openSettings = () => {
+    setAlbumPlayerOpen(false);
     playMenuSound('settings');
     setSettings(true);
   };
@@ -208,7 +322,7 @@ export default function App() {
     playMenuSound('back');
     setSettings(false);
   };
-  const difficulty = chart.difficulty ?? 'hard';
+  const chartType = chart.chartType ?? 'dance';
   const persistDraft = useCallback(async () => {
     if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
     const edition: Edition = { chart: structuredClone(chart), ...draftMeta, updatedAt: Date.now() };
@@ -217,7 +331,7 @@ export default function App() {
         ? previous
         : {
             id: chart.songId!,
-            drafts: { ...previous?.drafts, [chart.difficulty ?? 'hard']: edition },
+            drafts: { ...previous?.drafts, [chart.chartType ?? 'dance']: edition },
             released: previous?.released ?? {},
           },
     );
@@ -225,7 +339,7 @@ export default function App() {
     try {
       localStorage.setItem(
         LAST_DRAFT_KEY,
-        JSON.stringify({ id: chart.songId, difficulty: chart.difficulty ?? 'hard' }),
+        JSON.stringify({ id: chart.songId, chartType: chart.chartType ?? 'dance' }),
       );
     } catch {
       /* The draft itself is in IndexedDB. */
@@ -236,9 +350,15 @@ export default function App() {
     if (mode === 'player') setNotice('');
   }, [mode]);
   const completeCountdown = useCallback(() => {
-    setStartPending(false);
-    void media.toggle().catch(() => notify('请点击播放开始。'));
-  }, [media, notify]);
+    setReadyPhase('go');
+    playMenuSound('mode');
+    if (media.element?.paused)
+      void media.toggle().catch(() => {
+        setReadyPhase(null);
+        notify('请点击播放开始。');
+      });
+  }, [media, notify, playMenuSound]);
+  const finishCountdown = useCallback(() => setReadyPhase(null), []);
   const edit = useCallback((next: Chart) => dispatch({ type: 'edit', chart: next }), []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []),
     redo = useCallback(() => dispatch({ type: 'redo' }), []);
@@ -314,7 +434,7 @@ export default function App() {
         {
           ...next,
           songId: next.songId ?? existing?.id ?? crypto.randomUUID(),
-          difficulty: next.difficulty ?? 'hard',
+          chartType: next.chartType ?? 'dance',
           videoHint: video.hint,
         },
         video.hint.durationMs,
@@ -325,7 +445,7 @@ export default function App() {
       throw error;
     }
     const known = library.songs.find((s) => s.id === paired.songId);
-    const edition = context?.edition ?? known?.drafts[paired.difficulty ?? 'hard'];
+    const edition = context?.edition ?? known?.drafts[paired.chartType ?? 'dance'];
     const meta = { albumId: edition?.albumId ?? '', cover: edition?.cover ?? '' };
     try {
       if (!context?.play)
@@ -333,14 +453,14 @@ export default function App() {
           id: paired.songId!,
           drafts: {
             ...previous?.drafts,
-            [paired.difficulty ?? 'hard']: { chart: paired, ...meta, updatedAt: Date.now() },
+            [paired.chartType ?? 'dance']: { chart: paired, ...meta, updatedAt: Date.now() },
           },
           released: previous?.released ?? {},
         }));
       else if (JSON.stringify(next.videoHint) !== JSON.stringify(paired.videoHint))
         await updateSong(paired.songId!, (previous) => {
           if (!previous) return previous;
-          const d = paired.difficulty ?? 'hard';
+          const d = paired.chartType ?? 'dance';
           return {
             ...previous,
             released: { ...previous.released, [d]: { ...previous.released[d]!, chart: paired } },
@@ -353,12 +473,13 @@ export default function App() {
     deletedSongs.current.delete(paired.songId!);
     setDraftMeta(meta);
     setPlayOrigin(context?.play ? 'library' : 'editor');
-    setStartPending(!!context?.play);
+    setCountdownOrigin('start');
+    setReadyPhase(context?.play ? 'waiting' : null);
     if (!context?.play) {
       try {
         localStorage.setItem(
           LAST_DRAFT_KEY,
-          JSON.stringify({ id: paired.songId, difficulty: paired.difficulty }),
+          JSON.stringify({ id: paired.songId, chartType: paired.chartType }),
         );
         if (context?.legacy) localStorage.removeItem(DRAFT_KEY);
       } catch {
@@ -401,7 +522,7 @@ export default function App() {
         ? {
             ...blankChart(fileTitle(file.name)),
             songId: crypto.randomUUID(),
-            difficulty: 'hard' as const,
+            chartType: 'dance' as const,
           }
         : request.chart;
     await installProject(
@@ -478,7 +599,7 @@ export default function App() {
         );
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${chart.title.replace(/[<>:"/\\|?*]/g, '_')}_${difficulty}.wfp.json`;
+        link.download = `${chart.title.replace(/[<>:"/\\|?*]/g, '_')}_${chartType}.wfp.json`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
@@ -490,6 +611,49 @@ export default function App() {
     } finally {
       setSaving(false);
     }
+  };
+  const pauseGame = () => {
+    if (startPending || preparation.pending || !status.ready) return;
+    playMenuSound('settings');
+    media.pause();
+    setGamePauseOpen(true);
+  };
+  const resumeGame = (sound: 'mode' | 'song' = 'mode') => {
+    if (!status.ready || status.preparing || startPending) return;
+    if (!media.element?.paused) {
+      setGamePauseOpen(false);
+      return;
+    }
+    playMenuSound(sound);
+    setGamePauseOpen(false);
+    setCountdownOrigin('resume');
+    setReadyPhase('waiting');
+    // Prepare the paused frame without seeking or starting the shared media clock.
+    preparation.retry();
+  };
+  const toggleGamePlayback = () => {
+    if (gamePauseOpen || media.element?.paused) resumeGame();
+    else pauseGame();
+  };
+  const restartGame = () => {
+    if (!status.ready || status.preparing || startPending) return;
+    playMenuSound('song');
+    media.pause();
+    media.seek(playStart ?? 0);
+    setGamePauseOpen(false);
+    setCountdownOrigin('start');
+    setReadyPhase('waiting');
+    // Reuse the opening sequence after the seeked video frame is ready.
+    preparation.retry();
+  };
+  const backToSelect = () => {
+    playMenuSound('back');
+    media.pause();
+    setGamePauseOpen(false);
+    setReadyPhase(null);
+    setSelectedSong(chart.songId ?? selectedSong);
+    setSelectedChartType(chartType);
+    setMode('songs');
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -513,7 +677,10 @@ export default function App() {
         return;
       }
       if (isTyping(e.target)) return;
-      if (mode === 'editor' && mod && e.key.toLowerCase() === 'z') {
+      if (mode === 'player' && (e.key === 'Escape' || e.key === 'Backspace')) {
+        e.preventDefault();
+        if (!e.repeat) gamePauseOpen ? resumeGame() : pauseGame();
+      } else if (mode === 'editor' && mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         e.shiftKey ? redo() : undo();
       } else if (mode === 'editor' && mod && e.key.toLowerCase() === 'y') {
@@ -521,7 +688,8 @@ export default function App() {
         redo();
       } else if (e.code === 'Space' && (mode === 'editor' || mode === 'player')) {
         e.preventDefault();
-        if (!e.repeat) media.toggle().catch(() => notify('Press Play to start.'));
+        if (!e.repeat && !(mode === 'player' && gamePauseOpen))
+          void media.toggle().catch(() => notify('Press Play to start.'));
       }
     };
     const keyup = (e: KeyboardEvent) => {
@@ -563,14 +731,18 @@ export default function App() {
     void runTask('正在打开草稿…', async () => {
       await library.load();
       const songs = await readLibrary('songs');
-      let last: { id: string; difficulty: Difficulty } | undefined;
+      let last: { id: string; chartType: ChartType } | undefined;
       try {
-        last = JSON.parse(localStorage.getItem(LAST_DRAFT_KEY) || 'null');
+        const saved = JSON.parse(localStorage.getItem(LAST_DRAFT_KEY) || 'null');
+        if (saved && typeof saved.id === 'string') {
+          last = { id: saved.id, chartType: chartTypeFrom(saved.chartType ?? saved.difficulty) };
+          localStorage.setItem(LAST_DRAFT_KEY, JSON.stringify(last));
+        }
       } catch {
         /* Start an empty editor. */
       }
       const song = songs.find((s) => s.id === last?.id);
-      const edition = song?.drafts[last?.difficulty ?? 'hard'];
+      const edition = song?.drafts[last?.chartType ?? 'dance'];
       if (edition) await openProject(edition.chart, true, { edition });
       else {
         const legacy = localStorage.getItem(DRAFT_KEY);
@@ -586,14 +758,29 @@ export default function App() {
       }
     });
   };
-  const playSong = (song: Song, d: Difficulty) => {
+  const playSong = async (song: Song, d: ChartType) => {
     const edition = song.released[d];
-    if (!edition) return;
+    if (!edition || menuTransition || working.current) return;
     setSelectedSong(song.id);
-    setSelectedDifficulty(d);
-    void runTask('正在准备曲目…', () => openProject(edition.chart, true, { play: true, edition }));
+    setSelectedChartType(d);
+    const open = () =>
+      runTask('正在准备曲目…', () => openProject(edition.chart, true, { play: true, edition }));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      await open();
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      setPlayLoadComplete(false);
+      playOnCovered.current = () => {
+        void open().finally(() => {
+          setPlayLoadComplete(true);
+          resolve();
+        });
+      };
+      setMenuTransition({ next: 'player', direction: 'forward', phase: 'cover' });
+    });
   };
-  const editSong = (song: Song, d: Difficulty, published: boolean) => {
+  const editSong = (song: Song, d: ChartType, published: boolean) => {
     const edition = published ? song.released[d] : song.drafts[d];
     if (!edition) return;
     if (
@@ -610,13 +797,36 @@ export default function App() {
     setManageSongs(false);
     void runTask('正在打开谱面…', async () => {
       if (mode === 'editor') await persistDraft();
-      await openProject(edition.chart, true, { edition });
+      if (mode === 'player' && chart.songId === song.id && chartType === d) {
+        // The playing edition and its media are already loaded. Keep the paused
+        // position while entering its draft, after the existing overwrite guard.
+        media.pause();
+        await persistDraft();
+        setGamePauseOpen(false);
+        setReadyPhase(null);
+        setPlayOrigin('editor');
+        setMode('editor');
+      } else await openProject(edition.chart, true, { edition });
     });
   };
-  const withdraw = (song: Song, d: Difficulty) => {
+  const editCurrentGame = () => {
+    playMenuSound('mode');
+    const song = library.songs.find((s) => s.id === chart.songId);
+    if (playOrigin === 'library' && song) {
+      editSong(song, chartType, true);
+      return;
+    }
+    // A studio playtest returns to the same in-memory draft and undo history.
+    media.pause();
+    setGamePauseOpen(false);
+    setReadyPhase(null);
+    setPlayOrigin('editor');
+    setMode('editor');
+  };
+  const withdraw = (song: Song, d: ChartType) => {
     if (
       !window.confirm(
-        `撤下《${latestEdition(song).chart.title}》的 ${d.toUpperCase()}？只从音游模式移除，保留该难度草稿。`,
+        `撤下《${latestEdition(song).chart.title}》的 ${d.toUpperCase()}？只从音游模式移除，保留该类型草稿。`,
       )
     )
       return;
@@ -628,7 +838,7 @@ export default function App() {
   const deleteSong = (song: Song) => {
     if (
       !window.confirm(
-        `彻底从 WAIFU 删除《${latestEdition(song).chart.title}》？将删除 Normal / Hard 的草稿、发布版本和曲绘。磁盘原始文件不会删除。`,
+        `彻底从 WAIFU 删除《${latestEdition(song).chart.title}》？将删除 FITNESS / DANCE 的草稿、发布版本和曲绘。磁盘原始文件不会删除。`,
       )
     )
       return;
@@ -664,22 +874,22 @@ export default function App() {
     });
   };
   const updatePublication = async (values: {
-    difficulty?: Difficulty;
+    chartType?: ChartType;
     albumId?: string;
     cover?: string;
   }) => {
-    if (values.difficulty && values.difficulty !== difficulty) {
-      const existing = library.songs.find((s) => s.id === chart.songId)?.drafts[values.difficulty];
+    if (values.chartType && values.chartType !== chartType) {
+      const existing = library.songs.find((s) => s.id === chart.songId)?.drafts[values.chartType];
       if (
         existing &&
         !window.confirm(
-          `将当前谱面复制为 ${values.difficulty.toUpperCase()} 草稿，替换该难度现有草稿？两个难度的发布版本都不改变。`,
+          `将当前谱面复制为 ${values.chartType.toUpperCase()} 草稿，替换该类型现有草稿？两种类型的发布版本都不改变。`,
         )
       )
         return;
       try {
         await persistDraft();
-        edit({ ...chart, difficulty: values.difficulty });
+        edit({ ...chart, chartType: values.chartType });
       } catch (error) {
         notify(`草稿未能保存：${(error as Error).message}`);
         return;
@@ -709,9 +919,9 @@ export default function App() {
   const publish = async () => {
     try {
       await persistDraft();
-      await updateSong(chart.songId!, (song) => song && publishSong(song, difficulty));
+      await updateSong(chart.songId!, (song) => song && publishSong(song, chartType));
       setPublishing(false);
-      notify(`${difficulty.toUpperCase()} 已发布到曲库。`);
+      notify(`${chartType.toUpperCase()} 已发布到曲库。`);
     } catch (error) {
       notify(`发布失败：${(error as Error).message}`);
     }
@@ -721,40 +931,89 @@ export default function App() {
     <div
       className={`app ${mode === 'player' ? 'practice-app' : mode === 'editor' ? '' : 'menu-app'}`}
       data-workbench-theme={mode === 'editor' && workbenchDark ? 'dark' : undefined}
+      data-menu-settings={menuPage && settings ? 'open' : undefined}
+      data-album-player={mode === 'albums' && albumPlayerOpen ? 'open' : undefined}
+      data-album-tuning={albumTuning === 'reveal' || undefined}
+      {...(menuPage ? menuHighlight.handlers : {})}
     >
-      <div className="ambient-shape pink" />
+      <div className="ambient-shape pink">
+        <svg
+          className="album-housing-outline"
+          viewBox="0 0 1000 1000"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <polyline vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
       {menuPage && (
         <button
           className="icon-button menu-settings"
+          ref={menuSettingsTrigger}
           aria-label="全局设置"
-          inert={!!menuTransition}
-          onClick={openSettings}
+          aria-expanded={settings}
+          aria-controls="menu-settings-panel"
+          inert={!!menuTransition || !!albumTuning}
+          onClick={settings ? closeSettings : openSettings}
         >
+          <SettingsGearHalo />
           <Settings size={96} />
         </button>
       )}
-      {menuPage &&
+      {menuTransition?.liquid ? (
+        <LiquidMenuTransition
+          phase={menuTransition.phase}
+          direction={menuTransition.direction}
+          intro={menuTransition.intro}
+          introLoad={library.load}
+          onSound={playMenuSound}
+          onCovered={() => {
+            setMode(menuTransition.next);
+            setMenuTransition({ ...menuTransition, phase: 'reveal' });
+          }}
+          onRevealed={() => setMenuTransition(null)}
+        />
+      ) : (
         menuTransition &&
         createPortal(
-          <div
-            className="menu-curtain"
-            data-direction={menuTransition.direction}
-            data-phase={menuTransition.phase}
-            aria-hidden="true"
-          >
-            <div
-              className="menu-curtain-sheet"
-              onAnimationEnd={() => {
-                if (menuTransition.phase === 'cover') {
-                  // Switch only after the sheet has physically covered the whole viewport.
-                  setMode(menuTransition.next);
-                  setMenuTransition({ ...menuTransition, phase: 'reveal' });
-                } else setMenuTransition(null);
+          menuTransition.next === 'player' ? (
+            <GameEntrance
+              phase={menuTransition.phase}
+              onCovered={() => {
+                setMenuTransition({ ...menuTransition, phase: 'hold' });
+                const play = playOnCovered.current;
+                playOnCovered.current = null;
+                play?.();
               }}
+              onRevealed={() => setMenuTransition(null)}
             />
-          </div>,
+          ) : (
+            <MenuTransition
+              phase={menuTransition.phase}
+              direction={menuTransition.direction}
+              onCovered={() => {
+                setMode(menuTransition.next);
+                setMenuTransition({ ...menuTransition, phase: 'reveal' });
+              }}
+              onRevealed={() => setMenuTransition(null)}
+            />
+          ),
+          document.body,
+        )
+      )}
+      {albumTuning &&
+        createPortal(
+          <AlbumTuning
+            phase={albumTuning}
+            onCovered={() => {
+              setAlbumPlayerOpen(false);
+              setMode('songs');
+              setAlbumTuning('reveal');
+            }}
+            onRevealed={() => setAlbumTuning(null)}
+          />,
           document.body,
         )}
       <header className="app-header" hidden={mode !== 'editor'}>
@@ -786,14 +1045,6 @@ export default function App() {
           </button>
         </nav>
         <div className="header-right">
-          <button
-            className="icon-button"
-            aria-label="全局设置"
-            title="全局设置"
-            onClick={openSettings}
-          >
-            <Settings size={18} />
-          </button>
           {mode !== 'player' && (
             <button
               className="icon-button"
@@ -823,7 +1074,7 @@ export default function App() {
         {menuPage && (
           <div
             className="menu-scene"
-            inert={!!menuTransition}
+            inert={!!menuTransition || !!albumTuning}
             data-exit-to={menuTransition?.phase === 'cover' ? menuTransition.next : undefined}
             key={mode}
           >
@@ -851,19 +1102,25 @@ export default function App() {
                 songs={library.songs}
                 albumId={albumId}
                 songId={selectedSong}
-                difficulty={selectedDifficulty}
+                chartType={selectedChartType}
                 seed={coverSeed}
+                musicPlaying={menuMusic.playing}
+                music={menuMusic}
+                playerOpen={albumPlayerOpen}
+                onPlayerOpen={(open) => {
+                  setAlbumPlayerOpen(open);
+                  if (!open) setAlbumTuning(null);
+                }}
                 onAlbum={(id, enter) => {
                   setAlbumId(id);
                   if (enter) {
-                    playMenuSound('album');
-                    navigateMenu('songs');
+                    setAlbumTuning('cover');
                   }
                 }}
                 onSong={setSelectedSong}
-                onDifficulty={(difficulty) => {
+                onChartType={(chartType) => {
                   playMenuSound('settings');
-                  setSelectedDifficulty(difficulty);
+                  setSelectedChartType(chartType);
                 }}
                 onBack={() => {
                   playMenuSound('back');
@@ -875,7 +1132,7 @@ export default function App() {
                   enterEditor();
                 }}
                 onPlay={playSong}
-                onPreview={setPreviewAsset}
+                onPreview={previewSong}
                 onEdit={(song, d) => {
                   playMenuSound('mode');
                   editSong(song, d, true);
@@ -887,8 +1144,15 @@ export default function App() {
         <div
           className={`album-workspace ${mode === 'editor' ? 'editing' : 'practice'}`}
           hidden={mode !== 'editor' && mode !== 'player'}
+          data-ready={mode === 'player' && !renderPreparing ? (readyPhase ?? undefined) : undefined}
+          data-render-preparing={renderPreparing ? '' : undefined}
+          data-paused={mode === 'player' && gamePauseOpen ? '' : undefined}
+          style={readyCountdownStyle}
         >
           {mode === 'player' && <PracticeBackdrop />}
+          {mode === 'player' && (readyPhase !== null || gamePauseOpen) && (
+            <PracticeStartupLighting />
+          )}
           <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
             <i />
@@ -909,7 +1173,7 @@ export default function App() {
                 />
               </h1>
               <p hidden={mode === 'player'}>
-                {`${difficulty.toUpperCase()} DRAFT · ${chart.tempoSegments[0]?.bpm ?? 120} BPM · ${chart.notes.length} 个动作提示 · ${dirty ? '正在保存草稿…' : '草稿已保存'}`}
+                {`${chartType.toUpperCase()} DRAFT · ${chart.tempoSegments[0]?.bpm ?? 120} BPM · ${chart.notes.length} 个动作提示 · ${dirty ? '正在保存草稿…' : '草稿已保存'}`}
               </p>
             </div>
             <div className="workspace-actions" hidden={mode !== 'editor'}>
@@ -964,25 +1228,33 @@ export default function App() {
           </div>
           <div className="stage-grid">
             <div className="stage-left">
-              {mode === 'player' && <PracticeCover chart={chart} media={media} />}
+              {mode === 'player' && <span className="stage-skirt" aria-hidden="true" />}
+              {mode === 'player' && <PracticeCover chart={gameChart} media={media} />}
               {(mode === 'editor' || mode === 'player') && (
                 <Player
-                  chart={chart}
+                  chart={mode === 'player' ? gameChart : chart}
                   media={media}
                   showGuide={mode === 'editor'}
                   noteSpeed={noteSpeed}
+                  prepareEffects={renderPreparing}
+                  onEffectsReady={finishRenderPreparation}
                 />
+              )}
+              {mode === 'player' && gamePauseOpen && (
+                <span className="paused-track-shade" aria-hidden="true" />
               )}
             </div>
             <div className="stage-right">
+              {mode === 'player' && <span className="stage-skirt" aria-hidden="true" />}
               {mode === 'player' && (
                 <PracticeMasthead
-                  title={chart.title}
-                  returnLabel={playOrigin === 'library' ? 'SELECT MUSIC' : 'WORKBENCH'}
-                  onReturn={() => {
-                    media.pause();
-                    setMode(playOrigin === 'library' ? 'songs' : 'editor');
-                  }}
+                  chart={gameChart}
+                  cover={draftMeta.cover}
+                  media={media}
+                  paused={gamePauseOpen}
+                  pauseTrigger={gamePauseTrigger}
+                  onPause={() => (gamePauseOpen ? resumeGame() : pauseGame())}
+                  disabled={startPending || preparation.pending || !status.ready}
                 />
               )}
               <section className="video-panel" aria-label="Video">
@@ -999,7 +1271,9 @@ export default function App() {
                     src={source || undefined}
                     preload="auto"
                     playsInline
-                    onDoubleClick={() => media.toggle().catch(() => {})}
+                    onDoubleClick={() =>
+                      mode === 'player' ? toggleGamePlayback() : media.toggle().catch(() => {})
+                    }
                   />
                   {!source && (
                     <div className="video-placeholder">
@@ -1025,6 +1299,47 @@ export default function App() {
                       </button>
                     </div>
                   )}
+                  {mode === 'player' && gamePauseOpen && (
+                    <PracticePause
+                      chart={gameChart}
+                      cover={draftMeta.cover}
+                      trigger={gamePauseTrigger}
+                      onEdit={editCurrentGame}
+                      onRestart={restartGame}
+                      onBack={backToSelect}
+                      onSound={playMenuSound}
+                    />
+                  )}
+                  {mode === 'player' && readyPhase !== null && (
+                    <GameStartCountdown
+                      key={projectRevision}
+                      cover={draftMeta.cover}
+                      chartType={chartType}
+                      resuming={countdownOrigin === 'resume'}
+                      ready={
+                        !menuTransition &&
+                        menuMusic.quiet &&
+                        !busy &&
+                        !preparation.pending &&
+                        status.ready
+                      }
+                      onPhase={setReadyPhase}
+                      onComplete={completeCountdown}
+                      onFinished={finishCountdown}
+                      onCancel={() => {
+                        playMenuSound('back');
+                        if (countdownOrigin === 'resume') {
+                          setReadyPhase(null);
+                          setGamePauseOpen(true);
+                          return;
+                        }
+                        setMenuTransition(null);
+                        setReadyPhase(null);
+                        setMode('songs');
+                      }}
+                      onSound={playMenuSound}
+                    />
+                  )}
                 </div>
                 <div className="video-caption" hidden={mode === 'player'}>
                   <span>
@@ -1032,7 +1347,16 @@ export default function App() {
                   </span>
                   <span>VIDEO + MUSIC</span>
                 </div>
-                {mode === 'player' && <Transport media={media} notify={notify} />}
+                {mode === 'player' && (
+                  <Transport
+                    media={media}
+                    notify={notify}
+                    playRange={chart.playRange}
+                    onToggle={toggleGamePlayback}
+                    onRestart={restartGame}
+                    disabled={startPending}
+                  />
+                )}
               </section>
             </div>
             {mode === 'player' && <div className="album-hinge" aria-hidden="true" />}
@@ -1040,9 +1364,11 @@ export default function App() {
           {mode !== 'player' && <Transport media={media} notify={notify} />}
           {mode === 'editor' && (
             <Editor
+              ref={editor}
               key={projectRevision}
               chart={chart}
               media={media}
+              videoSource={source}
               onChange={edit}
               onUndo={undo}
               onRedo={redo}
@@ -1051,7 +1377,7 @@ export default function App() {
               notify={notify}
               publication={
                 <PublicationFields
-                  difficulty={difficulty}
+                  chartType={chartType}
                   albumId={draftMeta.albumId}
                   cover={draftMeta.cover}
                   albums={library.albums}
@@ -1074,7 +1400,7 @@ export default function App() {
             />
           )}
           <div className="workspace-bottom" hidden={mode !== 'editor'}>
-            <span>EDITOR / 空格 播放暂停 · Ctrl+S 保存</span>
+            <span>EDITOR / 空格 播放暂停 · N 最后音符 · B 开头 · Ctrl+S 保存</span>
             <button
               disabled={!source}
               onClick={() => {
@@ -1088,23 +1414,9 @@ export default function App() {
           </div>
         </div>
       </main>
-      {mode === 'player' &&
-        startPending &&
-        menuMusic.quiet &&
-        !busy &&
-        !preparation.pending &&
-        status.ready && (
-          <GameStartCountdown
-            key={projectRevision}
-            onComplete={completeCountdown}
-            onCancel={() => {
-              setStartPending(false);
-              setMode('songs');
-            }}
-          />
-        )}
       {(mode === 'editor' || mode === 'player') &&
         preparation.pending &&
+        (mode !== 'player' || readyPhase === null || !!preparation.error) &&
         createPortal(
           <div className="playback-preparation" aria-busy={!preparation.error}>
             {preparation.error ? (
@@ -1260,73 +1572,21 @@ export default function App() {
           </section>
         </ModalBackdrop>
       )}
-      {settings && (
-        <ModalBackdrop onClose={closeSettings}>
-          <section
-            className="modal settings-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="settings-title"
-          >
-            <button
-              className="modal-close icon-button"
-              aria-label="关闭设置"
-              onClick={closeSettings}
-            >
-              <X />
-            </button>
-            <h2 id="settings-title">全局设置</h2>
-            <div className="note-speed-setting">
-              <div className="note-speed-heading">
-                <label htmlFor="note-speed">音符流速</label>
-                <output htmlFor="note-speed">{noteSpeed.toFixed(1)}</output>
-              </div>
-              <input
-                id="note-speed"
-                type="range"
-                min="0.5"
-                max="10"
-                step="0.5"
-                value={noteSpeed}
-                onChange={(event) => changeNoteSpeed(Number(event.target.value))}
-              />
-              <div className="note-speed-scale" aria-hidden="true">
-                <span>0.5 · 慢</span>
-                <span>10 · 快</span>
-              </div>
-            </div>
-            <p>默认 {DEFAULT_NOTE_SPEED.toFixed(1)}。所有曲目共用，自动记住你的选择。</p>
-            <AudioVolumeControl
-              label="菜单 BGM 音量"
-              volume={menuMusic.volume}
-              onChange={menuMusic.setVolume}
-            />
-            <AudioVolumeControl
-              label="游戏／视频音量"
-              volume={status.volume}
-              onChange={media.setVolume}
-            />
-            <AudioVolumeControl
-              label="音效（SE）音量"
-              volume={seVolume}
-              onChange={changeSeVolume}
-            />
-            <div className="modal-actions">
-              <button
-                className="button light"
-                onClick={() => {
-                  playMenuSound('settings');
-                  changeNoteSpeed(DEFAULT_NOTE_SPEED);
-                }}
-              >
-                恢复默认
-              </button>
-              <button className="button primary" onClick={closeSettings}>
-                完成
-              </button>
-            </div>
-          </section>
-        </ModalBackdrop>
+      {menuPage && (
+        <MenuSettings
+          open={settings}
+          trigger={menuSettingsTrigger}
+          onClose={closeSettings}
+          onSound={playMenuSound}
+          menuVolume={menuMusic.volume}
+          onMenuVolume={menuMusic.setVolume}
+          videoVolume={status.volume}
+          onVideoVolume={media.setVolume}
+          seVolume={seVolume}
+          onSeVolume={changeSeVolume}
+          noteSpeed={noteSpeed}
+          onNoteSpeed={changeNoteSpeed}
+        />
       )}
       {manageSongs && (
         <SongManager
@@ -1354,15 +1614,19 @@ export default function App() {
       {publishing && (
         <PublishDialog
           edition={{ chart, ...draftMeta, updatedAt: Date.now() }}
-          difficulty={difficulty}
+          chartType={chartType}
           albums={library.albums}
-          updating={!!library.songs.find((s) => s.id === chart.songId)?.released[difficulty]}
+          updating={!!library.songs.find((s) => s.id === chart.songId)?.released[chartType]}
           onClose={() => {
             playMenuSound('back');
             setPublishing(false);
           }}
           onPublish={publish}
-          onDifficulty={(difficulty) => updatePublication({ difficulty })}
+          onLocate={(id) => {
+            setPublishing(false);
+            editor.current?.locateEvent(id);
+          }}
+          onChartType={(chartType) => updatePublication({ chartType })}
         />
       )}
       {help && (
@@ -1432,7 +1696,8 @@ export default function App() {
               <li>
                 <strong>保存，然后跟练</strong>
                 <p>
-                  Ctrl+S 保存本地草稿，Ctrl+Shift+S 导出 JSON 副本。在“曲目”里选择难度、专辑与曲绘，
+                  Ctrl+S 保存本地草稿，Ctrl+Shift+S 导出 JSON
+                  副本。在“曲目”里选择谱面类型、专辑与曲绘，
                   点击“发布到曲库”后可从音游模式游玩。编辑草稿不会改变已发布的谱面。
                 </p>
               </li>
