@@ -274,7 +274,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
   const [albumId, setAlbumId] = useState('all');
   const [albumPlayerOpen, setAlbumPlayerOpen] = useState(false);
-  const [albumTuning, setAlbumTuning] = useState<'insert' | 'cover' | 'reveal' | null>(null);
+  const [albumTuning, setAlbumTuning] = useState<'cover' | 'reveal' | null>(null);
   const [selectedSong, setSelectedSong] = useState('');
   const [selectedChartType, setSelectedChartType] = useState<ChartType>('dance');
   const [coverSeed] = useState(Math.random);
@@ -1004,7 +1004,6 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         )
       )}
       {albumTuning &&
-        albumTuning !== 'insert' &&
         createPortal(
           <AlbumTuning
             phase={albumTuning}
@@ -1112,7 +1111,6 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   setAlbumPlayerOpen(open);
                   if (!open) setAlbumTuning(null);
                 }}
-                onInsertStart={() => setAlbumTuning('insert')}
                 onAlbum={(id, enter) => {
                   setAlbumId(id);
                   if (enter) {

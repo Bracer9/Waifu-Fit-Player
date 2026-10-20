@@ -129,6 +129,30 @@
   display: block;
   transform: rotate(-90deg);
 }
+.album-deck-insert-hint > small {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  translate: -50% 0;
+  font:
+    700 11px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+}
+.album-deck-quick-hint {
+  position: absolute;
+  top: calc(100% + 30px);
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  font:
+    600 9px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  opacity: 0.65;
+}
 .album-deck-insert-hint-beat {
   display: block;
   /* Local down becomes right after rotation: each beat nudges toward the slot. */
@@ -168,7 +192,7 @@
 }
 .album-deck-slot > span {
   position: absolute;
-  left: -22px;
+  left: calc(100% + 12px);
   top: 50%;
   writing-mode: vertical-rl;
   translate: 0 -50%;
@@ -355,6 +379,11 @@
   transition: none !important;
   pointer-events: none;
 }
+.album-flight-card .cover-trace {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
 .album-tuning {
   position: fixed;
   inset: 0;
@@ -366,7 +395,7 @@
   animation: album-tuning-in 240ms ease-out both;
 }
 .album-tuning[data-phase='reveal'] {
-  animation: album-tuning-out 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: album-tuning-out var(--album-reveal-duration) cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .album-tuning-grain {
   position: absolute;
@@ -398,7 +427,7 @@
   height: 3px;
   background: var(--pink);
   transform-origin: left;
-  animation: album-tuning-fill 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: album-tuning-fill var(--album-tune-duration) cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .album-tuning-station > span {
   font-size: 11px;

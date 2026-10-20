@@ -7,7 +7,15 @@ import { CoverArt } from './CoverArt';
 import { MenuHintArrows } from './MainMenuDownHint';
 import { formatTime } from '../timing';
 
-export const ALBUM_DECK_TIMING = { unfold: 620, hint: 400, insert: 1140, tune: 460, reveal: 300 };
+export const ALBUM_DECK_TIMING = {
+  unfold: 620,
+  hint: 400,
+  insert: 960,
+  quickInsert: 420,
+  release: 220,
+  tune: 620,
+  reveal: 380,
+};
 
 export function AlbumDeck({
   open,
@@ -18,7 +26,7 @@ export function AlbumDeck({
   index,
   music,
   onTrack,
-  onInsert,
+  onInsertHold,
 }: {
   open: boolean;
   ready: boolean;
@@ -28,7 +36,7 @@ export function AlbumDeck({
   index: number;
   music: MenuMusic;
   onTrack: (delta: number) => void;
-  onInsert: () => void;
+  onInsertHold: (event: React.PointerEvent) => void;
 }) {
   const [position, setPosition] = useState(music.previewTransport.position);
   useLayoutEffect(() => {
@@ -64,6 +72,8 @@ export function AlbumDeck({
               <MenuHintArrows />
             </span>
           </span>
+          <small>HOLD</small>
+          <span className="album-deck-quick-hint">SHIFT + ENTER · QUICK</span>
         </span>
       )}
       <aside
@@ -96,7 +106,7 @@ export function AlbumDeck({
                 : 'EMPTY COLLECTION'}
             </small>
             <h2>{edition?.chart.title ?? '等待第一首作品'}</h2>
-            <p>{count ? '按 Enter 插入专辑，开始选曲' : '插入专辑后，可前往创作模式添加曲目'}</p>
+            <p>{count ? '按住 Enter 插入专辑，开始选曲' : '插入专辑后，可前往创作模式添加曲目'}</p>
           </div>
           <div className="album-deck-progress">
             <input
@@ -135,10 +145,15 @@ export function AlbumDeck({
               <ChevronRight />
             </button>
           </div>
-          <button className="album-deck-insert" disabled={!ready} onClick={onInsert}>
+          <button
+            className="album-deck-insert"
+            disabled={!ready}
+            onPointerDown={onInsertHold}
+            onClick={(event) => event.preventDefault()}
+          >
             <span>INSERT ALBUM</span>
             <ArrowRight />
-            <small>ENTER</small>
+            <small>HOLD ENTER</small>
           </button>
           <footer>
             <span>STEREO / {music.previewPlaying ? 'PLAYING' : 'STANDBY'}</span>
@@ -174,6 +189,12 @@ export function AlbumTuning({
     <div
       className="album-tuning menu-curtain"
       data-phase={phase}
+      style={
+        {
+          '--album-tune-duration': `${ALBUM_DECK_TIMING.tune}ms`,
+          '--album-reveal-duration': `${ALBUM_DECK_TIMING.reveal}ms`,
+        } as React.CSSProperties
+      }
       role="status"
       aria-label="正在载入专辑"
     >

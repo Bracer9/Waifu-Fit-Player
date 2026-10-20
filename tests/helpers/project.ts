@@ -28,7 +28,16 @@ export async function openDemo(page: Page) {
 
 /** Album confirmation opens the player; inserting is a separate command. */
 export async function insertAlbum(page: Page) {
-  await page.getByRole('button', { name: /INSERT ALBUM/ }).click();
+  const button = page.getByRole('button', { name: /INSERT ALBUM/ });
+  await expect(button).toBeEnabled();
+  const box = (await button.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  try {
+    await expect(page.locator('.music-menu.songs')).toBeVisible();
+  } finally {
+    await page.mouse.up();
+  }
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
 }

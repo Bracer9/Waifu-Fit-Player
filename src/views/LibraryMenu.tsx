@@ -16,6 +16,7 @@ import type { MenuSoundPlayer } from '../useMenuSounds';
 import { ratingValue, ratingSummary } from '../chart-types';
 import { useAlbumArtwork } from '../useAlbumArtwork';
 import { useMenuWheel } from '../useMenuWheel';
+import { useAlbumInsertion } from '../useAlbumInsertion';
 import type { MenuMusic } from '../useMenuMusic';
 import { AlbumDeck, ALBUM_DECK_TIMING } from '../components/AlbumDeck';
 
@@ -59,7 +60,6 @@ type Props = {
   music: MenuMusic;
   playerOpen: boolean;
   onPlayerOpen: (open: boolean) => void;
-  onInsertStart: () => void;
   onAlbum: (id: string, enter?: boolean) => void;
   onSong: (id: string) => void;
   onChartType: (chartType: ChartType) => void;
@@ -79,7 +79,6 @@ export function LibraryMenu(props: Props) {
   const artwork = useAlbumArtwork(albums);
   const scrollFrame = useRef(0);
   const centering = useRef<string | null>(null);
-  const [inserting, setInserting] = useState(false);
   const [deckReady, setDeckReady] = useState(false);
   const open = page === 'albums' && props.playerOpen;
   const menu = useRef<HTMLElement>(null);
@@ -104,6 +103,19 @@ export function LibraryMenu(props: Props) {
     setConfirmStart(null);
   };
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
+  const { inserting, begin: beginInsert } = useAlbumInsertion({
+    menu,
+    enabled: open && deckReady,
+    albumId: album.id,
+    onComplete: () => props.onAlbum(album.id, true),
+    onSound: props.onSound,
+  });
+  const holdInsert = (event: React.PointerEvent) => {
+    if (!open || !deckReady || inserting || event.button !== 0 || !event.isPrimary) return;
+    event.preventDefault();
+    menu.current?.setPointerCapture(event.pointerId);
+    beginInsert(event.pointerId);
+  };
   const inAlbum = useMemo(
     () =>
       songs
@@ -203,9 +215,6 @@ export function LibraryMenu(props: Props) {
       select(id);
       props.onPlayerOpen(true);
       props.onSound('settings');
-    } else if (deckReady) {
-      setInserting(true);
-      props.onInsertStart();
     }
   };
   const changePreviewTrack = (delta: number) => {
@@ -217,60 +226,6 @@ export function LibraryMenu(props: Props) {
     onSong(inAlbum[(index + delta + inAlbum.length) % inAlbum.length].id);
     props.onSound('settings');
   };
-  useEffect(() => {
-    if (!inserting) return;
-    const card = scroller.current?.querySelector<HTMLElement>('[aria-current="true"]');
-    const slot = menu.current?.querySelector<HTMLElement>('.album-deck-slot');
-    if (!card || !slot) {
-      setInserting(false);
-      props.onPlayerOpen(false);
-      return;
-    }
-    const box = card.getBoundingClientRect();
-    const edge = slot.getBoundingClientRect().left + 8;
-    const mask = document.createElement('div');
-    mask.className = 'album-flight';
-    mask.style.clipPath = `inset(0 ${Math.max(0, innerWidth - edge)}px 0 0)`;
-    const copy = card.cloneNode(true) as HTMLElement;
-    copy.classList.add('album-flight-card');
-    copy.setAttribute('aria-hidden', 'true');
-    copy.inert = true;
-    Object.assign(copy.style, {
-      left: `${box.left}px`,
-      top: `${box.top}px`,
-      width: `${box.width}px`,
-      height: `${box.height}px`,
-    });
-    mask.append(copy);
-    document.body.append(mask);
-    const previous = card.style.visibility;
-    card.style.visibility = 'hidden';
-    let cancelled = false;
-    const animation = copy.animate(
-      [{ translate: '0 0' }, { translate: `${edge - box.left + 30}px 0` }],
-      {
-        duration: matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 1
-          : ALBUM_DECK_TIMING.insert,
-        easing: 'cubic-bezier(0.45, 0, 0.2, 1)',
-        fill: 'forwards',
-      },
-    );
-    void animation.finished
-      .then(() => {
-        if (!cancelled) {
-          props.onSound('insert');
-          props.onAlbum(album.id, true);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-      animation.cancel();
-      mask.remove();
-      card.style.visibility = previous;
-    };
-  }, [inserting]);
 
   useLayoutEffect(() => {
     const node = scroller.current;
@@ -367,6 +322,16 @@ export function LibraryMenu(props: Props) {
       if (open && current !== gear && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         if (!e.repeat) changePreviewTrack(e.key === 'ArrowLeft' ? -1 : 1);
+        return;
+      }
+      if (
+        open &&
+        e.key === 'Enter' &&
+        current !== gear &&
+        (target.closest('.album-deck-insert') || !target.closest('.album-deck'))
+      ) {
+        e.preventDefault();
+        if (!e.repeat) beginInsert(e.shiftKey ? 'automatic' : 'keyboard');
         return;
       }
       if (open && target.closest('.album-deck')) return;
@@ -518,6 +483,9 @@ export function LibraryMenu(props: Props) {
                 data-id={a.id}
                 aria-current={a.id === album.id}
                 className="collection-album"
+                onPointerDown={(event) => {
+                  if (a.id === album.id) holdInsert(event);
+                }}
                 onClick={() => confirmAlbum(a.id)}
               >
                 <AlbumCover
@@ -555,7 +523,7 @@ export function LibraryMenu(props: Props) {
             )}
             music={props.music}
             onTrack={changePreviewTrack}
-            onInsert={() => confirmAlbum(album.id)}
+            onInsertHold={holdInsert}
           />
         </>
       ) : !selected ? (

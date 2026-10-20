@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { blankChart } from '../src/model';
+import { insertAlbum } from './helpers/project';
 
 async function setup(page: Page) {
   await page.goto('/art/special/heart.png');
@@ -181,11 +182,12 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
   const slot = (await deck.locator('.album-deck-slot').boundingBox())!;
   expect(Math.abs(slot.y + slot.height / 2 - cardBox.y - cardBox.height / 2)).toBeLessThan(6);
   expect(slot.height).toBeGreaterThanOrEqual(cardBox.height);
-  await page.keyboard.press('Enter');
+  await page.keyboard.down('Enter');
   await expect(page.locator('.album-flight')).toHaveCount(1);
   await page.waitForTimeout(350);
   await page.screenshot({ path: 'artifacts/album-deck-inserting-1080p.png' });
   await expect(page.locator('.album-tuning')).toBeVisible();
+  await page.keyboard.up('Enter');
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await expect(page.locator('.ambient-shape.pink')).toHaveCSS('rotate', '0deg');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
@@ -201,6 +203,52 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
   expect(inserted[0].progress).toBe(1);
   expect(inserted[0].volume).toBe(0.5);
   expect(errors).toEqual([]);
+});
+
+test('album insertion requires a hold and returns on keyboard release, pointer release and blur', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+  await expect(page.locator('.album-deck-insert-hint > small')).toHaveText('HOLD');
+  const card = page.locator('.album-shelf .collection-album[aria-current="true"]');
+  const original = (await card.boundingBox())!;
+  await page.keyboard.down('Enter');
+  await page.waitForTimeout(400);
+  const moving = page.locator('.album-flight-card');
+  expect((await moving.boundingBox())!.x).toBeGreaterThan(original.x + 30);
+  await page.keyboard.up('Enter');
+  await expect(page.locator('.album-flight')).toHaveCount(0);
+  await expect(card).toBeVisible();
+  expect((await card.boundingBox())!.x).toBeCloseTo(original.x, 0);
+  await expect(page.locator('.album-tuning')).toHaveCount(0);
+
+  // The selected album itself supports the same hold, including release outside it.
+  await page.mouse.move(original.x + original.width / 2, original.y + original.height / 2);
+  await page.mouse.down();
+  await expect(page.locator('.album-flight')).toHaveCount(1);
+  await expect(card).toHaveCSS('opacity', '0');
+  await expect(page.locator('.album-flight-card > .cover-trace')).toHaveCSS('opacity', '0');
+  await page.waitForTimeout(250);
+  await page.mouse.move(20, 20);
+  await page.mouse.up();
+  await expect(page.locator('.album-flight')).toHaveCount(0);
+  await expect(card).toBeVisible();
+  await expect(card).toHaveCSS('opacity', '1');
+
+  const button = page.getByRole('button', { name: /INSERT ALBUM/ });
+  const buttonBox = (await button.boundingBox())!;
+  await page.mouse.move(buttonBox.x + buttonBox.width / 2, buttonBox.y + buttonBox.height / 2);
+  await page.mouse.down();
+  await expect(page.locator('.album-flight')).toHaveCount(1);
+  await page.waitForTimeout(200);
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await expect(page.locator('.album-flight')).toHaveCount(0);
+  await page.mouse.up();
+  await expect(page.locator('.music-menu.albums')).toBeVisible();
+  await insertAlbum(page);
+  await expect(page.locator('.album-flight')).toHaveCount(0);
 });
 
 test('insert hint stays at the final gap midpoint throughout the unfold', async ({ page }) => {
@@ -234,6 +282,31 @@ test('insert hint stays at the final gap midpoint throughout the unfold', async 
     await page.keyboard.press('Escape');
     await expect(page.locator('.ambient-shape.pink')).toHaveCSS('translate', '0px');
   }
+});
+
+test('Shift Enter automatically inserts the album after key release', async ({ page }) => {
+  await setup(page);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+  await expect(page.locator('.album-deck-quick-hint')).toHaveText('SHIFT + ENTER · QUICK');
+  await page.keyboard.press('Shift+Enter');
+  await expect(page.locator('.album-flight')).toHaveCount(1);
+  expect(
+    await page.locator('.album-flight-card').evaluate(
+      (card) =>
+        card
+          .getAnimations()
+          .find(
+            (animation) =>
+              animation.effect instanceof KeyframeEffect && animation.effect.target === card,
+          )!
+          .effect!.getTiming().duration,
+    ),
+  ).toBe(420);
+  await expect(page.locator('.album-tuning')).toBeVisible();
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await expect(page.locator('.album-flight')).toHaveCount(0);
 });
 
 for (const switchDelay of [100, 550])
@@ -376,7 +449,7 @@ test('rapid open/eject, settings and reduced motion leave no flight copies or st
   await expect(page.locator('.corner-settings')).toHaveAttribute('data-open');
   await page.keyboard.press('Escape');
   await page.locator('.collection-album[aria-current="true"]').click();
-  await page.getByRole('button', { name: /INSERT ALBUM/ }).click();
+  await insertAlbum(page);
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(page.locator('.album-flight')).toHaveCount(0);
@@ -405,7 +478,7 @@ test('empty albums can be inserted; blank click and Back eject without leaving t
   await expect(page.locator('.menu-app')).not.toHaveAttribute('data-album-player');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(700);
-  await page.getByRole('button', { name: /INSERT ALBUM/ }).click();
+  await insertAlbum(page);
   await expect(page.locator('.library-empty')).toBeVisible();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
 });
