@@ -8,6 +8,7 @@ import {
 } from '../liquid-transition';
 import { LaneGlyph } from './Glyph';
 import type { MenuSoundPlayer } from '../useMenuSounds';
+import { menuViewport } from '../menu-viewport';
 
 const PRINTS = [
   { lane: 'squat', x: 210, y: 390, size: 230, angle: -12 },
@@ -140,8 +141,7 @@ export function LiquidMenuTransition({
     let arrival: Animation | undefined;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const draw = (progress: number) => {
-      const width = innerWidth,
-        height = innerHeight;
+      const { width, height } = menuViewport();
       const normalize = (point: { x: number; y: number }) =>
         reverse ? { x: width - point.x, y: height - point.y } : point;
       // Read live corners again during retreat, so the final frame matches the BGM position.

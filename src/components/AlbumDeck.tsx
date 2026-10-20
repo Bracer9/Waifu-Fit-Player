@@ -6,6 +6,7 @@ import type { MenuMusic } from '../useMenuMusic';
 import { CoverArt } from './CoverArt';
 import { MenuHintArrows } from './MainMenuDownHint';
 import { formatTime } from '../timing';
+import { menuViewport } from '../menu-viewport';
 
 export const ALBUM_DECK_TIMING = {
   unfold: 620,
@@ -43,7 +44,8 @@ export function AlbumDeck({
     const corner = document.querySelector<HTMLElement>('.menu-app > .ambient-shape.pink');
     if (!corner) return;
     const update = () => {
-      const shape = albumHousingOutline(innerWidth, innerHeight);
+      const { width, height } = menuViewport();
+      const shape = albumHousingOutline(width, height);
       corner.style.setProperty('--album-deck-clip', shape.clip);
       corner
         .querySelector('.album-housing-outline polyline')

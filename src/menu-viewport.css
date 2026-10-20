@@ -1,0 +1,20 @@
+/* Menus and Gameplay share the desktop stage. The editor keeps native pointer coordinates. */
+html[data-menu-fit] body {
+  min-width: 0;
+  overflow: hidden;
+}
+html[data-menu-fit] #root {
+  position: fixed;
+  left: var(--menu-offset-x);
+  top: var(--menu-offset-y);
+  width: 1920px;
+  height: 1080px;
+  transform: scale(var(--menu-scale));
+  transform-origin: 0 0;
+  overflow: clip;
+  isolation: isolate;
+}
+/* Use the same open-panel clearance as the 1080p reference on fitted stages. */
+html[data-menu-fit] .title-menu:has(.music-console[data-open]) .mode-records {
+  translate: 0 -40px;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { ALBUM_DECK_TIMING } from './components/AlbumDeck';
 import type { MenuSoundPlayer } from './useMenuSounds';
+import { menuPortalRoot, menuRect, menuViewport } from './menu-viewport';
 
 type Owner = 'keyboard' | 'automatic' | number;
 type Flight = {
@@ -73,11 +74,11 @@ export function useAlbumInsertion({
     const card = menu.current?.querySelector<HTMLElement>('.album-shelf [aria-current="true"]');
     const slot = menu.current?.querySelector<HTMLElement>('.album-deck-slot');
     if (!card || !slot) return;
-    const box = card.getBoundingClientRect();
-    const edge = slot.getBoundingClientRect().left + 8;
+    const box = menuRect(card);
+    const edge = menuRect(slot).left + 8;
     const mask = document.createElement('div');
     mask.className = 'album-flight';
-    mask.style.clipPath = `inset(0 ${Math.max(0, innerWidth - edge)}px 0 0)`;
+    mask.style.clipPath = `inset(0 ${Math.max(0, menuViewport().width - edge)}px 0 0)`;
     const copy = card.cloneNode(true) as HTMLElement;
     copy.classList.add('album-flight-card');
     copy.setAttribute('aria-hidden', 'true');
@@ -89,7 +90,7 @@ export function useAlbumInsertion({
       height: `${box.height}px`,
     });
     mask.append(copy);
-    document.body.append(mask);
+    menuPortalRoot().append(mask);
     const visibility = card.style.visibility;
     const opacity = card.style.opacity;
     card.style.visibility = 'hidden';

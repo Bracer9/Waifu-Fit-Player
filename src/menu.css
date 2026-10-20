@@ -1,9 +1,13 @@
 .menu-app {
   /* Size two cards down to the footer's text baseline while keeping the cover ratio. */
-  --album-shelf-width: min(1120px, calc(118vh - 570px), 74vw);
+  --album-shelf-width: min(
+    1120px,
+    calc(calc(var(--menu-vh, 1vh) * 118) - 570px),
+    calc(var(--menu-vw, 1vw) * 74)
+  );
   overflow: clip;
   padding: 0;
-  height: 100dvh;
+  height: calc(var(--menu-vh, 1vh) * 100);
   min-height: 650px;
   background: #f7f4ed;
   color: var(--ink);
@@ -15,19 +19,19 @@
   display: none;
 }
 .menu-app .ambient-shape.pink {
-  width: 36vw;
-  height: 130vh;
-  top: -90vh;
-  right: -5vw;
+  width: calc(var(--menu-vw, 1vw) * 36);
+  height: calc(var(--menu-vh, 1vh) * 130);
+  top: calc(var(--menu-vh, 1vh) * -90);
+  right: calc(var(--menu-vw, 1vw) * -5);
   background: var(--pink);
   transform: translate(calc(var(--music-beat, 0) * -44px), calc(var(--music-beat, 0) * 32px))
     rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.024));
 }
 .menu-app .ambient-shape.cyan {
-  width: 25vw;
-  height: 130vh;
-  top: 50vh;
-  left: -15vw;
+  width: calc(var(--menu-vw, 1vw) * 25);
+  height: calc(var(--menu-vh, 1vh) * 130);
+  top: calc(var(--menu-vh, 1vh) * 50);
+  left: calc(var(--menu-vw, 1vw) * -15);
   background: var(--cyan);
   transform: translate(calc(var(--music-beat, 0) * 44px), calc(var(--music-beat, 0) * -32px))
     rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.024));
@@ -72,12 +76,12 @@
   transition-delay: 70ms;
 }
 .title-menu {
-  --music-panel-height: clamp(154px, 21.5vh, 240px);
+  --music-panel-height: clamp(154px, calc(var(--menu-vh, 1vh) * 21.5), 240px);
   min-height: 650px;
-  height: 100dvh;
-  max-width: calc(1100px + 16vw);
+  height: calc(var(--menu-vh, 1vh) * 100);
+  max-width: calc(1100px + calc(var(--menu-vw, 1vw) * 16));
   margin: auto;
-  padding: 5vh 8vw 9vh;
+  padding: calc(var(--menu-vh, 1vh) * 5) calc(var(--menu-vw, 1vw) * 8) calc(var(--menu-vh, 1vh) * 9);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   /* PLAYER → cards → MORE → headphones share the three flexible gaps. */
@@ -94,7 +98,9 @@
 .title-brand h1 {
   margin: 10px 0 0;
   font:
-    950 clamp(44px, min(5.4vw, 7.7vh), 88px)/0.91 'Arial Black',
+    950
+      clamp(44px, min(calc(var(--menu-vw, 1vw) * 5.4), calc(var(--menu-vh, 1vh) * 7.7)), 88px)/0.91
+      'Arial Black',
     'Arial',
     sans-serif;
   letter-spacing: -4px;
@@ -118,13 +124,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
-  gap: clamp(28px, 2.6vw, 44px);
+  gap: clamp(28px, calc(var(--menu-vw, 1vw) * 2.6), 44px);
   translate: 0 -12px;
   transition: translate 260ms cubic-bezier(0.22, 0.75, 0.25, 1);
 }
 .mode-record {
   position: relative;
-  height: clamp(180px, 30.8vh, 340px);
+  height: clamp(180px, calc(var(--menu-vh, 1vh) * 30.8), 340px);
   padding: 0;
   text-align: left;
   background: transparent;
@@ -180,8 +186,8 @@
   letter-spacing: 3px;
 }
 .mode-symbol {
-  width: clamp(96px, 15vh, 160px);
-  height: clamp(96px, 15vh, 160px);
+  width: clamp(96px, calc(var(--menu-vh, 1vh) * 15), 160px);
+  height: clamp(96px, calc(var(--menu-vh, 1vh) * 15), 160px);
   position: absolute;
   right: 22px;
   top: 16px;
@@ -194,7 +200,7 @@
   left: 0;
   right: 0;
   height: 36%;
-  padding: 12px clamp(18px, 1.8vw, 30px);
+  padding: 12px clamp(18px, calc(var(--menu-vw, 1vw) * 1.8), 30px);
   background: #fff3e5;
   border-top: 4px solid var(--ink);
   display: grid;
@@ -202,7 +208,7 @@
   grid-template-columns: 1fr auto;
 }
 .mode-label strong {
-  font-size: clamp(27px, 2.4vw, 40px);
+  font-size: clamp(27px, calc(var(--menu-vw, 1vw) * 2.4), 40px);
   line-height: 1.1;
   font-weight: 900;
   letter-spacing: 3px;
@@ -226,7 +232,7 @@
 .menu-settings {
   position: fixed;
   top: 28px;
-  right: 5vw;
+  right: calc(var(--menu-vw, 1vw) * 5);
   padding: 8px;
   width: 112px;
   height: 112px;
@@ -289,7 +295,7 @@
   position: fixed;
   top: 24px;
   right: 24px;
-  width: min(420px, calc((100vw - 1100px) / 2 - 48px));
+  width: min(420px, calc((calc(var(--menu-vw, 1vw) * 100) - 1100px) / 2 - 48px));
   z-index: 20;
   color: var(--ink);
   opacity: 0;
@@ -424,7 +430,7 @@
 .corner-settings-sheet {
   position: relative;
   width: 100%;
-  height: clamp(306px, 30vh, 338px);
+  height: clamp(306px, calc(var(--menu-vh, 1vh) * 30), 338px);
   margin-top: 10px;
 }
 .settings-paper-art,
@@ -727,11 +733,11 @@
   height: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding: clamp(16px, 2.2vh, 24px) 8px;
+  padding: clamp(16px, calc(var(--menu-vh, 1vh) * 2.2), 24px) 8px;
 }
 .music-panel-section {
   min-width: 0;
-  padding: 0 clamp(16px, 1.8vw, 30px);
+  padding: 0 clamp(16px, calc(var(--menu-vw, 1vw) * 1.8), 30px);
 }
 .music-panel-section + .music-panel-section {
   border-left: 2px solid #d6d5d1;
@@ -740,9 +746,9 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0 0 clamp(6px, 1vh, 10px);
+  margin: 0 0 clamp(6px, calc(var(--menu-vh, 1vh) * 1), 10px);
   font:
-    700 clamp(11px, 0.9vw, 14px) 'Barlow Condensed',
+    700 clamp(11px, calc(var(--menu-vw, 1vw) * 0.9), 14px) 'Barlow Condensed',
     sans-serif;
   letter-spacing: 2.5px;
   white-space: nowrap;
@@ -770,7 +776,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: clamp(18px, 1.5vw, 26px);
+  font-size: clamp(18px, calc(var(--menu-vw, 1vw) * 1.5), 26px);
   line-height: 1.2;
   font-weight: 900;
   letter-spacing: -0.8px;
@@ -863,7 +869,7 @@
 .music-order {
   display: flex;
   gap: 8px;
-  margin-bottom: clamp(8px, 1.4vh, 14px);
+  margin-bottom: clamp(8px, calc(var(--menu-vh, 1vh) * 1.4), 14px);
 }
 .music-order button {
   display: flex;
@@ -873,12 +879,12 @@
   justify-content: center;
   flex: 1;
   min-width: 0;
-  height: clamp(44px, 6vh, 58px);
+  height: clamp(44px, calc(var(--menu-vh, 1vh) * 6), 58px);
   padding: 4px;
   border: 2px solid #d6d5d1;
   border-radius: 6px;
   font:
-    700 clamp(9px, 0.8vw, 12px) 'Barlow Condensed',
+    700 clamp(9px, calc(var(--menu-vw, 1vw) * 0.8), 12px) 'Barlow Condensed',
     sans-serif;
   letter-spacing: 1.1px;
 }
@@ -910,7 +916,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: clamp(5px, 0.9vh, 9px) 10px;
+  padding: clamp(5px, calc(var(--menu-vh, 1vh) * 0.9), 9px) 10px;
   text-align: left;
   border-radius: 6px;
   transition: background 120ms;
@@ -921,7 +927,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: clamp(12px, 1vw, 15px);
+  font-size: clamp(12px, calc(var(--menu-vw, 1vw) * 1), 15px);
   font-weight: 500;
 }
 .theme-track small {
@@ -971,12 +977,12 @@
 }
 .music-menu {
   --title-inset: 144px;
-  height: 100dvh;
+  height: calc(var(--menu-vh, 1vh) * 100);
   min-height: 650px;
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 0 5vw;
+  padding: 0 calc(var(--menu-vw, 1vw) * 5);
 }
 .music-menu-header {
   flex: none;
@@ -994,7 +1000,7 @@
 .collection-label strong,
 .menu-control-label {
   font:
-    900 clamp(34px, 2.7vw, 44px)/1.12 'Arial Black',
+    900 clamp(34px, calc(var(--menu-vw, 1vw) * 2.7), 44px)/1.12 'Arial Black',
     'Microsoft YaHei',
     sans-serif;
   letter-spacing: 1px;
@@ -1002,13 +1008,13 @@
   transform-origin: left center;
 }
 .menu-controls {
-  --control-size: clamp(29px, 2.295vw, 37.4px);
+  --control-size: clamp(29px, calc(var(--menu-vw, 1vw) * 2.295), 37.4px);
   position: relative;
   display: flex;
   flex: none;
   align-items: center;
   margin-left: 8px;
-  padding-bottom: clamp(20px, 2.8vh, 40px);
+  padding-bottom: clamp(20px, calc(var(--menu-vh, 1vh) * 2.8), 40px);
   color: var(--ink);
 }
 .menu-controls-actions {
@@ -1016,7 +1022,7 @@
   flex: none;
   margin-left: auto;
   margin-right: 8px;
-  gap: clamp(20px, 2.21vw, 44px);
+  gap: clamp(20px, calc(var(--menu-vw, 1vw) * 2.21), 44px);
 }
 .menu-control-label {
   font-size: calc(var(--control-size) * 0.7);
@@ -1024,8 +1030,8 @@
 .title-menu .menu-controls {
   position: fixed;
   bottom: 0;
-  left: calc(5vw + 8px);
-  right: 5vw;
+  left: calc(calc(var(--menu-vw, 1vw) * 5) + 8px);
+  right: calc(var(--menu-vw, 1vw) * 5);
   margin-left: 0;
 }
 .menu-control,
@@ -1064,7 +1070,7 @@
   align-items: center;
   position: absolute;
   top: 28px;
-  left: 5vw;
+  left: calc(var(--menu-vw, 1vw) * 5);
   width: 112px;
   height: 112px;
   justify-content: center;
@@ -1090,7 +1096,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--album-padding, 20vh) calc(16px + var(--album-shelf-width) * 0.07);
+  padding: var(--album-padding, calc(var(--menu-vh, 1vh) * 20))
+    calc(16px + var(--album-shelf-width) * 0.07);
   position: relative;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
@@ -1102,7 +1109,7 @@
 }
 .music-menu.albums .album-shelf {
   /* The centred cards use the empty space between the two footer control groups. */
-  margin-bottom: calc(-1 * clamp(29px, 2.295vw, 37.4px));
+  margin-bottom: calc(-1 * clamp(29px, calc(var(--menu-vw, 1vw) * 2.295), 37.4px));
 }
 .music-menu.albums .menu-controls {
   pointer-events: none;
@@ -1114,8 +1121,8 @@
   position: absolute;
   top: 156px;
   bottom: 96px;
-  left: 6.5vw;
-  width: 16vw;
+  left: calc(var(--menu-vw, 1vw) * 6.5);
+  width: calc(var(--menu-vw, 1vw) * 16);
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -1127,7 +1134,7 @@
   color: transparent;
   -webkit-text-stroke: 2px #24232959;
   font:
-    900 clamp(110px, 9vw, 184px)/1 'Barlow Condensed',
+    900 clamp(110px, calc(var(--menu-vw, 1vw) * 9), 184px)/1 'Barlow Condensed',
     sans-serif;
   letter-spacing: 0.035em;
   white-space: nowrap;
@@ -1216,7 +1223,7 @@
   top: 12%;
   left: 10%;
   font:
-    900 clamp(34px, 4vw, 70px)/0.9 'Arial Black',
+    900 clamp(34px, calc(var(--menu-vw, 1vw) * 4), 70px)/0.9 'Arial Black',
     sans-serif;
   letter-spacing: -2px;
 }
@@ -1304,11 +1311,11 @@
   font-size: 13px;
 }
 .song-picker {
-  --card-width: clamp(230px, 24vw, 360px);
+  --card-width: clamp(230px, calc(var(--menu-vw, 1vw) * 24), 360px);
   --song-gap: 36px;
   --record-accent: var(--dance-color);
   /* Scale the whole card, reserving room for the header and bottom controls on short screens. */
-  zoom: clamp(0.9, calc((100dvh - 350px) / 550px * 0.9), 1.35);
+  zoom: clamp(0.9, calc((calc(var(--menu-vh, 1vh) * 100) - 350px) / 550px * 0.9), 1.35);
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1560,7 +1567,7 @@
 }
 .selection-title h2 {
   margin: 8px 0;
-  font-size: clamp(21px, 2vw, 31px);
+  font-size: clamp(21px, calc(var(--menu-vw, 1vw) * 2), 31px);
   font-weight: 900;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1661,7 +1668,7 @@
   color: #cf3376;
 }
 .album-manager {
-  width: min(600px, 90vw);
+  width: min(600px, calc(var(--menu-vw, 1vw) * 90));
 }
 .album-edit-tabs {
   display: flex;
@@ -1691,10 +1698,10 @@
   object-fit: contain;
 }
 .song-manager {
-  width: min(850px, 90vw);
+  width: min(850px, calc(var(--menu-vw, 1vw) * 90));
 }
 .managed-songs {
-  max-height: 60vh;
+  max-height: calc(var(--menu-vh, 1vh) * 60);
   overflow-y: auto;
   padding-right: 8px;
 }
@@ -1777,27 +1784,27 @@
   }
 }
 @media (max-height: 850px) {
-  .title-menu {
-    padding-top: 4vh;
+  html:not([data-menu-fit]) .title-menu {
+    padding-top: calc(var(--menu-vh, 1vh) * 4);
   }
-  .title-brand h1 {
-    font-size: clamp(44px, 7.7vh, 65px);
+  html:not([data-menu-fit]) .title-brand h1 {
+    font-size: clamp(44px, calc(var(--menu-vh, 1vh) * 7.7), 65px);
   }
-  .mode-record {
-    height: clamp(180px, 29vh, 246px);
+  html:not([data-menu-fit]) .mode-record {
+    height: clamp(180px, calc(var(--menu-vh, 1vh) * 29), 246px);
   }
-  .song-picker {
-    --card-width: min(29vh, 300px);
+  html:not([data-menu-fit]) .song-picker {
+    --card-width: min(calc(var(--menu-vh, 1vh) * 29), 300px);
   }
-  .song-carousel {
+  html:not([data-menu-fit]) .song-carousel {
     padding-top: 45px;
     padding-bottom: 20px;
   }
-  .selection-details {
+  html:not([data-menu-fit]) .selection-details {
     padding-top: 10px;
     padding-bottom: 20px;
   }
-  .record-caption {
+  html:not([data-menu-fit]) .record-caption {
     padding: 9px 12px;
   }
 }

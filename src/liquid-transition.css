@@ -34,7 +34,7 @@
 }
 .liquid-briefing-stamp {
   position: relative;
-  width: min(940px, 80vw);
+  width: min(940px, calc(var(--menu-vw, 1vw) * 80));
   padding: 28px 60px 24px;
 }
 .liquid-briefing-stamp::before,
@@ -68,7 +68,7 @@
 .liquid-briefing h2 {
   margin: 0;
   font:
-    italic 900 clamp(64px, 7vw, 112px) / 0.88 'Barlow Condensed',
+    italic 900 clamp(64px, calc(var(--menu-vw, 1vw) * 7), 112px) / 0.88 'Barlow Condensed',
     sans-serif;
   letter-spacing: 1px;
 }

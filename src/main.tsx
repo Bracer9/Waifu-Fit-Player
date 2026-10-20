@@ -12,4 +12,8 @@ import './menu.css';
 import './album-deck.css';
 import './liquid-transition.css';
 import './main-menu-down-hint.css';
+import './workbench-viewport.css';
+import './menu-viewport.css';
+import { syncMenuViewport } from './menu-viewport';
+syncMenuViewport(true);
 createRoot(document.getElementById('root')!).render(<App />);

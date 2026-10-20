@@ -75,6 +75,8 @@ import { GameStartCountdown } from './components/GameStartCountdown';
 import { GameEntrance } from './components/GameEntrance';
 import { MenuTransition } from './components/MenuTransition';
 import { LiquidMenuTransition } from './components/LiquidMenuTransition';
+import { useMenuViewport } from './useMenuViewport';
+import { menuPortalRoot } from './menu-viewport';
 import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
   forgetVideo,
@@ -185,6 +187,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       finishRenderPreparation();
   }, [playLoadComplete, menuTransition, mode, preparation.error, finishRenderPreparation]);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
+  useMenuViewport(menuPage || mode === 'player');
   useMenuCardPress(menuPage);
   const playStart = chart.playRange?.startMs;
   const playEnd = chart.playRange?.endMs;
@@ -930,7 +933,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   return (
     <div
       className={`app ${mode === 'player' ? 'practice-app' : mode === 'editor' ? '' : 'menu-app'}`}
-      data-workbench-theme={mode === 'editor' && workbenchDark ? 'dark' : undefined}
+      data-workbench-theme={mode === 'editor' ? (workbenchDark ? 'dark' : 'light') : undefined}
       data-menu-settings={menuPage && settings ? 'open' : undefined}
       data-album-player={mode === 'albums' && albumPlayerOpen ? 'open' : undefined}
       data-album-tuning={albumTuning === 'reveal' || undefined}
@@ -1000,7 +1003,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               onRevealed={() => setMenuTransition(null)}
             />
           ),
-          document.body,
+          menuTransition.next === 'player' ? document.body : menuPortalRoot(),
         )
       )}
       {albumTuning &&
@@ -1014,7 +1017,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
             }}
             onRevealed={() => setAlbumTuning(null)}
           />,
-          document.body,
+          menuPortalRoot(),
         )}
       <header className="app-header" hidden={mode !== 'editor'}>
         <button
@@ -1442,7 +1445,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               </div>
             )}
           </div>,
-          document.body,
+          menuPortalRoot(),
         )}
       <input
         hidden

@@ -17,6 +17,7 @@ import { ratingValue, ratingSummary } from '../chart-types';
 import { useAlbumArtwork } from '../useAlbumArtwork';
 import { useMenuWheel } from '../useMenuWheel';
 import { useAlbumInsertion } from '../useAlbumInsertion';
+import { menuRect, menuViewport } from '../menu-viewport';
 import type { MenuMusic } from '../useMenuMusic';
 import { AlbumDeck, ALBUM_DECK_TIMING } from '../components/AlbumDeck';
 
@@ -171,7 +172,8 @@ export function LibraryMenu(props: Props) {
     const measure = () => {
       const card = scroller.current?.querySelector<HTMLElement>('[aria-current="true"]');
       if (!card || !menu.current) return;
-      const shelf = scroller.current!.getBoundingClientRect();
+      const shelf = menuRect(scroller.current!);
+      const { width } = menuViewport();
       const lift = Number.parseFloat(getComputedStyle(card).getPropertyValue('--album-lift')) || 0;
       menu.current.style.setProperty('--deck-slot-y', `${shelf.y + shelf.height / 2 + lift}px`);
       // Use the settled focus size even when a newly clicked card is still scrolling into place.
@@ -179,11 +181,8 @@ export function LibraryMenu(props: Props) {
       // Use layout dimensions and the final shelf offset, never animated rectangles.
       const shelfNode = scroller.current!;
       const cardRight =
-        shelfNode.offsetLeft +
-        shelfNode.offsetWidth / 2 -
-        innerWidth * 0.1 +
-        card.offsetWidth * 0.56;
-      const slotLeft = innerWidth * 0.71;
+        shelfNode.offsetLeft + shelfNode.offsetWidth / 2 - width * 0.1 + card.offsetWidth * 0.56;
+      const slotLeft = width * 0.71;
       menu.current.style.setProperty('--deck-insert-hint-x', `${(cardRight + slotLeft) / 2}px`);
     };
     measure();

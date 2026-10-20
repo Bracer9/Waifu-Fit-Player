@@ -32,7 +32,7 @@ body {
   background: #f7f4ed;
 }
 .preparation-track {
-  width: min(280px, 60vw);
+  width: min(280px, calc(var(--menu-vw, 1vw) * 60));
   height: 5px;
   overflow: hidden;
   border-radius: 3px;
@@ -112,7 +112,7 @@ a {
 }
 .app {
   isolation: isolate;
-  min-height: 100vh;
+  min-height: calc(var(--menu-vh, 1vh) * 100);
   position: relative;
   overflow: hidden;
   padding: 0 40px 28px;
@@ -435,7 +435,7 @@ nav button.active:after {
   flex: 1;
 }
 .play-lane {
-  height: clamp(63px, 5.2vw, 89px);
+  height: clamp(63px, calc(var(--menu-vw, 1vw) * 5.2), 89px);
   flex: 1;
   min-height: 55px;
   display: flex;
@@ -446,7 +446,7 @@ nav button.active:after {
   overflow: hidden;
 }
 .lane-label {
-  width: clamp(115px, 10.6vw, 174px);
+  width: clamp(115px, calc(var(--menu-vw, 1vw) * 10.6), 174px);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -2426,7 +2426,7 @@ nav button.active:after {
   padding: 30px;
 }
 .modal {
-  width: min(610px, 90vw);
+  width: min(610px, calc(var(--menu-vw, 1vw) * 90));
   background: #fffaf1;
   border: 1px solid #dbcfc0;
   box-shadow: 8px 8px 0 #f66a9d;
@@ -2460,7 +2460,7 @@ nav button.active:after {
   top: 14px;
 }
 .help-modal {
-  max-height: 90vh;
+  max-height: calc(var(--menu-vh, 1vh) * 90);
   overflow-y: auto;
 }
 .help-modal ol {
@@ -2508,100 +2508,100 @@ nav button.active:after {
   }
 }
 @media (max-width: 1250px) {
-  .app {
+  html:not([data-menu-fit]) .app {
     padding-left: 22px;
     padding-right: 22px;
   }
-  .app-header {
+  html:not([data-menu-fit]) .app-header {
     height: 82px;
   }
-  .wordmark {
+  html:not([data-menu-fit]) .wordmark {
     font-size: 30px;
   }
-  nav {
+  html:not([data-menu-fit]) nav {
     gap: 25px;
   }
-  .local-badge {
+  html:not([data-menu-fit]) .local-badge {
     display: none;
   }
-  .album-workspace {
+  html:not([data-menu-fit]) .album-workspace {
     padding: 17px 18px 0 32px;
     margin-top: 22px;
   }
-  .workspace-title h1 {
+  html:not([data-menu-fit]) .workspace-title h1 {
     font-size: 21px;
   }
-  .workspace-header {
+  html:not([data-menu-fit]) .workspace-header {
     gap: 12px;
     margin-bottom: 16px;
   }
-  .workspace-actions {
+  html:not([data-menu-fit]) .workspace-actions {
     gap: 5px;
   }
-  .workspace-actions .button {
+  html:not([data-menu-fit]) .workspace-actions .button {
     padding: 7px 8px;
     font-size: 10px;
   }
-  .stage-grid {
+  html:not([data-menu-fit]) .stage-grid {
     gap: 17px;
   }
-  .lane-label {
+  html:not([data-menu-fit]) .lane-label {
     width: 112px;
   }
-  .lane-label strong {
+  html:not([data-menu-fit]) .lane-label strong {
     font-size: 16px;
   }
-  .lane-label > svg {
+  html:not([data-menu-fit]) .lane-label > svg {
     width: 34px;
   }
-  .tiny-label {
+  html:not([data-menu-fit]) .tiny-label {
     display: none;
   }
-  .lane-legend {
+  html:not([data-menu-fit]) .lane-legend {
     font-size: 8px;
     gap: 11px;
   }
-  .special-slot {
+  html:not([data-menu-fit]) .special-slot {
     height: 50px;
   }
-  .transport {
+  html:not([data-menu-fit]) .transport {
     gap: 10px;
     margin-top: 17px;
   }
-  .editing .stage-grid {
+  html:not([data-menu-fit]) .editing .stage-grid {
     height: 255px;
   }
-  .editing .lane-label {
+  html:not([data-menu-fit]) .editing .lane-label {
     width: 105px;
   }
-  .editor-body {
+  html:not([data-menu-fit]) .editor-body {
     grid-template-columns: minmax(0, 1fr) 222px;
   }
-  .record-toolbar {
+  html:not([data-menu-fit]) .record-toolbar {
     gap: 7px;
   }
-  .lane-picks {
+  html:not([data-menu-fit]) .lane-picks {
     gap: 1px;
   }
-  .lane-picks button {
+  html:not([data-menu-fit]) .lane-picks button {
     padding: 4px 5px;
   }
-  .record-hint {
+  html:not([data-menu-fit]) .record-hint {
     display: none;
   }
-  .timeline-footer > span:last-child {
+  html:not([data-menu-fit]) .timeline-footer > span:last-child {
     display: none;
   }
-  .editing .special-slot small {
+  html:not([data-menu-fit]) .editing .special-slot small {
     font-size: 7px;
   }
-  .editing .special-slot strong {
+  html:not([data-menu-fit]) .editing .special-slot strong {
     font-size: 9px;
   }
-  .editor-toolbar {
+  html:not([data-menu-fit]) .editor-toolbar {
     gap: 8px;
   }
-  .inspector-content {
+  html:not([data-menu-fit]) .inspector-content {
     padding: 10px;
   }
 }
@@ -2633,7 +2633,7 @@ nav button.active:after {
   margin: 0;
 }
 .practice .stage-grid {
-  height: clamp(518px, 68vh, 720px);
+  height: clamp(518px, calc(var(--menu-vh, 1vh) * 68), 720px);
 }
 .practice .player-lanes {
   --note-size: 66px;
@@ -2675,12 +2675,12 @@ nav button.active:after {
   height: 58px;
 }
 .practice .lane-label {
-  width: clamp(115px, 9vw, 150px);
+  width: clamp(115px, calc(var(--menu-vw, 1vw) * 9), 150px);
   justify-content: center;
   gap: 6px;
 }
 .practice .lane-label strong {
-  font-size: clamp(16px, 1.25vw, 20px);
+  font-size: clamp(16px, calc(var(--menu-vw, 1vw) * 1.25), 20px);
   line-height: 1;
   letter-spacing: 0.5px;
 }

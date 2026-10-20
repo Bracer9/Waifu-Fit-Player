@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { menuPortalRoot } from '../menu-viewport';
 
 export function ModalBackdrop({
   children,
@@ -56,6 +57,6 @@ export function ModalBackdrop({
     <div className={`modal-backdrop ${className}`} ref={ref}>
       {children}
     </div>,
-    document.body,
+    menuPortalRoot(),
   );
 }

@@ -2,7 +2,7 @@
   z-index: 70;
   background: #11121c99;
   backdrop-filter: blur(8px);
-  padding: 40px 3vw;
+  padding: 40px calc(var(--menu-vw, 1vw) * 3);
 }
 .start-briefing {
   --start-charge: 0;
@@ -11,7 +11,7 @@
   --briefing-paper: var(--cream);
   --briefing-accent: var(--dance-color);
   position: relative;
-  width: min(1740px, 92vw);
+  width: min(1740px, calc(var(--menu-vw, 1vw) * 92));
   scale: 0.9;
   padding-top: 38px;
   color: var(--ink);
@@ -102,8 +102,8 @@
 .briefing-board {
   display: grid;
   grid-template-columns: 43% minmax(0, 1fr);
-  gap: clamp(24px, 2vw, 40px);
-  height: min(58vh, 650px);
+  gap: clamp(24px, calc(var(--menu-vw, 1vw) * 2), 40px);
+  height: min(calc(var(--menu-vh, 1vh) * 58), 650px);
   padding: 18px 24px 20px 18px;
   border: 6px solid var(--ink);
   background: var(--briefing-paper);
@@ -127,7 +127,7 @@
   object-position: center;
 }
 .briefing-cover > .cover-placeholder b {
-  font-size: clamp(44px, 5vw, 100px);
+  font-size: clamp(44px, calc(var(--menu-vw, 1vw) * 5), 100px);
 }
 .briefing-cover-grain,
 .briefing-cover-ink,
@@ -240,7 +240,7 @@
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: clamp(36px, 3.55vw, 72px);
+  font-size: clamp(36px, calc(var(--menu-vw, 1vw) * 3.55), 72px);
   line-height: 1.02;
   font-weight: 900;
   letter-spacing: -0.025em;
@@ -252,7 +252,7 @@
 }
 .briefing-song-heading > svg {
   flex: none;
-  width: clamp(38px, 3.1vw, 60px);
+  width: clamp(38px, calc(var(--menu-vw, 1vw) * 3.1), 60px);
   height: 60px;
   color: var(--briefing-accent);
   stroke-width: 4;
@@ -314,7 +314,7 @@
   background: #e9e8e5;
   color: #56565b;
   font:
-    800 clamp(21px, 1.7vw, 33px)/1 'Barlow Condensed',
+    800 clamp(21px, calc(var(--menu-vw, 1vw) * 1.7), 33px)/1 'Barlow Condensed',
     sans-serif;
   clip-path: polygon(5% 0, 96% 0, 100% 12%, 100% 88%, 95% 100%, 0 100%, 0 12%);
   transition:
@@ -360,7 +360,7 @@
 .briefing-metrics strong {
   display: block;
   margin-top: 5px;
-  font-size: clamp(35px, 2.7vw, 53px);
+  font-size: clamp(35px, calc(var(--menu-vw, 1vw) * 2.7), 53px);
   line-height: 1;
   font-weight: 800;
   white-space: nowrap;
@@ -378,7 +378,7 @@
 }
 .briefing-level > div > strong {
   margin: 0;
-  font-size: clamp(24px, 1.7vw, 34px);
+  font-size: clamp(24px, calc(var(--menu-vw, 1vw) * 1.7), 34px);
   color: var(--briefing-accent);
 }
 .briefing-strength {
@@ -387,7 +387,7 @@
 }
 .briefing-strength i {
   display: block;
-  width: clamp(9px, 0.8vw, 15px);
+  width: clamp(9px, calc(var(--menu-vw, 1vw) * 0.8), 15px);
   height: 28px;
   transform: skewX(-18deg);
   background: #d8d8d4;
@@ -431,7 +431,7 @@
 .briefing-move-icon {
   display: grid;
   place-items: center;
-  height: clamp(65px, 8vh, 95px);
+  height: clamp(65px, calc(var(--menu-vh, 1vh) * 8), 95px);
   background: transparent;
 }
 .briefing-move-icon svg {
@@ -445,7 +445,7 @@
 .briefing-move > strong {
   display: block;
   margin: 6px 0 1px;
-  font-size: clamp(17px, 1.25vw, 25px);
+  font-size: clamp(17px, calc(var(--menu-vw, 1vw) * 1.25), 25px);
   line-height: 1.05;
   font-weight: 800;
   white-space: nowrap;
@@ -480,7 +480,7 @@
   position: relative;
   width: calc(100% + 16px);
   min-height: 190px;
-  height: clamp(170px, 19vh, 220px);
+  height: clamp(170px, calc(var(--menu-vh, 1vh) * 19), 220px);
   margin: -3px 0 0 -8px;
   padding: 13px 60px 20px 330px;
   border: 5px solid var(--ink);
@@ -597,7 +597,7 @@
 .start-charge-content > strong {
   display: block;
   font-family: 'Arial Black', 'Barlow Condensed', sans-serif;
-  font-size: clamp(42px, 5.1vw, 95px);
+  font-size: clamp(42px, calc(var(--menu-vw, 1vw) * 5.1), 95px);
   line-height: 1.05;
   letter-spacing: -0.055em;
   font-style: normal;
@@ -614,7 +614,7 @@
   position: absolute;
   left: 25px;
   top: 50%;
-  width: clamp(225px, 14.5vw, 280px);
+  width: clamp(225px, calc(var(--menu-vw, 1vw) * 14.5), 280px);
   aspect-ratio: 1;
   transform: translateY(-50%);
   translate: calc(var(--start-beat) * 1.8px) calc(var(--start-beat) * -1.2px);
@@ -789,7 +789,7 @@
   filter: drop-shadow(0 0 4px var(--briefing-paper)) drop-shadow(0 0 14px var(--briefing-accent));
 }
 .start-briefing[data-state='complete'] .start-charge-content > strong {
-  padding-right: clamp(225px, 14.5vw, 280px);
+  padding-right: clamp(225px, calc(var(--menu-vw, 1vw) * 14.5), 280px);
   text-align: center;
   text-shadow: 0 0 16px color-mix(in srgb, var(--briefing-accent) 55%, transparent);
 }
