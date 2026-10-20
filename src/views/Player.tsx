@@ -17,19 +17,26 @@ import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
+import { usePlayerRenderPreparation } from '../usePlayerRenderPreparation';
 const BASE_PREVIEW_MS = 3600;
 export function Player({
   chart,
   media,
   showGuide = false,
   noteSpeed = DEFAULT_NOTE_SPEED,
+  prepareEffects = false,
+  onEffectsReady,
 }: {
   chart: Chart;
   media: MediaController;
   showGuide?: boolean;
   noteSpeed?: number;
+  prepareEffects?: boolean;
+  onEffectsReady?: () => void;
 }) {
-  const time = chartTimeAt(chart, useTime(media));
+  const actualTime = chartTimeAt(chart, useTime(media));
+  const preparedTime = usePlayerRenderPreparation(chart, prepareEffects, onEffectsReady);
+  const time = preparedTime ?? actualTime;
   const previewMs = (BASE_PREVIEW_MS * DEFAULT_NOTE_SPEED) / noteSpeed;
   const tracks = useRef<HTMLElement>(null);
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
@@ -101,6 +108,7 @@ export function Player({
       ref={tracks}
       className={`player-lanes ${showGuide ? 'preview-lanes' : ''}`}
       aria-label="Movement tracks"
+      data-render-preparing={prepareEffects ? '' : undefined}
     >
       <span className="note-metrics" aria-hidden="true" />
       <div className="lane-heading" hidden={!showGuide}>
@@ -188,7 +196,12 @@ export function Player({
                         className="player-note tap"
                         style={
                           {
-                            left: `${head}%`,
+                            ...(showGuide
+                              ? { left: `${head}%` }
+                              : {
+                                  left: 0,
+                                  transform: `translate3d(${(head * metrics.width) / 100}px, 0, 0) translate(-50%, -50%)`,
+                                }),
                             ...noteStyle(note),
                           } as React.CSSProperties
                         }
@@ -337,7 +350,14 @@ export function Player({
                     <path d="M12 5L4 12V28L12 35M28 5L36 12V28L28 35" />
                   </svg>
                 )}
-                {impact && <NoteImpact note={impact} elapsed={elapsed} release={impact !== hit} />}
+                {impact && (
+                  <NoteImpact
+                    note={impact}
+                    elapsed={elapsed}
+                    release={impact !== hit}
+                    baked={!showGuide}
+                  />
+                )}
                 {holding && (
                   <span className="holding-label" style={{ opacity: cueOpacity }}>
                     {noteAction(holding)}

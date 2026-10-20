@@ -411,6 +411,11 @@ body:has(.practice-app) {
   /* One stacking context per note. Later notes in DOM order cover earlier ones. */
   z-index: 1;
 }
+.practice .player-note,
+.practice .hold-head {
+  /* Keep the glyph/glow texture local; move it through the stage by composition. */
+  will-change: transform;
+}
 .practice .player-note svg,
 .practice .hold-head svg,
 .preview-lanes .player-note svg,
@@ -598,6 +603,33 @@ body:has(.practice-app) {
 .practice .note-impact {
   z-index: 2;
   --target-size: var(--note-size);
+}
+.impact-sprite {
+  display: block;
+  position: absolute;
+  width: calc(var(--note-size) * 256 / 78);
+  height: calc(var(--note-size) * 192 / 78);
+  transform: translate(-50%, -50%);
+  background-size: 800% 800%;
+  background-repeat: no-repeat;
+}
+.impact-still {
+  display: none;
+  position: absolute;
+  width: var(--note-size);
+  height: var(--note-size);
+  border: 2px solid #fff8fc;
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--lane);
+  transform: translate(-50%, -50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .impact-sprite {
+    display: none;
+  }
+  .impact-still {
+    display: block;
+  }
 }
 .impact-light {
   width: 12px;

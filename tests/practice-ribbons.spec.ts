@@ -166,14 +166,19 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await expect(sway).toHaveCount(0);
   await expect(page.locator('.combo-stat strong')).toHaveText('040');
   await seek(2.28);
-  await expect(page.getByTestId('impact-calf_raise').locator('.impact-ring')).toBeVisible();
+  await expect(page.getByTestId('impact-calf_raise').locator('.impact-sprite')).toBeVisible();
+  await expect(page.getByTestId('impact-calf_raise').locator('.impact-sprite')).toHaveCSS(
+    'filter',
+    'none',
+  );
+  await expect(page.getByTestId('impact-calf_raise').locator('.impact-particle')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/arrow-hold-arrival-1920.png', fullPage: true });
   const burst = await page
     .getByTestId('impact-calf_raise')
-    .locator('.impact-ring')
+    .locator('.impact-sprite')
     .getAttribute('style');
   await page.waitForTimeout(180);
-  await expect(page.getByTestId('impact-calf_raise').locator('.impact-ring')).toHaveAttribute(
+  await expect(page.getByTestId('impact-calf_raise').locator('.impact-sprite')).toHaveAttribute(
     'style',
     burst!,
   );

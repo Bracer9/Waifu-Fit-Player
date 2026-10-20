@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { noteColor } from '../model';
 import type { DisplayNote } from '../armDisplay';
 import { CrunchImpact } from './CrunchImpact';
+import { impactTint, IMPACT_FRAMES } from '../note-impact';
 
 export const IMPACT_MS = 520;
 
@@ -10,10 +11,12 @@ export function NoteImpact({
   note,
   elapsed,
   release,
+  baked = false,
 }: {
   note: DisplayNote;
   elapsed: number;
   release: boolean;
+  baked?: boolean;
 }) {
   const progress = Math.min(1, Math.max(0, elapsed / IMPACT_MS));
   if (note.lane === 'side_crunch')
@@ -23,6 +26,30 @@ export function NoteImpact({
   const color = note.pairedPunch
     ? 'var(--arms-both)'
     : noteColor(note.lane, note.direction, note.hand, note.armAction, note.foot);
+  if (baked) {
+    const frame =
+      Math.min(IMPACT_FRAMES - 1, Math.floor(progress * IMPACT_FRAMES)) +
+      (release ? IMPACT_FRAMES : 0);
+    return (
+      <div
+        className={`note-impact baked-impact ${release ? 'release' : 'arrival'}`}
+        aria-hidden="true"
+        data-testid={`impact-${note.lane}`}
+        data-frame={frame}
+        style={{ '--lane': color } as CSSProperties}
+      >
+        <span
+          className="impact-sprite"
+          style={{
+            backgroundImage: `url(/art/impact/${impactTint(note)}.png)`,
+            backgroundPosition: `${((frame % 8) / 7) * 100}% ${(Math.floor(frame / 8) / 7) * 100}%`,
+            opacity: note.direction === 'free' ? 0.8 : 1,
+          }}
+        />
+        <span className="impact-still" style={{ opacity: 1 - progress }} />
+      </div>
+    );
+  }
   return (
     <div
       className={`note-impact ${release ? 'release' : 'arrival'}`}

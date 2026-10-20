@@ -1,4 +1,4 @@
-import { holdStart } from './helpers/project';
+import { insertAlbum, holdStart } from './helpers/project';
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -14,6 +14,8 @@ type Proof = {
   frameReady?: number;
   seeking?: boolean;
   opacity?: number;
+  paused?: boolean;
+  covered?: boolean;
 };
 
 async function instrument(page: Page) {
@@ -21,6 +23,26 @@ async function instrument(page: Page) {
     Object.defineProperty(window, 'showOpenFilePicker', { value: undefined });
     Object.assign(window, { readyProof: [], holdReadyFrame: false });
     const state = window as unknown as { readyProof: Proof[]; holdReadyFrame: boolean };
+    new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.attributeName !== 'data-render-preparing') continue;
+        const root = record.target as HTMLElement;
+        if (!root.hasAttribute('data-render-preparing')) continue;
+        const video = document.querySelector('video');
+        const entrance = document.querySelector('.game-entrance');
+        state.readyProof.push({
+          kind: 'render-preparation',
+          at: performance.now(),
+          time: video?.currentTime,
+          paused: video?.paused,
+          covered: !!entrance && Number(getComputedStyle(entrance).opacity) > 0.99,
+        });
+      }
+    }).observe(document, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-render-preparing'],
+    });
     const ready = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState')!;
     Object.defineProperty(HTMLMediaElement.prototype, 'readyState', {
       configurable: true,
@@ -116,6 +138,7 @@ async function songs(page: Page) {
   await page.getByRole('button', { name: /音游模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
 }
 
@@ -149,6 +172,7 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   const video = page.locator('video');
   const videoNode = (await video.elementHandle())!;
   await expect(countdown).toHaveAttribute('data-phase', 'waiting');
+  await expect(page.locator('[data-note-id="start"]')).toBeVisible();
   await expect(page.locator('.ready-room-shade')).toHaveCSS(
     'opacity',
     String(READY_COUNTDOWN.roomShade),
@@ -177,6 +201,7 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     document.querySelector('video')!.dispatchEvent(new Event('canplay'));
   });
   await expect(countdown).toHaveAttribute('data-phase', 'counting');
+  await expect(page.locator('[data-render-preparing]')).toHaveCount(0);
   const gauge = await countdown.locator('.ready-progress-fill').evaluate((element) => {
     const animation = element
       .getAnimations()
@@ -194,9 +219,9 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   });
   expect(gauge.duration).toBe(READY_COUNTDOWN.beatMs * 3);
   expect(gauge.delay).toBe(READY_COUNTDOWN.introMs);
-  expect(gauge.samples[0]).toBeCloseTo(0.093, 2);
-  expect(gauge.samples[1]).toBeCloseTo(0.315, 2);
-  expect(gauge.samples[2]).toBeCloseTo(0.622, 2);
+  expect(gauge.samples[0]).toBeCloseTo(0.378, 2);
+  expect(gauge.samples[1]).toBeCloseTo(0.685, 2);
+  expect(gauge.samples[2]).toBeCloseTo(0.907, 2);
   await expect(countdown.locator('.ready-number')).toBeHidden();
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   await page.screenshot({ path: 'artifacts/ready-room-power-on-1080p.png' });
@@ -207,6 +232,7 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).animationDelay));
   expect(delays).toEqual(['0s', '0.085s', '0.17s', '0.255s', '0.34s']);
   await expect(countdown.getByRole('timer')).toHaveText('3');
+  await expect(page.locator('[data-note-id="start"]')).toBeVisible();
   // The lamp and room finish lighting during the lead-in, before the counted beats.
   await expect(page.locator('.ready-room-shade')).toHaveCSS('opacity', '0');
   await expect(page.locator('.ready-lamp-cap')).toHaveCSS('opacity', '0');
@@ -220,6 +246,7 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   await expect(page.locator('.ready-room-shade')).toHaveCSS('opacity', '0');
   await expect(page.locator('.ready-lamp-cap')).toHaveCSS('opacity', '0');
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
+  await expect(page.locator('[data-render-preparing]')).toHaveCount(0);
   await expect(countdown.locator('.ready-cover')).toHaveCSS('animation-name', 'ready-cover-glitch');
   await page.screenshot({ path: 'artifacts/ready-go-glitch-1080p.png' });
   await expect(countdown).toHaveCount(0);
@@ -232,6 +259,11 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     () => (window as unknown as { readyProof: Proof[] }).readyProof,
   );
   const numberOpacity = proof.filter((entry) => entry.kind === 'number-opacity');
+  const renderPreparation = proof.filter((entry) => entry.kind === 'render-preparation');
+  expect(renderPreparation.length).toBeGreaterThan(0);
+  expect(
+    renderPreparation.every((entry) => entry.covered && entry.paused && entry.time === 3),
+  ).toBe(true);
   expect(numberOpacity.length).toBeGreaterThan(5);
   expect(numberOpacity.every((entry) => entry.opacity === 1)).toBe(true);
   const intro = proof.find(
@@ -259,6 +291,7 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   await expect(countdown.getByRole('timer')).toHaveText('2');
   await page.keyboard.press('Backspace');
   await expect(countdown).toHaveCount(0);
+  await expect(page.locator('[data-render-preparing]')).toHaveCount(0);
   await page.waitForTimeout(2 * READY_COUNTDOWN.beatMs + READY_COUNTDOWN.revealMs + 100);
   expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
   expect(

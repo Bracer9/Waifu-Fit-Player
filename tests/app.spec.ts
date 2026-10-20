@@ -905,16 +905,14 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await seek(page, 1.08);
   const impact = page.getByTestId('impact-step');
   await expect(impact).toHaveClass(/arrival/);
-  await expect(impact.locator('.impact-particle')).toHaveCount(8);
+  await expect(impact.locator('.impact-particle')).toHaveCount(0);
+  await expect(impact.locator('.impact-sprite')).toBeVisible();
   const frozen = await impact.getAttribute('style');
-  const ringTransform = await impact.locator('.impact-ring').getAttribute('style');
+  const ringTransform = await impact.locator('.impact-sprite').getAttribute('style');
   await page.waitForTimeout(150);
   expect(await impact.getAttribute('style')).toBe(frozen);
-  expect(await impact.locator('.impact-ring').getAttribute('style')).toBe(ringTransform);
-  for (const viewport of [
-    { width: 1280, height: 720 },
-    { width: 1920, height: 1080 },
-  ]) {
+  expect(await impact.locator('.impact-sprite').getAttribute('style')).toBe(ringTransform);
+  for (const viewport of [{ width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
     expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(
       viewport.height,

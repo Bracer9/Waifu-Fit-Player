@@ -130,14 +130,19 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [media] = useState(() => new MediaController());
   const status = useMediaStatus(media);
   const [source, setSource] = useState('');
-  const preparation = usePlayerPreparation(media, source, chart);
+  const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
+  const preparation = usePlayerPreparation(
+    media,
+    source,
+    mode === 'player' ? gameChart : chart,
+    mode === 'player',
+  );
   const objectUrl = useRef<string | null>(null);
   const activeVideo = useRef<PreparedVideo | null>(null);
   const [projectRevision, setProjectRevision] = useState(0);
   const [binding, setBinding] = useState<VideoRequest | null>(null);
   const [busy, setBusy] = useState('');
   const working = useRef(false);
-  const [mode, setMode] = useState<'home' | 'albums' | 'songs' | 'player' | 'editor'>('home');
   const [menuTransition, setMenuTransition] = useState<{
     next: 'home' | 'albums' | 'songs' | 'player';
     direction: 'forward' | 'back';
@@ -156,6 +161,29 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         },
   );
   const playOnCovered = useRef<(() => void) | null>(null);
+  const [playLoadComplete, setPlayLoadComplete] = useState(false);
+  const renderPreparing =
+    menuTransition?.next === 'player' &&
+    menuTransition.phase === 'hold' &&
+    mode === 'player' &&
+    playLoadComplete &&
+    !preparation.pending;
+  const finishRenderPreparation = useCallback(() => {
+    setMenuTransition((current) =>
+      current?.next === 'player' && current.phase === 'hold'
+        ? { ...current, phase: 'reveal' }
+        : current,
+    );
+  }, []);
+  useEffect(() => {
+    if (
+      playLoadComplete &&
+      menuTransition?.next === 'player' &&
+      menuTransition.phase === 'hold' &&
+      (mode !== 'player' || preparation.error)
+    )
+      finishRenderPreparation();
+  }, [playLoadComplete, menuTransition, mode, preparation.error, finishRenderPreparation]);
   const menuPage = mode === 'home' || mode === 'albums' || mode === 'songs';
   useMenuCardPress(menuPage);
   const playStart = chart.playRange?.startMs;
@@ -748,9 +776,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       return;
     }
     await new Promise<void>((resolve) => {
+      setPlayLoadComplete(false);
       playOnCovered.current = () => {
         void open().finally(() => {
-          setMenuTransition((current) => (current ? { ...current, phase: 'reveal' } : null));
+          setPlayLoadComplete(true);
           resolve();
         });
       };
@@ -1099,7 +1128,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         <div
           className={`album-workspace ${mode === 'editor' ? 'editing' : 'practice'}`}
           hidden={mode !== 'editor' && mode !== 'player'}
-          data-ready={mode === 'player' ? (readyPhase ?? undefined) : undefined}
+          data-ready={mode === 'player' && !renderPreparing ? (readyPhase ?? undefined) : undefined}
+          data-render-preparing={renderPreparing ? '' : undefined}
+          data-paused={mode === 'player' && gamePauseOpen ? '' : undefined}
           style={readyCountdownStyle}
         >
           {mode === 'player' && <PracticeBackdrop />}
@@ -1187,6 +1218,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   media={media}
                   showGuide={mode === 'editor'}
                   noteSpeed={noteSpeed}
+                  prepareEffects={renderPreparing}
+                  onEffectsReady={finishRenderPreparation}
                 />
               )}
             </div>
