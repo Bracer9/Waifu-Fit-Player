@@ -12,7 +12,7 @@ test('album wheel notches advance smoothly without snapping back; reversal and k
   await shelf.hover();
   await page.mouse.wheel(0, 120);
   await idle();
-  await expect(current).toHaveAttribute('data-id', 'touhou');
+  await expect(current).toHaveAttribute('data-id', 'anime');
   const first = await shelf.evaluate((node) => node.scrollTop);
   expect(first).toBeGreaterThan(200);
   await page.mouse.wheel(0, 120);

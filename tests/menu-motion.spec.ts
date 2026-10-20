@@ -35,7 +35,7 @@ test('专辑首尾居中，滚轮与键盘对焦，点击邻近专辑后返回�
     await page.keyboard.press('ArrowDown');
     await centered();
   }
-  await expect(current).toHaveAttribute('data-id', 'pop');
+  await expect(current).toHaveAttribute('data-id', 'touhou');
   await centered();
   await page.setViewportSize({ width: 1280, height: 720 });
   await centered();
@@ -50,7 +50,7 @@ test('专辑首尾居中，滚轮与键盘对焦，点击邻近专辑后返回�
   await centered();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.keyboard.press('ArrowUp');
-  await expect(current).toHaveAttribute('data-id', 'anime');
+  await expect(current).toHaveAttribute('data-id', 'pop');
   await centered();
   await expect(current).toHaveCSS('transform', 'none');
   await expect(unfocused.locator('.cover-placeholder')).toHaveCSS('filter', 'none');

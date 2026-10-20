@@ -42,10 +42,10 @@ export function migrateSong(song: {
 export type Album = { id: string; name: string; cover: string };
 export const DEFAULT_ALBUMS: Album[] = [
   { id: 'all', name: '全部曲目', cover: '' },
-  { id: 'touhou', name: '东方', cover: '' },
   { id: 'anime', name: '动漫', cover: '' },
-  { id: 'vocaloid', name: '虚拟歌姬', cover: '' },
   { id: 'pop', name: '流行', cover: '' },
+  { id: 'vocaloid', name: '虚拟歌姬', cover: '' },
+  { id: 'touhou', name: '东方', cover: '' },
 ];
 
 export function publishSong(song: Song, chartType: ChartType): Song {

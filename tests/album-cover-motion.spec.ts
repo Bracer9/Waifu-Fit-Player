@@ -54,7 +54,6 @@ test('selected covers show visible sunset light and vinyl motion without moving 
   await openAuthoredCovers(page);
   await expect(page.locator('.collection-art[data-cover-motion]')).toHaveCount(1);
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('ArrowDown');
   const anime = page.locator('.collection-album[data-id="anime"]');
   await expect(anime).toHaveAttribute('aria-current', 'true');
   await expect(anime.locator('.album-cover-detail.sunset-window')).toBeVisible();
@@ -107,6 +106,7 @@ test('selected covers show visible sunset light and vinyl motion without moving 
   await expect(anime.locator('.album-sunset-glow')).toHaveCSS('opacity', '0.32');
   await page.screenshot({ path: 'artifacts/album-cover-anime-1080p.png' });
 
+  await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
   const vinyl = page.locator('.collection-album[data-id="vocaloid"]');
   await expect(vinyl).toHaveAttribute('aria-current', 'true');
@@ -196,7 +196,7 @@ test('album-specific scenes keep their static layers, animate only the selection
   });
   await page.screenshot({ path: 'artifacts/album-cover-all-1080p.png' });
 
-  await page.keyboard.press('ArrowDown');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
   await expect(moon).toHaveAttribute('aria-current', 'true');
   await expect(moon.locator('.album-ribbon-sway')).toHaveCSS('animation-play-state', 'running');
   await expect(all.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
@@ -222,14 +222,13 @@ test('album-specific scenes keep their static layers, animate only the selection
   });
   await page.screenshot({ path: 'artifacts/album-cover-touhou-1080p.png' });
 
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowUp');
   await expect(vinyl).toHaveAttribute('aria-current', 'true');
   await expect(vinyl.locator('.album-vinyl-disc')).toHaveAttribute('href', idleFace!);
   await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
   await expect(moon.locator('.album-ribbon-sway')).toHaveCSS('animation-play-state', 'paused');
 
-  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowUp');
   await expect(pop).toHaveAttribute('aria-current', 'true');
   await expect(pop.locator('.album-earring-glint')).toHaveCSS('animation-play-state', 'running');
   await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');

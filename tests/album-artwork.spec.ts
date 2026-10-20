@@ -12,7 +12,7 @@ test('centred albums show the next caption with its bottom beside the footer con
 }) => {
   await albums(page);
   await page.mouse.move(10, 10);
-  for (const id of ['all', 'touhou', 'anime', 'vocaloid']) {
+  for (const id of ['all', 'anime', 'pop', 'vocaloid']) {
     const current = page.locator(`.collection-album[data-id="${id}"]`);
     await expect(current).toHaveAttribute('aria-current', 'true');
     await expect
@@ -82,7 +82,7 @@ test('album originals occupy a full 7:2 picture area; only neighbouring cards ha
       });
   await expect.poll(() => blur(0)).toBeLessThan(0.05);
   await expect.poll(() => blur(1)).toBeGreaterThan(0.5);
-  for (const id of ['all', 'touhou', 'anime', 'vocaloid', 'pop']) {
+  for (const id of ['all', 'anime', 'pop', 'vocaloid', 'touhou']) {
     const filename = id === 'anime' ? 'animie' : id === 'vocaloid' ? 'Vocaloid' : id;
     const original = readFileSync(`src/assets/albums-illustrations/${filename}_album.png`);
     const dimensions = [original.readUInt32BE(16), original.readUInt32BE(20)];

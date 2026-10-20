@@ -166,7 +166,6 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
     .poll(async () => Math.abs((await shelf.boundingBox())!.x - before.x))
     .toBeLessThan(1);
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('ArrowDown');
   await expect(page.locator('.collection-album[aria-current="true"]')).toHaveAttribute(
     'data-id',
     'anime',
@@ -391,9 +390,10 @@ test('empty albums can be inserted; blank click and Back eject without leaving t
 }) => {
   await setup(page);
   await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
   await expect(page.locator('.collection-album[aria-current="true"]')).toHaveAttribute(
     'data-id',
-    'touhou',
+    'pop',
   );
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: '播放专辑试听' })).toBeDisabled();
