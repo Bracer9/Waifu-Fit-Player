@@ -503,6 +503,37 @@ test('charge eases out without changing the hold duration; mouse and keyboard sh
   await expect(page.locator('.game-entrance')).toHaveAttribute('data-phase', 'cover');
 });
 
+test('Shift Enter skips charging, completes once and enters the original gameplay opening', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const sounds: string[] = [];
+    Object.assign(window, { quickStartSounds: sounds });
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.dataset.menuSound) sounds.push(this.dataset.menuSound);
+      return play.call(this);
+    };
+  });
+  await fixture(page);
+  await page.locator('.record-select').click();
+  const briefing = page.locator('.start-briefing');
+  await expect(briefing.locator('.start-charge-shortcut')).toHaveText(
+    'SHIFT + ENTER · QUICK START',
+  );
+  await page.keyboard.press('Shift+Enter');
+  await expect(briefing).toHaveAttribute('data-state', 'complete');
+  expect(await chargeValue(page)).toBe(1);
+  await page.keyboard.press('Shift+Enter');
+  const sounds = await page.evaluate(
+    () => (window as unknown as { quickStartSounds: string[] }).quickStartSounds,
+  );
+  expect(sounds.filter((name) => name === 'charged')).toHaveLength(1);
+  expect(sounds.filter((name) => name === 'charge')).toHaveLength(0);
+  await expect(page.locator('.game-entrance')).toBeVisible();
+  await expect(page.locator('.ready-countdown')).toBeVisible();
+});
+
 test('fresh Enter hold connects a dedicated black entrance, then powers the room and starts the original countdown', async ({
   page,
 }) => {

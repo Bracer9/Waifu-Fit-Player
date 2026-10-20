@@ -577,11 +577,22 @@
   transition: scale 60ms ease-out;
 }
 .start-charge-content > small {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 2px;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.35em;
+}
+.start-charge-shortcut {
+  margin-right: 14px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  opacity: 0.6;
+}
+.start-briefing[data-state='complete'] .start-charge-shortcut {
+  visibility: hidden;
 }
 .start-charge-content > strong {
   display: block;

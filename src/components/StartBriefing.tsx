@@ -95,9 +95,47 @@ export function StartBriefing({
     };
     frame.current = requestAnimationFrame(rollback);
   };
-  const begin = (source: 'keyboard' | 'pointer') => {
+  const finishCharge = () => {
+    paint(1);
+    const button = root.current?.querySelector<HTMLElement>('.start-charge');
+    const ring = root.current?.querySelector<HTMLElement>('.start-charge-arrow');
+    if (button && ring) {
+      const panelStyle = getComputedStyle(button);
+      const ringStyle = getComputedStyle(ring);
+      root.current!.style.setProperty('--start-rest-transform', panelStyle.transform);
+      root.current!.style.setProperty(
+        '--start-locked-beat',
+        panelStyle.getPropertyValue('--start-beat'),
+      );
+      root.current!.style.setProperty('--start-ring-scale', ringStyle.scale);
+      root.current!.style.setProperty('--start-ring-rotate', ringStyle.rotate);
+      const [ringX, ringY = '0px'] =
+        ringStyle.translate === 'none' ? ['0px', '0px'] : ringStyle.translate.split(' ');
+      root.current!.style.setProperty('--start-ring-x', ringX);
+      root.current!.style.setProperty('--start-ring-y', ringY);
+      root.current!.style.setProperty(
+        '--start-slide-distance',
+        `${Math.max(0, button.clientWidth - ring.offsetWidth - 50)}px`,
+      );
+    }
+    owner.current = null;
+    phase.current = 'complete';
+    setState('complete');
+    stopCharge.current?.();
+    stopCharge.current = null;
+    callbacks.current.onSound('charged');
+    completion.current = setTimeout(() => {
+      completion.current = null;
+      callbacks.current.onStart();
+    }, START_BRIEFING.completionMs);
+  };
+  const begin = (source: 'keyboard' | 'pointer', quick = false) => {
     if (phase.current !== 'idle' || motion.isClosing()) return;
     clear();
+    if (quick) {
+      finishCharge();
+      return;
+    }
     owner.current = source;
     phase.current = 'holding';
     setState('holding');
@@ -110,39 +148,7 @@ export function StartBriefing({
       // Ease only the visual fill. Completion still uses the unchanged hold duration.
       paint(1 - (1 - value) ** 3);
       if (value < 1) frame.current = requestAnimationFrame(charge);
-      else {
-        const button = root.current?.querySelector<HTMLElement>('.start-charge');
-        const ring = root.current?.querySelector<HTMLElement>('.start-charge-arrow');
-        if (button && ring) {
-          const panelStyle = getComputedStyle(button);
-          const ringStyle = getComputedStyle(ring);
-          root.current!.style.setProperty('--start-rest-transform', panelStyle.transform);
-          root.current!.style.setProperty(
-            '--start-locked-beat',
-            panelStyle.getPropertyValue('--start-beat'),
-          );
-          root.current!.style.setProperty('--start-ring-scale', ringStyle.scale);
-          root.current!.style.setProperty('--start-ring-rotate', ringStyle.rotate);
-          const [ringX, ringY = '0px'] =
-            ringStyle.translate === 'none' ? ['0px', '0px'] : ringStyle.translate.split(' ');
-          root.current!.style.setProperty('--start-ring-x', ringX);
-          root.current!.style.setProperty('--start-ring-y', ringY);
-          root.current!.style.setProperty(
-            '--start-slide-distance',
-            `${Math.max(0, button.clientWidth - ring.offsetWidth - 50)}px`,
-          );
-        }
-        owner.current = null;
-        phase.current = 'complete';
-        setState('complete');
-        stopCharge.current?.();
-        stopCharge.current = null;
-        callbacks.current.onSound('charged');
-        completion.current = setTimeout(() => {
-          completion.current = null;
-          callbacks.current.onStart();
-        }, START_BRIEFING.completionMs);
-      }
+      else finishCharge();
     };
     frame.current = requestAnimationFrame(charge);
   };
@@ -175,7 +181,7 @@ export function StartBriefing({
       if (event.key === 'Escape' || event.key === 'Backspace') cancel();
       else if (event.key === 'Enter') {
         if (event.target instanceof Element && event.target.closest('.briefing-cancel')) cancel();
-        else begin('keyboard');
+        else begin('keyboard', event.shiftKey);
       } else selectType(event.key === 'ArrowLeft' ? 'fitness' : 'dance');
     };
     const up = (event: KeyboardEvent) => {
@@ -438,7 +444,10 @@ export function StartBriefing({
             <ArrowRight />
           </span>
           <span className="start-charge-content">
-            <small>{state === 'complete' ? 'READY. LET’S MOVE!' : 'READY TO MOVE?'}</small>
+            <small>
+              <span>{state === 'complete' ? 'READY. LET’S MOVE!' : 'READY TO MOVE?'}</span>
+              <span className="start-charge-shortcut">SHIFT + ENTER · QUICK START</span>
+            </small>
             <strong>
               {state === 'complete' ? (
                 <>
@@ -465,7 +474,7 @@ export function StartBriefing({
           <span className="start-charge-backlight" aria-hidden="true" />
         </button>
         <span className="sr-only" id={`${titleId}-hold`}>
-          按住 Enter 或鼠标约一秒充能开始，松开取消充能。
+          按住 Enter 或鼠标约一秒充能开始，松开取消充能。Shift + Enter 快速开始。
         </span>
         <button className="briefing-cancel" type="button" onClick={cancel} aria-label="取消">
           <kbd>ESC</kbd>
