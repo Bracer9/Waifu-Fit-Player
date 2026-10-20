@@ -1,5 +1,5 @@
-// Only rebuild the release/ignition feedback. Preserve the tuned charge and menu sounds.
-// node scripts/generate-start-feedback-sfx.mjs
+// Rebuild start feedback; --charged-only preserves the release sound too.
+// node scripts/generate-start-feedback-sfx.mjs --charged-only
 import { writeFileSync } from 'node:fs';
 
 const rate = 44100;
@@ -16,6 +16,7 @@ const envelope = (t, length, attack, decay) =>
     : 0;
 
 function bake(name, duration, level, sample) {
+  if (process.argv.includes('--charged-only') && name !== 'charged') return;
   const samples = Float64Array.from({ length: Math.ceil(rate * duration) }, (_, i) =>
     sample(i / rate),
   );
@@ -55,16 +56,16 @@ bake('release', 0.26, 0.4, (t) => {
   return hiss * 1.8 + Math.sin(phase) * envelope(t, 0.23, 0.008, 21) * 0.17;
 });
 
-// Soft power-on chime: rounded attack, warm tones, no impact/noise/saturation.
-bake('charged', 0.34, 0.18, (t) => {
-  return [
-    [392, 0, 0.7],
-    [523.25, 0.045, 0.32],
-    [784, 0.075, 0.07],
-  ].reduce((sum, [frequency, delay, gain]) => {
-    const age = t - delay;
-    return (
-      sum + Math.sin(2 * Math.PI * frequency * age) * envelope(age, 0.34 - delay, 0.035, 9) * gain
-    );
-  }, 0);
-});
+// One clear bell strike with a bright E6 body and short, softer metallic partials.
+// No low thump, staggered chord or noise burst; the tiny attack avoids a click.
+bake('charged', 0.42, 0.32, (t) =>
+  [
+    [1318.51, 1, 9],
+    [2637.02, 0.12, 15],
+    [3639.09, 0.15, 22],
+  ].reduce(
+    (sum, [frequency, gain, decay]) =>
+      sum + Math.sin(2 * Math.PI * frequency * t) * envelope(t, 0.42, 0.003, decay) * gain,
+    0,
+  ),
+);
