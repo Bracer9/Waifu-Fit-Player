@@ -1,22 +1,2 @@
-import { defineConfig } from '@playwright/test';
-export default defineConfig({
-  testDir: './tests',
-  timeout: 60000,
-  fullyParallel: false,
-  workers: 1,
-  reporter: [['list'], ['html', { open: 'never' }]],
-  use: {
-    baseURL: 'http://127.0.0.1:5173',
-    channel: 'chrome',
-    viewport: { width: 1440, height: 1000 },
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-  },
-  webServer: {
-    env: { WFP_MAPS_DIR: 'tests/fixtures/empty-maps' },
-    command: 'npm run dev',
-    url: 'http://127.0.0.1:5173',
-    reuseExistingServer: true,
-    timeout: 30000,
-  },
-});
+import { testConfig } from './tests/helpers/config';
+export default testConfig('regression');

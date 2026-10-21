@@ -16,6 +16,8 @@ type Proof = {
   opacity?: number;
   paused?: boolean;
   covered?: boolean;
+  progress?: number;
+  countdownPhase?: string;
 };
 
 async function instrument(page: Page) {
@@ -68,6 +70,19 @@ async function instrument(page: Page) {
     };
     let last = '';
     new MutationObserver(() => {
+      const progress = document.querySelector('.game-entrance [role="progressbar"]');
+      if (progress && document.querySelector('.practice[data-render-preparing]')) {
+        const video = document.querySelector('video');
+        state.readyProof.push({
+          kind: 'preparation-progress',
+          at: performance.now(),
+          progress: Number(progress.getAttribute('aria-valuenow')),
+          time: video?.currentTime,
+          paused: video?.paused,
+          countdownPhase:
+            document.querySelector('.ready-countdown')?.getAttribute('data-phase') ?? '',
+        });
+      }
       const countdown = document.querySelector('.ready-countdown');
       const phase = countdown?.getAttribute('data-phase') ?? '';
       const text = countdown?.querySelector('[role="timer"]')?.textContent ?? '';
@@ -100,7 +115,7 @@ async function instrument(page: Page) {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['data-phase'],
+      attributeFilter: ['data-phase', 'aria-valuenow'],
     });
   });
 }
@@ -171,6 +186,17 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   const countdown = page.getByRole('dialog', { name: '开始倒计时' });
   const video = page.locator('video');
   const videoNode = (await video.elementHandle())!;
+  const preparation = page.getByRole('progressbar', { name: '进曲准备进度' });
+  await expect(preparation).toBeVisible();
+  await expect(page.locator('.game-entrance')).toHaveAttribute('data-phase', 'hold');
+  expect(Number(await preparation.getAttribute('aria-valuenow'))).toBeLessThan(100);
+  await page.waitForTimeout(150);
+  expect(Number(await preparation.getAttribute('aria-valuenow'))).toBeLessThan(100);
+  expect(await video.evaluate((v: HTMLVideoElement) => [v.currentTime, v.paused])).toEqual([
+    3,
+    true,
+  ]);
+  await page.screenshot({ path: 'artifacts/stage-startup/preparing-stage.png' });
   await expect(countdown).toHaveAttribute('data-phase', 'waiting');
   await expect(page.locator('[data-note-id="start"]')).toBeVisible();
   await expect(page.locator('.ready-room-shade')).toHaveCSS(
@@ -178,10 +204,13 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
     String(READY_COUNTDOWN.roomShade),
   );
   await expect(page.locator('.ready-lamp-cap')).toHaveCSS('opacity', '0.9');
-  await expect(page.locator('.practice .lane-label').first()).toHaveCSS(
-    'filter',
-    'brightness(0.42)',
-  );
+  await expect(page.locator('.practice .lane-label').first()).toHaveCSS('filter', 'none');
+  expect(
+    await page
+      .locator('.practice .lane-label')
+      .first()
+      .evaluate((node) => getComputedStyle(node, '::before').opacity),
+  ).toBe('0.58');
   expect(
     await page
       .locator('.practice .play-lane')
@@ -260,6 +289,13 @@ test('song-specific cover, prepared frame, coordinated lanes, and GO starts play
   );
   const numberOpacity = proof.filter((entry) => entry.kind === 'number-opacity');
   const renderPreparation = proof.filter((entry) => entry.kind === 'render-preparation');
+  const progress = proof.filter((entry) => entry.kind === 'preparation-progress');
+  expect(progress.some((entry) => entry.progress === 100)).toBe(true);
+  expect(
+    progress.every(
+      (entry) => entry.paused && entry.time === 3 && entry.countdownPhase === 'waiting',
+    ),
+  ).toBe(true);
   expect(renderPreparation.length).toBeGreaterThan(0);
   expect(
     renderPreparation.every((entry) => entry.covered && entry.paused && entry.time === 3),
@@ -349,6 +385,12 @@ test('missing cover uses the existing placeholder and reduced motion keeps count
   await expect(page.locator('.practice .highway-line').first()).toHaveCSS('animation-name', 'none');
   await expect(page.locator('.ready-room-shade')).toHaveCSS('opacity', '0');
   await expect(page.locator('.ready-light-wash')).toBeHidden();
+  expect(
+    await page
+      .locator('.practice .lane-label')
+      .first()
+      .evaluate((node) => getComputedStyle(node, '::before').opacity),
+  ).toBe('0');
   await page.waitForFunction(
     () => document.querySelector('.ready-countdown')?.getAttribute('data-phase') === 'go',
   );

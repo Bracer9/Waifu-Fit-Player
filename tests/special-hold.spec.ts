@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -14,7 +14,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
   await openDemo(page);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));
@@ -137,7 +137,7 @@ test('SPECIAL HOLD 用同速长带表达时长，长条裁切、重叠、短条�
   await expect(effects('first').locator('.special-hold-strip')).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   for (const icon of ['star', 'sparkles']) {
-    await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+    await editInStudio(page);
     await page.getByRole('button', { name: '曲目', exact: true }).click();
     await page.getByLabel('SPECIAL 图标').selectOption(icon);
     await seek(4.9);

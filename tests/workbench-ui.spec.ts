@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { expect, test } from '@playwright/test';
 
 test('editor tool shortcuts respect inputs; day/night remains local to the editor', async ({
@@ -24,7 +24,7 @@ test('editor tool shortcuts respect inputs; day/night remains local to the edito
       ),
     );
   const originalGamePaint = await gamePaint();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const select = page.getByRole('button', { name: '选择工具', exact: true });
   const draw = page.getByRole('button', { name: '绘制工具', exact: true });
   await page.keyboard.press('s');
@@ -57,7 +57,7 @@ test('editor tool shortcuts respect inputs; day/night remains local to the edito
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   await expect(page.locator('.app')).not.toHaveAttribute('data-workbench-theme');
   expect(await gamePaint()).toEqual(originalGamePaint);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   await expect(theme).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '返回主页', exact: true }).click();
   await expect(page.locator('.app')).not.toHaveAttribute('data-workbench-theme');

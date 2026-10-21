@@ -3,10 +3,8 @@ import { ALBUM_DECK_TIMING } from './components/AlbumDeck';
 import type { MenuSoundPlayer } from './useMenuSounds';
 import { menuPortalRoot, menuRect, menuViewport } from './menu-viewport';
 
-type Owner = 'keyboard' | 'automatic' | number;
 type Flight = {
-  phase: 'holding' | 'returning' | 'complete';
-  owner: Owner;
+  phase: 'inserting' | 'returning' | 'complete';
   animation: Animation;
   card: HTMLElement;
   copy: HTMLElement;
@@ -15,7 +13,7 @@ type Flight = {
   opacity: string;
 };
 
-/** The physical insertion itself is the hold gauge; releasing reverses the card. */
+/** A click or Enter runs the insertion to completion; Escape and blur cancel it. */
 export function useAlbumInsertion({
   menu,
   enabled,
@@ -44,7 +42,7 @@ export function useAlbumInsertion({
   };
   const release = () => {
     const current = flight.current;
-    if (!current || current.phase !== 'holding') return;
+    if (!current || current.phase !== 'inserting') return;
     current.phase = 'returning';
     const { translate, opacity } = getComputedStyle(current.copy);
     current.animation.cancel();
@@ -69,7 +67,7 @@ export function useAlbumInsertion({
       })
       .catch(() => {});
   };
-  const begin = (owner: Owner) => {
+  const begin = (quick = false) => {
     if (!enabled || flight.current) return;
     const card = menu.current?.querySelector<HTMLElement>('.album-shelf [aria-current="true"]');
     const slot = menu.current?.querySelector<HTMLElement>('.album-deck-slot');
@@ -102,14 +100,13 @@ export function useAlbumInsertion({
         ? [{ opacity: 1 }, { opacity: 0.3 }]
         : [{ translate: '0 0' }, { translate: `${edge - box.left + 30}px 0` }],
       {
-        duration: owner === 'automatic' ? ALBUM_DECK_TIMING.quickInsert : ALBUM_DECK_TIMING.insert,
+        duration: quick ? ALBUM_DECK_TIMING.quickInsert : ALBUM_DECK_TIMING.insert,
         easing: 'cubic-bezier(0.45, 0, 0.2, 1)',
         fill: 'forwards',
       },
     );
     const current: Flight = {
-      phase: 'holding',
-      owner,
+      phase: 'inserting',
       animation,
       card,
       copy,
@@ -121,7 +118,7 @@ export function useAlbumInsertion({
     setInserting(true);
     void animation.finished
       .then(() => {
-        if (flight.current !== current || current.phase !== 'holding') return;
+        if (flight.current !== current || current.phase !== 'inserting') return;
         current.phase = 'complete';
         callbacks.current.onSound('insert');
         callbacks.current.onComplete();
@@ -140,29 +137,15 @@ export function useAlbumInsertion({
       event.stopImmediatePropagation();
       if (event.key !== 'Enter') release();
     };
-    const keyup = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || flight.current?.owner !== 'keyboard') return;
-      event.preventDefault();
-      release();
-    };
-    const pointerup = (event: PointerEvent) => {
-      if (flight.current?.owner === event.pointerId) release();
-    };
     const blur = () => release();
     const visibility = () => {
       if (document.hidden) blur();
     };
     window.addEventListener('keydown', keydown, true);
-    window.addEventListener('keyup', keyup, true);
-    window.addEventListener('pointerup', pointerup);
-    window.addEventListener('pointercancel', pointerup);
     window.addEventListener('blur', blur);
     document.addEventListener('visibilitychange', visibility);
     return () => {
       window.removeEventListener('keydown', keydown, true);
-      window.removeEventListener('keyup', keyup, true);
-      window.removeEventListener('pointerup', pointerup);
-      window.removeEventListener('pointercancel', pointerup);
       window.removeEventListener('blur', blur);
       document.removeEventListener('visibilitychange', visibility);
     };

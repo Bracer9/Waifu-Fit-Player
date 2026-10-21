@@ -15,6 +15,20 @@
   animation: game-entrance-reveal var(--entrance-fade-in) cubic-bezier(0.33, 0, 0.67, 1)
     var(--entrance-black-hold) both;
 }
+.game-entrance-preparation {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff4e7;
+}
+.game-entrance-preparation .album-tuning-station {
+  position: relative;
+}
+.game-entrance-preparation .album-tuning-station > i {
+  /* Actual media/asset and rendering steps, rather than the album's timed fill. */
+  animation: none;
+}
 .practice[data-render-preparing] .ready-countdown {
   /* Let the paused, prepared video frame reach the compositor too. The black
      entrance still covers the screen; the cover returns before it reveals. */

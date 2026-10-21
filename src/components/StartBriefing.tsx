@@ -54,6 +54,7 @@ export function StartBriefing({
     segmentAt(chart.tempoSegments, chartTimeAt(chart, chart.playRange?.startMs ?? 0))?.bpm ??
     chart.tempoSegments[0]?.bpm;
   const root = useRef<HTMLElement>(null);
+  const chargeControl = useRef<HTMLButtonElement>(null);
   const motion = useBriefingMotion(root, onClose);
   const frame = useRef(0);
   const stopCharge = useRef<(() => void) | null>(null);
@@ -69,7 +70,7 @@ export function StartBriefing({
 
   const paint = (value: number) => {
     progress.current = value;
-    root.current?.style.setProperty('--start-charge', String(value));
+    chargeControl.current?.style.setProperty('--start-charge', String(value));
   };
   const clear = () => {
     stopCharge.current?.();
@@ -97,26 +98,25 @@ export function StartBriefing({
   };
   const finishCharge = () => {
     paint(1);
-    const button = root.current?.querySelector<HTMLElement>('.start-charge');
-    const ring = root.current?.querySelector<HTMLElement>('.start-charge-arrow');
+    const button = chargeControl.current;
+    const ring = button?.querySelector<HTMLElement>('.start-charge-arrow');
     if (button && ring) {
       const panelStyle = getComputedStyle(button);
       const ringStyle = getComputedStyle(ring);
-      root.current!.style.setProperty('--start-rest-transform', panelStyle.transform);
-      root.current!.style.setProperty(
-        '--start-locked-beat',
-        panelStyle.getPropertyValue('--start-beat'),
-      );
-      root.current!.style.setProperty('--start-ring-scale', ringStyle.scale);
-      root.current!.style.setProperty('--start-ring-rotate', ringStyle.rotate);
       const [ringX, ringY = '0px'] =
         ringStyle.translate === 'none' ? ['0px', '0px'] : ringStyle.translate.split(' ');
-      root.current!.style.setProperty('--start-ring-x', ringX);
-      root.current!.style.setProperty('--start-ring-y', ringY);
-      root.current!.style.setProperty(
-        '--start-slide-distance',
-        `${Math.max(0, button.clientWidth - ring.offsetWidth - 50)}px`,
-      );
+      // Read the live pose and dimensions together before writing styles. Interleaved
+      // reads/writes here used to force repeated style flushes exactly at completion.
+      const pose = {
+        '--start-rest-transform': panelStyle.transform,
+        '--start-locked-beat': panelStyle.getPropertyValue('--start-beat'),
+        '--start-ring-scale': ringStyle.scale,
+        '--start-ring-rotate': ringStyle.rotate,
+        '--start-ring-x': ringX,
+        '--start-ring-y': ringY,
+        '--start-slide-distance': `${Math.max(0, button.clientWidth - ring.offsetWidth - 50)}px`,
+      };
+      for (const [name, value] of Object.entries(pose)) button.style.setProperty(name, value);
     }
     owner.current = null;
     phase.current = 'complete';
@@ -390,6 +390,7 @@ export function StartBriefing({
         </div>
         <button
           className="start-charge"
+          ref={chargeControl}
           type="button"
           aria-label="按住 Enter 开始游戏"
           aria-describedby={`${titleId}-hold`}

@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { LANES, type Chart, type Note } from '../src/model';
@@ -13,7 +13,7 @@ test('HOLD 结束点上的 TAP 与光带连成一体，间隔或重叠的 TAP �
   await page.goto('/');
   await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await downloading).path())!, 'utf8'));
@@ -122,7 +122,7 @@ test('有间隔的相邻 HOLD / SWAY 保留各自尾圆，只有精确首尾相�
   await page.goto('/');
   await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await downloading).path())!, 'utf8'));
@@ -283,7 +283,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
 
   await seek(29.3);
   await page.screenshot({ path: 'artifacts/notes-demo-fullscreen-1920.png' });
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
 
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();

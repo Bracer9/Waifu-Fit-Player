@@ -518,14 +518,16 @@ body:has(.practice-app) {
 }
 .ribbon-bloom {
   stroke: var(--lane);
-  stroke-width: 8px;
-  filter: blur(6px);
-  opacity: 0.45;
+  stroke-width: 28px;
+  opacity: 0.015;
+}
+.ribbon-glow {
+  stroke: var(--lane);
 }
 .ribbon-aura {
   stroke: var(--lane);
   stroke-width: 4px;
-  filter: blur(2px);
+  opacity: 0.35;
 }
 .ribbon-color {
   stroke: none;

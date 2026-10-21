@@ -1,11 +1,11 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { expect, test } from '@playwright/test';
 
 test('148 BPM 的 1.41–1.46 回跳后持续播放，不反复 seek', async ({ page }) => {
   await page.goto('/');
   await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   await page.getByRole('button', { name: '节拍段', exact: true }).click();
   for (const [name, value] of [
     ['BPM', '148'],

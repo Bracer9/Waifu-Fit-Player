@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { ARM_DIRECTIONS, type Chart, type Note } from '../src/model';
@@ -23,7 +23,7 @@ async function setup(page: Page) {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
   await openDemo(page);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const chart = await exportChart(page);
   chart.title = 'ARMS SESSION';
   chart.notes = [];
@@ -47,12 +47,12 @@ test('ARMS authoring, F/H, quick recording and save round trip', async ({ page }
   await page.getByRole('button', { name: '绘制手臂动作 ↗', exact: true }).click();
   await page.getByRole('button', { name: '录入用手 L', exact: true }).click();
   const box = (await page.locator('.timeline-surface').boundingBox())!;
-  await page.mouse.move(box.x + 324, box.y + 165);
+  await page.mouse.move(box.x + 324, box.y + 111);
   await page.mouse.down();
-  await page.mouse.move(box.x + 524, box.y + 165, { steps: 5 });
+  await page.mouse.move(box.x + 524, box.y + 111, { steps: 5 });
   await page.mouse.up();
   await page.getByLabel('选中事件类型').selectOption('sway');
-  await page.locator('.timeline-surface').click({ position: { x: 340, y: 165 } });
+  await page.locator('.timeline-surface').click({ position: { x: 340, y: 111 } });
   await page.keyboard.press('h');
   await page.keyboard.press('f');
   let saved = await exportChart(page);
@@ -91,7 +91,7 @@ test('ARMS authoring, F/H, quick recording and save round trip', async ({ page }
   await page.screenshot({ path: 'artifacts/arms-editor.png', fullPage: true });
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
-  await page.keyboard.press('1');
+  await page.keyboard.press('2');
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await seek(page, 20);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -116,7 +116,7 @@ test('ARMS authoring, F/H, quick recording and save round trip', async ({ page }
   await page.keyboard.down('j');
   await page.waitForTimeout(300);
   await page.keyboard.up('j');
-  await page.keyboard.press('2');
+  await page.keyboard.press('3');
   await page.keyboard.press('ArrowLeft');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   saved = await exportChart(page);

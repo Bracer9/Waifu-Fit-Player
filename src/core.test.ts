@@ -294,30 +294,34 @@ describe('编辑与历史', () => {
     // SIDE CRUNCH rejects vertical arrows, so the entire group remains in place.
     expect(group).toBe(chart);
     const upper = shiftNoteLanes(chart, ['hold', 'other'], 'squat', 'punch');
-    // The second note would land on STEP, which rejects down as well.
+    // The second note would land on SIDE CRUNCH, which rejects down as well.
     expect(upper).toBe(chart);
   });
-  it('左右三轨支持 STEP，批量移动保留行距并拒绝越出方向组', () => {
+  it('批量跨轨保留行距，逐个验证目标轨方向并拒绝越界', () => {
     const chart = fixture();
     chart.notes = [
-      { ...hold, id: 'p', lane: 'punch', direction: 'left' },
+      { ...hold, id: 'p', lane: 'punch', direction: 'up' },
       { id: 's', kind: 'tap', lane: 'step', direction: 'right', timeMs: 17000 },
     ];
-    const moved = shiftNoteLanes(chart, ['p', 's'], 'punch', 'step');
+    const moved = shiftNoteLanes(chart, ['p', 's'], 'punch', 'calf_raise');
     expect(moved.notes).toEqual([
-      { ...chart.notes[0], lane: 'step' },
+      { ...chart.notes[0], lane: 'calf_raise' },
       { ...chart.notes[1], lane: 'side_crunch' },
     ]);
-    expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'punch').notes).toEqual([
+    expect(shiftNoteLanes(moved, ['p', 's'], 'calf_raise', 'punch').notes).toEqual([
       { ...chart.notes[0], armAction: 'reach' },
       chart.notes[1],
     ]);
-    expect(shiftNoteLanes(moved, ['p', 's'], 'step', 'side_crunch')).toEqual(moved);
+    expect(shiftNoteLanes(moved, ['p', 's'], 'calf_raise', 'side_crunch')).toEqual(moved);
     expect(shiftNoteLanes(chart, ['s'], 'step', 'calf_raise')).toEqual(chart);
+    expect(flipNotes(moved, ['s']).notes[1]).toEqual({
+      ...moved.notes[1],
+      direction: 'left',
+      foot: 'right',
+    });
     expect(flipNotes(moved, ['p']).notes[0]).toEqual({
       ...moved.notes[0],
-      direction: 'right',
-      foot: 'left',
+      direction: 'down',
     });
   });
   it('整体移动保留 HOLD 时长并约束开始与结束', () => {

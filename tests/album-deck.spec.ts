@@ -205,50 +205,105 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
   expect(errors).toEqual([]);
 });
 
-test('album insertion requires a hold and returns on keyboard release, pointer release and blur', async ({
-  page,
-}) => {
+test('album insertion cancels on Escape, Backspace and blur', async ({ page }) => {
   await setup(page);
   await page.keyboard.press('Enter');
   await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
-  await expect(page.locator('.album-deck-insert-hint > small')).toHaveText('HOLD');
+  await expect(page.locator('.album-deck-insert-hint > small')).toHaveText('ENTER');
   const card = page.locator('.album-shelf .collection-album[aria-current="true"]');
   const original = (await card.boundingBox())!;
   await page.keyboard.down('Enter');
   await page.waitForTimeout(400);
   const moving = page.locator('.album-flight-card');
   expect((await moving.boundingBox())!.x).toBeGreaterThan(original.x + 30);
+  await page.keyboard.press('Escape');
   await page.keyboard.up('Enter');
   await expect(page.locator('.album-flight')).toHaveCount(0);
   await expect(card).toBeVisible();
   expect((await card.boundingBox())!.x).toBeCloseTo(original.x, 0);
   await expect(page.locator('.album-tuning')).toHaveCount(0);
 
-  // The selected album itself supports the same hold, including release outside it.
-  await page.mouse.move(original.x + original.width / 2, original.y + original.height / 2);
-  await page.mouse.down();
+  await page.mouse.click(original.x + original.width / 2, original.y + original.height / 2);
   await expect(page.locator('.album-flight')).toHaveCount(1);
   await expect(card).toHaveCSS('opacity', '0');
   await expect(page.locator('.album-flight-card > .cover-trace')).toHaveCSS('opacity', '0');
   await page.waitForTimeout(250);
-  await page.mouse.move(20, 20);
-  await page.mouse.up();
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
   await expect(page.locator('.album-flight')).toHaveCount(0);
   await expect(card).toBeVisible();
   await expect(card).toHaveCSS('opacity', '1');
 
   const button = page.getByRole('button', { name: /INSERT ALBUM/ });
   const buttonBox = (await button.boundingBox())!;
-  await page.mouse.move(buttonBox.x + buttonBox.width / 2, buttonBox.y + buttonBox.height / 2);
-  await page.mouse.down();
+  await page.mouse.click(buttonBox.x + buttonBox.width / 2, buttonBox.y + buttonBox.height / 2);
   await expect(page.locator('.album-flight')).toHaveCount(1);
   await page.waitForTimeout(200);
-  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await page.keyboard.press('Backspace');
   await expect(page.locator('.album-flight')).toHaveCount(0);
-  await page.mouse.up();
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   await insertAlbum(page);
   await expect(page.locator('.album-flight')).toHaveCount(0);
+});
+
+for (const [name, selector] of [
+  ['selected album card', '.album-shelf .collection-album[aria-current="true"]'],
+  ['INSERT ALBUM button', '.album-deck-insert'],
+] as const) {
+  test(`clicking the ${name} inserts after mouse release without requiring a hold`, async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.locator('.album-shelf .collection-album[aria-current="true"]').click();
+    await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+    await expect(page.locator('.album-flight')).toHaveCount(0);
+    const box = (await page.locator(selector).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await expect(page.locator('.album-flight')).toHaveCount(0);
+    await page.mouse.up();
+    await expect(page.locator('.album-flight')).toHaveCount(1);
+    const timing = await page.locator('.album-flight-card').evaluate((card) =>
+      card
+        .getAnimations()
+        .find(
+          (animation) =>
+            animation.effect instanceof KeyframeEffect && animation.effect.target === card,
+        )!
+        .effect!.getTiming(),
+    );
+    expect(timing.duration).toBe(960);
+    expect(timing.easing).toBe('cubic-bezier(0.45, 0, 0.2, 1)');
+    await expect(page.locator('.album-tuning')).toBeVisible();
+    await expect(page.locator('.music-menu.songs')).toBeVisible();
+    await expect(page.locator('.album-flight')).toHaveCount(0);
+  });
+}
+
+test('Enter inserts the album after key release at the original speed and easing', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+  await expect(page.locator('.album-deck-insert-hint > small')).toHaveText('ENTER');
+  await expect(page.locator('.album-deck-insert > small')).toHaveText('ENTER');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.album-flight')).toHaveCount(1);
+  const timing = await page.locator('.album-flight-card').evaluate((card) =>
+    card
+      .getAnimations()
+      .find(
+        (animation) =>
+          animation.effect instanceof KeyframeEffect && animation.effect.target === card,
+      )!
+      .effect!.getTiming(),
+  );
+  expect(timing.duration).toBe(960);
+  expect(timing.easing).toBe('cubic-bezier(0.45, 0, 0.2, 1)');
+  await expect(page.locator('.album-tuning')).toBeVisible();
+  await expect(page.locator('.music-menu.songs')).toBeVisible();
+  await expect(page.locator('.album-flight')).toHaveCount(0);
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
 });
 
 test('insert hint stays at the final gap midpoint throughout the unfold', async ({ page }) => {
@@ -393,7 +448,9 @@ test('first and repeated unfolds slide the live corner without rotating its body
   page,
 }) => {
   await setup(page);
-  await page.addStyleTag({ content: '.menu-app { --music-beat: 0 !important; }' });
+  await page.addStyleTag({
+    content: '.menu-app :is(.ambient-shape, .menu-settings) { --music-beat: 0 !important; }',
+  });
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
   const sample = () =>

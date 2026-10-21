@@ -1,28 +1,57 @@
-# 新 session 交接 — 2026-10-19
+# 当前会话交接 — 2026-10-21 恢复版
 
-这是本次交接快照，不是每次改动都要追加的日志。先读 [HLD](HLD.md)，使用与命令见 [README](../README.md)；旧 `Waifu-Fit-Player_Codex_Handoff/`、`decisions.md`、`verification.md` 只供历史追溯。
+这是 2026-10-21 恢复交接，已补充 D35 后续实现。替代原 2026-10-19 接手快照，旧内容仍可从 Git 历史查看。恢复阶段仅分析与维护文档；后续开发按用户当前授权执行，保留既有工作区与原始 Codex 记录。
+
+先读 [恢复报告](recovery/RECOVERY-REPORT-2026-10-21.md)、[当前实现核对](recovery/CURRENT-STATE-2026-10-21.md)，再读 [HLD](HLD.md) 和 [README](../README.md)。需求冲突时查 [决策恢复](recovery/DECISIONS-RECOVERED.md)，按原 JSONL 行号核对证据；分段摘录仅保存在本机 artifacts 归档，不必重新通读 306MB JSONL。旧 `Waifu-Fit-Player_Codex_Handoff/`、`decisions.md`、`verification.md` 只供历史追溯。
 
 ## 接手状态
 
-- 本次文档整理前基线为 `63a05d6 chore: add more bgm file`，工作区干净，分支为 `main`。此次仅整理文档，不切分支、不 push；用户自己安排试用 6.1sol 的分支。
-- 最近需求已完成：三个菜单的卡片流光只认**最晚实际操作的目标**；进入单曲页默认高亮当前曲目，Enter 可以确认开始。实现提交 `8d7a0cb`，没有需要继续补做的已知需求。
+- 本地 `sol61 @ 0e5c061`（2026-10-21 06:04:05 +09:00），本地 origin/sol61 指向同一提交；不等于本轮验证了实时远端。
+- 原有 10 个未提交文件：MenuMusic.tsx、StartBriefing.tsx、start-briefing.css，以及 album-deck、liquid-menu-transition、menu-music、menu-navigation、menu-settings、menu-viewport、start-briefing 七个 spec。90 新增／33 删除，均保留。这些是充能／律动样式重算优化与测试适配，M3 实际效果仍未验收。
+- 恢复结论保留在 docs/recovery/；提取脚本、对话摘录与校验快照仅存于被 Git 忽略的 artifacts/context-recovery-2026-10-21/。已核对 221 个功能／测试／配置文件未变。
 - 本地 `maps/` 和视频不进 Git；BGM 在 `src/assets/menu-bgm/`，SE 在 `src/assets/menu-sfx/`，这些是随 Git 走的游戏素材，不要当临时文件清理。
+
+## 最后需求的完成状态与剩余事项
+
+**D35 已实现**：专辑卡槽普通 Enter 单击后自动完成 960ms 插入，保留原 easing；Shift+Enter 420ms 快速插入不变，提示改为 ENTER。鼠标点击当前卡片或 INSERT ALBUM 同样自动插入，无需按住；Esc／Backspace／失焦取消保留。单曲 Hold to Start 未修改。恢复目录记载的是本次实现前的调查快照，不再将 D35 作为当前待办。
+
+本次已通过 TypeScript、193 项单元测试与正式构建；专辑单击／快速插入／取消、单曲长按与快速开始使用相关浏览器用例回归。
+
+后续开场性能修正：倒计时前资源已读取，主要开销来自轨道标签／判定圈的动态阴影、亮度与全屏模糊半径动画。改为静态光效层配合 opacity／transform；固定模糊淡出后移除滤镜。黑场准备现也取样通电、扫亮等真实 CSS 动画状态，复用专辑调谐样式显示实际资源／绘制步骤进度，恢复开场帧后才揭幕。只在遮挡下改变绘制样本，不启动真实倒计时、不播放／跳转视频；取消清理 RAF 与临时动画。Windows Chrome 4 倍 CPU 降速对照，前 2.2 秒最长帧首入约 117→25ms、再次约 75→25ms；不代表已完成真实 M3 验收或 GPU 完工保证。本机对照与 trace 位于被 Git 忽略的 artifacts/stage-startup/。
+
+开场变更验证：TypeScript、193 项单测、构建与格式通过；5 个相关浏览器场景中首轮 4 项通过，进场检查发现零模糊滤镜残留，修复其结束填充后定向复跑通过。覆盖准备进度在媒体未就绪时不填满、绘制准备时媒体／真实倒计时冻结、GO 播放时机、取消、暂停重开、小窗口与减少动态效果。
+
+五轨排序试用已按本轮用户确认改为 SQUAT → ARMS → STEP → CALF RAISE → SIDE CRUNCH。只调整共享 LANES 顺序；游戏、工作台、数字选轨及单曲大卡片 FOCUS MOVES 同步，图标／名称／占比仍按动作 ID 关联。README、HLD 与相关测试已更新；恢复目录保留调整前的历史快照。TypeScript、193 项单测、正式构建与 4 个专项浏览器场景通过，覆盖显示顺序、五个数字键、跨轨拖动与撤销、大卡片统计。旧综合用例中的 7 项在打开默认演示谱时被本机视频较短、谱面事件超出视频范围挡住，未进入目标操作，不计为通过；改用短谱完成相关专项验证。本机专项脚本与截图仅在忽略目录 artifacts/lane-order/。
+
+后续 Sunlight 首次游玩卡顿：按用户指定的当前 Windows Chrome、真实 480 音符谱面与 1080p/60fps 原视频，在独立 4182 正式 preview 复现。初次 20 秒不带 trace 的最长 RAF 间隔约 83ms，第二次进入明显减轻；带 trace 可见约 104ms GPU Task，无对应 JS 长任务／图片延迟加载。开关对照指向长条实时 blur：只去白色描边无改善，增加预绘也未解决并已撤回。最终仅修改 HoldRibbon 的柔光实现与 practice.css，用多层低透明度矢量描边替代 blur，保持原轮廓、方向、颜色、白边、时钟与预热策略。新浏览器冷启动实际歌曲前 60 秒，包含 GO 后最初 250ms 的最长间隔约 33.3ms；排除该入场区间的 7,161 个样本最长约 25ms，无超过 33.4ms 的间隔或长动画帧。不是完整 267 秒或实际用户窗口 165Hz 的验收。193 单测、TypeScript、构建及长 HOLD/SWAY 回归通过；后者视频丢帧 0/240、RAF P95 8.5ms。对照截图与证据仅在忽略目录 artifacts/sunlight-stutter/。
+
+另发现系统屏幕配置为 165Hz，而媒体绘制通知约 60Hz；现有调度在 165Hz 的模拟发布间隔为 12.121／18.182ms，会有节奏不均。本次没有直接提高整个 React/SVG 的更新频率；应独立评估轻量运动刷新与完整几何重建，不能把 GPU 长帧修正表述为所有持续细碎抖动均已解决。
+
+此外：真机复测本地充能优化，继续定位偶发长帧；16:10／略高比例及留边颜色尚在讨论；打卡／日周月累计仅为构想。双谱面顶部标签方案已撤回，只有 N/B 快捷键保留并完成。
 
 ## 易回退的约定
 
 - **数据**：FITNESS / 健身与 DANCE / 舞蹈各自有 draft 和 released 快照。健身由作者标注低／中／高运动强度，舞蹈保留数值难度。IndexedDB v2 原子迁移旧 Normal→fitness、Hard→dance；旧 JSON 在模型入口兼容，无类型默认 dance。旧数值保存在 `danceDifficulty`，不推断 `intensity`。音符、区间、视频关联、曲绘和更新时间保持原样，上次草稿指针在恢复时迁移。编辑不影响成品，发布只替换所选类型；撤下保留草稿，彻底删除也不删除用户磁盘原视频。入口在 `chart-types.ts`、`library.ts`、`useLibrary.ts`、`LibraryControls.tsx`。
-- **游戏**：共享 video 是唯一媒体时钟；音符是绝对毫秒，`chartTime = videoTime + videoOffsetMs`。节拍段 offset 只管网格，不能拿来移动音轨。菜单／编辑器样式调整不能误伤游戏画面和音画性能。MP4 录屏导出已被用户明确废弃并删除，不要恢复。
+- **游戏**：共享 video 是唯一媒体时钟；音符是绝对毫秒，`chartTime = videoTime + videoOffsetMs`。节拍段 offset 只管网格，不能拿来移动音轨。菜单／编辑器样式调整不能误伤游戏画面和音画性能。旧交接记载 MP4 录屏导出已废弃；本次未找回更早用户原话，不擅自恢复。
 - **音乐**：菜单 BGM、游戏／视频、SE 是三个独立音量，SE 默认 50%。试听直接用 MP4 音轨。当前 BGM 的完整压缩文件保留为 Blob URL，试听期间不释放；这是修复停留约 20～25 秒后返回无声的关键。菜单两个 Audio 共用一个 AudioContext／Analyser，只有一个音源在播放；不要把单曲页误判为应暂停 AudioContext。
 - **视觉**：主页两张卡片自行规律悬浮，不跟 BGM；背景粉／蓝色块跟随当前音乐，单曲页跟试听。转场必须先完整遮住旧页，再换页、揭幕。延续现有 Pop Art，不擅自加功能区或换风格。
 - **选择**：`useCardHighlight.ts` 维护唯一视觉高亮，`CoverTrace.tsx` 画流光；不要重新用独立 `:hover` 与 `:focus-visible` 同时点亮多张卡。停住的鼠标不能抢键盘高亮。悬停不等于更换居中曲目／试听。`MenuControls.tsx` 的返回按钮、Backspace、Esc 都必须有效。
 - **卡路里**：按音符权重和持续时间估算，统一系数；0.1 kcal 是显示精度，不是固定增量。`calories.ts` 已预编译累计索引，别改成逐帧全谱扫描。
+- **轨道**：SQUAT → ARMS → STEP → CALF RAISE → SIDE CRUNCH，录谱 1～5、工作台与单曲大卡片 FOCUS MOVES 同序；这是恢复快照 D31 之后用户确认的试用调整。ARMS 内部 ID 仍是 punch；foot 与方向独立；双臂展开按两颗同步音符保存，合并为一个紫色标记显示。
+- **类型切换**：工作台类型下拉是复制当前谱面到目标类型，不是加载另一草稿；继续已有版本走“本地作品”。工作台明暗偏好已经存在，不等于第二套全游戏主题。
+- **曲包**：maps 经 Vite dev/preview 只读桥接，纯静态 dist 不提供扫描。同 ID 本地编辑／隐藏优先；扫描不覆盖草稿；曲包仅导出发布版，普通 JSON 不是完整分享包。
+- **转场与性能**：主页↔专辑用局部液体，插入前进用 AlbumTuning，普通返回用 MenuTransition，进游戏用黑场；不恢复被否定的全局几何潮汐、封面飞行和刺耳弹跳。图集预热是尽力准备，非 GPU 完工保证；偶发长帧与长期多曲内存稳定性未验完。
 
 ## 验证与工作方式
 
-- 用户偏好：直接完成小范围修改，简短汇报，不反复确认、不顺手重构、不跑与改动无关的长测。按功能合理拆 commit，使用 `fix:`、`feat:`、`docs:` 等前缀；未经要求不 push。
+2026-10-21 测试整理：原 app.spec.ts 的 19 场景拆为 6 个主题文件，保留 18 场景，将重复 STEP 录谱用例的独有上方向拒绝检查合入组合键场景；移除 20 处重复成功截图。通用测试改用固定 60 秒 1080p 合成视频与有界谱面，性能／整首用 267 秒视频，两份素材约 1MB，附重建脚本。公共试玩返回编辑入口统一走暂停菜单，修复时间轴绘制定位；过期 ARMS Shift+← 期待值改为已有的 ↖ 语义。旧 artifacts/lane-order/ 两个临时测试脚本已由正式用例替代并移除，截图仍保留。
+
+本轮验证：TypeScript、193 项单测通过；快速回归 3 项全部通过约 44 秒，另有编辑往返、五轨显示、大卡片统计、STEP 组合键 4 项定向验证通过。初跑暴露的时间轴定位、旧 WORKBENCH 入口及旧斜向期待值已修复并定向复跑；不把初跑失败计为通过。常规 94、视觉 23、性能／整首 4 项均可被正式配置收集，曲包继续独立入口。核对功能源码、主 Vite 配置及正常启动素材脚本相对本轮基线没有变化。未运行全量功能／视觉组、性能组或 267 秒整首播放，不宣称所有旧用例均已验绿；手动三轮对照脚本更新了旧入口，本轮只做语法检查。测试入口与维护边界见 [测试说明](../tests/README.md)。
+
+- 用户偏好：直接完成授权范围，简短汇报，不反复确认、不顺手重构、不跑无关长测。历史 commit/push 授权只作证据，不延伸到新任务；恢复阶段的只读限制仅适用于恢复任务，后续按用户当前授权开展开发，未经要求不自动提交／push。
 - 正式入口 `npm start`：先 build，再在 `http://127.0.0.1:5173/` 提供产物。源码改动不会热更新到已运行的正式版。开发用 `npm run dev`。
-- 常用检查：`npm run check`（类型＋单测）、`npm run build`；浏览器测试只选相关 spec。全量 E2E 约 8 分钟，不为小 UI 改动默认跑全套。
-- 当前本机有被 Git 忽略的 `artifacts/practice-qa.config.ts`（preview 4179）和 `artifacts/menu-music-qa.config.ts`（dev 4180）。例如：`npx playwright test -c artifacts/practice-qa.config.ts tests/menu-highlight.spec.ts`，preview 测试前先 build。新 checkout 若没有这些文件，可另配独立端口，`reuseExistingServer: false`；不要动用户的 5173 服务。
+- 常用检查：`npm run check`（类型＋单测）、`npm run build`；浏览器测试只选相关 spec。`test:e2e:quick` 仅 3 条核心流程；默认 `test:e2e` 为常规功能组，视觉、性能／长期 BGM、整首播放和曲包分别使用独立命令，见 tests/README.md。不为小 UI 改动默认跑完整组。
+- 测试配置已纳入 Git：常规／视觉／性能使用 4180、固定合成视频和隔离 maps；不执行 predev，不改写 public 演示素材。`reuseExistingServer: false`；服务清理核对本轮实例标识后请求自行关闭。不要动用户的 5173 服务或接管个人浏览器。旧 artifacts 配置仅作历史调查，不再作为正式测试入口。
 - `tests/menu-music.spec.ts` 临时写入 BGM 测试 WAV，需要 dev 服务；**不要与 build 并行**，避免测试音频混入产物。测试结束只清理自己启动的进程。
 - 浏览器曲库与视频授权按 origin 隔离：`127.0.0.1:5173`、`localhost`、其他端口互不共用。不要为了测试清理用户站点存储。
-- 最近代码已验证 build、菜单导航／动效及流光交互测试；本次仅修改文档，不重复运行游戏测试。后续修改按实际影响选测，不沿用旧报告当新验证。
+- 恢复阶段没有重跑构建、功能或性能测试。旧会话最后一批先 29 通过／2 失败，修断言后定向 3 通过，汇总 31 个唯一检查；原 JSONL L13857、L13878 可核对。Windows 降速模拟不能替代 M3 真机结果，历史记录不能当成本轮验证。

@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -13,7 +13,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   );
   await page.goto('/');
   await openDemo(page);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const exportChart = async (): Promise<Chart> => {
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
@@ -76,7 +76,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   await seek(3.5);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'sway');
   await expect(page.getByTestId('special-cue')).toContainText('SPECIAL!');
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await input.fill('-500');
   await input.press('Enter');
@@ -96,7 +96,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
   await seek(8);
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await page.keyboard.press('4');
+  await page.keyboard.press('1');
   await page.keyboard.press('ArrowDown');
   await page.keyboard.down('ArrowUp');
   await page.waitForTimeout(300);
@@ -112,7 +112,7 @@ test('video/audio offset saves, seeks and records consistently without altering 
   await expect(page.locator('.combo-stat strong')).toHaveText('000');
   await seek(3.5);
   await expect(page.locator('.combo-stat strong')).toHaveText('001');
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByRole('button', { name: '视频偏移归零', exact: true }).click();
   await expect(input).toHaveValue('0');

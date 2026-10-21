@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 
 test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿', async ({ page }) => {
@@ -132,7 +132,7 @@ test('折页专辑全屏对齐统计与五轨、视频与控制条的上下沿',
   await page.locator('video').evaluate((v: HTMLVideoElement) => {
     v.playbackRate = 0.75;
   });
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   expect(await videoNode.evaluate((element) => element.isConnected)).toBe(true);
   expect(await video.evaluate((element) => (element as HTMLVideoElement).currentTime)).toBeCloseTo(
     paused,

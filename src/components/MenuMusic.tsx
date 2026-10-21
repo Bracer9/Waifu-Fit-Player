@@ -20,6 +20,18 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
     const node = canvas.current!;
     const ctx = waveform ? node.getContext('2d') : null;
     const menu = node.closest<HTMLElement>('.menu-app');
+    // These inherited variables must stay on the visuals that use them. Updating
+    // .menu-app/body invalidates the entire menu, hidden workbench and briefing.
+    const beatSelector = [
+      '.ambient-shape',
+      '.title-brand h1 b',
+      '.menu-settings',
+      '.main-menu-down-hint-arrows',
+      '.album-deck-insert-hint-beat',
+      '.collection-album[aria-current="true"]',
+    ].join(',');
+    let beatTargets = new Set<HTMLElement>();
+    let chargeTarget: HTMLElement | null = null;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const bins = new Uint8Array(music.analyser?.frequencyBinCount ?? 1024);
     const count = 56;
@@ -64,10 +76,17 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
         );
         beat += (target - beat) * (target > beat ? 0.45 : 0.13);
       } else average = beat = 0;
-      menu?.style.setProperty('--music-beat', beat.toFixed(3));
-      // The start briefing is portaled outside .menu-app. Share this same FFT beat
-      // with its charge control without another analyser, RAF or React render.
-      document.body.style.setProperty('--menu-music-beat', beat.toFixed(3));
+      const value = beat.toFixed(3);
+      const targets = new Set(menu?.querySelectorAll<HTMLElement>(beatSelector));
+      for (const target of beatTargets)
+        if (!targets.has(target)) target.style.removeProperty('--music-beat');
+      for (const target of targets) target.style.setProperty('--music-beat', value);
+      beatTargets = targets;
+      // The portal shares this FFT read, but only its moving charge control needs it.
+      const charge = document.querySelector<HTMLElement>('.start-charge');
+      if (charge !== chargeTarget) chargeTarget?.style.removeProperty('--menu-music-beat');
+      charge?.style.setProperty('--menu-music-beat', value);
+      chargeTarget = charge;
       const coverBars = animate
         ? menu?.querySelectorAll<SVGRectElement>(
             '.collection-album[aria-current="true"] .album-wave-bar',
@@ -132,8 +151,8 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
       resize?.disconnect();
       document.removeEventListener('visibilitychange', refresh);
       reduced.removeEventListener('change', refresh);
-      menu?.style.removeProperty('--music-beat');
-      document.body.style.removeProperty('--menu-music-beat');
+      for (const target of beatTargets) target.style.removeProperty('--music-beat');
+      chargeTarget?.style.removeProperty('--menu-music-beat');
     };
   }, [music.analyser, music.playing, audible, waveform]);
   return <canvas className="music-pulse" ref={canvas} hidden={!waveform} aria-hidden="true" />;

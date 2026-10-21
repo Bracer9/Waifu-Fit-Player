@@ -165,6 +165,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   );
   const playOnCovered = useRef<(() => void) | null>(null);
   const [playLoadComplete, setPlayLoadComplete] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
   const renderPreparing =
     menuTransition?.next === 'player' &&
     menuTransition.phase === 'hold' &&
@@ -782,6 +783,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     }
     await new Promise<void>((resolve) => {
       setPlayLoadComplete(false);
+      setRenderProgress(0);
       playOnCovered.current = () => {
         void open().finally(() => {
           setPlayLoadComplete(true);
@@ -1008,6 +1010,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           menuTransition.next === 'player' ? (
             <GameEntrance
               phase={menuTransition.phase}
+              progress={
+                mode === 'player' && playLoadComplete
+                  ? preparation.pending
+                    ? preparation.progress * 0.7
+                    : 0.7 + renderProgress * 0.3
+                  : 0
+              }
               onCovered={() => {
                 setMenuTransition({ ...menuTransition, phase: 'hold' });
                 const play = playOnCovered.current;
@@ -1265,6 +1274,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   noteSpeed={noteSpeed}
                   prepareEffects={renderPreparing}
                   onEffectsReady={finishRenderPreparation}
+                  onPreparationProgress={setRenderProgress}
                 />
               )}
               {mode === 'player' && gamePauseOpen && (

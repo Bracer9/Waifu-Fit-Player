@@ -20,7 +20,7 @@ async function home(page: Page) {
 async function freeze(page: Page) {
   await page.addStyleTag({
     content:
-      '* { animation-play-state: paused !important; transition: none !important } .menu-app { --music-beat: 0 !important }',
+      '* { animation-play-state: paused !important; transition: none !important } .menu-app * { --music-beat: 0 !important }',
   });
   await page.evaluate(() =>
     document.getAnimations().forEach((animation) => {

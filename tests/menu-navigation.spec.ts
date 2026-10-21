@@ -67,7 +67,9 @@ test('菜单齿轮归位一致，前进返回动画与菜单操作音效', async
       ),
     )
     .toBe('back');
-  const beat = await page.addStyleTag({ content: '.menu-app { --music-beat: 0.73 !important; }' });
+  const beat = await page.addStyleTag({
+    content: '.menu-app :is(.ambient-shape, .menu-settings) { --music-beat: 0.73 !important; }',
+  });
   await page.evaluate(() => {
     const animate = Element.prototype.animate;
     Object.assign(window, { originalMenuAnimate: animate });

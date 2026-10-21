@@ -17,7 +17,11 @@
     "check": "tsc -b && vitest run",
     "format": "prettier --write src tests scripts *.ts *.json *.html README.md docs",
     "format:check": "prettier --check src tests scripts *.ts *.json *.html README.md docs",
-    "test:e2e:quick": "playwright test tests/app.spec.ts tests/project.spec.ts tests/practice-layout.spec.ts tests/practice-ribbons.spec.ts tests/note-overlap.spec.ts tests/special-hold.spec.ts"
+    "test:e2e:quick": "playwright test --grep @smoke",
+    "test:e2e:visual": "playwright test -c tests/visual.config.ts",
+    "test:e2e:perf": "playwright test -c tests/performance.config.ts --grep-invert @endurance",
+    "test:e2e:endurance": "playwright test -c tests/performance.config.ts --grep @endurance",
+    "test:fixtures": "node scripts/generate-player-fixtures.mjs"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",

@@ -256,7 +256,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await expect.poll(async () => (await sound(page)).reads).toBeGreaterThan(reads + 2);
   const beat = () =>
     page
-      .locator('.menu-app')
+      .locator('.ambient-shape.pink')
       .evaluate((node) => Number((node as HTMLElement).style.getPropertyValue('--music-beat')));
   await expect.poll(beat).toBeGreaterThan(0.05);
   const theme = await sound(page);

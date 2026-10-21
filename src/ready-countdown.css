@@ -404,6 +404,7 @@
 .ready-room-focus {
   position: absolute;
   inset: 0;
+  opacity: 0;
 }
 .practice[data-paused] .ready-room-shade {
   animation: paused-room-dim 220ms ease-out both;
@@ -453,20 +454,33 @@
     opacity: 0.9;
   }
 }
-.practice[data-ready='waiting'] .ready-room-focus {
+.practice:is([data-ready='waiting'], [data-render-preparing]) .ready-room-focus {
   backdrop-filter: blur(var(--ready-room-focus-blur));
+  opacity: 1;
+  will-change: opacity;
 }
 .practice[data-ready='counting'] .ready-room-focus {
-  /* Clear with the lamp's 600ms rise. No forwards fill: release the fullscreen
-     filter entirely before the counted beats or normal gameplay. */
-  animation: ready-room-focus var(--ready-light-rise) ease-in-out backwards;
+  /* Fade a fixed blur instead of recomputing a fullscreen blur radius every frame.
+     Drop its backdrop surface in one step once it is transparent. */
+  will-change: opacity;
+  animation:
+    ready-room-focus var(--ready-light-rise) ease-in-out backwards,
+    ready-room-focus-release var(--ready-light-rise) step-end;
 }
 @keyframes ready-room-focus {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ready-room-focus-release {
   from {
     backdrop-filter: blur(var(--ready-room-focus-blur));
   }
   to {
-    backdrop-filter: blur(0px);
+    backdrop-filter: none;
   }
 }
 .practice[data-ready='counting'] .ready-room-shade {
@@ -549,19 +563,61 @@
 .practice[data-ready='waiting'] .highway-line {
   opacity: 0.07;
 }
-.practice[data-ready='waiting'] .lane-label {
-  filter: brightness(0.42);
+.practice:is([data-ready], [data-render-preparing]) .lane-label::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+  will-change: opacity;
+}
+.practice:is([data-ready='waiting'], [data-render-preparing]) .lane-label::before {
+  opacity: 0.58;
+}
+.practice:is([data-ready], [data-render-preparing]) .lane-label::after {
+  /* One painted inset glow; only its opacity changes during power-on. */
+  display: block;
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: auto;
+  clip-path: none;
+  z-index: 5;
+  pointer-events: none;
+  background: transparent;
+  box-shadow: inset 0 0 25px #fff5;
+  opacity: 0;
+  will-change: opacity;
 }
 .practice[data-ready='counting'] .judgement-line {
   animation: ready-power-on var(--ready-lane-sweep) ease-in-out both;
 }
 .practice[data-ready='counting'] .judgement-ring {
+  animation: ready-power-on var(--ready-lane-sweep) ease-in-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+.practice[data-ready] .judgement-ring::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid #fff9;
+  box-shadow:
+    0 0 13px #fff9,
+    inset 0 0 8px #fff5;
+  opacity: 0;
+  will-change: opacity;
+}
+.practice[data-ready='counting'] .judgement-ring::before {
   animation: ready-target-power var(--ready-lane-sweep) ease-in-out both;
   animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
 }
 .practice[data-ready='counting'] .highway-line {
   z-index: 2;
   transform-origin: left;
+  will-change: transform, opacity;
   animation: ready-lane-sweep var(--ready-line-sweep) ease-in-out both;
   animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
 }
@@ -586,8 +642,12 @@
     opacity: 0;
   }
 }
-.practice[data-ready='counting'] .lane-label {
+.practice[data-ready='counting'] .lane-label::before {
   animation: ready-label-power var(--ready-lane-sweep) ease-in-out both;
+  animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
+}
+.practice[data-ready='counting'] .lane-label::after {
+  animation: ready-label-flash var(--ready-lane-sweep) ease-in-out both;
   animation-delay: calc(var(--lane-index) * var(--ready-lane-stagger));
 }
 @keyframes ready-power-on {
@@ -601,17 +661,12 @@
 @keyframes ready-target-power {
   0% {
     opacity: 0;
-    box-shadow: 0 0 0 #fff0;
   }
   55% {
     opacity: 1;
-    box-shadow:
-      0 0 13px #fff9,
-      inset 0 0 8px #fff5;
   }
   100% {
-    opacity: 1;
-    box-shadow: 0 0 6px #fff4;
+    opacity: 0;
   }
 }
 @keyframes ready-lane-sweep {
@@ -621,37 +676,41 @@
   }
   70% {
     opacity: 1;
-    box-shadow: 0 0 12px var(--lane);
   }
   100% {
     transform: scaleX(1);
     opacity: 0.85;
-    box-shadow: 0 0 5px var(--lane);
   }
 }
 @keyframes ready-label-power {
   0% {
-    filter: brightness(0.42);
-    box-shadow: inset 0 0 0 #fff0;
+    opacity: 0.58;
   }
   65% {
-    filter: brightness(1.2);
-    box-shadow: inset 0 0 25px #fff5;
+    opacity: 0;
   }
   100% {
-    filter: brightness(1);
-    box-shadow: inset 0 0 0 #fff0;
+    opacity: 0;
   }
 }
-.practice[data-ready='go'] .judgement-ring {
+@keyframes ready-label-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+}
+.practice[data-ready='go'] .judgement-ring::before {
   animation: ready-target-go var(--ready-reveal) ease-out both;
 }
 @keyframes ready-target-go {
   from {
-    box-shadow: 0 0 12px #fff9;
+    opacity: 1;
   }
   to {
-    box-shadow: 0 0 5px #ffffff18;
+    opacity: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -665,6 +724,19 @@
   .practice[data-ready] .ready-room-focus {
     backdrop-filter: none;
     animation: none;
+  }
+  .practice:is([data-ready], [data-render-preparing]) .ready-room-focus {
+    backdrop-filter: none;
+    animation: none;
+    opacity: 0;
+    will-change: auto;
+  }
+  .practice[data-ready] .lane-label::before,
+  .practice[data-ready] .lane-label::after,
+  .practice[data-ready] .judgement-ring::before {
+    animation: none;
+    opacity: 0;
+    will-change: auto;
   }
   .ready-countdown[data-phase='counting'] :is(.ready-cover, .ready-number),
   .ready-number.is-go,

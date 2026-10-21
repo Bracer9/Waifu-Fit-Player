@@ -37,7 +37,7 @@ test('stage artwork, track metadata and shared keyboard/mouse pause controls at 
   await expect(header.locator('.practice-bpm')).toHaveText('BPM120');
   await expect(header).not.toContainText('TIME');
   await expect(page.locator('.return-workspace')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'WORKBENCH', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'EDIT IN STUDIO', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'SELECT MUSIC', exact: true })).toHaveCount(0);
   expect(
     await page

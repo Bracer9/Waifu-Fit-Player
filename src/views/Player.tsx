@@ -26,6 +26,7 @@ export function Player({
   noteSpeed = DEFAULT_NOTE_SPEED,
   prepareEffects = false,
   onEffectsReady,
+  onPreparationProgress,
 }: {
   chart: Chart;
   media: MediaController;
@@ -33,12 +34,19 @@ export function Player({
   noteSpeed?: number;
   prepareEffects?: boolean;
   onEffectsReady?: () => void;
+  onPreparationProgress?: (value: number) => void;
 }) {
+  const tracks = useRef<HTMLElement>(null);
   const actualTime = chartTimeAt(chart, useTime(media));
-  const preparedTime = usePlayerRenderPreparation(chart, prepareEffects, onEffectsReady);
+  const preparedTime = usePlayerRenderPreparation(
+    chart,
+    prepareEffects,
+    tracks,
+    onEffectsReady,
+    onPreparationProgress,
+  );
   const time = preparedTime ?? actualTime;
   const previewMs = (BASE_PREVIEW_MS * DEFAULT_NOTE_SPEED) / noteSpeed;
-  const tracks = useRef<HTMLElement>(null);
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {
     const root = tracks.current!;

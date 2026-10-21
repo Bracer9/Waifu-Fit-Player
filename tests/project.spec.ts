@@ -1,4 +1,5 @@
-import { openDemo } from './helpers/project';
+import { TEST_VIDEO } from './helpers/test-media';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { blankChart, type Chart } from '../src/model';
@@ -31,17 +32,16 @@ async function ready(page: Page, title: string) {
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
 }
-async function selectVideo(page: Page, button: string, path = 'public/demo.mp4') {
+async function selectVideo(page: Page, button: string, path = TEST_VIDEO) {
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: button, exact: true }).click();
   await (await chooser).setFiles(path);
 }
 async function note(page: Page) {
-  const box = (await page.locator('.timeline-surface').boundingBox())!;
-  await page.mouse.click(box.x + 224, box.y + 57);
+  await page.locator('.timeline-surface').click({ position: { x: 224, y: 57 } });
 }
 
-test('保存作品后刷新再打开，自动恢复真实视频；同名但不同关联不能误配', async ({ page }) => {
+test('保存作品后刷新再打开，自动恢复真实视频；同名但不同关联不能误配 @smoke', async ({ page }) => {
   await selectVideo(page, '新建');
   await ready(page, 'demo');
   await note(page);
@@ -79,7 +79,7 @@ test('保存作品后刷新再打开，自动恢复真实视频；同名但不�
 
 test('旧谱一次定位后保存关联，失败与取消保留当前作品，全屏也能定位', async ({ page }) => {
   await openDemo(page);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const original = await exported(page);
   const legacy = blankChart('旧版作品');
   legacy.videoHint = { fileName: 'demo.mp4', durationMs: original.videoHint.durationMs };

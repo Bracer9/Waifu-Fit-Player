@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
@@ -14,7 +14,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
   await openDemo(page);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const save = async (): Promise<Chart> => {
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
@@ -83,7 +83,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
     },
   ];
   await load(chart);
-  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '3 踏步', exact: true }).click();
   await expect(page.getByLabel('绘制类型').locator('option')).toHaveText([
     'TAP',
     'FOLLOW',
@@ -139,7 +139,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   ]);
   await load(chart);
   expect((await save()).notes).toEqual(chart.notes);
-  await page.getByRole('button', { name: '2 踏步', exact: true }).click();
+  await page.getByRole('button', { name: '3 踏步', exact: true }).click();
   await page.getByTestId('editor-note').first().click();
   await page.screenshot({ path: 'artifacts/step-colors-editor.png', fullPage: true });
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();

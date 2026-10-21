@@ -14,8 +14,11 @@ try {
       Object.defineProperty(window, 'showOpenFilePicker', { value: undefined }),
     );
     await page.goto(process.env.PROFILE_URL || 'http://127.0.0.1:5173');
-    await page.getByRole('button', { name: '体验示例作品', exact: true }).click();
-    await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+    await page.getByRole('button', { name: /创作模式/ }).click();
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: '新建', exact: true }).click();
+    await (await chooser).setFiles('tests/fixtures/player/demo.mp4');
+    await page.getByRole('button', { name: 'Play', exact: true }).waitFor();
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
     const chart = JSON.parse(await readFile(await (await download).path(), 'utf8'));

@@ -111,12 +111,6 @@ export function LibraryMenu(props: Props) {
     onComplete: () => props.onAlbum(album.id, true),
     onSound: props.onSound,
   });
-  const holdInsert = (event: React.PointerEvent) => {
-    if (!open || !deckReady || inserting || event.button !== 0 || !event.isPrimary) return;
-    event.preventDefault();
-    menu.current?.setPointerCapture(event.pointerId);
-    beginInsert(event.pointerId);
-  };
   const inAlbum = useMemo(
     () =>
       songs
@@ -214,7 +208,7 @@ export function LibraryMenu(props: Props) {
       select(id);
       props.onPlayerOpen(true);
       props.onSound('settings');
-    }
+    } else beginInsert();
   };
   const changePreviewTrack = (delta: number) => {
     if (!inAlbum.length) return;
@@ -330,7 +324,7 @@ export function LibraryMenu(props: Props) {
         (target.closest('.album-deck-insert') || !target.closest('.album-deck'))
       ) {
         e.preventDefault();
-        if (!e.repeat) beginInsert(e.shiftKey ? 'automatic' : 'keyboard');
+        if (!e.repeat) beginInsert(e.shiftKey);
         return;
       }
       if (open && target.closest('.album-deck')) return;
@@ -482,9 +476,6 @@ export function LibraryMenu(props: Props) {
                 data-id={a.id}
                 aria-current={a.id === album.id}
                 className="collection-album"
-                onPointerDown={(event) => {
-                  if (a.id === album.id) holdInsert(event);
-                }}
                 onClick={() => confirmAlbum(a.id)}
               >
                 <AlbumCover
@@ -522,7 +513,7 @@ export function LibraryMenu(props: Props) {
             )}
             music={props.music}
             onTrack={changePreviewTrack}
-            onInsertHold={holdInsert}
+            onInsert={() => beginInsert()}
           />
         </>
       ) : !selected ? (

@@ -11,7 +11,6 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   const gear = page.getByRole('button', { name: '全局设置', exact: true });
   const settings = page.getByRole('dialog', { name: '全局设置', exact: true });
   const pink = page.locator('.ambient-shape.pink');
-  const cards = (await page.locator('.mode-records').boundingBox())!;
   const audioTab = page.getByRole('tab', { name: 'AUDIO', exact: true });
   const systemTab = page.getByRole('tab', { name: 'SYSTEM', exact: true });
   const verifyWidth = async () => {
@@ -46,6 +45,14 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   await page.getByRole('button', { name: '选择主界面 BGM' }).click();
   const music = page.getByRole('region', { name: '主界面音乐' });
   await music.getByRole('slider', { name: '菜单 BGM 音量', exact: true }).fill('0.64');
+  // Opening the headphone panel intentionally raises the cards at 1080p. Measure
+  // after that motion so this assertion isolates the settings panel itself.
+  await page
+    .locator('.mode-records')
+    .evaluate((node) =>
+      Promise.all(node.getAnimations().map((animation) => animation.finished.catch(() => {}))),
+    );
+  const cards = (await page.locator('.mode-records').boundingBox())!;
   await open();
   await expect(page.locator('.settings-gear-halo')).toHaveCSS('opacity', '1');
   await expect(page.locator('.modal-backdrop')).toHaveCount(0);
@@ -67,7 +74,7 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   await settings.getByRole('slider', { name: '音效（SE）音量', exact: true }).fill('0.28');
   const beat = () =>
     page
-      .locator('.menu-app')
+      .locator('.ambient-shape.pink')
       .evaluate((node) => (node as HTMLElement).style.getPropertyValue('--music-beat'));
   const before = await beat();
   await expect.poll(beat, { timeout: 10000 }).not.toBe(before);
@@ -130,9 +137,9 @@ test('设置从原有几何展开并收回，动效中途不改变主卡片布�
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  const cards = (await page.locator('.mode-records').boundingBox())!;
   const gear = page.getByRole('button', { name: '全局设置', exact: true });
   const pink = page.locator('.ambient-shape.pink');
+  const cards = (await page.locator('.mode-records').boundingBox())!;
   const freeze = () =>
     page.evaluate(() => {
       for (const selector of ['.ambient-shape.pink', '.corner-settings', '.settings-gear-halo']) {

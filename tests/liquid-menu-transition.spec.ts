@@ -165,7 +165,9 @@ test('pink floods into albums, cyan floods home; only the fully covered frame sw
 }) => {
   await page.goto('/');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
-  await page.addStyleTag({ content: '.menu-app { --music-beat: 0.73 !important }' });
+  await page.addStyleTag({
+    content: '.menu-app :is(.ambient-shape, .menu-settings) { --music-beat: 0.73 !important }',
+  });
   await page.evaluate(() => {
     const animate = Element.prototype.animate;
     Element.prototype.animate = function (...args) {
@@ -247,7 +249,7 @@ test('pink floods into albums, cyan floods home; only the fully covered frame sw
     expect(back ? incoming.y < 1080 : incoming.y + incoming.height > 0).toBe(true);
     const beforeBeat = await primary.getAttribute('points');
     await page.addStyleTag({
-      content: `.menu-app { --music-beat: ${back ? 0.73 : 0.15} !important }`,
+      content: `.menu-app :is(.ambient-shape, .menu-settings) { --music-beat: ${back ? 0.73 : 0.15} !important }`,
     });
     await expect.poll(() => primary.getAttribute('points')).not.toBe(beforeBeat);
     const liveCorner = page.locator(`.ambient-shape.${back ? 'cyan' : 'pink'}`);
@@ -348,6 +350,10 @@ test('albums ↔ songs retain the ordinary transition, and reduced motion skips 
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   for (const action of ['.collection-album[data-id="all"]', '.menu-back']) {
     await page.locator(action).click();
+    if (action.startsWith('.collection-album')) {
+      await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+      await page.keyboard.press('Shift+Enter');
+    }
     await expect(page.locator('.menu-curtain')).toBeVisible();
     await expect(page.locator('.liquid-menu-curtain')).toHaveCount(0);
     await expect(page.locator('.menu-curtain')).toHaveCount(0);

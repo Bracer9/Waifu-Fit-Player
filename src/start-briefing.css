@@ -5,7 +5,6 @@
   padding: 40px calc(var(--menu-vw, 1vw) * 3);
 }
 .start-briefing {
-  --start-charge: 0;
   --briefing-pink: var(--pink);
   --briefing-cyan: var(--cyan);
   --briefing-paper: var(--cream);
@@ -473,6 +472,7 @@
   background: var(--briefing-accent);
 }
 .start-charge {
+  --start-charge: 0;
   --start-beat: var(--menu-music-beat, 0);
   container-type: inline-size;
   display: flex;

@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { expect, test } from '@playwright/test';
 
 test('workbench loop funnels drag independently and loop the actual offset video', async ({
@@ -9,7 +9,7 @@ test('workbench loop funnels drag independently and loop the actual offset video
   await page.goto('/');
   await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   const offset = page.getByRole('spinbutton', { name: '视频偏移 / ms', exact: true });
   await offset.fill('500');

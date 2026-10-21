@@ -86,7 +86,7 @@ async function fixture(page: Page) {
 
 const chargeValue = (page: Page) =>
   page
-    .locator('.start-briefing')
+    .locator('.start-charge')
     .evaluate((root) => Number(getComputedStyle(root).getPropertyValue('--start-charge')));
 
 test('briefing fades as one layer without moving covers or flashing back on cancel', async ({
@@ -247,11 +247,11 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
   );
   await expect(briefing.locator('.briefing-move[data-prominent="true"]')).toHaveCount(2);
   const expectedMoves = [
+    ['squat', 'SQUAT', '深蹲'],
     ['punch', 'ARMS', '手臂'],
     ['step', 'STEP', '踏步'],
-    ['side_crunch', 'SIDE CRUNCH', '侧腹'],
-    ['squat', 'SQUAT', '深蹲'],
     ['calf_raise', 'CALF RAISE', '提踵'],
+    ['side_crunch', 'SIDE CRUNCH', '侧腹'],
   ];
   await expect(briefing.locator('.briefing-move > strong')).toHaveText(
     expectedMoves.map(([, english]) => english),
@@ -260,6 +260,11 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
     const move = briefing.locator(`.briefing-move[data-lane="${lane}"]`);
     await expect(move.locator('strong')).toHaveText(english);
     await expect(move.locator(':scope > span')).toHaveText(chinese);
+    const count = dance.notes.filter((note) => note.lane === lane).length;
+    await expect(move).toHaveAttribute(
+      'aria-label',
+      `${english} ${Math.round((count / dance.notes.length) * 100)}%`,
+    );
   }
   await expect(briefing.locator('[data-lane="step"]')).toHaveAttribute('aria-label', 'STEP 70%');
   await expect(briefing.locator('[data-lane="calf_raise"]')).toHaveAttribute('data-empty', 'true');
@@ -354,6 +359,26 @@ test('charge eases out without changing the hold duration; mouse and keyboard sh
       return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3);
     });
   expect(idleArrowColor).toEqual([98, 97, 106]);
+  // Per-frame beat/progress updates belong to the moving control, never the full page/card.
+  await expect
+    .poll(() =>
+      button.evaluate((node) =>
+        Number((node as HTMLElement).style.getPropertyValue('--menu-music-beat')),
+      ),
+    )
+    .toBeGreaterThan(0);
+  expect(
+    await page.evaluate(() => ({
+      bodyBeat: document.body.style.getPropertyValue('--menu-music-beat'),
+      menuBeat: document
+        .querySelector<HTMLElement>('.menu-app')!
+        .style.getPropertyValue('--music-beat'),
+      cardCharge: document
+        .querySelector<HTMLElement>('.start-briefing')!
+        .style.getPropertyValue('--start-charge'),
+    })),
+  ).toEqual({ bodyBeat: '', menuBeat: '', cardCharge: '' });
+
   await button.hover();
   await page.mouse.down();
   await expect.poll(() => chargeValue(page), { intervals: [16] }).toBeGreaterThan(0.3);

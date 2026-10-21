@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import { LANES, type Chart } from '../src/model';
@@ -16,7 +16,7 @@ test('1080p 连续 SPECIAL 与五轨长条播放：视频帧、媒体时钟和�
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
   await openDemo(page);
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));

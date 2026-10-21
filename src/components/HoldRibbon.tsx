@@ -12,6 +12,13 @@ import {
 } from './Glyph';
 import type { DisplayNote } from '../armDisplay';
 
+const GLOW_LAYERS = [
+  [22, 0.025],
+  [16, 0.045],
+  [12, 0.08],
+  [8, 0.16],
+] as const;
+
 /** A filled contour avoids overlapping SVG stroke edges under CSS perspective. */
 export function HoldRibbon({
   durationMs,
@@ -125,7 +132,18 @@ export function HoldRibbon({
             </filter>
           </defs>
           <g>
+            {/* Approximate the soft halo with translucent vector contours.
+                Live blur on a moving/clipped SVG path can stall Chrome's GPU
+                during first-use filter setup, even after image decoding. */}
             <path className="ribbon-bloom" d={path} />
+            {GLOW_LAYERS.map(([strokeWidth, opacity]) => (
+              <path
+                key={strokeWidth}
+                className="ribbon-glow"
+                d={path}
+                style={{ strokeWidth, opacity }}
+              />
+            ))}
             <path className="ribbon-aura" d={path} />
             <g className="ribbon-outline" filter={`url(#${outline})`}>
               <path className="ribbon-color" d={path} />

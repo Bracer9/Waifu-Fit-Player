@@ -27,7 +27,7 @@ export function AlbumDeck({
   index,
   music,
   onTrack,
-  onInsertHold,
+  onInsert,
 }: {
   open: boolean;
   ready: boolean;
@@ -37,7 +37,7 @@ export function AlbumDeck({
   index: number;
   music: MenuMusic;
   onTrack: (delta: number) => void;
-  onInsertHold: (event: React.PointerEvent) => void;
+  onInsert: () => void;
 }) {
   const [position, setPosition] = useState(music.previewTransport.position);
   useLayoutEffect(() => {
@@ -74,7 +74,7 @@ export function AlbumDeck({
               <MenuHintArrows />
             </span>
           </span>
-          <small>HOLD</small>
+          <small>ENTER</small>
           <span className="album-deck-quick-hint">SHIFT + ENTER · QUICK</span>
         </span>
       )}
@@ -108,7 +108,9 @@ export function AlbumDeck({
                 : 'EMPTY COLLECTION'}
             </small>
             <h2>{edition?.chart.title ?? '等待第一首作品'}</h2>
-            <p>{count ? '按住 Enter 插入专辑，开始选曲' : '插入专辑后，可前往创作模式添加曲目'}</p>
+            <p>
+              {count ? '点击或按 Enter 插入专辑，开始选曲' : '插入专辑后，可前往创作模式添加曲目'}
+            </p>
           </div>
           <div className="album-deck-progress">
             <input
@@ -147,15 +149,10 @@ export function AlbumDeck({
               <ChevronRight />
             </button>
           </div>
-          <button
-            className="album-deck-insert"
-            disabled={!ready}
-            onPointerDown={onInsertHold}
-            onClick={(event) => event.preventDefault()}
-          >
+          <button className="album-deck-insert" disabled={!ready} onClick={onInsert}>
             <span>INSERT ALBUM</span>
             <ArrowRight />
-            <small>HOLD ENTER</small>
+            <small>ENTER</small>
           </button>
           <footer>
             <span>STEREO / {music.previewPlaying ? 'PLAYING' : 'STANDBY'}</span>

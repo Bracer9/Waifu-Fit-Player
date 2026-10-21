@@ -8,6 +8,18 @@ export async function importDemo(page: Page, chart?: Chart) {
   await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
   const metadata = await (await page.request.get('/demo-media.json')).json();
   const next = chart ?? demoChart(metadata.fileName);
+  // General interaction tests use a bounded chart and fixed 60-second media.
+  // Endurance tests pass their full chart explicitly.
+  if (!chart) {
+    next.notes = next.notes.filter(
+      (note) => (note.kind === 'hold' ? note.endTimeMs : note.timeMs) < metadata.durationMs,
+    );
+    next.specialEvents = next.specialEvents.filter(
+      (event) => (event.endTimeMs ?? event.timeMs) < metadata.durationMs,
+    );
+  }
+  next.videoHint.fileName = metadata.fileName;
+  next.videoHint.durationMs = metadata.durationMs;
   next.videoHint.assetId = `demo-${createHash('sha256')
     .update(JSON.stringify([metadata.fileName, metadata.size, metadata.lastModified]))
     .digest('hex')}`;
@@ -20,10 +32,19 @@ export async function importDemo(page: Page, chart?: Chart) {
   return next;
 }
 
-export async function openDemo(page: Page) {
-  await importDemo(page);
+export async function openDemo(page: Page, chart?: Chart) {
+  await importDemo(page, chart);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+}
+
+/** The current gameplay editor entry lives inside the pause menu. */
+export async function editInStudio(page: Page) {
+  const dialog = page.getByRole('dialog', { name: 'PAUSED', exact: true });
+  if (!(await dialog.isVisible()))
+    await page.getByRole('button', { name: '暂停游戏', exact: true }).click();
+  await dialog.getByRole('button', { name: 'EDIT IN STUDIO', exact: true }).click();
+  await expect(page.locator('.editor')).toBeVisible();
 }
 
 /** Album confirmation opens the player; inserting is a separate command. */
@@ -32,12 +53,7 @@ export async function insertAlbum(page: Page) {
   await expect(button).toBeEnabled();
   const box = (await button.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  try {
-    await expect(page.locator('.music-menu.songs')).toBeVisible();
-  } finally {
-    await page.mouse.up();
-  }
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.locator('.music-menu.songs')).toBeVisible();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
 }

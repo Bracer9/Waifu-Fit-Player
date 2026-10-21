@@ -1,4 +1,4 @@
-import { openDemo } from './helpers/project';
+import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { type Chart } from '../src/model';
@@ -13,7 +13,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await page.goto('/');
   await openDemo(page);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: '导出 JSON', exact: true }).click();
   const chart: Chart = JSON.parse(await readFile((await (await download).path())!, 'utf8'));
@@ -212,7 +212,7 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(path).toBeVisible();
   await page.screenshot({ path: 'artifacts/arrow-reduced-motion.png', fullPage: true });
-  await page.getByRole('button', { name: 'WORKBENCH', exact: true }).click();
+  await editInStudio(page);
   expect(await node.evaluate((element) => element.isConnected)).toBe(true);
   await expect
     .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
