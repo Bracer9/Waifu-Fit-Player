@@ -17,11 +17,14 @@ export type SongPack = {
   charts: Partial<Record<ChartType, string | PackChart>>;
 };
 export type PackVideo = { id: string; fileName: string; url: string; aliases?: string[] };
+export type MapLocation = { folder: string; revision?: string; workspace?: boolean };
 export type MapLibrary = {
   songs: Song[];
   albums: Album[];
   videos: PackVideo[];
   warnings: string[];
+  writable?: boolean;
+  locations?: Record<string, MapLocation>;
 };
 export const emptyMapLibrary = (): MapLibrary => ({
   songs: [],
@@ -107,7 +110,7 @@ export function playablePackChart(value: unknown, type?: ChartType): Chart {
   return chart;
 }
 
-/** Local edits/publication choices win. Folder scans never mutate the draft database. */
+/** During migration, keep unresolved browser projects visible beside the disk library. */
 export function mergeMapSongs(local: Song[], packs: Song[]): Song[] {
   const ids = new Set(local.map((song) => song.id));
   const signatures = new Set(

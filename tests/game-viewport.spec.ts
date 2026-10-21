@@ -121,7 +121,7 @@ test('laptop song confirmation, full-window entrance, countdown and resume share
   await page.locator('.collection-album').first().click();
   await insertAlbum(page);
   await page.keyboard.press('Enter');
-  await expect(page.locator('.start-briefing')).toBeVisible();
+  await expect(page.locator('.start-briefing')).toHaveAttribute('data-motion', 'ready');
   const briefing = (await page.locator('.start-briefing').boundingBox())!;
   expect(briefing.x).toBeGreaterThan(0);
   expect(briefing.y).toBeGreaterThan(0);

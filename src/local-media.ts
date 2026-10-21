@@ -50,14 +50,15 @@ async function database(): Promise<IDBDatabase> {
   });
 }
 
-async function storedVideo(id: string, value?: StoredVideo): Promise<StoredVideo | undefined> {
+/** Legacy browser cache is read only for migration; new media is stored in maps. */
+async function storedVideo(id: string): Promise<StoredVideo | undefined> {
   const db = await database();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction('videos', value ? 'readwrite' : 'readonly');
+    const tx = db.transaction('videos', 'readonly');
     const store = tx.objectStore('videos');
     let request: IDBRequest;
     try {
-      request = value ? store.put(value) : store.get(id);
+      request = store.get(id);
     } catch (error) {
       db.close();
       reject(error);
@@ -65,11 +66,11 @@ async function storedVideo(id: string, value?: StoredVideo): Promise<StoredVideo
     }
     tx.oncomplete = () => {
       db.close();
-      resolve(value || request.result);
+      resolve(request.result);
     };
     tx.onabort = tx.onerror = () => {
       db.close();
-      reject(tx.error || new Error('无法保存本地视频关联。'));
+      reject(tx.error || new Error('无法读取旧视频关联。'));
     };
   });
 }
@@ -92,24 +93,6 @@ export async function forgetVideo(id: string): Promise<void> {
   });
 }
 
-export async function rememberVideo(asset: VideoAsset): Promise<void> {
-  if (asset.kind !== 'file') return;
-  const { file, handle, id } = asset;
-  try {
-    await storedVideo(id, {
-      id,
-      fileName: file.name,
-      size: file.size,
-      lastModified: file.lastModified,
-      ...(handle ? { handle } : { file }),
-    });
-  } catch (error) {
-    throw new Error(
-      `无法记住视频，作品尚未切换。请检查浏览器本地存储空间或权限。${error instanceof Error ? `（${error.message}）` : ''}`,
-    );
-  }
-}
-
 export async function readStoredVideo(record: StoredVideo): Promise<VideoResolution> {
   try {
     if (
@@ -125,7 +108,41 @@ export async function readStoredVideo(record: StoredVideo): Promise<VideoResolut
   } catch (error) {
     if (error instanceof DOMException && error.name === 'NotAllowedError')
       return { reason: '请重新允许读取已关联的视频。', permission: record };
+    if (error instanceof DOMException && error.name === 'NotFoundError') {
+      const recovered = await recoverRenamedVideo(record);
+      if (recovered) return { asset: recovered };
+    }
     return { reason: '原视频无法读取，可能已被移动或删除，请重新定位。' };
+  }
+}
+
+async function recoverRenamedVideo(record: StoredVideo): Promise<VideoAsset | undefined> {
+  if (
+    !Number.isSafeInteger(record.size) ||
+    record.size <= 0 ||
+    !Number.isSafeInteger(record.lastModified)
+  )
+    return undefined;
+  try {
+    const query = new URLSearchParams({
+      size: String(record.size),
+      lastModified: String(record.lastModified),
+    });
+    const response = await fetch(`/__wfp/find-video?${query}`, { cache: 'no-store' });
+    if (!response.ok) return undefined;
+    const match = await response.json();
+    if (
+      typeof match?.fileName !== 'string' ||
+      !/\.mp4$/i.test(match.fileName) ||
+      typeof match.url !== 'string' ||
+      !match.url.startsWith('/__wfp/map-file/')
+    )
+      return undefined;
+    // Keep the original association ID: drafts and published charts share this reference.
+    return { id: record.id, kind: 'pack', fileName: match.fileName, url: match.url };
+  } catch {
+    // Static hosting and unavailable local servers retain the existing manual relocation flow.
+    return undefined;
   }
 }
 
@@ -145,9 +162,11 @@ export async function demoVideo(): Promise<VideoAsset> {
   return { id, kind: 'demo', fileName: meta.fileName, url: '/demo.mp4' };
 }
 
-export async function resolveVideo(assetId?: string): Promise<VideoResolution> {
+export async function resolveVideo(assetId?: string, refresh = false): Promise<VideoResolution> {
   if (!assetId)
     return { reason: '这份旧作品还没有保存视频关联。选择一次对应视频，保存后即可自动打开。' };
+  const packed = await mapVideo(assetId, refresh).catch(() => undefined);
+  if (packed) return { asset: { ...packed, id: assetId, kind: 'pack' } };
   if (assetId.startsWith('demo-')) {
     try {
       const asset = await demoVideo();
@@ -160,16 +179,18 @@ export async function resolveVideo(assetId?: string): Promise<VideoResolution> {
   }
   if (!assetId.startsWith('pack-')) {
     const record = await storedVideo(assetId);
-    if (record) return readStoredVideo(record);
+    if (record) {
+      // A maps file needs no browser file-handle permission, including after a rename.
+      const recovered = await recoverRenamedVideo(record);
+      if (recovered) return { asset: recovered };
+      return readStoredVideo(record);
+    }
   }
-  const packed = await mapVideo(assetId).catch(() => undefined);
-  return packed
-    ? { asset: { ...packed, kind: 'pack' } }
-    : {
-        reason: assetId.startsWith('pack-')
-          ? '没有找到曲包视频。请确认曲包已解压到 maps，或重新定位视频。'
-          : '当前浏览器没有此作品的视频关联，请重新定位一次视频。',
-      };
+  return {
+    reason: assetId.startsWith('pack-')
+      ? '没有找到曲包视频。请确认曲包已解压到 maps，或重新定位视频。'
+      : '当前浏览器没有此作品的视频关联，请重新定位一次视频。',
+  };
 }
 
 /** Probe before replacing the current project: failures and cancelled pickers leave it intact. */

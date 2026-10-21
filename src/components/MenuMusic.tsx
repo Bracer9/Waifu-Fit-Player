@@ -23,7 +23,8 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
     // These inherited variables must stay on the visuals that use them. Updating
     // .menu-app/body invalidates the entire menu, hidden workbench and briefing.
     const beatSelector = [
-      '.ambient-shape',
+      '.ambient-shape.cyan',
+      ':scope:not([data-album-player="open"]) > .ambient-shape.pink',
       '.title-brand h1 b',
       '.menu-settings',
       '.main-menu-down-hint-arrows',

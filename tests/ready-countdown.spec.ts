@@ -1,3 +1,4 @@
+import { putSongs, readSongs } from './helpers/library';
 import { insertAlbum, holdStart } from './helpers/project';
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
@@ -346,33 +347,9 @@ test('missing cover uses the existing placeholder and reduced motion keeps count
   await page.getByRole('button', { name: /创作模式/ }).click();
   await publish(page, 'Ready Legacy', 'public/art/special/heart.png');
   // A released edition without a jacket is valid legacy data.
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve, reject) => {
-        const opening = indexedDB.open('waifu-fit-player-library');
-        opening.onerror = () => reject(opening.error);
-        opening.onsuccess = () => {
-          const db = opening.result;
-          const tx = db.transaction('songs', 'readwrite');
-          const store = tx.objectStore('songs');
-          const request = store.getAll();
-          request.onsuccess = () => {
-            for (const song of request.result) {
-              song.released.fitness.cover = '';
-              store.put(song);
-            }
-          };
-          tx.oncomplete = () => {
-            db.close();
-            resolve();
-          };
-          tx.onerror = () => {
-            db.close();
-            reject(tx.error);
-          };
-        };
-      }),
-  );
+  const items = await readSongs(page);
+  for (const song of items) song.released.fitness!.cover = '';
+  await putSongs(page, items);
   await page.reload();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await songs(page);

@@ -25,3 +25,5 @@
 排序契约由明确预期的界面用例覆盖；其他绘制通过动作 ID 查行。变更测试期待值前，先核对用户需求和实现，不以让测试通过为唯一依据。不按测试年龄删除旧格式兼容或数据保护测试。
 
 本轮验证结果在 `docs/HANDOFF.md` 的测试整理记录中维护。
+
+2026-10-22 存储改造后，常规测试的 maps 按测试运行 token 和隔离浏览器上下文存放在 artifacts/test-maps；浏览器测试间不共享磁盘作品。helpers/library.ts 通过本地保存 API 注入作品，helpers/project.ts 的 lastDraft 从 maps 读取。仅旧版迁移用例继续向 IndexedDB 写种子；不要用读取旧浏览器数据库来断言新作品是否保存。maps-storage.spec.ts 覆盖新浏览器直接读盘和旧作品迁移后保留浏览器原记录；maps-workspace.test.ts 验证文件落点、改名、备份、冲突和中断恢复。相关验证不读写用户真实 maps，也不接管个人浏览器。

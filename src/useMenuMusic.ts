@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resolveVideo } from './local-media';
-import { audioOutputErrorMessage } from './media';
+import { audioOutputErrorMessage, previewFadeOutGain } from './media';
 import type { PlayRange } from './model';
 import { loadMenuBgm } from './menu-bgm-source';
+import { createAlbumPreviewAudio } from './album-preview-audio';
 
 const files = import.meta.glob<string>('./assets/menu-bgm/*.{mp3,ogg,wav,m4a,MP3,OGG,WAV,M4A}', {
   eager: true,
@@ -40,6 +41,10 @@ export function useMenuMusic(
   notify: (s: string) => void,
   videoVolume: number,
   previewRange?: PlayRange,
+  albumPreview = false,
+  seVolume = 0.5,
+  onPreviewEnd?: () => boolean,
+  previewFromStart = false,
 ) {
   // Keep theme and preview independent. Only one element plays at a time.
   const [bgm] = useState(() => new Audio());
@@ -80,14 +85,26 @@ export function useMenuMusic(
   const [previewReady, setPreviewReady] = useState(false);
   const [quiet, setQuiet] = useState(true);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
-  const graph = useRef<{ context: AudioContext; sources: MediaElementAudioSourceNode[] } | null>(
-    null,
-  );
+  const graph = useRef<{
+    context: AudioContext;
+    sources: MediaElementAudioSourceNode[];
+    album: ReturnType<typeof createAlbumPreviewAudio>;
+  } | null>(null);
   const active = useRef<HTMLAudioElement | null>(null);
+  const albumState = useRef({ albumPreview, seVolume });
+  albumState.current = { albumPreview, seVolume };
+  const previewEndAction = useRef(onPreviewEnd);
+  previewEndAction.current = onPreviewEnd;
+  useEffect(() => {
+    graph.current?.album.setMuffled(albumPreview);
+    // The mechanism belongs to the open player, independent of song changes or pause.
+    graph.current?.album.setMotor(albumPreview, seVolume);
+  }, [albumPreview, seVolume, analyser]);
   const manuallyPaused = useRef(false);
   const previewUrl = useRef<string | undefined>(undefined);
   const previewBounds = useRef<{ start: number; end: number } | null>(null);
   const previewPaused = useRef(false);
+  const sourceChanging = useRef(false);
   const previewTransport = useMemo(
     () => ({
       position: () => {
@@ -122,6 +139,7 @@ export function useMenuMusic(
   const levels = useRef({ volume, videoVolume });
   levels.current = { volume, videoVolume };
   const gain = useRef(0);
+  const previewLevel = useRef(1);
   const fadeIn = useRef(false);
   const fading = useRef<{ frame: number; finish: (done: boolean) => void } | null>(null);
   const track = themeTracks.find((t) => t.id === selected) ?? themeTracks[0];
@@ -130,6 +148,15 @@ export function useMenuMusic(
   const previewStart = scene === 'preview' ? (previewRange?.startMs ?? 0) / 1000 : 0;
   const previewEnd = scene === 'preview' && previewRange ? previewRange.endMs / 1000 : undefined;
 
+  const applyVolume = useCallback(
+    (audio: HTMLAudioElement) => {
+      const level =
+        (active.current === audio ? gain.current : 0) *
+        (audio === bgm ? levels.current.volume : levels.current.videoVolume * previewLevel.current);
+      if (audio.volume !== level) audio.volume = level;
+    },
+    [bgm],
+  );
   const cancelFade = useCallback(() => {
     if (!fading.current) return;
     cancelAnimationFrame(fading.current.frame);
@@ -142,6 +169,7 @@ export function useMenuMusic(
       const audio = active.current;
       if (!audio || audio.paused || gain.current === target) {
         gain.current = target;
+        if (audio) applyVolume(audio);
         return Promise.resolve(true);
       }
       const from = gain.current,
@@ -151,8 +179,7 @@ export function useMenuMusic(
           const progress = Math.max(0, Math.min(1, (now - start) / duration));
           const eased = progress * progress * (3 - 2 * progress);
           gain.current = from + (target - from) * eased;
-          audio.volume =
-            gain.current * (audio === bgm ? levels.current.volume : levels.current.videoVolume);
+          applyVolume(audio);
           if (progress < 1) fading.current = { frame: requestAnimationFrame(tick), finish };
           else {
             fading.current = null;
@@ -162,11 +189,12 @@ export function useMenuMusic(
         fading.current = { frame: requestAnimationFrame(tick), finish };
       });
     },
-    [bgm, cancelFade],
+    [applyVolume, cancelFade],
   );
   const clearPreview = useCallback(() => {
     preview.pause();
     previewBounds.current = null;
+    previewLevel.current = 1;
     if (preview.hasAttribute('src')) {
       preview.removeAttribute('src');
       preview.load();
@@ -205,13 +233,16 @@ export function useMenuMusic(
           meter.maxDecibels = -10;
           meter.smoothingTimeConstant = 0.5;
           // Both menu sources share one meter/output; the fade keeps playback exclusive.
-          const sources = [bgm, preview].map((audio) => {
-            const source = context.createMediaElementSource(audio);
-            source.connect(meter);
-            return source;
-          });
+          const sources = [bgm, preview].map((audio) => context.createMediaElementSource(audio));
+          sources[0].connect(meter);
+          const album = createAlbumPreviewAudio(
+            context,
+            sources[1],
+            meter,
+            albumState.current.albumPreview,
+          );
           meter.connect(context.destination);
-          graph.current = { context, sources };
+          graph.current = { context, sources, album };
           setAnalyser(meter);
         } catch {
           void context.close();
@@ -270,6 +301,7 @@ export function useMenuMusic(
 
   useEffect(() => {
     let cancelled = false;
+    sourceChanging.current = true;
     previewPaused.current = false;
     setPreviewPlaying(false);
     setPreviewReady(false);
@@ -280,7 +312,7 @@ export function useMenuMusic(
       active.current?.pause();
       active.current = null;
       clearPreview();
-      if (!themeUrl && !assetId && graph.current)
+      if (!themeUrl && !assetId && !albumState.current.albumPreview && graph.current)
         await graph.current.context.suspend().catch(() => {});
       if (cancelled) return;
       setQuiet(true);
@@ -320,6 +352,7 @@ export function useMenuMusic(
       } else return;
       next.volume = 0;
       active.current = next;
+      sourceChanging.current = false;
       fadeIn.current = true;
       setQuiet(false);
       play();
@@ -336,6 +369,8 @@ export function useMenuMusic(
     assetId,
     previewStart,
     previewEnd,
+    // Explicitly restart on confirmation even when a short song's clip is its full range.
+    previewFromStart,
     bgm,
     preview,
     fade,
@@ -347,25 +382,54 @@ export function useMenuMusic(
 
   useEffect(() => {
     let frame = 0;
-    const guard = () => {
+    let advancing = false;
+    const envelope = () => {
       const range = previewBounds.current;
-      if (active.current === preview && range && preview.currentTime >= range.end)
-        preview.currentTime = range.start;
+      previewLevel.current = range ? previewFadeOutGain(preview.currentTime, range) : 1;
+      if (active.current === preview) applyVolume(preview);
+    };
+    const position = () => {
+      if (previewBounds.current) preview.currentTime = previewBounds.current.start;
+      envelope();
+    };
+    const advance = () => {
+      if (advancing) return true;
+      if (albumState.current.albumPreview && previewEndAction.current?.()) {
+        advancing = true;
+        preview.pause();
+        return true;
+      }
+      return false;
+    };
+    const guard = () => {
+      envelope();
+      const range = previewBounds.current;
+      if (
+        active.current === preview &&
+        range &&
+        !preview.paused &&
+        !preview.seeking &&
+        preview.currentTime >= range.end
+      ) {
+        // A pending manual transition owns the handoff; never loop its fading tail.
+        if (sourceChanging.current) preview.pause();
+        else if (!advance()) position();
+      }
     };
     const tick = () => {
       guard();
       if (!preview.paused && previewBounds.current) frame = requestAnimationFrame(tick);
     };
     const start = () => {
+      advancing = false;
+      envelope();
       cancelAnimationFrame(frame);
       if (previewBounds.current) frame = requestAnimationFrame(tick);
     };
     const stop = () => cancelAnimationFrame(frame);
-    const position = () => {
-      if (previewBounds.current) preview.currentTime = previewBounds.current.start;
-    };
     const repeat = () => {
-      if (active.current !== preview || !previewBounds.current) return;
+      if (active.current !== preview || !previewBounds.current || sourceChanging.current) return;
+      if (advance()) return;
       position();
       play();
     };
@@ -373,6 +437,8 @@ export function useMenuMusic(
     preview.addEventListener('playing', start);
     preview.addEventListener('pause', stop);
     preview.addEventListener('timeupdate', guard);
+    preview.addEventListener('seeking', envelope);
+    preview.addEventListener('seeked', envelope);
     preview.addEventListener('ended', repeat);
     return () => {
       cancelAnimationFrame(frame);
@@ -380,9 +446,11 @@ export function useMenuMusic(
       preview.removeEventListener('playing', start);
       preview.removeEventListener('pause', stop);
       preview.removeEventListener('timeupdate', guard);
+      preview.removeEventListener('seeking', envelope);
+      preview.removeEventListener('seeked', envelope);
       preview.removeEventListener('ended', repeat);
     };
-  }, [preview, play]);
+  }, [preview, play, applyVolume]);
 
   useEffect(() => {
     bgm.loop = order === 'repeat' || themeTracks.length < 2;
@@ -397,10 +465,10 @@ export function useMenuMusic(
     return () => bgm.removeEventListener('ended', next);
   }, [scene, order, track, bgm]);
   useEffect(() => {
-    bgm.volume = (active.current === bgm ? gain.current : 0) * volume;
-    preview.volume = (active.current === preview ? gain.current : 0) * videoVolume;
+    applyVolume(bgm);
+    applyVolume(preview);
     remember('waifu-menu-volume', String(volume));
-  }, [volume, videoVolume, bgm, preview]);
+  }, [volume, videoVolume, bgm, preview, applyVolume]);
   useEffect(() => remember('waifu-menu-order', order), [order]);
   useEffect(() => remember('waifu-menu-track', selected), [selected]);
   useEffect(
@@ -413,6 +481,7 @@ export function useMenuMusic(
       if (themeSource.current) URL.revokeObjectURL(themeSource.current.objectUrl);
       themeSource.current = null;
       graph.current?.sources.forEach((source) => source.disconnect());
+      graph.current?.album.dispose();
       void graph.current?.context.close();
     },
     [bgm, clearPreview, cancelFade],
@@ -431,7 +500,7 @@ export function useMenuMusic(
       previewPaused.current = !preview.paused;
       if (previewPaused.current) {
         preview.pause();
-        void graph.current?.context.suspend().catch(() => {});
+        if (!albumState.current.albumPreview) void graph.current?.context.suspend().catch(() => {});
       } else play();
     },
     tracks: themeTracks,

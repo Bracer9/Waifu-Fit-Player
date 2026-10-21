@@ -60,6 +60,7 @@ export async function insertAlbum(page: Page) {
 
 export async function holdStart(page: Page) {
   const button = page.getByRole('button', { name: '按住 Enter 开始游戏', exact: true });
+  await expect(page.locator('.start-briefing')).toHaveAttribute('data-motion', 'ready');
   await expect(button).toBeVisible();
   // The whole bar follows the music, so its bounds intentionally never settle.
   // Move a real pointer to its centre instead of waiting for hover's stable-box check.
@@ -76,21 +77,11 @@ export async function holdStart(page: Page) {
 }
 
 export async function lastDraft(page: Page): Promise<Chart | undefined> {
-  return page.evaluate(
-    () =>
-      new Promise((resolve, reject) => {
-        const last = JSON.parse(localStorage.getItem('waifu-last-draft') || 'null');
-        if (!last) return resolve(undefined);
-        const opening = indexedDB.open('waifu-fit-player-library');
-        opening.onerror = () => reject(opening.error);
-        opening.onsuccess = () => {
-          const db = opening.result;
-          const request = db.transaction('songs').objectStore('songs').get(last.id);
-          request.onsuccess = () => {
-            resolve(request.result?.drafts[last.chartType]?.chart);
-            db.close();
-          };
-        };
-      }),
+  const last = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('waifu-last-draft') || 'null'),
   );
+  if (!last) return undefined;
+  const library = await (await page.request.get('/__wfp/maps')).json();
+  return library.songs.find((song: { id: string }) => song.id === last.id)?.drafts[last.chartType]
+    ?.chart;
 }

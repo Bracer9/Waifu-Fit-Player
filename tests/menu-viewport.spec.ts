@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
+import { albumHousingOutline } from '../src/album-deck-motion';
 
 const selectors = [
   '.title-brand',
@@ -12,6 +13,35 @@ const selectors = [
   '.menu-settings',
   '.menu-controls',
 ];
+
+test('entering albums directly from the editor fits the housing before the first unfold', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1470, height: 956 });
+  await page.goto('/');
+  await importDemo(page, blankChart('Housing viewport regression'));
+  await expect(page.locator('html')).not.toHaveAttribute('data-menu-fit');
+  await page.getByRole('button', { name: '音游模式', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-menu-fit');
+  const corner = page.locator('.ambient-shape.pink');
+  const expected = albumHousingOutline(1920, 1080).clip;
+  expect(
+    await corner.evaluate((node) =>
+      (node as HTMLElement).style.getPropertyValue('--album-deck-clip'),
+    ),
+  ).toBe(expected);
+  await page.locator('.collection-album[data-id="pop"]').click();
+  await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+  await page.screenshot({
+    path: 'artifacts/album-housing-investigation/fixed-editor-to-albums-1470.png',
+  });
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  expect(
+    await corner.evaluate((node) =>
+      (node as HTMLElement).style.getPropertyValue('--album-deck-clip'),
+    ),
+  ).toBe(expected);
+});
 async function home(page: Page) {
   await page.goto('/');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);

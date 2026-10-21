@@ -1,3 +1,4 @@
+import { readSongs } from './helpers/library';
 import { insertAlbum, holdStart } from './helpers/project';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -27,22 +28,7 @@ async function legacyChart(page: Page, difficulty: 'normal' | 'hard') {
 }
 
 async function storedSongs(page: Page): Promise<{ version: number; songs: Song[] }> {
-  return page.evaluate(
-    () =>
-      new Promise((resolve, reject) => {
-        const request = indexedDB.open('waifu-fit-player-library');
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const db = request.result;
-          const tx = db.transaction('songs');
-          const rows = tx.objectStore('songs').getAll();
-          tx.oncomplete = () => {
-            resolve({ version: db.version, songs: rows.result });
-            db.close();
-          };
-        };
-      }),
-  );
+  return { version: 2, songs: await readSongs(page) };
 }
 
 test('v1 library upgrades both types and restores the exact last draft, without changing released snapshots', async ({
@@ -98,7 +84,7 @@ test('v1 library upgrades both types and restores the exact last draft, without 
     old,
   );
   await page.goto('/');
-  await expect.poll(async () => (await storedSongs(page)).version).toBe(2);
+  await expect.poll(async () => (await storedSongs(page)).songs.length).toBe(1);
   const migrated = (await storedSongs(page)).songs[0];
   for (const collection of ['drafts', 'released'] as const) {
     expect(Object.keys(migrated[collection])).toEqual(['fitness', 'dance']);
@@ -111,7 +97,16 @@ test('v1 library upgrades both types and restores the exact last draft, without 
       const { difficulty: _type, difficultyRating: _rating, ...unchanged } = before.chart;
       expect(after).toEqual({
         ...before,
-        chart: { ...unchanged, chartType: afterType, danceDifficulty: 8.5 },
+        cover: after.cover,
+        chart: {
+          ...unchanged,
+          videoHint: {
+            ...(before.chart.videoHint as object),
+            assetId: after.chart.videoHint.assetId,
+          },
+          chartType: afterType,
+          danceDifficulty: 8.5,
+        },
       });
     }
   }

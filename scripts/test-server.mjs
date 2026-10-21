@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 const port = 4180;
 const endurance = process.env.WFP_TEST_ENDURANCE === '1';
 const file = resolve(`tests/fixtures/player/${endurance ? 'endurance' : 'demo'}.mp4`);
+process.env.WFP_TEST_MEDIA = file;
 const metadata = {
   available: true,
   fileName: 'demo.mp4',

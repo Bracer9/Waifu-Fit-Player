@@ -1,8 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, mkdir, writeFile, readFile, rename, rm, symlink } from 'node:fs/promises';
+import {
+  mkdtemp,
+  mkdir,
+  writeFile,
+  readFile,
+  rename,
+  rm,
+  symlink,
+  stat,
+  utimes,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { scanMaps } from '../scripts/maps-library';
+import { findMapVideo, scanMaps } from '../scripts/maps-library';
 import { blankChart } from './model';
 import { mergeMapSongs, PACK_FORMAT, packPath, parseSongPack, type SongPack } from './song-pack';
 import type { Song } from './library';
@@ -58,6 +68,45 @@ async function fixture(folder: string) {
     JSON.stringify({ ...chart(), chartType: 'dance', danceDifficulty: 7 }),
   );
 }
+
+describe('renamed local videos', () => {
+  it('finds a renamed loose MP4 without a chart and refuses ambiguous or modified files', async () => {
+    const folder = path.join(temporary, 'song');
+    await mkdir(folder);
+    const original = path.join(folder, 'original.mp4');
+    await writeFile(original, 'video');
+    const info = await stat(original);
+    const timestamp = Math.trunc(info.mtimeMs);
+    const renamed = path.join(folder, 'new name.mp4');
+    await rename(original, renamed);
+    expect(await findMapVideo(temporary, info.size, timestamp)).toEqual({
+      fileName: 'new name.mp4',
+      url: '/__wfp/map-file/song/new%20name.mp4',
+    });
+    const duplicate = path.join(folder, 'copy.mp4');
+    await writeFile(duplicate, 'video');
+    await utimes(duplicate, info.atime, new Date(timestamp));
+    expect(await findMapVideo(temporary, info.size, timestamp)).toBeUndefined();
+    await rm(duplicate);
+    await writeFile(renamed, 'different video');
+    expect(await findMapVideo(temporary, info.size, timestamp)).toBeUndefined();
+    await expect(findMapVideo(temporary, -1, timestamp)).rejects.toThrow();
+  });
+  it('does not search hidden directories or follow links outside maps', async () => {
+    const outside = path.join(temporary, 'outside.mp4');
+    await writeFile(outside, 'video');
+    const info = await stat(outside);
+    const maps = path.join(temporary, 'maps');
+    await mkdir(path.join(maps, '.hidden'), { recursive: true });
+    await writeFile(path.join(maps, '.hidden/video.mp4'), 'video');
+    try {
+      await symlink(outside, path.join(maps, 'link.mp4'));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EPERM') throw error;
+    }
+    expect(await findMapVideo(maps, info.size, Math.trunc(info.mtimeMs))).toBeUndefined();
+  });
+});
 
 describe('portable song folders', () => {
   it('loads both editions and their metadata without rewriting notes or timing; relocation keeps IDs', async () => {

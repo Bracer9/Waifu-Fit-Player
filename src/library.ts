@@ -11,7 +11,7 @@ export type Edition = {
 };
 export type Song = {
   id: string;
-  /** A local removal of a folder song; never deletes its original files. */
+  /** Persisted removal from the library; the original files remain on disk. */
   hidden?: true;
   drafts: Partial<Record<ChartType, Edition>>;
   released: Partial<Record<ChartType, Edition>>;
@@ -141,7 +141,7 @@ export async function readLibrary<T extends keyof Tables>(table: T): Promise<Tab
   });
 }
 
-/** Read/modify/write in one transaction so autosave cannot erase a published edition. */
+/** Legacy migration/cleanup only. New editor saves go through maps-workspace. */
 export async function changeLibrary<T extends keyof Tables>(
   table: T,
   id: string,

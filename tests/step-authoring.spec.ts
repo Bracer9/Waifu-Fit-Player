@@ -172,6 +172,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   await expect(drawing.locator('option')).toHaveText([
     'TAP',
     'FOLLOW',
+    'FOLLOW SWAY',
     'HOLD',
     'SWAY',
     'FREE SWAY',
@@ -239,10 +240,101 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   const target = page.getByTestId('target-step');
   await expect(target).toHaveAttribute('data-state', 'sway');
   await expect(target).toHaveAttribute('data-action', 'FREE SWAY');
-  await expect(target.locator('.note-glyph')).toHaveAttribute('data-symbol', 'FREE');
+  await expect(
+    page
+      .getByTestId('lane-step')
+      .locator('.player-hold[data-direction="free"] .hold-head .note-glyph'),
+  ).toHaveAttribute('data-symbol', 'FREE');
   await expect(target).toHaveCSS('color', 'rgb(246, 78, 147)');
   await seek(page, 6.1);
   await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('RELEASE');
+});
+
+test('FOLLOW SWAY 紧接 FOLLOW，支持绘制、转换、录谱和持续并步箭头', async ({ page }) => {
+  await emptyEditor(page);
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  await page.getByRole('button', { name: '3 踏步', exact: true }).click();
+  await stepChoice(page, 'draw', 'left-follow-sway');
+  await expect(page.getByLabel('绘制类型').locator('option')).toHaveText([
+    'TAP',
+    'FOLLOW',
+    'FOLLOW SWAY',
+    'HOLD',
+    'SWAY',
+    'FREE SWAY',
+  ]);
+  await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
+  await draw(page, 1000, 'step', 3000);
+  await expect(page.getByLabel('结束 / ms')).toHaveValue('3000');
+  await page.getByRole('button', { name: '选中踏步用脚 BOTH', exact: true }).click();
+  await page.keyboard.press('f');
+  const selected = page.getByLabel('选中事件类型');
+  await selected.selectOption('sway');
+  await selected.selectOption('follow-sway');
+  await expect(page.getByLabel('结束 / ms')).toHaveValue('3000');
+  await expect(page.getByLabel('选中踏步跨度', { exact: true })).toHaveCount(0);
+  let chart = await exportChart(page);
+  expect(chart.notes[0]).toMatchObject({
+    kind: 'hold',
+    modifier: 'sway',
+    follow: true,
+    direction: 'right',
+    foot: 'both',
+    timeMs: 1000,
+    endTimeMs: 3000,
+  });
+  await stepChoice(page, 'draw', 'left-follow-sway');
+  await draw(page, 4000, 'step');
+  chart = await exportChart(page);
+  expect(chart.notes[1]).toMatchObject({
+    kind: 'hold',
+    modifier: 'sway',
+    follow: true,
+    timeMs: 4000,
+  });
+  expect(chart.notes[1].kind === 'hold' && chart.notes[1].endTimeMs).toBeGreaterThan(4000);
+  await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
+  await seek(page, 6);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await page.keyboard.down('Control');
+  await page.keyboard.down('Alt');
+  await page.keyboard.down('ArrowRight');
+  await page.waitForTimeout(350);
+  await page.keyboard.up('ArrowRight');
+  await page.keyboard.up('Alt');
+  await page.keyboard.up('Control');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  chart = await exportChart(page);
+  expect(chart.notes.at(-1)).toMatchObject({
+    kind: 'hold',
+    modifier: 'sway',
+    follow: true,
+    direction: 'right',
+  });
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'follow-sway.wfp.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  expect((await exportChart(page)).notes).toEqual(chart.notes);
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  const lane = page.getByTestId('lane-step');
+  await seek(page, 0.5);
+  const sustain = lane.locator('[data-note-id="' + chart.notes[0].id + '"]');
+  await expect(sustain).toHaveAttribute('data-action', 'FOLLOW SWAY');
+  await expect(sustain.locator('.hold-head .follow-color')).toHaveCSS('fill', 'none');
+  await expect(sustain.locator('.hold-head .follow-color')).toHaveCSS(
+    'stroke',
+    'rgb(181, 138, 238)',
+  );
+  await expect(sustain.locator('.ribbon-head-shape')).toHaveCount(0);
+  await expect(sustain.locator('.ribbon-color')).toHaveCSS('fill', 'rgb(181, 138, 238)');
+  await seek(page, 1.7);
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FOLLOW SWAY');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'sway');
+  await page.screenshot({ path: 'artifacts/step-follow-sway-game.png' });
+  await seek(page, 3.1);
+  await expect(lane.locator('.release-label')).toHaveText('RELEASE');
 });
 
 test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显示虚线箭头', async ({ page }) => {

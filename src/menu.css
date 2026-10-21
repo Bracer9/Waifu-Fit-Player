@@ -48,8 +48,8 @@
 .menu-app[data-menu-settings='open'] .ambient-shape.pink {
   scale: 1.22;
 }
-.menu-app .ambient-shape.pink::before,
-.menu-app .ambient-shape.pink::after {
+.menu-app .ambient-shape.pink > .album-housing-details::before,
+.menu-app .ambient-shape.pink > .album-housing-details::after {
   content: '';
   position: absolute;
   pointer-events: none;
@@ -59,18 +59,18 @@
     clip-path 420ms cubic-bezier(0.22, 0.7, 0.2, 1);
   clip-path: inset(0 0 100% 0);
 }
-.menu-app .ambient-shape.pink::before {
+.menu-app .ambient-shape.pink > .album-housing-details::before {
   inset: 34px auto 32px 32px;
   width: 90px;
   background: radial-gradient(circle, #fff9 1px, transparent 1.2px) 0 0 / 7px 7px;
 }
-.menu-app .ambient-shape.pink::after {
+.menu-app .ambient-shape.pink > .album-housing-details::after {
   inset: 14px;
   border-left: 4px solid #fff;
   border-bottom: 4px solid #fff;
 }
-.menu-app[data-menu-settings='open'] .ambient-shape.pink::before,
-.menu-app[data-menu-settings='open'] .ambient-shape.pink::after {
+.menu-app[data-menu-settings='open'] .ambient-shape.pink > .album-housing-details::before,
+.menu-app[data-menu-settings='open'] .ambient-shape.pink > .album-housing-details::after {
   opacity: 1;
   clip-path: inset(0);
   transition-delay: 70ms;
@@ -1810,8 +1810,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .menu-app .ambient-shape.pink,
-  .menu-app .ambient-shape.pink::before,
-  .menu-app .ambient-shape.pink::after,
+  .menu-app .ambient-shape.pink > .album-housing-details::before,
+  .menu-app .ambient-shape.pink > .album-housing-details::after,
   .corner-settings,
   .corner-settings-heading,
   .corner-settings-tabs,

@@ -1,3 +1,4 @@
+import { readSongs } from './helpers/library';
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { blankChart, type Chart } from '../src/model';
@@ -143,25 +144,7 @@ test('editing a published song from pause protects its draft and keeps the video
   ]);
   expect(await originalVideo.evaluate((v) => v.isConnected)).toBe(true);
   expect((await exported(page)).notes).toEqual(published.notes);
-  const release = await page.evaluate(
-    (id) =>
-      new Promise<Chart>((resolve, reject) => {
-        const opening = indexedDB.open('waifu-fit-player-library');
-        opening.onerror = () => reject(opening.error);
-        opening.onsuccess = () => {
-          const db = opening.result;
-          const request = db.transaction('songs').objectStore('songs').get(id);
-          request.onsuccess = () => {
-            resolve(request.result.released.dance.chart);
-            db.close();
-          };
-          request.onerror = () => {
-            reject(request.error);
-            db.close();
-          };
-        };
-      }),
-    published.songId!,
-  );
+  const release = (await readSongs(page)).find((song) => song.id === published.songId)!.released
+    .dance!.chart;
   expect(release.notes).toEqual(published.notes);
 });

@@ -226,6 +226,7 @@ export function Player({
                           lane={note.lane}
                           direction={note.direction}
                           armAction={note.armAction}
+                          hand={note.hand}
                           pairedPunch={note.pairedPunch}
                           pairedReach={!!note.pairedReach}
                           distance={note.distance}
@@ -250,6 +251,7 @@ export function Player({
                       className={`player-hold ${note.modifier === 'sway' ? 'sway' : ''} ${time >= note.timeMs ? 'active' : ''}`}
                       data-direction={note.direction}
                       data-note-id={note.id}
+                      data-action={noteAction(note)}
                       aria-label={`${lane.english} ${noteSymbol(note.lane, note.direction, note.distance, note.armAction)} ${noteAction(note)}`}
                       style={
                         {
@@ -301,10 +303,12 @@ export function Player({
                       >
                         <NoteGlyph
                           variant="tip"
+                          follow={isFollowStep(note)}
                           joined={!showGuide}
                           lane={note.lane}
                           direction={note.direction}
                           armAction={note.armAction}
+                          hand={note.hand}
                           pairedPunch={note.pairedPunch}
                           pairedReach={!!note.pairedReach}
                           distance={note.distance}
@@ -335,10 +339,12 @@ export function Player({
                     >
                       <NoteGlyph
                         variant="tip"
+                        follow={isFollowStep(holding)}
                         joined={!showGuide}
                         lane={holding.lane}
                         direction={holding.direction}
                         armAction={holding.armAction}
+                        hand={holding.hand}
                         pairedPunch={holding.pairedPunch}
                         pairedReach={!!holding.pairedReach}
                         distance={holding.distance}

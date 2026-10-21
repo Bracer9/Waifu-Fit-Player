@@ -2,6 +2,7 @@ import { openDemo, editInStudio } from './helpers/project';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
+import { draw } from './helpers/editor';
 
 test('STEP separates type, direction and foot color in editing, recording and gameplay', async ({
   page,
@@ -75,7 +76,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
       id: 'free',
       lane: 'step',
       direction: 'free',
-      foot: 'right',
+      foot: 'both',
       timeMs: 9000,
       endTimeMs: 10500,
       kind: 'hold',
@@ -87,29 +88,53 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   await expect(page.getByLabel('绘制类型').locator('option')).toHaveText([
     'TAP',
     'FOLLOW',
+    'FOLLOW SWAY',
     'HOLD',
     'SWAY',
     'FREE SWAY',
   ]);
   await expect(
     page.getByRole('group', { name: '录入用脚', exact: true }).getByRole('button'),
-  ).toHaveText(['L', 'R']);
+  ).toHaveText(['L', 'R', 'BOTH']);
   await page.getByTestId('editor-note').first().click();
   await page.getByRole('button', { name: '选中踏步用脚 L', exact: true }).click();
   await page.keyboard.press('f');
   expect((await save()).notes[0]).toMatchObject({ direction: 'right', foot: 'left' });
   await page.keyboard.press('h');
-  for (const type of ['hold', 'sway', 'free-sway', 'follow', 'tap']) {
+  for (const type of ['hold', 'sway', 'free-sway', 'follow', 'follow-sway', 'tap']) {
     await page.getByLabel('选中事件类型').selectOption(type);
     expect((await save()).notes[0].foot).toBe('right');
+  }
+  await page.getByRole('button', { name: '选中踏步用脚 BOTH', exact: true }).click();
+  for (const type of ['free-sway', 'follow', 'follow-sway', 'hold', 'sway', 'tap']) {
+    await page.getByLabel('选中事件类型').selectOption(type);
+    expect((await save()).notes[0].foot).toBe('both');
   }
   await page.getByRole('button', { name: '选中踏步用脚 R', exact: true }).click();
   await page.keyboard.press('Control+a');
   await page.getByRole('button', { name: '选中踏步用脚 R', exact: true }).click();
   expect((await save()).notes.every((n) => n.foot === 'right')).toBe(true);
   await page.keyboard.press('h');
+  expect((await save()).notes.every((n) => n.foot === 'both')).toBe(true);
+  await page.keyboard.press('h');
   expect((await save()).notes.every((n) => n.foot === 'left')).toBe(true);
   await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '录入用脚 BOTH', exact: true }).click();
+  await page.getByLabel('绘制类型').selectOption('free-sway');
+  await draw(page, 15000, 'step', 16000);
+  expect((await save()).notes.find((n) => n.timeMs === 15000)).toMatchObject({
+    direction: 'free',
+    foot: 'both',
+    kind: 'hold',
+    modifier: 'sway',
+    endTimeMs: 16000,
+  });
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '5 侧收腹', exact: true }).click();
+  await expect(
+    page.getByRole('group', { name: '录入用腿', exact: true }).getByRole('button'),
+  ).toHaveText(['L', 'R']);
+  await page.getByRole('button', { name: '3 踏步', exact: true }).click();
   await page.getByRole('button', { name: '录入用脚 R', exact: true }).click();
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
@@ -127,15 +152,16 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   await page.waitForTimeout(300);
   await page.keyboard.up('ArrowRight');
   await page.keyboard.up('Control');
+  await page.getByRole('button', { name: '录入用脚 BOTH', exact: true }).click();
   await page.keyboard.press('ArrowDown');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const recorded = (await save()).notes.filter((n) => n.timeMs >= 20000);
   expect(recorded).toMatchObject([
     { direction: 'left', kind: 'tap', foot: 'right' },
-    { direction: 'right', kind: 'tap', follow: true, foot: 'left' },
-    { direction: 'left', kind: 'hold', modifier: 'none', foot: 'left' },
-    { direction: 'right', kind: 'hold', modifier: 'sway', foot: 'right' },
-    { direction: 'free', kind: 'hold', modifier: 'sway', foot: 'right' },
+    { direction: 'right', kind: 'tap', follow: true, foot: 'both' },
+    { direction: 'left', kind: 'hold', modifier: 'none', foot: 'both' },
+    { direction: 'right', kind: 'hold', modifier: 'sway', foot: 'left' },
+    { direction: 'free', kind: 'hold', modifier: 'sway', foot: 'both' },
   ]);
   await load(chart);
   expect((await save()).notes).toEqual(chart.notes);
@@ -166,7 +192,11 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   );
   await page.screenshot({ path: 'artifacts/step-colors-sustains-game.png' });
   await seek(9.5);
-  await expect(page.getByTestId('target-step')).toHaveCSS('color', 'rgb(246, 78, 147)');
+  await expect(page.getByTestId('target-step')).toHaveCSS('color', 'rgb(181, 138, 238)');
+  await expect(lane.locator('[data-note-id="free"] .ribbon-color')).toHaveCSS(
+    'fill',
+    'rgb(181, 138, 238)',
+  );
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
   expect(errors).toEqual([]);
 });

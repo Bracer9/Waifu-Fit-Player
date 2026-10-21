@@ -50,7 +50,7 @@ export function ModalBackdrop({
     document.addEventListener('keydown', keydown, true);
     return () => {
       document.removeEventListener('keydown', keydown, true);
-      previous?.focus();
+      previous?.focus({ preventScroll: true });
     };
   }, []);
   return createPortal(

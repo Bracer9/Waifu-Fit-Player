@@ -35,10 +35,9 @@ import { DEFAULT_NOTE_SPEED } from './timing';
 import { useLibrary } from './useLibrary';
 import {
   latestEdition,
+  editionsIn,
   publishSong,
-  readLibrary,
   unpublishSong,
-  videoIds,
   type ChartType,
   type Edition,
   type Song,
@@ -46,6 +45,7 @@ import {
 import { coverFromVideo } from './cover';
 import { LibraryMenu } from './views/LibraryMenu';
 import { AlbumTuning } from './components/AlbumDeck';
+import { AlbumHousing } from './components/AlbumHousing';
 import {
   AlbumManager,
   PublicationFields,
@@ -76,15 +76,15 @@ import { GameEntrance } from './components/GameEntrance';
 import { MenuTransition } from './components/MenuTransition';
 import { LiquidMenuTransition } from './components/LiquidMenuTransition';
 import { useMenuViewport } from './useMenuViewport';
+import { EditorPreviewResize } from './components/EditorPreviewResize';
 import { menuPortalRoot } from './menu-viewport';
 import { exportSongPack } from './export-song-pack';
+import { storeMapVideo } from './maps-workspace';
 import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
-  forgetVideo,
   prepareVideo,
   readStoredVideo,
   releaseVideo,
-  rememberVideo,
   resolveVideo,
   videoPicker,
   type PreparedVideo,
@@ -281,6 +281,21 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [albumPlayerOpen, setAlbumPlayerOpen] = useState(false);
   const [albumTuning, setAlbumTuning] = useState<'cover' | 'reveal' | null>(null);
   const [selectedSong, setSelectedSong] = useState('');
+  const previewSelection = useRef(selectedSong);
+  previewSelection.current = selectedSong;
+  const shuffleAlbumPreview = useCallback(() => {
+    const songs = library.songs.filter((song) => editionsIn(song, albumId).length);
+    const others = songs.filter((song) => song.id !== previewSelection.current);
+    const pool = others.length ? others : songs;
+    const next = pool[Math.floor(Math.random() * pool.length)];
+    if (!next || next.id === previewSelection.current) return false;
+    previewSelection.current = next.id;
+    setSelectedSong(next.id);
+    return true;
+  }, [library.songs, albumId]);
+  useEffect(() => {
+    if (mode === 'albums' && albumPlayerOpen) shuffleAlbumPreview();
+  }, [mode, albumPlayerOpen, shuffleAlbumPreview]);
   const [selectedChartType, setSelectedChartType] = useState<ChartType>('dance');
   const [coverSeed] = useState(Math.random);
   const [manageSongs, setManageSongs] = useState(false);
@@ -302,10 +317,15 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   }, [mode, startPending, preparation.pending, status.playing]);
   const [previewAsset, setPreviewAsset] = useState<string>();
   const [previewRange, setPreviewRange] = useState<PlayRange>();
-  const previewSong = useCallback((assetId: string | undefined, range?: PlayRange) => {
-    setPreviewAsset(assetId);
-    setPreviewRange(range);
-  }, []);
+  const [previewFromStart, setPreviewFromStart] = useState(false);
+  const previewSong = useCallback(
+    (assetId: string | undefined, range?: PlayRange, fromStart = false) => {
+      setPreviewAsset(assetId);
+      setPreviewRange(range);
+      setPreviewFromStart(fromStart);
+    },
+    [],
+  );
   const menuMusic = useMenuMusic(
     mode === 'songs' || (mode === 'albums' && albumPlayerOpen)
       ? 'preview'
@@ -316,6 +336,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     notify,
     status.volume,
     previewRange,
+    mode === 'albums' && albumPlayerOpen,
+    seVolume,
+    shuffleAlbumPreview,
+    previewFromStart,
   );
   const playMenuSound = useMenuSounds(seVolume);
   const openSettings = () => {
@@ -347,7 +371,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         JSON.stringify({ id: chart.songId, chartType: chart.chartType ?? 'dance' }),
       );
     } catch {
-      /* The draft itself is in IndexedDB. */
+      /* The draft itself is in maps. */
     }
     return result;
   }, [chart, draftMeta, source, updateSong]);
@@ -426,25 +450,43 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     persist = false,
     context?: OpenContext,
   ) => {
-    const video = await prepareVideo(asset);
+    const existingSong = library.songs.find((song) =>
+      next.songId
+        ? song.id === next.songId
+        : latestEdition(song).chart.title === next.title &&
+          latestEdition(song).chart.videoHint.fileName === next.videoHint.fileName,
+    );
+    const songId = next.songId ?? existingSong?.id ?? crypto.randomUUID();
+    // Adopt/copy once before saving; the running project no longer depends on a browser handle.
+    const checked = await prepareVideo(asset);
+    let video = checked;
+    try {
+      if (!context?.play || persist) {
+        const diskAsset = await storeMapVideo(songId, next.title, asset);
+        if (diskAsset.kind !== 'file') {
+          video = {
+            src: diskAsset.url,
+            ownedUrl: false,
+            hint: { ...checked.hint, assetId: diskAsset.id, fileName: diskAsset.fileName },
+          };
+          releaseVideo(checked);
+        }
+      }
+    } catch (error) {
+      releaseVideo(checked);
+      throw error;
+    }
     let paired: Chart;
     try {
-      const existing = library.songs.find((song) =>
-        next.songId
-          ? song.id === next.songId
-          : latestEdition(song).chart.title === next.title &&
-            latestEdition(song).chart.videoHint.fileName === next.videoHint.fileName,
-      );
       paired = parseChart(
         {
           ...next,
-          songId: next.songId ?? existing?.id ?? crypto.randomUUID(),
+          songId,
           chartType: next.chartType ?? 'dance',
           videoHint: video.hint,
         },
         video.hint.durationMs,
       );
-      if (persist) await rememberVideo(asset);
     } catch (error) {
       releaseVideo(video);
       throw error;
@@ -492,7 +534,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         );
         if (context?.legacy) localStorage.removeItem(DRAFT_KEY);
       } catch {
-        /* IndexedDB remains authoritative. */
+        /* maps remains authoritative. */
       }
     }
     // Commit the chart and its validated video together. Never clear the current project early.
@@ -511,7 +553,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setBinding(null);
   };
   const openProject = async (next: Chart, isSaved: boolean, context?: OpenContext) => {
-    const result = await resolveVideo(next.videoHint.assetId);
+    const result = await resolveVideo(next.videoHint.assetId, true);
     if ('asset' in result) {
       try {
         await installProject(next, result.asset, isSaved, false, context);
@@ -545,9 +587,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       request.context,
     );
     if (!request.context?.play)
-      notify(
-        request.kind === 'new' ? '作品已创建，视频关联已记住。' : '视频关联已更新，请保存作品。',
-      );
+      notify(request.kind === 'new' ? '作品与视频已保存到 maps。' : '视频关联已更新并写入 maps。');
   };
   const chooseVideo = (request: VideoRequest) => {
     videoIntent.current = request;
@@ -615,7 +655,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
-      notify(exportCopy ? 'JSON 副本已导出，草稿也已保存。' : '草稿已保存。已发布的谱面不受影响。');
+      notify(
+        exportCopy
+          ? 'JSON 副本已导出，草稿已写入 maps。'
+          : '草稿已写入 maps 曲目目录。已发布的谱面不受影响。',
+      );
       return true;
     } catch (error) {
       notify(`保存失败：${(error as Error).message}`);
@@ -742,7 +786,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     }
     void runTask('正在打开草稿…', async () => {
       await library.load();
-      const songs = await readLibrary('songs');
+      const songs = library.snapshot();
       let last: { id: string; chartType: ChartType } | undefined;
       try {
         const saved = JSON.parse(localStorage.getItem(LAST_DRAFT_KEY) || 'null');
@@ -754,7 +798,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         /* Start an empty editor. */
       }
       const song = songs.find((s) => s.id === last?.id);
-      const edition = song?.drafts[last?.chartType ?? 'dance'];
+      const edition =
+        song?.drafts[last?.chartType ?? 'dance'] ??
+        songs.flatMap((s) => Object.values(s.drafts)).sort((a, b) => b.updatedAt - a.updatedAt)[0];
       if (edition) await openProject(edition.chart, true, { edition });
       else {
         const legacy = localStorage.getItem(DRAFT_KEY);
@@ -863,9 +909,6 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         deletedSongs.current.delete(song.id);
         throw error;
       }
-      const remaining = await readLibrary('songs');
-      for (const id of videoIds(song))
-        if (!remaining.some((other) => videoIds(other).includes(id))) await forgetVideo(id);
       if (chart.songId === song.id) {
         media.pause();
         setSource('');
@@ -966,14 +1009,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       {...(menuPage ? menuHighlight.handlers : {})}
     >
       <div className="ambient-shape pink">
-        <svg
-          className="album-housing-outline"
-          viewBox="0 0 1000 1000"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <polyline vectorEffect="non-scaling-stroke" />
-        </svg>
+        <AlbumHousing open={mode === 'albums' && albumPlayerOpen} />
       </div>
       <div className="ambient-shape cyan" />
       <div className="ambient-dots" />
@@ -1300,7 +1336,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                     <i />
                     {mode === 'editor' ? 'VIDEO PREVIEW' : 'YOUR PRIVATE STAGE'}
                   </span>
-                  <span>↗</span>
+                  {mode === 'editor' ? <EditorPreviewResize /> : <span>↗</span>}
                 </div>
                 <div className="video-viewport">
                   <video
@@ -1714,20 +1750,21 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               <li>
                 <strong>ARMS 手臂</strong>
                 <p>
-                  八方向箭头表示动作方位，L/R 拳套表示对应手向前出拳。TAP、HOLD、SWAY 共通。
-                  箭头用手颜色：ANY 未指定白色，L 左手蓝色，R 右手红色，BOTH 双手紫色；H
-                  循环换手，支持多选。 录谱使用方向键；Shift + ←/→ 录 ↖/↗，Alt + ←/→ 录
-                  ↙/↘，也支持数字小键盘八方向。 J/K 录左右拳套。长按 HOLD，Ctrl + 长按 SWAY；录谱时
-                  H 修改后续箭头的用手。
+                  八方向箭头表示动作方位，L/R 拳套表示对应手向前出拳；L/R/BOTH
+                  手掌表示单手或双手水平前伸。TAP、HOLD、SWAY 共通。 箭头用手颜色：ANY 未指定白色，L
+                  左手蓝色，R 右手红色，BOTH 双手紫色；H 循环换手，支持多选。 录谱使用方向键；Shift
+                  + ←/→ 录 ↖/↗，Alt + ←/→ 录 ↙/↘，也支持数字小键盘八方向。 J/K 录左右拳套，U/I/O
+                  录左手／右手／双手前伸。长按 HOLD，Ctrl + 长按 SWAY；录谱时 H 修改后续箭头的用手。
                 </p>
               </li>
               <li>
                 <strong>STEP 踏步</strong>
                 <p>
                   ← / → 录入左右踏步，点按 TAP、长按 HOLD、Ctrl + 长按 SWAY。 ↓ 直接录入 FREE
-                  SWAY，长按决定时长。Shift + 左右跨两格；Alt + ← / → 录入 FOLLOW，并步跟脚只支持
-                  TAP。类型菜单仅提供 TAP、FOLLOW、HOLD、SWAY、FREE SWAY；箭头单独选择移动方向。
-                  用脚颜色独立设置：L 左脚蓝色、R 右脚红色，H 切换，支持多选和所有类型。 F
+                  SWAY，长按决定时长。Shift + 左右跨两格；Alt + ← / → 录入 FOLLOW，Ctrl + Alt +
+                  长按左右方向键录入 FOLLOW SWAY。类型菜单提供 TAP、FOLLOW、FOLLOW
+                  SWAY、HOLD、SWAY、FREE SWAY；箭头单独选择移动方向。 用脚颜色独立设置：L
+                  左脚蓝色、R 右脚红色、BOTH 双脚紫色，H 循环，支持多选和所有类型。 F
                   只反转方向，普通左右踏步按 D 切换跨度。
                 </p>
               </li>

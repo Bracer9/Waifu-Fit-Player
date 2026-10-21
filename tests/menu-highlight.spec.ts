@@ -1,3 +1,4 @@
+import { putSongs, readSongs } from './helpers/library';
 import { expect, test, type Locator } from '@playwright/test';
 import { insertAlbum, importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
@@ -42,32 +43,12 @@ test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) 
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve, reject) => {
-        const opening = indexedDB.open('waifu-fit-player-library');
-        opening.onerror = () => reject(opening.error);
-        opening.onsuccess = () => {
-          const db = opening.result;
-          const tx = db.transaction('songs', 'readwrite');
-          const store = tx.objectStore('songs');
-          const request = store.getAll();
-          request.onsuccess = () => {
-            const song = structuredClone(request.result[0]);
-            song.id = 'highlight-second';
-            song.released.dance.chart.songId = song.id;
-            song.released.dance.chart.title = 'Second song';
-            song.released.dance.updatedAt += 1;
-            store.put(song);
-          };
-          tx.oncomplete = () => {
-            db.close();
-            resolve();
-          };
-          tx.onerror = () => reject(tx.error);
-        };
-      }),
-  );
+  const song = structuredClone((await readSongs(page))[0]);
+  song.id = crypto.randomUUID();
+  song.released.dance!.chart.songId = song.id;
+  song.released.dance!.chart.title = 'Second song';
+  song.released.dance!.updatedAt += 1;
+  await putSongs(page, [song]);
   await page.reload();
   await page.locator('.play-mode').click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);

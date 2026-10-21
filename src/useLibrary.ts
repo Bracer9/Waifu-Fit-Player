@@ -1,27 +1,53 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { changeLibrary, DEFAULT_ALBUMS, readLibrary, type Album, type Song } from './library';
+import { DEFAULT_ALBUMS, readLibrary, type Album, type Song } from './library';
 import { readMapLibrary } from './map-library';
-import { emptyMapLibrary, mergeMapSongs } from './song-pack';
+import { mergeMapSongs } from './song-pack';
+import { migrateMapSong, saveMapAlbum, saveMapSong } from './maps-workspace';
 
 export function useLibrary(notify: (text: string) => void) {
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState(DEFAULT_ALBUMS);
   const [ready, setReady] = useState(false);
   const loaded = useRef<Promise<void> | null>(null);
-  const mapSongs = useRef<Song[]>([]);
+  const current = useRef<Song[]>([]);
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
   const load = useCallback(() => {
     if (!loaded.current)
       loaded.current = Promise.all([
-        readLibrary('songs'),
-        readLibrary('albums'),
-        readMapLibrary().catch((error) => {
-          notify(`曲包扫描失败：${error.message}`);
-          return emptyMapLibrary();
-        }),
+        readLibrary('songs').catch(() => [] as Song[]),
+        readLibrary('albums').catch(() => [] as Album[]),
+        readMapLibrary(),
       ])
-        .then(([songs, albums, packs]) => {
-          mapSongs.current = packs.songs;
-          setSongs(mergeMapSongs(songs, packs.songs));
+        .then(async ([legacySongs, legacyAlbums, packs]) => {
+          const recovered: Song[] = [];
+          const failures: string[] = [];
+          for (const song of legacySongs) {
+            // Once a project exists on disk, the old browser DB is only an archive.
+            if (packs.locations?.[song.id]?.workspace) continue;
+            try {
+              if (!packs.writable) throw new Error('本地 maps 保存服务未启动');
+              const saved = await migrateMapSong(song);
+              recovered.push(saved);
+              // Migration is copy-only. Keep browser originals until the user
+              // has inspected the disk projects and explicitly approves cleanup.
+            } catch (error) {
+              recovered.push(song);
+              failures.push((error as Error).message);
+            }
+          }
+          current.current = [
+            ...packs.songs.filter((song) => !recovered.some((s) => s.id === song.id)),
+            ...recovered,
+          ];
+          setSongs(mergeMapSongs(recovered, packs.songs));
+          const albums: Album[] = [];
+          for (const album of legacyAlbums) {
+            try {
+              albums.push(await saveMapAlbum(album, true));
+            } catch {
+              albums.push(album);
+            }
+          }
           const groups = [
             ...albums,
             ...packs.albums.filter((a) => !albums.some((b) => b.id === a.id)),
@@ -39,6 +65,10 @@ export function useLibrary(notify: (text: string) => void) {
           ]);
           if (packs.warnings.length)
             notify(`已跳过 ${packs.warnings.length} 个曲包问题：${packs.warnings[0]}`);
+          if (failures.length)
+            notify(
+              `${failures.length} 个旧作品尚未迁入 maps，浏览器原数据保留；请重新定位视频后保存。${failures[0]}`,
+            );
           setReady(true);
         })
         .catch((error) => {
@@ -52,29 +82,45 @@ export function useLibrary(notify: (text: string) => void) {
   }, [load, notify]);
   const updateSong = useCallback(
     async (id: string, update: (old: Song | undefined) => Song | undefined) => {
-      const packed = mapSongs.current.find((song) => song.id === id);
-      const stored = await changeLibrary(
-        'songs',
-        id,
-        (previous) =>
-          update(previous ?? packed) ??
-          (packed ? { id, hidden: true, drafts: {}, released: {} } : undefined),
-      );
-      const next = stored?.hidden ? undefined : stored;
-      setSongs((items) =>
-        next ? [...items.filter((s) => s.id !== id), next] : items.filter((s) => s.id !== id),
-      );
-      return next;
+      const task = queue.current
+        .catch(() => {})
+        .then(async () => {
+          await load();
+          const previous = current.current.find((song) => song.id === id);
+          const candidate = update(previous) ?? {
+            id,
+            hidden: true as const,
+            drafts: {},
+            released: {},
+          };
+          const stored = await saveMapSong(candidate);
+          current.current = [...current.current.filter((song) => song.id !== id), stored];
+          const next = stored.hidden ? undefined : stored;
+          setSongs((items) =>
+            next ? [...items.filter((s) => s.id !== id), next] : items.filter((s) => s.id !== id),
+          );
+          return next;
+        });
+      queue.current = task;
+      return task;
     },
-    [],
+    [load],
   );
   const saveAlbum = useCallback(async (album: Album) => {
-    await changeLibrary('albums', album.id, () => album);
+    await saveMapAlbum(album);
     setAlbums((items) =>
       items.some((a) => a.id === album.id)
         ? items.map((a) => (a.id === album.id ? album : a))
         : [...items, album],
     );
   }, []);
-  return { songs, albums, ready, load, updateSong, saveAlbum };
+  return {
+    songs,
+    albums,
+    ready,
+    load,
+    updateSong,
+    saveAlbum,
+    snapshot: () => current.current.filter((song) => !song.hidden),
+  };
 }

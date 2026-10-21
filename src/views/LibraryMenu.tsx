@@ -9,7 +9,7 @@ import { AlbumBackdrop } from '../components/AlbumBackdrop';
 import { AlbumCover } from '../components/AlbumCover';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
-import { playableChart, playDuration } from '../play-range';
+import { playableChart, playDuration, videoPlayRange } from '../play-range';
 import type { PlayRange } from '../model';
 import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
@@ -20,6 +20,8 @@ import { useAlbumInsertion } from '../useAlbumInsertion';
 import { menuRect, menuViewport } from '../menu-viewport';
 import type { MenuMusic } from '../useMenuMusic';
 import { AlbumDeck, ALBUM_DECK_TIMING } from '../components/AlbumDeck';
+import { prepareAssets } from '../asset-cache';
+import { BRIEFING_TEXTURES } from '../start-briefing';
 
 function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
   const center = horizontal
@@ -68,7 +70,7 @@ type Props = {
   onSound: MenuSoundPlayer;
   onCreate: () => void;
   onPlay: (song: Song, chartType: ChartType) => Promise<void>;
-  onPreview: (assetId: string | undefined, range?: PlayRange) => void;
+  onPreview: (assetId: string | undefined, range?: PlayRange, fromStart?: boolean) => void;
   onEdit: (song: Song, chartType: ChartType) => void;
 };
 
@@ -95,12 +97,17 @@ export function LibraryMenu(props: Props) {
   const [confirmStart, setConfirmStart] = useState<{
     song: Song;
     chartType: ChartType;
+    requireEnterRelease: boolean;
   } | null>(null);
-  const confirmSong = (song: Song, chartType: ChartType) => {
+  const confirmationOpen = useRef(false);
+  const confirmSong = (song: Song, chartType: ChartType, requireEnterRelease = false) => {
+    if (confirmationOpen.current) return;
+    confirmationOpen.current = true;
     props.onSound('song');
-    setConfirmStart({ song, chartType });
+    setConfirmStart({ song, chartType, requireEnterRelease });
   };
   const closeConfirmation = () => {
+    confirmationOpen.current = false;
     setConfirmStart(null);
   };
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
@@ -123,10 +130,13 @@ export function LibraryMenu(props: Props) {
     [songs, albumId],
   );
   const selected = inAlbum.find((s) => s.id === songId) ?? inAlbum[0];
+  useEffect(() => {
+    if (page === 'songs') void prepareAssets({ images: BRIEFING_TEXTURES }).catch(() => {});
+  }, [page]);
   useMenuWheel(
     scroller,
     page === 'songs' ? 'x' : 'y',
-    !inserting && (page === 'albums' || !!selected),
+    !inserting && !confirmStart && (page === 'albums' || !!selected),
   );
   // Compile each released chart once when the library changes, never during playback/scroll.
   const totalCalories = useMemo(
@@ -144,11 +154,23 @@ export function LibraryMenu(props: Props) {
   const available = selected ? editionsIn(selected, albumId) : [];
   const selectedChartType = available.includes(chartType) ? chartType : available.at(-1);
   const edition = selected && selectedChartType ? selected.released[selectedChartType] : undefined;
-  const previewAsset = page === 'songs' || open ? edition?.chart.videoHint.assetId : undefined;
-  const previewRange = page === 'songs' || open ? edition?.chart.playRange : undefined;
+  const previewEdition = confirmStart
+    ? confirmStart.song.released[confirmStart.chartType]
+    : edition;
+  const previewFromStart = !!confirmStart;
+  const previewAsset =
+    page === 'songs' || open ? previewEdition?.chart.videoHint.assetId : undefined;
+  const previewRange = useMemo(() => {
+    if (!previewEdition || (page !== 'songs' && !open)) return undefined;
+    if (previewFromStart) return previewEdition.chart.playRange;
+    const range = videoPlayRange(previewEdition.chart);
+    const length = Math.min(30000, range.endMs - range.startMs);
+    const startMs = range.startMs + Math.floor((range.endMs - range.startMs - length) / 2);
+    return { startMs, endMs: startMs + length };
+  }, [page, open, previewEdition, previewFromStart]);
   useEffect(
-    () => props.onPreview(previewAsset, previewRange),
-    [previewAsset, previewRange, props.onPreview],
+    () => props.onPreview(previewAsset, previewRange, previewFromStart),
+    [previewAsset, previewRange, previewFromStart, props.onPreview],
   );
   const cards = page === 'albums' ? albums : inAlbum;
   const selectedId = page === 'albums' ? album.id : selected?.id;
@@ -391,7 +413,7 @@ export function LibraryMenu(props: Props) {
           const nextChartType = choices.includes(chartType) ? chartType : choices.at(-1);
           if (nextChartType) {
             onSong(song.id);
-            confirmSong(song, nextChartType);
+            confirmSong(song, nextChartType, true);
           }
         }
       }
@@ -418,11 +440,17 @@ export function LibraryMenu(props: Props) {
     [albums, songs, seed, artwork],
   );
   const trackScroll = () => {
-    if (scrollFrame.current) return;
+    if (scrollFrame.current || confirmationOpen.current) return;
     scrollFrame.current = requestAnimationFrame(() => {
       scrollFrame.current = 0;
       const node = scroller.current;
-      if (!node || inserting || node.closest('.menu-scene[data-exit-to]')) return;
+      if (
+        !node ||
+        inserting ||
+        confirmationOpen.current ||
+        node.closest('.menu-scene[data-exit-to]')
+      )
+        return;
       const id = updateScrollFocus(node, page === 'songs');
       if (centering.current) return;
       if (id && id !== selectedId) {
@@ -648,15 +676,15 @@ export function LibraryMenu(props: Props) {
           chartType={confirmStart.chartType}
           available={editionsIn(confirmStart.song, albumId)}
           albumName={album.name}
+          source={menu}
+          requireEnterRelease={confirmStart.requireEnterRelease}
           onChartType={(type) => {
             onChartType(type);
             setConfirmStart({ ...confirmStart, chartType: type });
           }}
           onClose={closeConfirmation}
           onStart={() => {
-            void props
-              .onPlay(confirmStart.song, confirmStart.chartType)
-              .finally(() => setConfirmStart(null));
+            void props.onPlay(confirmStart.song, confirmStart.chartType).finally(closeConfirmation);
           }}
           onSound={props.onSound}
         />

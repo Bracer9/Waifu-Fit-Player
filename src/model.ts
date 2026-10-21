@@ -16,9 +16,9 @@ export const ARM_DIRECTIONS = [
   'down',
   'down_right',
 ] as const;
-export type ArmAction = 'reach' | 'punch';
+export type ArmAction = 'reach' | 'punch' | 'forward';
 export type ArmHand = 'any' | 'left' | 'right' | 'both';
-export type StepFoot = 'left' | 'right';
+export type StepFoot = 'left' | 'right' | 'both';
 export const ARM_HANDS = [
   { value: 'any', label: 'ANY', color: 'var(--arms-any)' },
   { value: 'left', label: 'L', color: 'var(--cyan)' },
@@ -31,7 +31,7 @@ export const LANES = [
     id: 'punch',
     name: '手臂',
     english: 'ARMS',
-    directions: ARM_DIRECTIONS,
+    directions: [...ARM_DIRECTIONS, 'forward'],
     color: 'var(--pink)',
   },
   {
@@ -57,12 +57,13 @@ export const LANES = [
   },
 ] as const;
 export type Lane = (typeof LANES)[number]['id'];
-export type Direction = (typeof ARM_DIRECTIONS)[number] | 'free';
+export type Direction = (typeof ARM_DIRECTIONS)[number] | 'free' | 'forward';
 export type StepDistance = 1 | 2;
-export type NoteType = 'tap' | 'hold' | 'sway' | 'follow';
+export type NoteType = 'tap' | 'hold' | 'sway' | 'follow' | 'follow-sway';
 export const STEP_TYPES = [
   { value: 'tap', label: 'TAP' },
   { value: 'follow', label: 'FOLLOW' },
+  { value: 'follow-sway', label: 'FOLLOW SWAY' },
   { value: 'hold', label: 'HOLD' },
   { value: 'sway', label: 'SWAY' },
   { value: 'free-sway', label: 'FREE SWAY' },
@@ -105,6 +106,7 @@ export const arrow: Record<Direction, string> = {
   left: '←',
   right: '→',
   free: 'FREE',
+  forward: 'FWD',
   up_left: '↖',
   up_right: '↗',
   down_left: '↙',
@@ -112,15 +114,19 @@ export const arrow: Record<Direction, string> = {
 };
 // Legacy charts used left/right on the punch lane for frontal punches.
 export const isPunchAction = (lane: Lane, direction: Direction, action?: ArmAction) =>
-  lane === 'punch' && action !== 'reach' && (direction === 'left' || direction === 'right');
+  lane === 'punch' &&
+  (action === undefined || action === 'punch') &&
+  (direction === 'left' || direction === 'right');
 export const armHand = (note: Pick<Note, 'lane' | 'direction' | 'armAction' | 'hand'>): ArmHand =>
   isPunchAction(note.lane, note.direction, note.armAction)
     ? (note.direction as 'left' | 'right')
     : (note.hand ?? 'any');
-export const armActionValue = (note: Pick<Note, 'lane' | 'direction' | 'armAction'>) =>
-  isPunchAction(note.lane, note.direction, note.armAction)
-    ? `punch-${note.direction}`
-    : note.direction;
+export const armActionValue = (note: Pick<Note, 'lane' | 'direction' | 'armAction' | 'hand'>) =>
+  note.armAction === 'forward'
+    ? `forward-${note.hand ?? 'left'}`
+    : isPunchAction(note.lane, note.direction, note.armAction)
+      ? `punch-${note.direction}`
+      : note.direction;
 export const stepFoot = (note: Pick<Note, 'direction' | 'foot'>): StepFoot =>
   note.foot ?? (note.direction === 'right' ? 'right' : 'left');
 export const noteSymbol = (
@@ -148,17 +154,20 @@ export const noteColor = (
         (item) => item.value === armHand({ lane, direction, hand, armAction: action }),
       )!.color
     : lane === 'step' || lane === 'side_crunch'
-      ? stepFoot({ direction, foot }) === 'left'
-        ? 'var(--cyan)'
-        : 'var(--pink)'
+      ? stepFoot({ direction, foot }) === 'both'
+        ? 'var(--arms-both)'
+        : stepFoot({ direction, foot }) === 'left'
+          ? 'var(--cyan)'
+          : 'var(--pink)'
       : LANES.find((item) => item.id === lane)!.color;
-export const isFollowStep = (note: Note) =>
-  note.lane === 'step' && note.kind === 'tap' && note.follow === true;
+export const isFollowStep = (note: Note) => note.lane === 'step' && note.follow === true;
 export const isStepMove = (note: Note) =>
   note.lane === 'step' && note.direction !== 'free' && !isFollowStep(note);
 export const noteType = (note: Note): NoteType =>
   isFollowStep(note)
-    ? 'follow'
+    ? note.kind === 'hold'
+      ? 'follow-sway'
+      : 'follow'
     : note.kind === 'hold' && note.modifier === 'sway'
       ? 'sway'
       : note.kind;
@@ -168,12 +177,14 @@ export function noteTypeLabel(
   direction: Direction,
 ): string {
   if (type === 'follow') return 'FOLLOW';
+  if (type === 'follow-sway') return 'FOLLOW SWAY';
   if (type === 'tap') return 'TAP';
   if (type === 'sway') return lane === 'step' && direction === 'free' ? 'FREE SWAY' : 'SWAY';
   return lane === 'step' ? 'BALANCE HOLD' : 'HOLD';
 }
 export function noteAction(note: Note): string {
-  if (isFollowStep(note)) return `FOLLOW ${noteSymbol(note.lane, note.direction)}`;
+  if (isFollowStep(note))
+    return note.kind === 'hold' ? 'FOLLOW SWAY' : `FOLLOW ${noteSymbol(note.lane, note.direction)}`;
   if (note.kind === 'tap' && note.lane === 'step')
     return `STEP ${noteSymbol(note.lane, note.direction, note.distance)}`;
   return noteTypeLabel(
@@ -341,10 +352,18 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
       if (
         note.armAction !== undefined &&
         (note.lane !== 'punch' ||
-          !['reach', 'punch'].includes(String(note.armAction)) ||
-          (note.armAction === 'punch' && !['left', 'right'].includes(String(note.direction))))
+          !['reach', 'punch', 'forward'].includes(String(note.armAction)) ||
+          (note.armAction === 'punch' && !['left', 'right'].includes(String(note.direction))) ||
+          (note.armAction === 'forward' &&
+            (note.direction !== 'forward' ||
+              !['left', 'right', 'both'].includes(String(note.hand)))) ||
+          (note.armAction !== 'forward' && note.direction === 'forward'))
       )
-        errors.push(`${label}：ARMS 拳套仅支持左手或右手，其他方向使用箭头。`);
+        errors.push(
+          `${label}：ARMS 拳套使用左右方向；前伸手掌使用 forward 方向并指定 left／right／both。`,
+        );
+      if (note.direction === 'forward' && note.armAction !== 'forward')
+        errors.push(`${label}：前伸方向必须使用前伸手掌动作。`);
       if (
         note.hand !== undefined &&
         (note.lane !== 'punch' ||
@@ -359,20 +378,24 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
       if (
         note.foot !== undefined &&
         ((note.lane !== 'step' && note.lane !== 'side_crunch') ||
-          (note.foot !== 'left' && note.foot !== 'right'))
+          (note.foot !== 'left' &&
+            note.foot !== 'right' &&
+            !(note.lane === 'step' && note.foot === 'both')))
       )
-        errors.push(`${label}：用脚／腿颜色仅适用于 STEP 或 SIDE CRUNCH，必须为 left 或 right。`);
+        errors.push(
+          `${label}：用脚／腿颜色仅适用于 STEP 或 SIDE CRUNCH；left／right 均可，both 仅适用于 STEP。`,
+        );
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：FREE SWAY 必须是有时长的 SWAY。`);
       if (
         note.follow !== undefined &&
         (note.follow !== true ||
           note.lane !== 'step' ||
-          note.kind !== 'tap' ||
+          (note.kind !== 'tap' && !(note.kind === 'hold' && note.modifier === 'sway')) ||
           !['left', 'right'].includes(String(note.direction)) ||
           note.distance !== undefined)
       )
-        errors.push(`${label}：FOLLOW 仅适用于 STEP 左右 TAP，不设置跨度。`);
+        errors.push(`${label}：FOLLOW 仅适用于 STEP 左右 TAP 或 SWAY，不设置跨度。`);
       if (
         note.distance !== undefined &&
         (note.lane !== 'step' ||

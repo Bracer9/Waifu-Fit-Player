@@ -2,10 +2,14 @@ import {
   isPunchAction,
   noteSymbol,
   type ArmAction,
+  type ArmHand,
   type Direction,
   type Lane,
   type StepDistance,
 } from '../model';
+// The base silhouettes have the thumb on the viewer's left (a right hand).
+const PALM_PATH =
+  'M14 23L8 17Q6 15 4 17Q3 18 4 20L12 32Q15 37 21 37H24Q34 37 34 27V15Q34 12 31.5 12Q29 12 29 15V20V9Q29 6 26.5 6Q24 6 24 9V18V5Q24 2 21.5 2Q19 2 19 5V18V8Q19 5 16.5 5Q14 5 14 8Z';
 const laneFigures: Record<Lane, React.ReactNode> = {
   squat: (
     <>
@@ -64,16 +68,20 @@ export function noteGlyphShape(
   direction: Direction,
   distance: StepDistance = 1,
   action?: ArmAction,
+  hand?: ArmHand,
 ) {
-  const shape = isPunchAction(lane, direction, action)
-    ? 'glove'
-    : lane !== 'step'
-      ? 'arrow'
-      : direction === 'free'
-        ? 'free'
-        : 'step';
+  const shape =
+    lane === 'punch' && action === 'forward'
+      ? 'palm'
+      : isPunchAction(lane, direction, action)
+        ? 'glove'
+        : lane !== 'step'
+          ? 'arrow'
+          : direction === 'free'
+            ? 'free'
+            : 'step';
   const angle =
-    shape === 'glove'
+    shape === 'glove' || shape === 'palm'
       ? 0
       : {
           up: 0,
@@ -85,32 +93,45 @@ export function noteGlyphShape(
           left: 270,
           up_left: 315,
           free: 0,
+          forward: 0,
         }[direction];
   const path =
-    shape === 'glove'
-      ? 'M13 5Q20 1 29 5Q34 7 34 14V22Q34 26 29 29L28 36H13L12 29Q5 28 4 22V18Q4 14 8 14Q11 14 12 18V11Q12 7 13 5Z'
-      : shape === 'free'
-        ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
-        : shape === 'step' && distance === 2
-          ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
-          : lane === 'side_crunch'
-            ? 'M20 1L37 19H28V38H12V19H3Z'
-            : 'M20 4L34 18H26V35H14V18H6Z';
-  return { shape, angle, path };
+    shape === 'palm'
+      ? PALM_PATH
+      : shape === 'glove'
+        ? 'M13 5Q20 1 29 5Q34 7 34 14V22Q34 26 29 29L28 36H13L12 29Q5 28 4 22V18Q4 14 8 14Q11 14 12 18V11Q12 7 13 5Z'
+        : shape === 'free'
+          ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
+          : shape === 'step' && distance === 2
+            ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
+            : lane === 'side_crunch'
+              ? 'M20 1L37 19H28V38H12V19H3Z'
+              : 'M20 4L34 18H26V35H14V18H6Z';
+  const mirror = shape === 'glove' ? direction === 'left' : shape === 'palm' && hand === 'left';
+  return { shape, angle, path, mirror };
 }
 
 export function GlyphLabel({
   lane,
   direction,
   armAction,
+  hand,
 }: {
   lane: Lane;
   direction: Direction;
   armAction?: ArmAction;
+  hand?: ArmHand;
 }) {
-  return isPunchAction(lane, direction, armAction) ? (
-    <text className="glove-letter" x="23" y="23" textAnchor="middle">
-      {direction === 'left' ? 'L' : 'R'}
+  const palm = lane === 'punch' && armAction === 'forward';
+  const left = palm ? hand === 'left' : direction === 'left';
+  return isPunchAction(lane, direction, armAction) || (palm && hand !== 'both') ? (
+    <text
+      className={`glove-letter${palm ? ' palm-letter' : ''}`}
+      x={left ? 17 : 23}
+      y={palm ? 30 : 23}
+      textAnchor="middle"
+    >
+      {left ? 'L' : 'R'}
     </text>
   ) : null;
 }
@@ -118,26 +139,51 @@ export function GlyphLabel({
 export function PunchPair({
   joined = false,
   ribbon = false,
+  palms = false,
 }: {
   joined?: boolean;
   ribbon?: boolean;
+  palms?: boolean;
 }) {
-  const path = noteGlyphShape('punch', 'left').path;
+  const path = noteGlyphShape(
+    'punch',
+    palms ? 'forward' : 'right',
+    1,
+    palms ? 'forward' : 'punch',
+  ).path;
   return (
-    <g className="punch-pair">
+    <g className={palms ? 'palm-pair' : 'punch-pair'}>
       {(['left', 'right'] as const).map((direction, i) => (
         <g
           key={direction}
-          transform={`translate(${i ? 19 : -13} 4) scale(0.8)`}
+          transform={
+            palms
+              ? `translate(${i ? 21 : -1} 4) scale(0.52 0.85)`
+              : `translate(${i ? 19 : -13} 4) scale(0.8)`
+          }
           style={
             {
-              '--lane': direction === 'left' ? 'var(--cyan)' : 'var(--pink)',
+              '--lane': palms
+                ? 'var(--arms-both)'
+                : direction === 'left'
+                  ? 'var(--cyan)'
+                  : 'var(--pink)',
             } as React.CSSProperties
           }
         >
-          {!joined && !ribbon && <path className="glyph-edge" d={path} />}
-          <path className={ribbon ? 'ribbon-pair-body' : 'glyph-body'} d={path} />
-          <GlyphLabel lane="punch" direction={direction} armAction="punch" />
+          {!joined && !ribbon && (
+            <path
+              className="glyph-edge"
+              d={path}
+              transform={direction === 'left' ? 'translate(40 0) scale(-1 1)' : undefined}
+            />
+          )}
+          <path
+            className={ribbon ? 'ribbon-pair-body' : 'glyph-body'}
+            d={path}
+            transform={direction === 'left' ? 'translate(40 0) scale(-1 1)' : undefined}
+          />
+          {!palms && <GlyphLabel lane="punch" direction={direction} armAction="punch" />}
         </g>
       ))}
     </g>
@@ -173,12 +219,7 @@ export function ShoePrint() {
 
 /** An upright open palm, shared by both punch-sway directions. */
 export function PalmPrint() {
-  return (
-    <path
-      className="palm-print"
-      d="M14 23L8 17Q6 15 4 17Q3 18 4 20L12 32Q15 37 21 37H24Q34 37 34 27V15Q34 12 31.5 12Q29 12 29 15V20V9Q29 6 26.5 6Q24 6 24 9V18V5Q24 2 21.5 2Q19 2 19 5V18V8Q19 5 16.5 5Q14 5 14 8Z"
-    />
-  );
+  return <path className="palm-print" d={PALM_PATH} />;
 }
 /** Two broad, stemless downward arrowheads for squat holds (about 120 degrees). */
 export function SquatDownCue() {
@@ -193,6 +234,7 @@ export function NoteGlyph({
   joined = false,
   follow = false,
   armAction,
+  hand,
   pairedPunch = false,
   pairedReach = false,
 }: {
@@ -204,17 +246,20 @@ export function NoteGlyph({
   joined?: boolean;
   follow?: boolean;
   armAction?: ArmAction;
+  hand?: ArmHand;
   pairedPunch?: boolean;
   pairedReach?: boolean;
 }) {
-  const { shape, angle, path } = noteGlyphShape(lane, direction, distance, armAction);
+  const { shape, angle, path, mirror } = noteGlyphShape(lane, direction, distance, armAction, hand);
   return (
     <svg
       className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}${follow ? ' glyph--follow' : ''}`}
       data-symbol={
         pairedReach
           ? '↔'
-          : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
+          : armAction === 'forward'
+            ? `FWD ${hand === 'both' ? 'BOTH' : hand === 'right' ? 'R' : 'L'}`
+            : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
       }
       width={size}
       height={size}
@@ -223,12 +268,14 @@ export function NoteGlyph({
     >
       <g
         transform={
-          pairedReach || shape === 'free' || shape === 'glove'
+          pairedReach || shape === 'free' || shape === 'glove' || shape === 'palm'
             ? undefined
             : `rotate(${angle} 20 20)`
         }
       >
-        {pairedReach ? (
+        {shape === 'palm' && hand === 'both' ? (
+          <PunchPair palms joined={joined} />
+        ) : pairedReach ? (
           <ReachPair joined={joined} />
         ) : pairedPunch ? (
           <PunchPair joined={joined} />
@@ -243,9 +290,21 @@ export function NoteGlyph({
           ))
         ) : (
           <>
-            {!joined && <path className="glyph-edge" fillRule="evenodd" d={path} />}
-            <path className="glyph-body" fillRule="evenodd" d={path} />
-            <GlyphLabel lane={lane} direction={direction} armAction={armAction} />
+            {!joined && (
+              <path
+                className="glyph-edge"
+                fillRule="evenodd"
+                d={path}
+                transform={mirror ? 'translate(40 0) scale(-1 1)' : undefined}
+              />
+            )}
+            <path
+              className="glyph-body"
+              fillRule="evenodd"
+              d={path}
+              transform={mirror ? 'translate(40 0) scale(-1 1)' : undefined}
+            />
+            <GlyphLabel lane={lane} direction={direction} armAction={armAction} hand={hand} />
           </>
         )}
       </g>

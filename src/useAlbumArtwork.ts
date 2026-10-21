@@ -9,6 +9,22 @@ import pop from './assets/albums-illustrations/pop_album.png';
 
 export const ALBUM_ARTWORK: Record<string, string> = { all, touhou, anime, vocaloid, pop };
 const legacyCopies = new Map<string, Promise<string>>();
+// Verified historical 512px crops. Canvas/WebP output can differ between browser
+// rendering paths, so re-encoding today is not a reliable identity check alone.
+const legacyCropHashes: Record<string, string> = {
+  all: '002c6dff96e2d61b533e0f7bb3e4f1e6e141708fc46a206d065cdda5e4d49e1a',
+};
+
+async function knownLegacyCrop(albumId: string, stored: string) {
+  const expected = legacyCropHashes[albumId];
+  if (!expected) return false;
+  const bytes = await (await fetch(stored)).arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const hash = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+  return hash === expected;
+}
 
 function legacyCopy(source: string) {
   let copy = legacyCopies.get(source);
@@ -41,7 +57,11 @@ export function useAlbumArtwork(albums: Album[]) {
             // Only replace an exact old 512px crop of the supplied original.
             // Unrelated custom artwork and the stored library remain untouched.
             const original = ALBUM_ARTWORK[album.id];
-            if ((await legacyCopy(original)) === album.cover) source = original;
+            if (
+              (await knownLegacyCrop(album.id, album.cover)) ||
+              (await legacyCopy(original)) === album.cover
+            )
+              source = original;
           } catch {
             /* Keep the saved cover if the original cannot be read. */
           }

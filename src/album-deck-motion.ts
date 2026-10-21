@@ -23,6 +23,13 @@ export function albumHousingOutline(width: number, height: number) {
     };
   };
   const local = world.map(toLocal);
+  const points = (vertices: { x: number; y: number }[]) =>
+    vertices
+      .map(
+        ({ x, y }) =>
+          `${((x / boxWidth) * 1000).toFixed(3)},${((y / boxHeight) * 1000).toFixed(3)}`,
+      )
+      .join(' ');
   const inset = world.map(([x, y]) => {
     const dx = width * 0.9 - x,
       dy = height * 0.55 - y;
@@ -30,12 +37,8 @@ export function albumHousingOutline(width: number, height: number) {
     return toLocal([x + (dx / length) * 8, y + (dy / length) * 8]);
   });
   return {
+    points: points(local),
     clip: `polygon(${local.map(({ x, y }) => `${x.toFixed(3)}px ${y.toFixed(3)}px`).join(',')})`,
-    outline: inset
-      .map(
-        ({ x, y }) =>
-          `${((x / boxWidth) * 1000).toFixed(3)},${((y / boxHeight) * 1000).toFixed(3)}`,
-      )
-      .join(' '),
+    outline: points(inset),
   };
 }

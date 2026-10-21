@@ -1,26 +1,10 @@
+import { readSongs } from './helpers/library';
 import { expect, test, type Page } from '@playwright/test';
-import type { Song } from '../src/library';
 import { blankChart } from '../src/model';
 import { insertAlbum, importDemo, holdStart } from './helpers/project';
 import { createCalorieIndex } from '../src/calories';
 
-async function songs(page: Page): Promise<Song[]> {
-  return page.evaluate(
-    () =>
-      new Promise((resolve, reject) => {
-        const opening = indexedDB.open('waifu-fit-player-library');
-        opening.onerror = () => reject(opening.error);
-        opening.onsuccess = () => {
-          const db = opening.result;
-          const request = db.transaction('songs').objectStore('songs').getAll();
-          request.onsuccess = () => {
-            resolve(request.result);
-            db.close();
-          };
-        };
-      }),
-  );
-}
+const songs = readSongs;
 async function publish(page: Page) {
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   if (!(await page.getByLabel('所属专辑').inputValue()))
@@ -59,7 +43,7 @@ test('健身与舞蹈谱独立发布、编辑、撤下、删除与重开', async
   const dance = (await songs(page))[0].released.dance!;
   expect(dance.albumId).toBe('anime');
   expect(dance.chart.danceDifficulty).toBe(8.5);
-  expect(dance.cover.startsWith('data:image/webp')).toBe(true);
+  expect(dance.cover.startsWith('/__wfp/map-file/')).toBe(true);
   await page.getByLabel('谱面类型').selectOption('fitness');
   await expect(page.getByLabel('谱面类型')).toHaveValue('fitness');
   await page.getByLabel('作品名称').fill('Sunlight FITNESS');

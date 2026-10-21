@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { copyFile, mkdir, readFile, rm, writeFile, readdir } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { blankChart } from '../src/model';
 import { PACK_FORMAT } from '../src/song-pack';
@@ -13,7 +13,10 @@ test.skip(
   ({ baseURL }) => !baseURL?.endsWith(':4178'),
   'Run with npm run test:e2e:packs (isolated maps server).',
 );
-test.beforeAll(async () => {
+test.beforeEach(async () => {
+  if (!root.startsWith(path.resolve('artifacts') + path.sep))
+    throw new Error('Unexpected fixture directory');
+  await rm(root, { recursive: true, force: true });
   const folder = path.join(root, 'Downloaded Song');
   await mkdir(folder, { recursive: true });
   await copyFile('tests/fixtures/bpm-148.mp4', path.join(folder, 'video.mp4'));
@@ -184,4 +187,86 @@ test('removing a folder song locally survives a reload and preserves its source 
   await page.getByRole('button', { name: '本地作品', exact: true }).click();
   await expect(page.locator('.managed-song')).toHaveCount(0);
   expect((await scanMaps(root)).songs).toHaveLength(1);
+});
+
+test('a missing browser file handle recovers a renamed maps video and plays with the existing chart', async ({
+  page,
+  request,
+}) => {
+  const info = await stat(path.join(root, 'Downloaded Song/video.mp4'));
+  const query = `size=${info.size}&lastModified=${Math.trunc(info.mtimeMs)}`;
+  const match = await request.get(`/__wfp/find-video?${query}`);
+  expect(match.status()).toBe(200);
+  const recovered = await match.json();
+  expect(recovered.fileName).toBe('video.mp4');
+  expect((await request.get('/__wfp/find-video?size=wrong&lastModified=1')).status()).toBe(400);
+  const partial = await request.get(recovered.url, { headers: { Range: 'bytes=10-29' } });
+  expect(partial.status()).toBe(206);
+  expect((await partial.body()).length).toBe(20);
+  const library = await (await request.get('/__wfp/maps')).json();
+  await page.goto('/');
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await page.evaluate(
+    async ({ song, size, lastModified }) => {
+      const assetId = '77777777-8888-4999-aaaa-bbbbbbbbbbbb';
+      // A real, structured-cloneable handle whose file disappears (the same getFile failure as rename).
+      // OPFS belongs only to this isolated browser context, never to the user's maps or profile.
+      const directory = await navigator.storage.getDirectory();
+      const handle = await directory.getFileHandle('old-name.mp4', { create: true });
+      await directory.removeEntry('old-name.mp4');
+      const store = (name: string, version: number, table: string, value: unknown) =>
+        new Promise<void>((resolve, reject) => {
+          const opening = indexedDB.open(name, version);
+          opening.onupgradeneeded = () =>
+            opening.result.createObjectStore(table, { keyPath: 'id' });
+          opening.onerror = () => reject(opening.error);
+          opening.onsuccess = () => {
+            const db = opening.result;
+            const tx = db.transaction(table, 'readwrite');
+            tx.objectStore(table).put(value);
+            tx.oncomplete = () => {
+              db.close();
+              resolve();
+            };
+            tx.onabort = () => {
+              db.close();
+              reject(tx.error);
+            };
+          };
+        });
+      await store('waifu-fit-player-media', 1, 'videos', {
+        id: assetId,
+        fileName: 'old-name.mp4',
+        size,
+        lastModified,
+        handle,
+      });
+      for (const edition of Object.values(song.released) as {
+        chart: { videoHint: { assetId: string; fileName: string } };
+      }[]) {
+        edition.chart.videoHint.assetId = assetId;
+        edition.chart.videoHint.fileName = 'old-name.mp4';
+      }
+      await store('waifu-fit-player-library', 2, 'songs', song);
+    },
+    { song: library.songs[0], size: info.size, lastModified: Math.trunc(info.mtimeMs) },
+  );
+  const recoveryRequest = page.waitForResponse(
+    (response) => response.url().includes('/__wfp/find-video?') && response.status() === 200,
+  );
+  await page.reload();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await page.locator('.play-mode').click();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
+  await page.keyboard.press('Enter');
+  await holdStart(page);
+  await recoveryRequest;
+  await expect(page.locator('.practice-masthead')).toContainText('Downloaded Song');
+  await expect(page.locator('.ready-countdown')).toHaveCount(0);
+  await expect
+    .poll(() => page.locator('video').evaluate((video: HTMLVideoElement) => video.currentTime))
+    .toBeGreaterThan(2.1);
+  expect(await page.locator('video').getAttribute('src')).toContain('/__wfp/map-file/');
 });

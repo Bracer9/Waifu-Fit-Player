@@ -538,7 +538,9 @@ body:has(.practice-app) {
   stroke-width: 6px;
 }
 .practice .player-hold.active .ribbon-bloom {
-  opacity: calc(0.45 + var(--sustain-pulse) * 0.25);
+  /* The wide vector halo uses 1/30 of the former blurred layer's alpha.
+     Keep its original pulse curve on that scale, including while held. */
+  opacity: calc(0.015 + var(--sustain-pulse) * 0.008333333);
 }
 .practice .hold-head {
   width: var(--hold-head-size);

@@ -50,7 +50,7 @@ export function testConfig(suite: 'regression' | 'visual' | 'performance') {
       command: 'node scripts/test-server.mjs',
       cwd: root,
       env: {
-        WFP_MAPS_DIR: 'tests/fixtures/empty-maps',
+        WFP_MAPS_DIR: `artifacts/test-maps/${testServerToken}`,
         WFP_TEST_TOKEN: testServerToken,
         WFP_TEST_ENDURANCE: suite === 'performance' ? '1' : '0',
       },

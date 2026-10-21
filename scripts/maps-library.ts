@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
+import { MapsWorkspace } from './maps-workspace';
 import { CHART_TYPES } from '../src/chart-types';
 import type { Song, Album } from '../src/library';
 import {
@@ -31,8 +33,48 @@ const mime: Record<string, string> = {
 const json = async (file: string) =>
   JSON.parse((await readFile(file, 'utf8')).replace(/^\uFEFF/, ''));
 
+/** Recover a renamed browser file reference using metadata, without reading video bytes. */
+export async function findMapVideo(directory: string, size: number, lastModified: number) {
+  if (
+    !Number.isSafeInteger(size) ||
+    size <= 0 ||
+    !Number.isSafeInteger(lastModified) ||
+    lastModified < 0
+  )
+    throw new Error('视频文件信息无效。');
+  const root = await realpath(directory).catch(() => null);
+  if (!root) return undefined;
+  const matches: { fileName: string; url: string }[] = [];
+  const walk = async (folder: string, depth: number) => {
+    if (depth > 12 || matches.length > 1) return;
+    const entries = await readdir(folder, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (matches.length > 1) return;
+      if (entry.name.startsWith('.')) continue;
+      const file = path.join(folder, entry.name);
+      if (entry.isDirectory()) await walk(file, depth + 1);
+      else if (entry.isFile() && /\.mp4$/i.test(entry.name)) {
+        const actual = await realpath(file).catch(() => null);
+        if (!actual || !within(root, actual)) continue;
+        const info = await stat(actual).catch(() => null);
+        // File.lastModified is integer milliseconds; fs.Stats retains sub-millisecond precision.
+        if (info?.isFile() && info.size === size && Math.trunc(info.mtimeMs) === lastModified)
+          matches.push({
+            fileName: entry.name,
+            url: fileUrl(path.relative(root, actual).split(path.sep).join('/')),
+          });
+      }
+    }
+  };
+  await walk(root, 0);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 export async function scanMaps(directory: string): Promise<MapLibrary> {
   const result = emptyMapLibrary();
+  result.writable = true;
+  result.locations = {};
+  const workspace = new MapsWorkspace(directory);
   const root = await realpath(directory).catch(() => null);
   if (!root) return result;
   const usedIds = new Set<string>();
@@ -69,10 +111,11 @@ export async function scanMaps(directory: string): Promise<MapLibrary> {
     name
       ? fileUrl(resources.get(await resolve(folder, name, ['.png', '.webp', '.jpg', '.jpeg']))!)
       : '';
-  const add = (song: Song) => {
+  const add = (song: Song, folder: string) => {
     if (usedIds.has(song.id)) throw new Error('与其他曲包的歌曲 ID 重复，已跳过。');
     usedIds.add(song.id);
     result.songs.push(song);
+    result.locations![song.id] = { folder: path.relative(root, folder).split(path.sep).join('/') };
   };
   const registerAlbum = (album: Album) => {
     if (!result.albums.some((a) => a.id === album.id)) result.albums.push(album);
@@ -108,7 +151,7 @@ export async function scanMaps(directory: string): Promise<MapLibrary> {
         updatedAt: (await stat(file)).mtimeMs,
       };
     }
-    add(song);
+    add(song, folder);
   };
   const legacy = async (folder: string, files: string[]) => {
     const charts = files.filter((name) => /\.wfp\.json$/i.test(name));
@@ -147,7 +190,7 @@ export async function scanMaps(directory: string): Promise<MapLibrary> {
         result.warnings.push(`${path.join(relative, name)}：${(error as Error).message}`);
       }
     }
-    if (Object.keys(song.released).length) add(song);
+    if (Object.keys(song.released).length) add(song, folder);
   };
   const walk = async (folder: string, depth: number) => {
     if (depth > 12) return;
@@ -159,6 +202,20 @@ export async function scanMaps(directory: string): Promise<MapLibrary> {
       .filter((e) => e.isFile())
       .map((e) => e.name)
       .sort();
+    if (files.includes('project.json')) {
+      try {
+        const relative = path.relative(root, folder).split(path.sep).join('/');
+        const data = await workspace.readProject(relative);
+        add(data.song, folder);
+        result.locations![data.song.id] = data.location;
+        result.videos.push(...data.videos);
+      } catch (error) {
+        result.warnings.push(
+          `${path.relative(root, folder)}/project.json：${(error as Error).message}`,
+        );
+      }
+      return;
+    }
     if (files.includes('song.json')) {
       try {
         await manifest(folder);
@@ -179,11 +236,17 @@ export async function scanMaps(directory: string): Promise<MapLibrary> {
         await walk(path.join(folder, entry.name), depth + 1);
   };
   await walk(root, 0);
-  const editions = result.songs.flatMap((song) => Object.values(song.released));
+  const editions = result.songs.flatMap((song) => [
+    ...Object.values(song.drafts),
+    ...Object.values(song.released),
+  ]);
   const usedVideos = new Set(editions.map((edition) => edition.chart.videoHint.assetId));
   const usedAlbums = new Set(editions.map((edition) => edition.albumId));
   result.videos = result.videos.filter((video) => usedVideos.has(video.id));
   result.albums = result.albums.filter((album) => usedAlbums.has(album.id));
+  for (const album of await workspace.albums()) {
+    result.albums = [...result.albums.filter((a) => a.id !== album.id), album];
+  }
   return result;
 }
 
@@ -238,39 +301,164 @@ async function serveFile(
   stream.pipe(res);
 }
 
-/** Read-only localhost resources: no uploads, extraction, filesystem writes or arbitrary paths. */
-export function mapsLibraryPlugin(): Plugin {
-  const directory = path.resolve(process.env.WFP_MAPS_DIR ?? 'maps');
-  const middleware = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    const pathname = req.url?.split('?')[0] ?? '';
-    if (pathname !== '/__wfp/maps' && !pathname.startsWith('/__wfp/map-file/')) {
-      next();
-      return;
-    }
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      res.writeHead(405).end();
-      return;
-    }
-    void (async () => {
-      if (pathname === '/__wfp/maps') {
-        const data = await scanMaps(directory);
-        res.writeHead(200, {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Cache-Control': 'no-store',
-        });
-        res.end(req.method === 'HEAD' ? undefined : JSON.stringify(data));
-      } else
-        await serveFile(
-          directory,
-          decodeURIComponent(pathname.slice('/__wfp/map-file/'.length)),
-          req,
-          res,
-        );
-    })().catch(() => {
-      if (!res.headersSent) res.writeHead(404);
-      res.end();
-    });
+/** Same-origin editor saves are confined to maps; video playback remains range-streamed. */
+export function mapsLibraryPlugin(
+  options: { isolateByCookie?: boolean; demoFile?: string } = {},
+): Plugin {
+  const base = path.resolve(process.env.WFP_MAPS_DIR ?? 'maps');
+  const createMiddleware = (directory: string) => {
+    const workspace = new MapsWorkspace(directory, options.demoFile);
+    let writes: Promise<unknown> = Promise.resolve();
+    const middleware = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      const pathname = req.url?.split('?')[0] ?? '';
+      if (
+        pathname !== '/__wfp/maps' &&
+        pathname !== '/__wfp/find-video' &&
+        !pathname.startsWith('/__wfp/workspace/') &&
+        !pathname.startsWith('/__wfp/map-file/')
+      ) {
+        next();
+        return;
+      }
+      if (pathname.startsWith('/__wfp/workspace/')) {
+        if (
+          req.method !== 'POST' ||
+          req.headers['x-wfp-workspace'] !== '1' ||
+          (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host)
+        ) {
+          res.writeHead(403).end();
+          return;
+        }
+        const run = async () => {
+          const body = async () => {
+            const chunks: Buffer[] = [];
+            let size = 0;
+            for await (const chunk of req) {
+              size += chunk.length;
+              if (size > 32 * 1024 * 1024) throw new Error('保存数据超过 32 MB。');
+              chunks.push(Buffer.from(chunk));
+            }
+            return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          };
+          let data: unknown;
+          if (pathname === '/__wfp/workspace/attach') {
+            const input = await body();
+            // public/demo.mp4 is normally a hard link to a maps video. Adopt that
+            // original song folder too, rather than creating a duplicate copy.
+            if (input.source === '/demo.mp4') {
+              const info = await stat(options.demoFile ?? path.resolve('public/demo.mp4'));
+              const match = await findMapVideo(directory, info.size, Math.trunc(info.mtimeMs));
+              if (match) input.source = match.url;
+            }
+            if (!input.source && input.size && Number.isSafeInteger(input.lastModified)) {
+              const match = await findMapVideo(directory, input.size, input.lastModified);
+              if (!match) {
+                res.writeHead(404).end();
+                return;
+              }
+              input.source = match.url;
+            }
+            data = await workspace.attach(input);
+          } else if (pathname === '/__wfp/workspace/upload') {
+            const input = JSON.parse(
+              new URL(req.url!, 'http://localhost').searchParams.get('metadata') ?? '{}',
+            );
+            data = await workspace.attach(input, req);
+          } else if (pathname === '/__wfp/workspace/song') {
+            const input = await body();
+            data = await workspace.saveSong(
+              input.song,
+              input.revision,
+              input.folder,
+              input.migration === true,
+            );
+          } else if (pathname === '/__wfp/workspace/album') {
+            const input = await body();
+            data = await workspace.saveAlbum(input.album, input.migration === true);
+          } else {
+            res.writeHead(404).end();
+            return;
+          }
+          res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store',
+          });
+          res.end(JSON.stringify(data));
+        };
+        writes = writes
+          .catch(() => {})
+          .then(run)
+          .catch((error) => {
+            if (!res.headersSent)
+              res.writeHead(409, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ error: (error as Error).message }));
+          });
+        return;
+      }
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        res.writeHead(405).end();
+        return;
+      }
+      void (async () => {
+        if (pathname === '/__wfp/find-video') {
+          const query = new URL(req.url!, 'http://localhost').searchParams;
+          const size = query.get('size'),
+            lastModified = query.get('lastModified');
+          if (!size || !lastModified || !/^\d+$/.test(size) || !/^\d+$/.test(lastModified)) {
+            res.writeHead(400).end();
+            return;
+          }
+          const match = await findMapVideo(directory, Number(size), Number(lastModified));
+          res.writeHead(match ? 200 : 404, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store',
+          });
+          res.end(req.method === 'HEAD' ? undefined : JSON.stringify(match ?? null));
+        } else if (pathname === '/__wfp/maps') {
+          await writes;
+          const data = await scanMaps(directory);
+          res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store',
+          });
+          res.end(req.method === 'HEAD' ? undefined : JSON.stringify(data));
+        } else
+          await serveFile(
+            directory,
+            decodeURIComponent(pathname.slice('/__wfp/map-file/'.length)),
+            req,
+            res,
+          );
+      })().catch(() => {
+        if (!res.headersSent) res.writeHead(404);
+        res.end();
+      });
+    };
+    return middleware;
   };
+  const handlers = new Map<string, ReturnType<typeof createMiddleware>>();
+  const shared = createMiddleware(base);
+  const middleware = options.isolateByCookie
+    ? (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        if (!req.url?.startsWith('/__wfp/')) return next();
+        let id = /(?:^|;\s*)wfp-test-workspace=([a-f0-9-]{36})(?:;|$)/.exec(
+          req.headers.cookie ?? '',
+        )?.[1];
+        if (!id) {
+          id = randomUUID();
+          res.setHeader(
+            'Set-Cookie',
+            `wfp-test-workspace=${id}; Path=/; SameSite=Strict; HttpOnly`,
+          );
+        }
+        let handler = handlers.get(id);
+        if (!handler) {
+          handler = createMiddleware(path.join(base, id));
+          handlers.set(id, handler);
+        }
+        handler(req, res, next);
+      }
+    : shared;
   return {
     name: 'wfp-local-maps',
     configureServer(server) {

@@ -549,6 +549,13 @@ nav button.active:after {
     sans-serif;
   pointer-events: none;
 }
+.palm-letter {
+  font-size: 12px;
+}
+.arms-hand-actions {
+  display: grid;
+  gap: 4px;
+}
 .arms-action-picker {
   display: flex;
   gap: 8px;

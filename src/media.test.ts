@@ -1,5 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaController, audioOutputErrorMessage } from './media';
+import { MediaController, audioOutputErrorMessage, previewFadeOutGain } from './media';
+
+it('试听仅在末尾淡出，回跳或拖回中段恢复原音量，短片段也保留正常开头', () => {
+  const range = { start: 15, end: 45 };
+  expect(previewFadeOutGain(15, range)).toBe(1);
+  expect(previewFadeOutGain(30, range)).toBe(1);
+  expect(previewFadeOutGain(44.3, range)).toBe(1);
+  expect(previewFadeOutGain(44.65, range)).toBeCloseTo(0.5);
+  expect(previewFadeOutGain(45, range)).toBe(0);
+  expect(previewFadeOutGain(46, range)).toBe(0);
+  expect(previewFadeOutGain(15, range)).toBe(1);
+  expect(previewFadeOutGain(0, { start: 0, end: 0.4 })).toBe(1);
+  expect(previewFadeOutGain(0.3, { start: 0, end: 0.4 })).toBeCloseTo(0.5);
+});
 
 it('音频输出故障不误报为视频格式错误', () => {
   expect(

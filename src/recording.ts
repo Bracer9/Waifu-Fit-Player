@@ -112,6 +112,7 @@ export function useRecording(options: Options) {
         >
       )[e.key];
       let armAction: ArmAction | undefined;
+      let forwardHand: ArmHand | undefined;
       if (o.lane === 'punch') {
         const numpad = (
           {
@@ -126,7 +127,14 @@ export function useRecording(options: Options) {
           } as Record<string, Direction>
         )[e.code];
         if (numpad) dir = numpad;
-        if (e.code === 'KeyJ' || e.code === 'KeyK') {
+        const palmHand = ({ KeyU: 'left', KeyI: 'right', KeyO: 'both' } as const)[
+          e.code as 'KeyU' | 'KeyI' | 'KeyO'
+        ];
+        if (palmHand) {
+          dir = 'forward';
+          armAction = 'forward';
+          forwardHand = palmHand;
+        } else if (e.code === 'KeyJ' || e.code === 'KeyK') {
           dir = e.code === 'KeyJ' ? 'left' : 'right';
           armAction = 'punch';
         } else if (dir) {
@@ -168,7 +176,10 @@ export function useRecording(options: Options) {
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
         ...(armAction ? { armAction } : {}),
         ...(armAction === 'reach' && o.hand !== 'any' ? { hand: o.hand } : {}),
-        ...(o.lane === 'step' || o.lane === 'side_crunch' ? { foot: o.foot } : {}),
+        ...(forwardHand ? { hand: forwardHand } : {}),
+        ...(o.lane === 'step' || o.lane === 'side_crunch'
+          ? { foot: o.lane === 'side_crunch' && o.foot === 'both' ? 'left' : o.foot }
+          : {}),
       };
     };
     const keyup = (e: KeyboardEvent) => {
@@ -188,7 +199,7 @@ export function useRecording(options: Options) {
       )
         return;
       const short = performance.now() - p.pressedAt < HOLD_THRESHOLD_MS;
-      if ((short || p.follow) && p.direction !== 'free') {
+      if ((short || (p.follow && p.modifier !== 'sway')) && p.direction !== 'free') {
         o.onNote({
           id: uid(),
           lane: p.lane,
@@ -223,6 +234,7 @@ export function useRecording(options: Options) {
           kind: 'hold',
           modifier: p.modifier,
           endTimeMs,
+          ...(p.follow ? { follow: true } : {}),
           ...(p.distance ? { distance: p.distance } : {}),
           ...(p.armAction ? { armAction: p.armAction } : {}),
           ...(p.hand ? { hand: p.hand } : {}),

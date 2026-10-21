@@ -301,16 +301,22 @@ export function Editor({
   const stepIssues = useMemo(() => checkStepPositions(shown), [shown]);
   const pickLane = (newLane: Lane) => {
     setLane(newLane);
-    if (newLane !== 'step') setDrawType((current) => (current === 'follow' ? 'tap' : current));
+    if (newLane === 'side_crunch') setDrawFoot((foot) => (foot === 'both' ? 'left' : foot));
+    if (newLane !== 'step')
+      setDrawType((current) =>
+        current === 'follow' ? 'tap' : current === 'follow-sway' ? 'sway' : current,
+      );
     const dirs = LANES.find((l) => l.id === newLane)!.directions as readonly Direction[];
     setDirection((current) =>
-      newLane === 'punch' && drawArmAction === 'punch'
-        ? current === 'right'
-          ? 'right'
-          : 'left'
-        : dirs.includes(current)
-          ? current
-          : dirs[0],
+      newLane === 'punch' && drawArmAction === 'forward'
+        ? 'forward'
+        : newLane === 'punch' && drawArmAction === 'punch'
+          ? current === 'right'
+            ? 'right'
+            : 'left'
+          : dirs.includes(current)
+            ? current
+            : dirs[0],
     );
   };
   useRecording({
@@ -322,7 +328,7 @@ export function Editor({
     hand: drawHand,
     onHand: () => setDrawHand((hand) => nextArmHand(hand)),
     foot: drawFoot,
-    onFoot: () => setDrawFoot(nextStepFoot),
+    onFoot: () => setDrawFoot((foot) => nextStepFoot(foot, lane === 'step')),
     onLane: pickLane,
     onNote: (note) => onChange({ ...chart, notes: [...chart.notes, note] }),
     notify,
@@ -355,10 +361,15 @@ export function Editor({
       selected.includes(n.id) &&
       n.lane === 'punch' &&
       !spreadIds.has(n.id) &&
+      n.armAction !== 'forward' &&
       !isPunchAction(n.lane, n.direction, n.armAction),
   );
   const canFlip = chart.notes.some(
-    (n) => selected.includes(n.id) && n.direction !== 'free' && !spreadIds.has(n.id),
+    (n) =>
+      selected.includes(n.id) &&
+      n.direction !== 'free' &&
+      (n.direction !== 'forward' || n.hand !== 'both') &&
+      !spreadIds.has(n.id),
   );
   const selectedSpecial = chart.specialEvents.find((n) => selected.includes(n.id));
   const event = selectedNote || selectedSpecial;
@@ -399,8 +410,10 @@ export function Editor({
     if (selectedSpread && !recording) return;
     if ((selectedArm || selectedFoot) && !recording)
       onChange(setStepFoot(setArmHand(chart, selected), selected));
-    else if (lane === 'punch' && !drawSpread) setDrawHand((hand) => nextArmHand(hand));
-    else if (lane === 'step' || lane === 'side_crunch') setDrawFoot(nextStepFoot);
+    else if (lane === 'punch' && !drawSpread && (recording || drawArmAction === 'reach'))
+      setDrawHand((hand) => nextArmHand(hand));
+    else if (lane === 'step' || lane === 'side_crunch')
+      setDrawFoot((foot) => nextStepFoot(foot, lane === 'step'));
   };
   const duplicate = () => {
     const notes = chart.notes.filter((n) => selected.includes(n.id)),
@@ -519,7 +532,7 @@ export function Editor({
       'endTimeMs' in event && event.endTimeMs !== undefined
         ? event.endTimeMs
         : nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
-    if ((type === 'hold' || type === 'sway') && end <= event.timeMs) {
+    if ((type === 'hold' || type === 'sway' || type === 'follow-sway') && end <= event.timeMs) {
       notify('视频末尾没有足够空间创建长条。');
       return;
     }
@@ -662,10 +675,15 @@ export function Editor({
     setDraft(value);
   };
   const drawEvent = (d: Drag, end: number): Chart => {
-    const isFollow = d.lane === 'step' && drawType === 'follow';
+    const isFollow = d.lane === 'step' && (drawType === 'follow' || drawType === 'follow-sway');
+    const followTap = isFollow && drawType === 'follow';
     const isHold =
-      !isFollow && (drawType === 'hold' || drawType === 'sway' || Math.abs(end - d.time) > 10);
-    let start = isFollow ? d.time : Math.min(d.time, end),
+      !followTap &&
+      (drawType === 'hold' ||
+        drawType === 'sway' ||
+        drawType === 'follow-sway' ||
+        Math.abs(end - d.time) > 10);
+    let start = followTap ? d.time : Math.min(d.time, end),
       finish = Math.max(d.time, end);
     if (isHold && finish <= start) finish = nextGrid(start, chart.tempoSegments, snap, duration);
     start = Math.round(start);
@@ -695,8 +713,9 @@ export function Editor({
           direction: dir,
           timeMs: start,
           kind: 'hold',
-          modifier: drawType === 'sway' ? 'sway' : 'none',
+          modifier: drawType === 'sway' || drawType === 'follow-sway' ? 'sway' : 'none',
           endTimeMs: finish,
+          ...(isFollow ? { follow: true } : {}),
         }
       : {
           id: d.id!,
@@ -710,7 +729,8 @@ export function Editor({
     if (d.lane === 'step' || d.lane === 'side_crunch') note.foot = drawFoot;
     if (d.lane === 'punch') {
       note.armAction = drawArmAction;
-      if (drawArmAction === 'reach' && drawHand !== 'any') note.hand = drawHand;
+      if ((drawArmAction === 'reach' && drawHand !== 'any') || drawArmAction === 'forward')
+        note.hand = drawHand;
       if (drawSpread) {
         const left: Note = { ...note, direction: 'left', armAction: 'reach', hand: 'left' };
         const right: Note = { ...left, id: `${d.id}-right`, direction: 'right', hand: 'right' };
@@ -845,6 +865,7 @@ export function Editor({
               lane={n.lane}
               direction={n.direction}
               armAction={n.armAction}
+              hand={n.hand}
               distance={n.distance}
               follow={isFollowStep(n)}
               size={18}
@@ -955,7 +976,7 @@ export function Editor({
         <button
           className="tool-button flip-button"
           aria-label="反转方向"
-          title="反转选中音符方向／拳套 L ↔ R（F），箭头的用手或用脚颜色不变"
+          title="反转选中音符方向／拳套或前伸手掌 L ↔ R（F），箭头的用手或用脚颜色不变"
           disabled={!canFlip}
           onClick={flip}
         >
@@ -965,7 +986,7 @@ export function Editor({
         <button
           className="tool-button flip-button"
           aria-label="切换用手或用脚颜色"
-          title="H：ARMS 循环用手；STEP / SIDE CRUNCH 切换 L/R 用脚或腿颜色；拳套用 F 互换"
+          title="H：ARMS 循环用手；STEP 循环 L/R/BOTH 用脚颜色；SIDE CRUNCH 切换 L/R 腿色；拳套用 F 互换"
           disabled={
             !selectedArm &&
             !selectedFoot &&
@@ -1157,7 +1178,7 @@ export function Editor({
                 value={
                   drawSpread
                     ? 'spread'
-                    : armActionValue({ lane, direction, armAction: drawArmAction })
+                    : armActionValue({ lane, direction, armAction: drawArmAction, hand: drawHand })
                 }
                 hand={drawHand}
                 onChange={(value) => {
@@ -1166,6 +1187,12 @@ export function Editor({
                     setDrawArmAction('reach');
                     setDrawHand('both');
                     setDirection('left');
+                    return;
+                  }
+                  if (value.startsWith('forward-')) {
+                    setDrawArmAction('forward');
+                    setDirection('forward');
+                    setDrawHand(value.slice(8) as ArmHand);
                     return;
                   }
                   setDrawArmAction(value.startsWith('punch-') ? 'punch' : 'reach');
@@ -1186,24 +1213,29 @@ export function Editor({
         {(lane === 'step' || lane === 'side_crunch') && (
           <ArmHandPicker
             feet
+            bothFeet={lane === 'step'}
             label={lane === 'side_crunch' ? '录入用腿' : '录入用脚'}
             value={drawFoot}
             onChange={(foot) => setDrawFoot(foot as StepFoot)}
           />
         )}
-        {lane === 'step' && direction !== 'free' && drawType !== 'follow' && !recording && (
-          <label className="inline-field step-distance-picker">
-            跨度
-            <select
-              aria-label="绘制踏步跨度"
-              value={stepDistance}
-              onChange={(e) => setDrawDistance(Number(e.target.value) as StepDistance)}
-            >
-              <option value={1}>1 格</option>
-              <option value={2}>2 格</option>
-            </select>
-          </label>
-        )}
+        {lane === 'step' &&
+          direction !== 'free' &&
+          drawType !== 'follow' &&
+          drawType !== 'follow-sway' &&
+          !recording && (
+            <label className="inline-field step-distance-picker">
+              跨度
+              <select
+                aria-label="绘制踏步跨度"
+                value={stepDistance}
+                onChange={(e) => setDrawDistance(Number(e.target.value) as StepDistance)}
+              >
+                <option value={1}>1 格</option>
+                <option value={2}>2 格</option>
+              </select>
+            </label>
+          )}
         <select
           aria-label="绘制类型"
           hidden={recording}
@@ -1233,14 +1265,16 @@ export function Editor({
         <span className="record-hint">
           {recording
             ? lane === 'step'
-              ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
+              ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · Ctrl + Alt + 长按 FOLLOW SWAY · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
               : lane === 'punch'
-                ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · H 换手 · 长按 HOLD · Ctrl+长按 SWAY'
+                ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · U/I/O 左/右/双手前伸 · H 箭头换手 · 长按 HOLD · Ctrl+长按 SWAY'
                 : lane === 'side_crunch'
                   ? '←/→ 动作方向 · H 换腿颜色 · 长按 HOLD · Ctrl + 长按 SWAY'
                   : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
-            : lane === 'step' && drawType === 'follow'
-              ? 'FOLLOW：指定脚同方向跟上并拢 · H 换脚颜色 · 仅 TAP'
+            : lane === 'step' && (drawType === 'follow' || drawType === 'follow-sway')
+              ? drawType === 'follow-sway'
+                ? 'FOLLOW SWAY：跟脚并拢后持续摇摆 · H 换脚颜色 · 拖动设置时长'
+                : 'FOLLOW：指定脚同方向跟上并拢 · H 换脚颜色 · 仅 TAP'
               : '点击放置 · 拖动拉长 · Shift 多选'}
         </span>
       </div>
@@ -1496,6 +1530,7 @@ export function Editor({
                       </span>
                       <ArmHandPicker
                         feet
+                        bothFeet={selectedNote.lane === 'step'}
                         label={
                           selectedNote.lane === 'side_crunch' ? '选中侧收腹用腿' : '选中踏步用脚'
                         }
@@ -1507,7 +1542,7 @@ export function Editor({
                       <p className="inspector-tip">
                         {selectedNote.lane === 'side_crunch'
                           ? 'L 左腿蓝色，R 右腿红色；箭头独立表示动作方向。'
-                          : 'L 左脚蓝色，R 右脚红色；箭头表示移动方向。'}
+                          : 'L 左脚蓝色，R 右脚红色，BOTH 双脚紫色；箭头表示移动方向。'}
                       </p>
                     </div>
                   )}
@@ -1524,11 +1559,16 @@ export function Editor({
                           setSelected(next.ids);
                         }}
                       />
-                      {!isPunchAction(
-                        selectedNote.lane,
-                        selectedNote.direction,
-                        selectedNote.armAction,
-                      ) ? (
+                      {selectedNote.armAction === 'forward' ? (
+                        <p className="inspector-tip">
+                          水平前伸：L 左手蓝色，R 右手红色，BOTH
+                          双手紫色；左掌拇指朝右，右掌拇指朝左。F 互换单手。
+                        </p>
+                      ) : !isPunchAction(
+                          selectedNote.lane,
+                          selectedNote.direction,
+                          selectedNote.armAction,
+                        ) ? (
                         <>
                           <span>用手颜色 · H{selected.length > 1 ? ' · 批量' : ''}</span>
                           <ArmHandPicker
@@ -1602,10 +1642,12 @@ export function Editor({
                   {selectedNote?.lane === 'step' && (
                     <p className="inspector-tip">
                       {isFollowStep(selectedNote)
-                        ? 'FOLLOW：另一只脚朝箭头方向跟上并拢；可放在任意拍点，仅 TAP。'
+                        ? selectedNote.kind === 'hold'
+                          ? 'FOLLOW SWAY：朝箭头方向跟脚并拢后持续摇摆；可拖动调整时长。'
+                          : 'FOLLOW：另一只脚朝箭头方向跟上并拢；可放在任意拍点，仅 TAP。'
                         : selectedNote.direction === 'free'
                           ? '原地自由摇摆；可在类型菜单直接切换为左右 TAP、HOLD 或 SWAY。'
-                          : 'TAP 迈步；FOLLOW 跟脚并拢；HOLD 单脚支撑；SWAY 迈出后摇摆。类型菜单可直接互换。'}
+                          : 'TAP 迈步；FOLLOW 跟脚并拢；FOLLOW SWAY 并拢后摇摆；HOLD 单脚支撑；SWAY 迈出后摇摆。类型菜单可直接互换。'}
                     </p>
                   )}
                   <div className="inspector-actions">

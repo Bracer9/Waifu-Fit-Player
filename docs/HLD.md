@@ -1,6 +1,6 @@
 # Waifu Fit Player — HLD
 
-当前架构概览，初稿：2026-10-17；最近依据代码与旧会话核对：2026-10-21。用于定位代码和判断改动边界；只在模块职责、数据契约或关键流程改变时维护，不逐项登记功能与修复。
+当前架构概览，初稿：2026-10-17；最近维护：2026-10-22（存储改造）；旧会话核对：2026-10-21。用于定位代码和判断改动边界；只在模块职责、数据契约或关键流程改变时维护，不逐项登记功能与修复。
 
 本次核对基线为 `sol61 @ 0e5c061` 加已有的 10 个未提交文件；其中充能／律动样式优化只存在于本地工作区。本文区分当前实现和待实现需求，不以旧助手“已完成”答复代替源码证据。恢复过程、决策原文索引、历史验证与不确定性见 [恢复报告](recovery/RECOVERY-REPORT-2026-10-21.md)、[当前实现核对](recovery/CURRENT-STATE-2026-10-21.md)、[决策恢复](recovery/DECISIONS-RECOVERED.md)。这些恢复材料记录调查时的快照；之后的 D35 专辑 Enter 单击交互已实现，当前行为以后文与最新代码为准。
 
@@ -8,7 +8,7 @@
 
 React + TypeScript + Vite 本地浏览器应用，无业务后端。主菜单分音游模式与创作模式：前者经专辑、单曲及谱面类型选择进入跟练，后者直接进入谱面工作台。FITNESS 健身谱以节奏锻炼为主，DANCE 舞蹈谱以视频舞步联动为主。一个作品由谱面 JSON 与关联的本地视频组成；工作台和跟练共用同一个 `<video>`，游玩声音直接来自视频。
 
-“无业务后端”不等于仅靠静态文件运行全部能力：Vite dev／preview 中的 Node 插件提供 maps 本地只读扫描与媒体文件服务，不提供账号、云存储或远端业务接口。普通静态部署可使用浏览器作品功能，但不能自动读取用户磁盘 maps。运行时无动作识别或输入评分；FULL COMBO 是按谱面时间自动计算的展示。当前没有每日打卡、游玩历史或跨曲累计热量系统。
+“无业务后端”不等于纯静态运行：Vite dev／preview 中的 Node 插件提供 maps 本地扫描、受限写盘和 Range 媒体服务，不提供账号或云接口。作品以 maps 为准；纯静态部署不能保存作品，也不会退回浏览器存储。运行时无动作识别或输入评分；FULL COMBO 按谱面时间展示。当前没有每日打卡、游玩历史或跨曲累计热量系统。
 
 ```mermaid
 flowchart LR
@@ -21,13 +21,13 @@ flowchart LR
   Prep -->|就绪后允许播放| Media[共享视频与 MediaController]
   Media -->|媒体时间与状态| Editor
   Media -->|媒体时间与状态| Player
-  Maps[maps 曲包目录] --> Bridge[Vite 本地只读桥接]
-  Bridge --> Library[曲库合并：本地记录优先]
-  DB[(IndexedDB 草稿与发布版)] --> Library
+  Maps[maps 作品目录] <--> Bridge[Vite 本地读写桥接]
+  Bridge --> Library[磁盘曲库]
+  DB[(旧 IndexedDB)] -->|迁移并保留原记录| Bridge
   Library --> Menu[主页 / 专辑 / 单曲 / 开始确认]
   Menu -->|发布快照与视频| App
-  App -->|只保存草稿；显式发布| DB
-  DB --> Export[曲包导出：发布版与相对资源]
+  App -->|自动保存草稿；显式发布| Bridge
+  Library --> Export[曲包导出：发布版与相对资源]
 ```
 
 ## 模块与状态归属
@@ -39,7 +39,7 @@ flowchart LR
 | [Editor.tsx](../src/views/Editor.tsx)、[recording.ts](../src/recording.ts)                                                                                                  | 时间轴交互、属性编辑与录谱；选择、缩放、拖动预览等为编辑器临时状态，不写入谱面。                                                                                                                         |
 | [media.ts](../src/media.ts)、[timing.ts](../src/timing.ts)                                                                                                                  | 控制实际视频，发布时间／播放状态，处理循环；提供媒体时间与谱面时间换算、编谱网格和吸附。                                                                                                                 |
 | [Player.tsx](../src/views/Player.tsx)、`components/`                                                                                                                        | 从谱面与当前媒体时间计算画面；音符、长条与特效组件负责呈现。`combo.ts`、`special.ts` 等提供计算规则。                                                                                                    |
-| [local-media.ts](../src/local-media.ts)                                                                                                                                     | 视频预检、关联解析、文件句柄／文件的 IndexedDB 存储和访问权限恢复。对象 URL 的当前生命周期由 App 管理。                                                                                                  |
+| [local-media.ts](../src/local-media.ts)                                                                                                                                     | 视频预检、maps 关联解析和旧浏览器媒体迁移读取。对象 URL 的当前生命周期由 App 管理。                                                                                                                      |
 | [usePlayerPreparation.ts](../src/usePlayerPreparation.ts)、[asset-cache.ts](../src/asset-cache.ts)                                                                          | 前者提供本曲资源清单并协调视频就绪；后者共享图片解码、字体加载任务和成功结果，失败项可重试。                                                                                                             |
 | [library.ts](../src/library.ts)、[useLibrary.ts](../src/useLibrary.ts)、[chart-types.ts](../src/chart-types.ts)                                                             | 本地曲库、FITNESS / DANCE 草稿与发布快照、类型及评级元数据、专辑及曲绘；向菜单提供已发布作品。                                                                                                           |
 | [Home.tsx](../src/views/Home.tsx)、[LibraryMenu.tsx](../src/views/LibraryMenu.tsx)、[useCardHighlight.ts](../src/useCardHighlight.ts)                                       | 菜单布局与导航、专辑滚动对焦、最近输入目标的唯一流光；曲目选择仍由 App 保留。                                                                                                                            |
@@ -48,40 +48,48 @@ flowchart LR
 
 播放时间通过媒体订阅直接进入需要它的视图，不写回谱面历史。编辑器卸载后临时工具状态会重置；谱面、历史和实际视频仍由 App 保留。
 
-补充边界：`scripts/maps-library.ts` 负责 Node 文件访问；`song-pack.ts` 校验曲包契约，`map-library.ts` 提供浏览器索引／视频映射，`export-song-pack.ts / zip.ts` 负责发布版导出。`useAlbumInsertion.ts / album-deck-motion.ts` 负责插槽动画，`useBriefingMotion.ts / StartBriefing.tsx` 负责确认与充能；`GameEntrance`、`LiquidMenuTransition`、`MenuTransition` 和 `AlbumTuning` 分属不同导航流程，不能用一个全局转场替代。`usePlayerRenderPreparation.ts` 负责尽力绘制预热，和图片／字体解码准备是两个阶段。
+补充边界：`scripts/maps-library.ts` 负责扫描／HTTP 桥接，`scripts/maps-workspace.ts` 负责磁盘保存／恢复，`src/maps-workspace.ts` 负责浏览器调用及迁移；`song-pack.ts` 校验曲包契约，`map-library.ts` 提供浏览器索引／视频映射，`export-song-pack.ts / zip.ts` 负责发布版导出。`useAlbumInsertion.ts / album-deck-motion.ts` 负责插槽动画，`useBriefingMotion.ts / StartBriefing.tsx` 负责确认与充能；`GameEntrance`、`LiquidMenuTransition`、`MenuTransition` 和 `AlbumTuning` 分属不同导航流程，不能用一个全局转场替代。`usePlayerRenderPreparation.ts` 负责尽力绘制预热，和图片／字体解码准备是两个阶段。
 
 ## 数据契约与持久化边界
 
-| 数据                   | 当前契约与保存位置                                                                                                                                                                                                            |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chart                  | `schemaVersion: 1`；绝对毫秒 notes / specialEvents、tempoSegments；可选 songId、chartType、intensity、danceDifficulty、videoOffsetMs、playRange；videoHint 含文件名、时长和可选关联 ID。兼容集中在 model / chart-types 入口。 |
-| Note                   | tap 或含 endTimeMs / modifier 的 hold；SWAY 是 hold 的 modifier，FOLLOW 是 STEP tap 的标记，FREE SWAY 使用 direction=free。ARMS 支持 action/hand；STEP／侧收腹可有 foot；不要按 UI 下拉名称臆造新的 schema 类型。             |
-| Song / Edition / Album | Song 按类型分别保存 drafts / released；Edition=chart、albumId、cover、updatedAt；Album=id、name、cover。曲库 IndexedDB v2；目录曲本机删除可写 hidden 墓碑。                                                                   |
-| 视频                   | 独立本地关联库保存 FileSystemFileHandle 或 File；pack 视频使用本地受限 URL 映射；共享 video 只持有当前来源。原磁盘视频不随浏览器删除操作删除。                                                                                |
-| 普通 JSON 与曲包       | 普通谱面 JSON 不携带完整曲绘／专辑／视频；曲包 song.json v1 和相对路径补齐这些资源，只分享发布版，不包含草稿。两种 version 的含义独立。                                                                                       |
-| 偏好与临时状态         | localStorage 保存上次草稿指针、音量、流速与工作台 light/dark；选区、工具、剪贴板、A/B 编辑循环等是临时状态，不是持久化作品或运动历史。                                                                                        |
+| 数据                   | 当前契约与保存位置                                                                                                                                                                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chart                  | `schemaVersion: 1`；绝对毫秒 notes / specialEvents、tempoSegments；可选 songId、chartType、intensity、danceDifficulty、videoOffsetMs、playRange；videoHint 含文件名、时长和可选关联 ID。兼容集中在 model / chart-types 入口。      |
+| Note                   | tap 或含 endTimeMs / modifier 的 hold；SWAY 是 hold 的 modifier；FOLLOW 使用 STEP tap + follow，FOLLOW SWAY 使用 STEP hold + modifier=sway + follow；FREE SWAY 使用 direction=free。ARMS 支持 action/hand；STEP／侧收腹可有 foot。 |
+| Song / Edition / Album | Song 按类型分别保存 drafts / released；Edition=chart、albumId、cover、updatedAt；Album=id、name、cover。各类型草稿／发布快照在 maps 同目录，隐藏状态写入 project.json；专辑在 maps/library.json。                                  |
+| 视频                   | project.json 保存稳定 ID、相对路径与文件元数据；共享 video 经受限 Range URL 播放。原磁盘视频不随浏览器删除操作删除。                                                                                                               |
+| 普通 JSON 与曲包       | 普通谱面 JSON 不携带完整曲绘／专辑／视频；曲包 song.json v1 和相对路径补齐这些资源，只分享发布版，不包含草稿。两种 version 的含义独立。                                                                                            |
+| 偏好与临时状态         | localStorage 保存上次草稿指针、音量、流速与工作台 light/dark；选区、工具、剪贴板、A/B 编辑循环等是临时状态，不是持久化作品或运动历史。                                                                                             |
 
 工作台“谱面类型”下拉通过 App 的 `updatePublication` **复制当前 Chart 到目标类型**，目标已有草稿时提示替换；不会直接载入目标原草稿。继续另一类型现有草稿需从本地作品进入。顶部双标签与空白创建方案曾讨论并尝试，随后被用户撤回；不要把它作为当前已实现能力或已批准待办。工作台局部日夜样式已经存在，与第二套全游戏主题是两件事。
 
 ## 主要数据流
 
-**可移植曲包**：`scripts/maps-library.ts` 在 Vite dev／preview 安装只读本地目录桥接。`GET /__wfp/maps` 递归扫描 `maps/` 中的 `song.json`，通过 `song-pack.ts` 校验清单与真实谱面，组合 FITNESS／DANCE 已发布快照；旧同目录 `.wfp.json` 按 `videoHint.fileName` 精确匹配视频。`/__wfp/map-file/` 仅服务 maps 内受支持的文件，realpath 检查阻止越界与外部符号链接；MP4 支持 HTTP Range，扫描不读入整段视频，也不将曲包灌入 IndexedDB。资源 ID 以歌曲 ID＋包内路径生成，移动整个项目或重命名完整曲包文件夹保持关联。`map-library.ts` 在页面启动加载一次索引，`local-media.ts` 将 pack 视频接入既有预检、试听和共享媒体时钟。文件或坏谱面只影响对应包。
+**磁盘作品与曲包**：GET /__wfp/maps 优先扫描各曲目的 project.json 和独立草稿／发布 Chart JSON；兼容旧 song.json 和松散 .wfp.json 曲包。POST /__wfp/workspace/* 提供视频采用／流式导入、作品保存及专辑保存，仅允许同源请求并限制在 maps。map-file 经 realpath 检查并支持 HTTP Range，不读取整段视频进入内存。完整协议与迁移边界见 [maps 存储说明](MAPS-STORAGE.md)。
 
-**曲包与本地编辑**：`useLibrary.ts` 合并目录快照与 IndexedDB，同 ID 的本地记录完整优先；第一次编辑目录歌曲时以目录快照作为原子更新的初值，保留另一类型和已发布版本，之后正常自动存草稿。扫描不写入原文件／本地草稿。目录歌曲的本机删除保存 `Song.hidden` 墓碑，刷新不重新出现；撤下使用既有草稿／发布逻辑。纯目录歌曲随文件刷新更新，本地改过的歌曲保持本地优先。
+**编辑与迁移**：useLibrary 以 maps 为权威，更新串行写盘，成功后更新界面。作品目录包含视频、project.json、wfp-类型-draft.json、wfp-类型-released.json 和曲绘；maps/library.json 保存专辑设置。旧浏览器作品首次加载时迁入 maps，服务端读回确认并保存原始 Song 备份，所有原 IndexedDB 记录保留，等待用户检查后的明确清理确认；失败项保留原数据并提示。磁盘已有作品优先，旧浏览器副本不覆盖它。导入曲包编辑后建立 project.json，不覆盖作者原始导入文件。撤下、隐藏状态同样写盘。
 
 **导出分享曲包**：`export-song-pack.ts` 从一首歌的已发布快照收集两种谱面、关联视频、曲绘、专辑元数据及自定义封面，以相对路径写入 `song.json`；不导出未发布草稿，不带设备绝对路径或浏览器视频 ID。`zip.ts` 输出标准 UTF-8 STORE ZIP，原 MP4／图片直接作为 Blob 分片，CRC32 分块计算并让出主线程，不转码、不压缩大视频；单包上限 4 GB。入口在本地作品的“导出曲包”。`npm run test:e2e:packs` 使用独立目录与端口验证空白浏览器游玩和导出后在另一目录恢复。
 
 **界面尺寸适配**：`menu-viewport.ts` 以 1920×1080 为较小窗口的逻辑舞台，菜单与 Gameplay 等比缩放 `#root` 并居中留边；宽高均达到设计尺寸时保持原有响应式布局。CSS 的 `--menu-vw`／`--menu-vh` 将画面内尺寸绑定到同一逻辑舞台，未启用时回退原生视口单位；物理窗口的紧凑布局断点在拟合时停用，避免二次缩小。`useMenuViewport` 仅在模式变化及窗口 resize 时同步，捕获阶段先更新，再让转场、插槽读几何。菜单 Portal、确认卡片和插入副本挂在同一根节点；`menuRect` 把屏幕矩形转换回逻辑坐标，潮水和机身轮廓读取 `menuViewport`。进入游戏的黑场仍覆盖真实窗口，原媒体元素与时间轴保持不变。工作室不启用整体缩放，`workbench-viewport.css` 在较矮窗口压缩顶部预览、在较窄窗口允许操作栏换行，并限制弹窗高度；保留时间轴的原生像素／毫秒换算和正常滚动。
 
+**编辑器视频尺寸**：`EditorPreviewResize.tsx` 为右上角现有视频框添加左下角拖拽柄，向左增宽、向下增高，保留初始默认布局；右上重置按钮／拖拽柄双击／聚焦后 Home 恢复默认，方向键按 24px／16px 调整宽高。拖动只写工作台上方网格的 CSS 尺寸变量，每个动画帧最多更新一次，不缩放整个界面、不移动或重建共享 video，也不改变时间轴像素与时间的换算。左侧预览至少约 320～420px，视频至少约 320px；高度根据窗口、页头和五轨最小内容高度夹紧，上限 680px，并在窗口底部为播放工具与部分时间轴预留约 250px，剩余编辑内容正常纵向滚动。比例／高度偏好只在完成操作后写入 `waifu-fit-player-editor-preview-size`，窗口变小时自动夹紧；Esc、失焦与指针取消恢复拖动前布局。退出工作台清理样式与监听，跟练视图沿用原布局。
+
 **轨道顺序**：`model.ts` 的 `LANES` 统一定义 SQUAT → ARMS → STEP → CALF RAISE → SIDE CRUNCH，游戏、工作台、数字选轨与单曲大卡片 FOCUS MOVES 共用；本次试用将常用 ARMS／STEP 放在第 2／3 排，侧收腹放在底部，以阅读重心为主；确认页动作名称、图标及占比按动作 ID 对应，不依赖另一份平行数组。谱面仍保存动作 ID，不迁移或改写音符时间。
 
 **长条绘制**：`HoldRibbon.tsx` 与 `ribbonGeometry.ts` 按媒体时间绘制有界的 HOLD／SWAY 轮廓；柔光使用低透明度矢量描边层叠加，保留原路径、方向、轨道色和白色描边，不对移动／裁切的波浪路径应用实时 blur。Windows Chrome 的真实 Sunlight 冷启动对照将长条 blur 与首次 GPU 长帧关联，增加预绘未消除问题，该尝试已撤回。完整 React／SVG 绘制通知仍约 60Hz；在 165Hz 屏幕上的发布节奏不均是独立待优化项，不能把 RAF 平稳等同于已经获得原生高刷运动。
+
+外晕切换到 28px 低 alpha 描边后，持续状态也必须沿用该透明度尺度：`ribbon-bloom` 基值 .015，半拍额外量约 .008333；这是旧模糊层 .45／.25 曲线的 1/30。旧 active 规则若仍覆盖为 .45～.7，会把宽轮廓变成明显的实体重影并反复明暗变化。仅调整该尺度，不改变头部渐隐、相邻音符遮挡、图层结构或媒体时钟；关于抵达前闪烁的现场反馈仍待验证。
 
 **启动加载**：首次青色开场的分段条等待字体与本地曲库读取，并保留最短可读展示时间；填满后再退潮显露主页。曲库读取失败沿用原通知并允许进入主页，不等待 BGM 自动播放权限，也不提前加载整套游戏特效。
 
 **双臂展开预设**：方向盘中央以一个连续的紫色 ↔ 表示左手向左、右手向右；保存为起点、类型、终点一致的两颗普通 ARMS reach，分别为 L-left 与 R-right，不新增谱面字段。`armDisplayNotes` 只在显示层合并，计数和卡路里仍读取原始两颗音符。编辑器将配对选中、拖动、拉长、改类型、复制与删除；`changeArmGesture` 转回普通方向时折回一颗 BOTH 音符，保留时长。仅完全匹配的动作配对，不合并不同起止或形态的音符。
 
-**用脚／腿与方向**：STEP 与 SIDE CRUNCH 共用可选 `Note.foot: left | right`，颜色由 foot 决定，箭头由 direction 决定。旧谱面缺少 foot 时按原方向回退，编辑方向或类型前固定原有腿色；绘制、录谱、反向、复制、序列化和发布均保留独立 foot。只在离开这两种轨道时清除该字段，不改变旧谱面的时间、方向或 schemaVersion。
+**用脚／腿与方向**：STEP 可选 `Note.foot: left | right | both`，分别为青蓝／粉红／紫色；SIDE CRUNCH 仍只支持 left／right。颜色由 foot 决定，箭头由 direction 决定。绘制／属性面板提供 BOTH，STEP 的 H 循环 L→R→BOTH，侧收腹继续 L↔R；FREE SWAY 可自由选三色，不强制双脚。旧谱面缺少 foot 时按原方向回退，编辑方向或类型前固定原有腿色；绘制、录谱、反向、复制、序列化和发布均保留独立 foot。离开这两种轨道时清除该字段，STEP 的 both 跨入侧收腹时也清除，回退为原方向腿色；混合多选设置 both 时跳过侧收腹。不改变旧谱面的时间、方向或 schemaVersion；游戏箭头、长条、尾端与命中特效复用已有双手紫色及图集。
+
+**FOLLOW SWAY**：STEP 类型菜单在 FOLLOW 后插入 FOLLOW SWAY；保存为已有 `kind: hold, modifier: sway, follow: true`，保留 schemaVersion 1，不引入新 kind。仅支持左右方向，不设置跨度或跨轨；可选三种脚色。绘制拖动设置时长，单击默认延长到下一拍网格；类型转换保留 ID、起点、脚色和已有长条终点。录谱 Ctrl＋Alt＋长按左右方向键生成 FOLLOW SWAY，普通 Alt 录入 FOLLOW 仍为 TAP。显示复用 FOLLOW 的空心断线箭头与有界 SWAY 波浪轮廓，轮廓头部留出箭头空心区，不叠加实心头；工作台、持续提示、释放、计分和参考消耗沿用既有媒体时钟及 SWAY 时长规则。
+
+**水平前伸手掌**：ARMS 增加 `armAction: forward, direction: forward, hand: left | right | both`，和八方向 reach／拳套 punch 分开校验，保持 schemaVersion 1。动作选择器在拳套下提供三枚无手套手掌，双手是一颗带两掌图形的紫色音符；不自动合并左右单掌。TAP／HOLD／SWAY、复制与保存复用既有 Note 流程，转换保留 ID、时间和长条时长。U／I／O 录入左掌／右掌／双掌，Ctrl 长按为 SWAY；F 互换单掌、双掌保持，H 继续只改变方向箭头的用手。forward 方向仅 ARMS 接受，不跨到其他轨道。共享 Glyph 和 HoldRibbon 对单掌、双掌及拳套本体统一镜像：原轮廓拇指在左边代表右手，左手只镜像路径，L／R 文字不镜像；配对拳套、长条头与释放头同步。双掌使用已有紫色和命中特效资源，不新增实时滤镜。
 
 **打开作品**：解析 JSON → 按 `videoHint.assetId` 查找本地视频关联 → 必要时授权或重新定位 → 视频元数据预检与谱面校验 → 一起安装谱面和视频来源 → 等待图片解码、字体及实际视频可播放 → 允许播放。关联或预检失败不替换原作品；安装后的资源准备失败停在可重试界面。预检用的临时 video 不播放，不参与游戏计时。
 
@@ -97,7 +105,7 @@ flowchart LR
 
 **谱面类型迁移**：`chart-types.ts` 集中兼容旧 `difficulty: normal / hard` 与 `difficultyRating`。JSON 解析转为 `chartType: fitness / dance`、`danceDifficulty`，无类型旧谱默认 dance；导出只写新字段。健身强度不从旧数值猜测，未标注显示 `—`。曲库 IndexedDB v2 升级事务逐条迁移 draft / released，槽名决定类型，保留全部谱面内容、曲绘、视频 ID、区间和时间戳；若新旧槽并存，已有新槽优先。恢复草稿时同时迁移旧 `{id, difficulty}` 指针，避免丢失上次编辑位置。
 
-`Home.tsx` / `LibraryMenu.tsx` 呈现主菜单、纵向专辑与横向单曲选择，`LibraryControls.tsx` 提供编辑器发布字段和管理弹窗。选曲状态由 App 保留。封面压缩为小图，未指定曲绘时取视频帧；专辑未指定封面时从成员曲绘选取，会话内稳定。菜单显示静态封面，不挂载游戏轨道。IndexedDB `waifu-fit-player-library` 存 songs / albums，原视频库保持不变。
+`Home.tsx` / `LibraryMenu.tsx` 呈现菜单与选择，`LibraryControls.tsx` 提供发布和管理弹窗。选曲状态由 App 保留；曲绘与专辑设置写入 maps，新作品不写入 IndexedDB。
 
 **开始确认**：`StartBriefing.tsx` 使用所选发布快照，切换类型同时更新 App 的真实选曲／试听状态。`start-briefing.ts` 集中充能参数及动作构成统计：仅计算游玩区间内 Notes 数量，HOLD／SWAY 各计一个音符，高亮前两类及占比至少 15% 的第三类；图标复用游戏轨道 `LaneGlyph`。作者只读取已有可选 `artist`／`author` 元数据，缺失标为未标注，不扩展 Chart 格式。按住 Enter 或主鼠标键约 1150ms 充能，单一 RAF 只写 CSS 进度变量；松开 180ms 回退，失焦／取消／卸载清理，首次打开的 Enter 连发不能触发充能。视觉填充使用 ease-out，实际充满时间不变；Shift + Enter 跳过长按，复用同一完成反馈与开场流程，防止重复启动；专用充能 SE 随取消立即停止，充满播放 420ms 整条充能区通电反馈及专用完成 SE。光晕位于进度裁切外层，箭头从灰暗逐渐点亮，曲绘叠加静态纸纹，整张卡片缩放为 90%。进入游戏专用 `GameEntrance.tsx`／`game-entrance.css`，只动画黑色遮罩透明度：420ms 渐暗，完全遮住旧页后安装媒体，至少保持黑场 140ms，再用 620ms 显出昏暗房间。房间显现前保持倒计时 waiting，显现完成后才启动既有灯光、轨道通电和 Cover 倒计时；普通菜单导航使用内容淡入淡出与角落色块的轻推呼应。安装失败或需授权时淡回原页面，减少动态效果时直接切换。准备期间显示 Cover 等待，资源错误仍使用原重试界面。充能和暗场不操作媒体时间，视频与谱面仍在 GO 共用原媒体时钟。
 
@@ -123,23 +131,31 @@ flowchart LR
 
 **主菜单↔专辑液体转场（试作）**：仅这两个导航方向由 `navigateMenu` 标记 `liquid`，走独立 `LiquidMenuTransition.tsx`。进入专辑时粉色从右上横向铺开再向下覆盖，返回时青色从左下向右、向上覆盖；另一角落向外让开，完全覆盖后才换页。回收保持全宽水平波浪，约 828ms 内完全退出屏幕，再让原几何从上下方用约 635ms 的 cubic ease-out 归位；持续读取实时 BGM 位置，齿轮附着粉色几何返回，结束／卸载恢复原 visibility 和前景控件样式。SVG 贝塞尔液面带局部短高光、四个淡白气泡，以及复用 `LaneGlyph` 的五种动作印花和稀疏 Pop Art 符号，不使用滤镜；主内容保持原位。接近全覆盖时出现双向不同的短提示与五格节拍条，到位时文字轻回弹，无假加载百分比。有限 WAAPI 时间线驱动短暂 RAF，不逐帧更新 React。`liquid-transition.ts` 集中管理覆盖 880ms、全遮挡停留 200ms、退场 1380ms、波高、印花／高光透明度和到位脉冲。`liquid-transition.css` 管理提示排版；离线生成的 `liquid.wav` 以轻柔气泡为主，经 `useMenuSounds` 独立短通道与点击声叠加，共用 SE 音量，组件卸载停止。首次启动复用该组件的后半段：蓝色满屏、品牌标题停留 620ms，再退潮露出主页，不重复涨潮、不自动播放音效。液体组件直接挂在菜单根节点，避免首次挂载 portal 容器变化重启演出。减少动态效果时直接显示主页／换页，其他导航与 Gameplay 黑场不走该组件。
 
-**卡片与确认页动效**：`useMenuCardPress.ts` 为主页模式卡、专辑卡和单曲卡提供鼠标／Enter 共用的 150ms 按压反馈；独立 additive translate 最多下压 3px 并压缩硬阴影，保留原悬浮、hover 和居中缩放。开始确认页由 `useBriefingMotion.ts` 整体淡入 320ms、淡出 240ms，入场只动画卡片自身 opacity，退出则让整个弹层（含黑色遮罩与背景模糊）一起淡出，封面、纸纹与装饰保持同一层，不复制或移动封面。开场先以极低透明度准备四个绘制帧，再启动淡入计时，避免首帧栅格化耗尽动画；背景模糊在入场时保持稳定。退出透明终态保持到 React 移除弹窗，卸载时先把透明度写到原元素再清理动画，避免恢复默认不透明状态造成闪屏；途中取消从当前透明度接续。减少动态效果时直接展示／关闭，卸载清理动画，不改充能时长、专用黑场和媒体时钟。
+**卡片与确认页动效**：`useMenuCardPress.ts` 保留主页模式卡、专辑卡和单曲卡的 150ms 按压反馈。单曲→确认由 `useBriefingMotion.ts` 使用 Web Animations API 实现约 780ms 的 Poster Reveal：选中卡片轻微缩放、相邻卡片向外淡出，复用原粉青几何层展开；110ms 起用斜切多边形遮罩在 460ms 内揭示原面板，使用先展开再平滑减速的缓动，避免前段瞬间撑开；340ms 起呈现信息，490ms 起让充能横幅从下方 72px 上移到位，780ms 完成。面板入场全程维持最终尺寸与静态缩放中心，不在结束时切换 transform-origin，避免固定 0.9 缩放下整体下跳；粉青几何层只向最终尺寸展开；两者均无超调回缩，横幅不越过终点。封面与原有 ink／grain／fibers 始终一起揭示，不复制、搬运或切换封面材质。原背景色与固定 5px 模糊放在独立遮罩层，只动画透明度，不逐帧改变模糊半径。结束后取消面板临时动画，恢复原静态 CSS 和 BGM 律动；充能期间不保留遮罩或额外缩放。Esc／Backspace／取消按钮以约 200ms 从当前进度收回，入场中也可取消；选曲滚轮与原生吸附在弹层期间暂停，卸载恢复原偏移与焦点，不更改歌曲选择。打开面板的 Enter 必须先松开；入场中忽略充能与类型切换，收回中不接受重复操作。减少动态效果时直接展示／关闭。`start-briefing.ts` 集中阶段时长与 easing，钩子顶部 `POSTER` 集中遮罩斜度、收回缩放与移动距离；原长按时长、Shift+Enter 快速开始、专用游戏黑场、倒计时和媒体时钟不变。
 
-**音效（SE）音量**：全局设置独立控制，默认 50%，0 为静音；`App` 保存到 `waifu-fit-player-se-volume`，与菜单 BGM、游戏／视频音量互不影响。当前传给 `useMenuSounds.ts`，将来增加游戏 note 音效时沿用此音量值。
+纸纹准备复用 `prepareAssets` 的共享解码缓存：选曲页提前解码原有四张纸纹 SVG，确认页在揭示前等待纸纹与当前封面解码。卡片反馈及背景变暗立即开始；正常缓存命中后海报动画约 780ms，首次素材读取额外耗时不算在动画时长中。等待期间仍可 Esc 取消；资源失败时沿用 CSS 降级而不锁住输入，缓存失败项可重试。静态纸纹实现、透明度及混合模式不变。
+
+**音效（SE）音量**：全局设置独立控制，默认 50%，0 为静音；`App` 保存到 `waifu-fit-player-se-volume`，与菜单 BGM、游戏／视频音量互不影响。当前传给 `useMenuSounds.ts` 和专辑播放器机械声，将来增加游戏 note 音效时沿用此音量值。
+
+**专辑试听片段**：`LibraryMenu` 为展开的专辑播放器计算当前发布曲目游玩区间正中间的最多 30 秒，未设置游玩区间时使用视频全长。起点为区间起点加上剩余时长的一半（毫秒向下取整），终点为起点加最多 30000ms。直接复用 `useMenuMusic` 的区间、相对进度与拖动，不分析音频、不保存新素材、不改变曲目数据。App 在播放器展开或专辑变化时随机选择当前专辑内一首已发布曲目，多个曲目时排除刚播放的曲目。片段结束时 `useMenuMusic` 经回调请求随机换曲，设置一次性切换标记并暂停旧音源，防止 RAF／timeupdate／ended 重复切歌；只有一首时继续循环原片段。手动上一首／下一首保持原操作，机械声不随换曲重启。单曲选择／确认仍使用原游玩区间的试听，正式游戏起点不变。
+
+**专辑试听音色与机械声**：`album-preview-audio.ts` 复用菜单 AudioContext，在 preview 音源上并联原声与隔门音色：后者为单声道、130Hz 低架 +2dB、两级 780Hz 低通及 0.78 基础增益。隔门效果混合量为 75%，即原声增益 0.25、隔门支路增益 0.585；仅 `mode === albums && albumPlayerOpen` 使用隔门支路，切换时以 75ms 时间常数交叉渐变；单曲选择／确认恢复原声，游戏 video 不经过此链路。专辑插入单曲页时沿用同一音源和中间 30 秒区间，保持播放进度、不淡出重载；单曲页切歌仍取各曲中间 30 秒，片段结束循环当前曲目，仅专辑页自动随机换曲。有限试听区间在最后 700ms 按媒体时钟做 smoothstep 音量淡出，短于 1.4 秒的区间将淡出长度限制为区间一半；不新增开头淡入。包络与原有切歌渐变及视频音量相乘，循环／拖回区间中段立即恢复包络，暂停不按墙钟继续衰减。复用既有区间边界 RAF，不新增音频解码、音源或逐帧 React 状态。打开 HOLD 确认时才从原游玩区间开头（无区间时为视频开头）重新预览完整区间；显式确认状态保证短曲片段等于全曲时也会重播，关闭确认后切回中间片段。播放器运行时使用 `player-run.wav` 循环与 `player-start.wav` 启动短音，按 SE 音量播放；机械声仅跟随播放器展开状态，首次展开启动一次，切换专辑／曲目、空专辑及暂停试听均保持同一循环和运行中的 AudioContext，收起／离开专辑页才淡停；机械声直接接菜单输出，不进入音乐律动分析。两个小 WAV 首次需要时以完整 Range 请求读取、解码一次复用，异步结果由代次与卸载标记约束，避免快速关闭后延迟发声；卸载停止并断开所有声源。素材由 `scripts/generate-player-sfx.mjs` 离线生成，无实时合成或新增逐帧任务。
 
 **菜单音效**：`useMenuSounds.ts` 统一播放 `src/assets/menu-sfx/` 的五个短 WAV（合计约 60 KB），使用 SE 音量；每次操作至多播放一个，连点中断上一段。耳机菜单、循环方式、BGM 选择与播放暂停、谱面类型等按钮复用点击音；菜单返回、取消、关闭叉号及 Esc 关闭共用 `back.wav`。只在实际操作回调中触发，滚动不会连续发声；音效由脚本离线生成并随 Git 保存。
 
-**本地持久化**：JSON 保存谱面与视频关联 ID，不包含视频二进制。IndexedDB 优先保存视频文件句柄，不支持时保存 File；关联依赖当前浏览器资料及站点 origin，跨机器或清理存储后可能需要重新定位。页面会话中的对象 URL 仅用于播放。
+**本地持久化**：新作品、视频关联、曲绘与发布状态全部保存在 maps，浏览器仅保留界面偏好和当前编辑内存。JSON 使用临时文件替换与同目录 .wfp-backup 上一版备份；.wfp-save.json 记录待完成的多文件事务，下次读取时恢复。保存检查磁盘 revision，拒绝陈旧覆盖。曲绘采用不可变内容文件，避免草稿改图污染发布版。
+
+**本地视频改名恢复**：project.json 的媒体 ID 不依赖文件名。原文件名不存在时，在同曲目文件夹按大小＋毫秒修改时间唯一恢复 MP4，保存更新实际文件名；多个候选不猜测。旧浏览器引用迁移前也可通过 GET /__wfp/find-video 查询 maps 元数据，无需读取或哈希整个视频。旧未迁移曲包仍遵循原文件名规则。新增本地桥接能力需重启 Vite dev／preview 进程；不强制刷新正在编谱的页面。
 
 **资源准备**：普通动作素材预先准备，SPECIAL 按本曲配置加载。缓存共享进行中的任务和成功结果，普通编辑及视图切换复用；更换视频或资源清单时重新协调准备。缓存限当前页面会话，不持久化解码结果，不把整段视频解码进内存。进度条表示准备任务完成比例，不是字节下载比例。
 
 **普通命中特效**：游戏中的普通命中／释放使用 `public/art/impact/` 的五种轨道配色图集，每种含 32 帧命中和 32 帧释放，由 `scripts/bake-note-impacts.mjs` 用原 DOM/CSS 离线绘制。`NoteImpact` 只从现有媒体时间选择帧，不在游玩时实时计算多重 blur／阴影。工作台不加载这些图集，游玩仅解码当前游玩区间实际使用的配色（含配对手臂），同 URL 跨曲复用；五张图集各为 2048×1536，一份全量 RGBA 解码约 60MiB，显存／浏览器额外副本另计，素材尺寸与透明通道由测试约束。减少动态效果时显示简单静态圆环，工作台预览保留原 DOM 光效；SIDE CRUNCH／SPECIAL 继续使用各自图集。普通 TAP 在游戏内用 transform 移动并复用图形层，网格与音视频计时不变。修改原光效 CSS 后运行 `node scripts/bake-note-impacts.mjs` 重新生成图集；准备阶段的 RAF 取样是尽力预热，不是 GPU 完工屏障。
 
-**专辑播放器**：`LibraryMenu` 区分展开播放器与插入专辑，展开后 Space 控制试听暂停。原 `.ambient-shape.pink` 以独立 translate／clip-path 下滑展开，保留音乐 transform；`album-deck-motion.ts` 将目标轮廓逆映射到原几何的局部坐标，不旋转几何本体。扩大纯色绘制范围后由轮廓裁切，避免原矩形边缘露出。`AlbumDeck` 的图片区域只显示曲绘，试听控件复用 `useMenuMusic` 的 preview Audio、淡入淡出与音量。插槽按当前卡片测量对齐；`useAlbumInsertion` 复制当前可见卡片做裁切飞入，原卡隐藏，普通 Enter 或点击当前卡片／INSERT ALBUM 后自动推进 960ms，松键或松鼠标不取消；Esc／Backspace 或失焦时以 220ms 退回，完成前不切换页面。Shift + Enter 用 420ms 自动滑入，松键不取消，仍可用 Esc／失焦取消。完成后播放一次 `insert.wav` 卡扣声，由 App 持有的 `AlbumTuning` 全屏遮挡并换页，覆盖期间复位机身后揭幕。卸载清理飞入副本与动画；不增加播放器、频谱或逐帧 React 更新。
+**专辑播放器**：`LibraryMenu` 区分展开播放器与插入专辑，展开后 Space 控制试听暂停。原 `.ambient-shape.pink` 以独立 translate／clip-path 下滑展开，保留音乐 transform；`album-deck-motion.ts` 将目标轮廓逆映射到原几何的局部坐标，不旋转几何本体。`AlbumHousing.tsx` 直接绘制填色 SVG 轮廓，620ms 的 points 插值复用原形状坐标和 easing；背景不经过 CSS clip-path，不使用大面积阴影或外扩实色块，装饰网点／细线单独裁切。此替换因用户实际窗口持续白块而实施，尚未完成新的浏览器运行验证，不能视为根因已证实或问题已解决。`AlbumDeck` 的图片区域只显示曲绘，试听控件复用 `useMenuMusic` 的 preview Audio、淡入淡出与音量。插槽按当前卡片测量对齐；`useAlbumInsertion` 复制当前可见卡片做裁切飞入，原卡隐藏，普通 Enter 或点击当前卡片／INSERT ALBUM 后自动推进 960ms，松键或松鼠标不取消；Esc／Backspace 或失焦时以 220ms 退回，完成前不切换页面。Shift + Enter 用 420ms 自动滑入，松键不取消，仍可用 Esc／失焦取消。完成后播放一次 `insert.wav` 卡扣声，由 App 持有的 `AlbumTuning` 全屏遮挡并换页，覆盖期间复位机身后揭幕。卸载清理飞入副本与动画；不增加播放器、频谱或逐帧 React 更新。 按用户静止对照要求，播放器展开时机身固定旋转 -33deg，不跟音乐平移／缩放，MusicPulse 跳过该节点的律动变量写入；收起后恢复。机身轮廓由 `AlbumHousing` 显式使用菜单模式的 `fitMenuViewport`，避免编辑器直接返回时子组件先读取到旧坐标模式；2026-10-22 偶发白块的调查、已修复尺寸错位及未确认部分见 [调查记录](ALBUM-PLAYER-WHITE-FLASH-2026-10-22.md)。
 
 ## 必须保持的约束
 
-导航使用不同入口：主页↔专辑走液体覆盖；专辑插入前进到单曲走 `AlbumTuning` 全屏调谐；单曲返回专辑走普通 `MenuTransition`；单曲→确认仅整体淡入出；确认→游戏走 `GameEntrance` 黑场。早期全局双几何潮汐、封面跨页飞行和标题分组方案已被撤回，不能据旧对话中间方案恢复。
+导航使用不同入口：主页↔专辑走液体覆盖；专辑插入前进到单曲走 `AlbumTuning` 全屏调谐；单曲返回专辑走普通 `MenuTransition`；单曲→确认走局部 Poster Reveal；确认→游戏走 `GameEntrance` 黑场。早期全局双几何潮汐、封面跨页飞行和标题分组方案已被撤回，不能据旧对话中间方案恢复。
 
 **游玩暂停状态**：进入发布谱面后 waiting 等待资源与菜单淡出，随后 counting（600ms 灯光准备＋3×800ms 数字），GO 开始共享视频并退出 cover。Esc/Back 打开暂停菜单、冻结媒体并暗房间；恢复重新走 waiting/counting，到 GO 从暂停位置继续；RESTART 先 seek 游玩起点再走同一流程。恢复倒计时内取消回暂停菜单，首次开场取消回选曲。Space 只切媒体，不打开菜单、不倒计时；拖进度只 seek。EDIT IN STUDIO 保留当前媒体位置，按已有确认规则处理不同草稿，不直接改发布版。
 
@@ -175,7 +191,7 @@ flowchart LR
 - App 仍协调作品加载、视频授权与页面切换；后续会话流程继续增长时再提取，保留现有媒体实例和校验流程。
 - Editor 已集中较多职责，可按时间轴交互、属性面板逐步拆分；每次保持行为，沿用相关测试，不伴随全量重写。
 - 新页面可提供自己的 `AssetManifest` 复用加载器。当前内置资源集合有限，尚无缓存容量／淘汰机制；资源规模实际增长后再考虑。
-- 桌面打包尚未定案；当前曲库依赖浏览器 origin，不引入服务端或新框架。
+- 桌面打包尚未定案；当前作品存储在 maps，经本地 Vite 桥接读取／写入，不依赖浏览器 origin。
 
 ## 文档维护边界
 

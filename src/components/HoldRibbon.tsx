@@ -1,6 +1,6 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
-import { noteColor } from '../model';
+import { isFollowStep, noteColor } from '../model';
 import {
   GlyphLabel,
   noteGlyphShape,
@@ -53,15 +53,17 @@ export function HoldRibbon({
   const drawWidth = Math.max(1, width - visibleStart);
   const height = size * 1.08;
   const connected = headOpacity > 0;
-  // Meet the left junction of the free-sway loop without filling its open centres.
-  const headGap = connected ? (note.direction === 'free' ? size * 0.4 : 0) : size * 0.32;
-  const glyph = noteGlyphShape(note.lane, note.direction, note.distance, note.armAction);
+  // Keep both the free-sway loop and the separate FOLLOW arrow's hollow stem clear.
+  const follow = isFollowStep(note);
+  const headGap = connected ? (note.direction === 'free' || follow ? size * 0.4 : 0) : size * 0.32;
+  const glyph = noteGlyphShape(note.lane, note.direction, note.distance, note.armAction, note.hand);
   const releaseGlyph = releaseNote
     ? noteGlyphShape(
         releaseNote.lane,
         releaseNote.direction,
         releaseNote.distance,
         releaseNote.armAction,
+        releaseNote.hand,
       )
     : undefined;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
@@ -147,13 +149,15 @@ export function HoldRibbon({
             <path className="ribbon-aura" d={path} />
             <g className="ribbon-outline" filter={`url(#${outline})`}>
               <path className="ribbon-color" d={path} />
-              {connected && (
+              {connected && !follow && (
                 <g
                   className="ribbon-head-shape"
                   opacity={headOpacity}
                   transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                 >
-                  {note.pairedReach ? (
+                  {note.armAction === 'forward' && note.hand === 'both' ? (
+                    <PunchPair palms ribbon />
+                  ) : note.pairedReach ? (
                     <ReachPair ribbon />
                   ) : note.pairedPunch ? (
                     <PunchPair ribbon />
@@ -162,12 +166,17 @@ export function HoldRibbon({
                       <path
                         d={glyph.path}
                         fillRule="evenodd"
-                        transform={`rotate(${glyph.angle} 20 20)`}
+                        transform={
+                          glyph.mirror
+                            ? 'translate(40 0) scale(-1 1)'
+                            : `rotate(${glyph.angle} 20 20)`
+                        }
                       />
                       <GlyphLabel
                         lane={note.lane}
                         direction={note.direction}
                         armAction={note.armAction}
+                        hand={note.hand}
                       />
                     </>
                   )}
@@ -191,7 +200,9 @@ export function HoldRibbon({
                     } as React.CSSProperties
                   }
                 >
-                  {releaseNote.pairedReach ? (
+                  {releaseNote.armAction === 'forward' && releaseNote.hand === 'both' ? (
+                    <PunchPair palms ribbon />
+                  ) : releaseNote.pairedReach ? (
                     <ReachPair ribbon />
                   ) : releaseNote.pairedPunch ? (
                     <PunchPair ribbon />
@@ -200,12 +211,17 @@ export function HoldRibbon({
                       <path
                         d={releaseGlyph.path}
                         fillRule="evenodd"
-                        transform={`rotate(${releaseGlyph.angle} 20 20)`}
+                        transform={
+                          releaseGlyph.mirror
+                            ? 'translate(40 0) scale(-1 1)'
+                            : `rotate(${releaseGlyph.angle} 20 20)`
+                        }
                       />
                       <GlyphLabel
                         lane={releaseNote.lane}
                         direction={releaseNote.direction}
                         armAction={releaseNote.armAction}
+                        hand={releaseNote.hand}
                       />
                     </>
                   )}

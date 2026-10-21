@@ -1,12 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import type { Edition } from '../library';
-import { albumHousingOutline } from '../album-deck-motion';
 import type { MenuMusic } from '../useMenuMusic';
 import { CoverArt } from './CoverArt';
 import { MenuHintArrows } from './MainMenuDownHint';
 import { formatTime } from '../timing';
-import { menuViewport } from '../menu-viewport';
 
 export const ALBUM_DECK_TIMING = {
   unfold: 620,
@@ -40,21 +38,6 @@ export function AlbumDeck({
   onInsert: () => void;
 }) {
   const [position, setPosition] = useState(music.previewTransport.position);
-  useLayoutEffect(() => {
-    const corner = document.querySelector<HTMLElement>('.menu-app > .ambient-shape.pink');
-    if (!corner) return;
-    const update = () => {
-      const { width, height } = menuViewport();
-      const shape = albumHousingOutline(width, height);
-      corner.style.setProperty('--album-deck-clip', shape.clip);
-      corner
-        .querySelector('.album-housing-outline polyline')
-        ?.setAttribute('points', shape.outline);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
   useEffect(() => {
     if (!open) return;
     const update = () => setPosition(music.previewTransport.position());

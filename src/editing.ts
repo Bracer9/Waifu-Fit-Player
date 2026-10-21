@@ -77,6 +77,7 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
     left: 'right',
     right: 'left',
     free: 'free',
+    forward: 'forward',
     up_left: 'down_right',
     up_right: 'down_left',
     down_left: 'up_right',
@@ -85,13 +86,15 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
   return {
     ...chart,
     notes: chart.notes.map((n) =>
-      selected.includes(n.id) && n.direction !== 'free'
-        ? {
-            ...n,
-            direction: opposite[n.direction],
-            ...(n.lane === 'step' || n.lane === 'side_crunch' ? { foot: stepFoot(n) } : {}),
-          }
-        : n,
+      selected.includes(n.id) && n.armAction === 'forward' && n.hand !== 'both'
+        ? { ...n, hand: n.hand === 'left' ? 'right' : 'left' }
+        : selected.includes(n.id) && n.direction !== 'free' && n.direction !== 'forward'
+          ? {
+              ...n,
+              direction: opposite[n.direction],
+              ...(n.lane === 'step' || n.lane === 'side_crunch' ? { foot: stepFoot(n) } : {}),
+            }
+          : n,
     ),
   };
 }
@@ -105,6 +108,7 @@ export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Ch
       if (
         !selected.includes(note.id) ||
         note.lane !== 'punch' ||
+        note.armAction === 'forward' ||
         isPunchAction(note.lane, note.direction, note.armAction)
       )
         return note;
@@ -114,20 +118,25 @@ export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Ch
     }),
   };
 }
-export const nextStepFoot = (foot: StepFoot): StepFoot => (foot === 'left' ? 'right' : 'left');
+export const nextStepFoot = (foot: StepFoot, bothFeet = false): StepFoot =>
+  foot === 'left' ? 'right' : foot === 'right' && bothFeet ? 'both' : 'left';
 /** STEP feet and SIDE CRUNCH legs share colour selection, independent of direction. */
 export function setStepFoot(chart: Chart, selected: string[], foot?: StepFoot): Chart {
   return {
     ...chart,
     notes: chart.notes.map((note) =>
-      selected.includes(note.id) && (note.lane === 'step' || note.lane === 'side_crunch')
-        ? { ...note, foot: foot ?? nextStepFoot(stepFoot(note)) }
+      selected.includes(note.id) &&
+      (note.lane === 'step' || note.lane === 'side_crunch') &&
+      !(note.lane === 'side_crunch' && foot === 'both')
+        ? { ...note, foot: foot ?? nextStepFoot(stepFoot(note), note.lane === 'step') }
         : note,
     ),
   };
 }
 export function changeArmAction(note: Note, value: string): Note {
   if (note.lane !== 'punch') return note;
+  if (value.startsWith('forward-'))
+    return { ...note, armAction: 'forward', direction: 'forward', hand: value.slice(8) as ArmHand };
   const punch = value.startsWith('punch-');
   const next: Note = {
     ...note,
@@ -178,6 +187,8 @@ export function changeNoteForm(
   direction: Direction,
   endTimeMs: number,
 ): Note {
+  const follow =
+    note.lane === 'step' && direction !== 'free' && (type === 'follow' || type === 'follow-sway');
   const base = {
     id: note.id,
     lane: note.lane,
@@ -185,7 +196,7 @@ export function changeNoteForm(
     timeMs: note.timeMs,
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
     ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
-    ...(note.lane === 'step' && direction !== 'free' && type !== 'follow' && note.distance
+    ...(note.lane === 'step' && direction !== 'free' && !follow && note.distance
       ? { distance: note.distance }
       : {}),
   };
@@ -195,8 +206,9 @@ export function changeNoteForm(
   return {
     ...base,
     kind: 'hold',
-    modifier: type === 'sway' || direction === 'free' ? 'sway' : 'none',
+    modifier: type === 'sway' || type === 'follow-sway' || direction === 'free' ? 'sway' : 'none',
     endTimeMs: note.kind === 'hold' ? note.endTimeMs : endTimeMs,
+    ...(follow ? { follow: true } : {}),
   };
 }
 /** Preserve row spacing and only move to lanes that accept every selected note's direction. */
@@ -225,7 +237,8 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
       if (next.lane !== 'step') {
         delete next.distance;
       }
-      if (next.lane !== 'step' && next.lane !== 'side_crunch') delete next.foot;
+      if (next.lane !== 'step' && (next.lane !== 'side_crunch' || next.foot === 'both'))
+        delete next.foot;
       if (next.lane !== 'punch') {
         delete next.armAction;
         delete next.hand;

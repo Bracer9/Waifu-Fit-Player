@@ -2,6 +2,7 @@ import { openDemo, editInStudio } from './helpers/project';
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { ARM_DIRECTIONS, type Chart, type Note } from '../src/model';
+import { draw } from './helpers/editor';
 
 async function exportChart(page: Page): Promise<Chart> {
   const download = page.waitForEvent('download');
@@ -39,6 +40,166 @@ async function seek(page: Page, seconds: number) {
     .toBe(false);
   await page.evaluate(() => new Promise(requestAnimationFrame));
 }
+
+test('ARMS forward palms use separate hands, correct thumbs, sustain and save/record round trips', async ({
+  page,
+}) => {
+  const chart = await setup(page);
+  await load(page, chart);
+  await page.locator('.lane-picks [data-lane="punch"]').click();
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  const picker = page.getByRole('group', { name: '绘制手臂动作', exact: true });
+  const left = picker.getByRole('button', { name: '绘制手臂动作 FWD L', exact: true });
+  const right = picker.getByRole('button', { name: '绘制手臂动作 FWD R', exact: true });
+  const both = picker.getByRole('button', { name: '绘制手臂动作 FWD BOTH', exact: true });
+  for (const prefix of ['PUNCH', 'FWD']) {
+    const l = picker.getByRole('button', { name: `绘制手臂动作 ${prefix} L`, exact: true });
+    const r = picker.getByRole('button', { name: `绘制手臂动作 ${prefix} R`, exact: true });
+    await expect(l.locator('.glyph-body')).toHaveAttribute(
+      'transform',
+      'translate(40 0) scale(-1 1)',
+    );
+    expect(await r.locator('.glyph-body').getAttribute('transform')).toBeNull();
+    await expect(l.locator('.glove-letter')).toHaveText('L');
+    await expect(r.locator('.glove-letter')).toHaveText('R');
+  }
+  await expect(both.locator('.palm-pair .glyph-body')).toHaveCount(2);
+  await picker.screenshot({ path: 'artifacts/arms-forward-picker.png', scale: 'css' });
+  await left.click();
+  await draw(page, 1000, 'punch');
+  await right.click();
+  await page.getByLabel('绘制类型').selectOption('hold');
+  await draw(page, 2000, 'punch', 3000);
+  await both.click();
+  await page.getByLabel('绘制类型').selectOption('sway');
+  await draw(page, 4000, 'punch', 5500);
+  await page.getByRole('button', { name: '选中手臂动作 FWD L', exact: true }).click();
+  await page.keyboard.press('f');
+  await expect(
+    page.getByRole('button', { name: '选中手臂动作 FWD R', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('结束 / ms')).toHaveValue('5500');
+  await page.getByRole('button', { name: '选中手臂动作 FWD BOTH', exact: true }).click();
+  await expect(page.getByRole('button', { name: '反转方向', exact: true })).toBeDisabled();
+  let saved = await exportChart(page);
+  expect(saved.notes).toMatchObject([
+    { armAction: 'forward', direction: 'forward', hand: 'left', kind: 'tap' },
+    {
+      armAction: 'forward',
+      direction: 'forward',
+      hand: 'right',
+      kind: 'hold',
+      modifier: 'none',
+      endTimeMs: 3000,
+    },
+    {
+      armAction: 'forward',
+      direction: 'forward',
+      hand: 'both',
+      kind: 'hold',
+      modifier: 'sway',
+      endTimeMs: 5500,
+    },
+  ]);
+  await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
+  await seek(page, 10);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await page.keyboard.press('u');
+  await page.keyboard.down('i');
+  await page.waitForTimeout(300);
+  await page.keyboard.up('i');
+  await page.keyboard.down('Control');
+  await page.keyboard.down('o');
+  await page.waitForTimeout(300);
+  await page.keyboard.up('o');
+  await page.keyboard.up('Control');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  saved = await exportChart(page);
+  expect(saved.notes.filter((n) => n.timeMs >= 10000)).toMatchObject([
+    { armAction: 'forward', hand: 'left', kind: 'tap' },
+    { armAction: 'forward', hand: 'right', kind: 'hold', modifier: 'none' },
+    { armAction: 'forward', hand: 'both', kind: 'hold', modifier: 'sway' },
+  ]);
+  saved.notes.push(
+    {
+      id: 'thumb-hold',
+      lane: 'punch',
+      direction: 'left',
+      armAction: 'punch',
+      kind: 'hold',
+      modifier: 'none',
+      timeMs: 15000,
+      endTimeMs: 17000,
+    },
+    {
+      id: 'thumb-release',
+      lane: 'punch',
+      direction: 'left',
+      armAction: 'punch',
+      kind: 'tap',
+      timeMs: 17000,
+    },
+    {
+      id: 'pair-left',
+      lane: 'punch',
+      direction: 'left',
+      armAction: 'punch',
+      kind: 'tap',
+      timeMs: 20000,
+    },
+    {
+      id: 'pair-right',
+      lane: 'punch',
+      direction: 'right',
+      armAction: 'punch',
+      kind: 'tap',
+      timeMs: 20000,
+    },
+  );
+  await load(page, saved);
+  expect((await exportChart(page)).notes).toEqual(saved.notes);
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  const lane = page.getByTestId('lane-punch');
+  await seek(page, 0.5);
+  await expect(
+    lane.locator('[data-note-id="' + saved.notes[0].id + '"] .glyph--palm'),
+  ).toHaveAttribute('data-symbol', 'FWD L');
+  const rightHold = lane.locator('[data-note-id="' + saved.notes[1].id + '"]');
+  await expect(rightHold.locator('.hold-head .glyph--palm')).toHaveAttribute(
+    'data-symbol',
+    'FWD R',
+  );
+  await expect(rightHold.locator('.ribbon-head-shape path')).toHaveAttribute(
+    'transform',
+    'rotate(0 20 20)',
+  );
+  await seek(page, 3.5);
+  const bothHold = lane.locator('[data-note-id="' + saved.notes[2].id + '"]');
+  await expect(bothHold.locator('.ribbon-head-shape .palm-pair .ribbon-pair-body')).toHaveCount(2);
+  await expect(bothHold.locator('.ribbon-color')).toHaveCSS('fill', 'rgb(181, 138, 238)');
+  await page.screenshot({ path: 'artifacts/arms-forward-game.png' });
+  await seek(page, 4.5);
+  await expect(page.getByTestId('target-punch')).toHaveAttribute('data-state', 'sway');
+  await expect(page.getByTestId('target-punch')).toHaveCSS('color', 'rgb(181, 138, 238)');
+  await seek(page, 14.5);
+  const gloveHold = lane.locator('[data-note-id="thumb-hold"]');
+  await expect(gloveHold.locator('.ribbon-head-shape path')).toHaveAttribute(
+    'transform',
+    'translate(40 0) scale(-1 1)',
+  );
+  await expect(gloveHold.locator('.ribbon-release-shape path')).toHaveAttribute(
+    'transform',
+    'translate(40 0) scale(-1 1)',
+  );
+  await seek(page, 19.5);
+  const pair = lane.locator('.punch-pair');
+  await expect(pair.locator('.glyph-body').first()).toHaveAttribute(
+    'transform',
+    'translate(40 0) scale(-1 1)',
+  );
+  expect(await pair.locator('.glyph-body').last().getAttribute('transform')).toBeNull();
+  await expect(pair.locator('.glove-letter')).toHaveText(['L', 'R']);
+});
 
 test('ARMS authoring, F/H, quick recording and save round trip', async ({ page }) => {
   const chart = await setup(page);

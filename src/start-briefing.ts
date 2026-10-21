@@ -1,15 +1,26 @@
 import { LANES, type Chart } from './model';
 import { playableChart } from './play-range';
 
+export const BRIEFING_TEXTURES = [
+  '/art/cover-paper-grain.svg',
+  '/art/cover-paper-ink.svg',
+  '/art/cover-paper-fibers.svg',
+  '/art/cover-paper-edges.svg',
+];
+
 export const START_BRIEFING = {
   holdMs: 1150,
   releaseMs: 180,
   completionMs: 420,
-  openMs: 320,
-  closeMs: 240,
-  prepareFrames: 4,
-  prepareOpacity: 0.03,
-  enterEase: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  openMs: 780,
+  closeMs: 200,
+  revealDelayMs: 110,
+  revealMs: 460,
+  infoDelayMs: 340,
+  infoMs: 220,
+  bannerDelayMs: 490,
+  revealEase: 'cubic-bezier(0.35, 0, 0.25, 1)',
+  enterEase: 'cubic-bezier(0.16, 1, 0.3, 1)',
 } as const;
 
 /** Count authored notes once each, regardless of tap/hold/sway shape. */

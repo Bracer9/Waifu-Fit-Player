@@ -104,7 +104,7 @@ test('album originals occupy a full 7:2 picture area; only neighbouring cards ha
   await page.screenshot({ path: 'artifacts/album-artwork-full-originals-1080p.png' });
 });
 
-test('exact legacy square crops recover their supplied original; unrelated custom art and stored data stay intact', async ({
+test('verified legacy crops recover even when canvas encoding changes; custom art and stored data stay intact', async ({
   page,
 }) => {
   await albums(page);
@@ -150,30 +150,28 @@ test('exact legacy square crops recover their supplied original; unrelated custo
     });
     return cover;
   }, source);
+  // Model a different browser encoder: visually equivalent output need not have
+  // the same data URL. The verified historical bytes must still recover.
+  await page.addInitScript(() => {
+    const encode = HTMLCanvasElement.prototype.toDataURL;
+    HTMLCanvasElement.prototype.toDataURL = function (...args) {
+      const result = encode.apply(this, args);
+      return args[0] === 'image/webp' ? `${result}\n` : result;
+    };
+  });
   await albums(page);
   await expect(page.locator('.collection-album[data-id="all"] img')).toHaveAttribute('src', source);
+  await expect(page.locator('.collection-album[data-id="all"] .all-record')).toHaveCount(1);
+  await expect(page.locator('.collection-album[data-id="all"] .album-vinyl-spin')).toHaveCSS(
+    'animation-play-state',
+    'running',
+  );
   await expect(page.locator('.collection-album[data-id="custom-cover"] img')).toHaveAttribute(
     'src',
     saved,
   );
-  const stored = await page.evaluate(
-    () =>
-      new Promise<string>((resolve, reject) => {
-        const request = indexedDB.open('waifu-fit-player-library');
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const db = request.result;
-          const read = db.transaction('albums').objectStore('albums').get('all');
-          read.onsuccess = () => {
-            db.close();
-            resolve(read.result.cover);
-          };
-          read.onerror = () => {
-            db.close();
-            reject(read.error);
-          };
-        };
-      }),
-  );
+  const stored = (await (await page.request.get('/__wfp/maps')).json()).albums.find(
+    (album: { id: string }) => album.id === 'all',
+  ).cover;
   expect(stored).toBe(saved);
 });

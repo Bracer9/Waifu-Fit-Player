@@ -109,25 +109,23 @@ test('旧谱一次定位后保存关联，失败与取消保留当前作品，�
   expect(await exported(page)).toEqual(linked);
 });
 
-test('新建取消、无法记住视频时不进入半成品工作区', async ({ page }) => {
+test('新建取消、maps 写入失败时不进入半成品工作区', async ({ page }) => {
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: '新建', exact: true }).click();
   await (await chooser).setFiles([]);
-  await expect(page.locator('video')).not.toHaveAttribute('src', /blob:/);
   await expect(page.getByRole('button', { name: '试玩谱面', exact: true })).toBeDisabled();
-  await page.evaluate(() => {
-    indexedDB.open = () => {
-      throw new DOMException('storage unavailable', 'QuotaExceededError');
-    };
-  });
+  await page.route('**/__wfp/workspace/attach', (route) =>
+    route.fulfill({
+      status: 409,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'maps 磁盘写入失败' }),
+    }),
+  );
   await selectVideo(page, '新建');
-  await expect(page.getByRole('status')).toContainText('无法记住视频');
-  await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page.locator('video')).not.toHaveAttribute('src', /blob:/);
+  await expect(page.getByRole('status')).toContainText('maps 磁盘写入失败');
+  await expect(page.getByRole('button', { name: '试玩谱面', exact: true })).toBeDisabled();
 });
-
-test('真实文件句柄持久化、刷新恢复、权限重新授权与文件变动检查', async ({ page }) => {
-  // OPFS supplies a real serializable FileSystemFileHandle; only the OS picker UI is substituted.
+test('选择文件句柄后写入 maps，删除浏览器源文件也能重开', async ({ page }) => {
   await page.evaluate(async () => {
     const root = await navigator.storage.getDirectory();
     const handle = await root.getFileHandle('handle-video.mp4', { create: true });
@@ -142,55 +140,13 @@ test('真实文件句柄持久化、刷新恢复、权限重新授权与文件�
   await page.getByRole('button', { name: '新建', exact: true }).click();
   await ready(page, 'handle-video');
   const chart = await exported(page);
-  const stored = await page.evaluate(
-    async (id) =>
-      new Promise<{ handle: boolean; copy: boolean }>((resolve, reject) => {
-        const open = indexedDB.open('waifu-fit-player-media', 1);
-        open.onerror = () => reject(open.error);
-        open.onsuccess = () => {
-          const db = open.result;
-          const request = db.transaction('videos').objectStore('videos').get(id);
-          request.onsuccess = () => {
-            resolve({
-              handle: request.result.handle instanceof FileSystemFileHandle,
-              copy: !!request.result.file,
-            });
-            db.close();
-          };
-        };
-      }),
-    chart.videoHint.assetId!,
-  );
-  expect(stored).toEqual({ handle: true, copy: false });
-  await page.reload();
-  await open(page, chart);
-  await ready(page, 'handle-video');
-  await page.reload();
-  await page.evaluate(() => {
-    let granted = false,
-      attempts = 0;
-    Object.defineProperty(FileSystemHandle.prototype, 'queryPermission', {
-      value: async () => (granted ? 'granted' : 'prompt'),
-      configurable: true,
-    });
-    Object.defineProperty(FileSystemHandle.prototype, 'requestPermission', {
-      value: async () => (++attempts === 1 ? 'denied' : ((granted = true), 'granted')),
-      configurable: true,
-    });
-  });
-  await open(page, chart);
-  await expect(page.getByRole('dialog')).toContainText('允许读取关联视频');
-  await page.getByRole('button', { name: '允许读取视频', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('尚未允许读取');
-  await expect(page.locator('video')).not.toHaveAttribute('src', /blob:/);
-  await page.getByRole('button', { name: '允许读取视频', exact: true }).click();
-  await ready(page, 'handle-video');
+  expect(chart.videoHint.assetId).toMatch(/^pack-/);
+  expect(await page.locator('video').getAttribute('src')).toContain('/__wfp/map-file/');
   await page.evaluate(async () => {
-    const handle = await (await navigator.storage.getDirectory()).getFileHandle('handle-video.mp4');
-    const writable = await handle.createWritable();
-    await writable.write('changed');
-    await writable.close();
+    await (await navigator.storage.getDirectory()).removeEntry('handle-video.mp4');
   });
+  await page.reload();
   await open(page, chart);
-  await expect(page.getByRole('dialog')).toContainText('原视频已被修改');
+  await ready(page, 'handle-video');
+  expect(await exported(page)).toEqual(chart);
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readStoredVideo, type StoredVideo, type VideoFileHandle } from './local-media';
 import { blankChart, parseChart, serializeChart } from './model';
 
@@ -11,6 +11,7 @@ const base: StoredVideo = {
   lastModified: file.lastModified,
 };
 const handle = (methods: Record<string, unknown>) => methods as unknown as VideoFileHandle;
+afterEach(() => vi.unstubAllGlobals());
 
 describe('作品的视频关联', () => {
   it('关联随 JSON 往返，旧谱仍可读，拒绝将 URL 当关联 ID', () => {
@@ -60,5 +61,53 @@ describe('作品的视频关联', () => {
   it('兼容文件缓存无需重新选择，缺失记录不伪装成成功', async () => {
     expect(await readStoredVideo({ ...base, file })).toMatchObject({ asset: { id, file } });
     expect(await readStoredVideo(base)).toHaveProperty('reason');
+  });
+  it('文件改名后使用 maps 唯一元数据匹配，保持原关联 ID', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ fileName: 'renamed.mp4', url: '/__wfp/map-file/song/renamed.mp4' }),
+    });
+    vi.stubGlobal('fetch', fetcher);
+    const record = {
+      ...base,
+      handle: handle({
+        getFile: async () => {
+          throw new DOMException('gone', 'NotFoundError');
+        },
+      }),
+    };
+    expect(await readStoredVideo(record)).toEqual({
+      asset: { id, kind: 'pack', fileName: 'renamed.mp4', url: '/__wfp/map-file/song/renamed.mp4' },
+    });
+    expect(fetcher).toHaveBeenCalledWith('/__wfp/find-video?size=3&lastModified=100', {
+      cache: 'no-store',
+    });
+    // Missing/ambiguous matches, static hosting, and failed requests still allow manual relocation.
+    fetcher.mockResolvedValue({ ok: false });
+    expect(await readStoredVideo(record)).toHaveProperty('reason');
+    fetcher.mockRejectedValue(new Error('offline'));
+    expect(await readStoredVideo(record)).toHaveProperty('reason');
+    fetcher.mockResolvedValue({
+      ok: true,
+      json: async () => ({ fileName: 'x.mp4', url: 'https://example.com/x.mp4' }),
+    });
+    expect(await readStoredVideo(record)).toHaveProperty('reason');
+  });
+  it('权限不足或视频已修改时不自动改用 maps 中的文件', async () => {
+    const fetcher = vi.fn();
+    vi.stubGlobal('fetch', fetcher);
+    await readStoredVideo({
+      ...base,
+      handle: handle({
+        getFile: async () => {
+          throw new DOMException('denied', 'NotAllowedError');
+        },
+      }),
+    });
+    await readStoredVideo({
+      ...base,
+      file: new File(['changed'], 'dance.mp4', { lastModified: 100 }),
+    });
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });

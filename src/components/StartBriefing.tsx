@@ -1,4 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from 'react';
 import { ArrowRight, ArrowUpRight, Dumbbell, PersonStanding } from 'lucide-react';
 import type { ChartType, Song } from '../library';
 import type { Lane } from '../model';
@@ -29,6 +37,8 @@ export function StartBriefing({
   chartType,
   available,
   albumName,
+  source,
+  requireEnterRelease,
   onChartType,
   onClose,
   onStart,
@@ -38,6 +48,8 @@ export function StartBriefing({
   chartType: ChartType;
   available: ChartType[];
   albumName: string;
+  source: RefObject<HTMLElement | null>;
+  requireEnterRelease: boolean;
   onChartType: (type: ChartType) => void;
   onClose: () => void;
   onStart: () => void;
@@ -55,7 +67,8 @@ export function StartBriefing({
     chart.tempoSegments[0]?.bpm;
   const root = useRef<HTMLElement>(null);
   const chargeControl = useRef<HTMLButtonElement>(null);
-  const motion = useBriefingMotion(root, onClose);
+  const motion = useBriefingMotion(root, source, onClose);
+  const enterReleased = useRef(!requireEnterRelease);
   const frame = useRef(0);
   const stopCharge = useRef<(() => void) | null>(null);
   const completion = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +143,7 @@ export function StartBriefing({
     }, START_BRIEFING.completionMs);
   };
   const begin = (source: 'keyboard' | 'pointer', quick = false) => {
-    if (phase.current !== 'idle' || motion.isClosing()) return;
+    if (phase.current !== 'idle' || !motion.isReady()) return;
     clear();
     if (quick) {
       finishCharge();
@@ -160,7 +173,7 @@ export function StartBriefing({
   };
   const selectType = (type: ChartType) => {
     if (
-      motion.isClosing() ||
+      !motion.isReady() ||
       phase.current === 'complete' ||
       !callbacks.current.available.includes(type)
     )
@@ -180,6 +193,12 @@ export function StartBriefing({
       if (event.repeat) return;
       if (event.key === 'Escape' || event.key === 'Backspace') cancel();
       else if (event.key === 'Enter') {
+        if (!motion.isReady()) {
+          enterReleased.current = false;
+          return;
+        }
+        if (!enterReleased.current) return;
+        enterReleased.current = false;
         if (event.target instanceof Element && event.target.closest('.briefing-cancel')) cancel();
         else begin('keyboard', event.shiftKey);
       } else selectType(event.key === 'ArrowLeft' ? 'fitness' : 'dance');
@@ -188,9 +207,11 @@ export function StartBriefing({
       if (event.key !== 'Enter') return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      enterReleased.current = true;
       if (owner.current === 'keyboard') release();
     };
     const blur = () => {
+      enterReleased.current = true;
       if (phase.current === 'complete') {
         clear();
         phase.current = 'idle';
@@ -218,6 +239,7 @@ export function StartBriefing({
   const strength = chart.intensity ? { low: 1, medium: 3, high: 5 }[chart.intensity] : 0;
   return (
     <ModalBackdrop className="start-briefing-backdrop" onClose={cancel}>
+      <div className="briefing-shade" aria-hidden="true" />
       <section
         className="start-briefing"
         role="dialog"

@@ -1,4 +1,8 @@
 /* A moving scene behind the existing 7:2 aperture; the card frame stays still. */
+.collection-art {
+  /* Stage lights blend with this cover only, never with menu backgrounds or captions. */
+  isolation: isolate;
+}
 .album-cover-scene {
   display: block;
   position: absolute;

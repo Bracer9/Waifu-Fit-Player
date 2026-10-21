@@ -1,5 +1,13 @@
 import { useSyncExternalStore } from 'react';
 
+/** Fade a preview's final 700ms on its media clock; leave the beginning unchanged. */
+export function previewFadeOutGain(time: number, range: { start: number; end: number }): number {
+  const duration = Math.min(0.7, (range.end - range.start) / 2);
+  if (duration <= 0) return 0;
+  const remaining = Math.max(0, Math.min(1, (range.end - time) / duration));
+  return remaining * remaining * (3 - 2 * remaining);
+}
+
 export function audioOutputErrorMessage(error: Pick<MediaError, 'message'> | null): string {
   return error && /AUDIO_RENDERER_ERROR\b|audio render error/i.test(error.message)
     ? '音频无法播放：无法使用当前音频输出设备，请检查设备连接及其他程序占用。'

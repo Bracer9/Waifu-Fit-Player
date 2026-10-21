@@ -42,6 +42,61 @@ const fixture = () => ({
 });
 
 describe('ARMS direction, hand and gesture remain independent', () => {
+  it('前伸的左右手与双手可互换 TAP/HOLD/SWAY，保存与复制式属性转换保留动作和时长', () => {
+    for (const hand of ['left', 'right', 'both'] as const)
+      for (const type of ['tap', 'hold', 'sway'] as const) {
+        const forward = changeArmAction(reach, `forward-${hand}`);
+        const note = changeNoteForm(forward, type, 'forward', 5000);
+        const chart = { ...fixture(), notes: [note] };
+        expect(note).toMatchObject({
+          armAction: 'forward',
+          direction: 'forward',
+          hand,
+          id: reach.id,
+          timeMs: reach.timeMs,
+        });
+        if (note.kind === 'hold') expect(note.endTimeMs).toBe(3000);
+        expect(armActionValue(note)).toBe(`forward-${hand}`);
+        expect(noteColor('punch', 'forward', hand, 'forward')).toBe(
+          hand === 'both' ? 'var(--arms-both)' : hand === 'left' ? 'var(--cyan)' : 'var(--pink)',
+        );
+        expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
+        expect(flipNotes(chart, [note.id]).notes[0].hand).toBe(
+          hand === 'both' ? 'both' : hand === 'left' ? 'right' : 'left',
+        );
+        expect(flipNotes(flipNotes(chart, [note.id]), [note.id])).toEqual(chart);
+        expect(setArmHand(chart, [note.id])).toEqual(chart);
+        expect(shiftNoteLanes(chart, [note.id], 'punch', 'step')).toEqual(chart);
+        expect(armDisplayNotes(chart.notes)).toEqual(chart.notes);
+        expect(changeArmAction(note, 'punch-left').hand).toBeUndefined();
+        expect(changeArmAction(note, 'up')).toMatchObject({
+          armAction: 'reach',
+          direction: 'up',
+          hand,
+        });
+      }
+  });
+  it('前伸仅允许 ARMS 的 forward 方向和明确用手，旧拳套保持独立', () => {
+    const forward = changeArmAction(reach, 'forward-left');
+    for (const note of [
+      { ...forward, hand: 'any' },
+      { ...forward, hand: undefined },
+      { ...forward, direction: 'left' },
+      { ...forward, lane: 'step' },
+      { ...forward, armAction: 'reach' },
+      { ...forward, armAction: undefined },
+    ])
+      expect(() => parseChart({ ...fixture(), notes: [note] })).toThrow();
+    expect(noteGlyphShape('punch', 'left').mirror).toBe(true);
+    expect(noteGlyphShape('punch', 'right').mirror).toBe(false);
+    expect(noteGlyphShape('punch', 'forward', 1, 'forward', 'left')).toMatchObject({
+      shape: 'palm',
+      angle: 0,
+      mirror: true,
+    });
+    expect(noteGlyphShape('punch', 'forward', 1, 'forward', 'right').mirror).toBe(false);
+    expect(armActionValue(legacy)).toBe('punch-left');
+  });
   it('authors an outward two-hand preset as ordinary notes with a single compact display', () => {
     for (const type of ['tap', 'hold', 'sway'] as const) {
       const original = changeNoteForm(reach, type, reach.direction, 3000);

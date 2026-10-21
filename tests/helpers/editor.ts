@@ -20,7 +20,8 @@ export const test = base.extend({
   },
 });
 export async function stepChoice(page: Page, target: 'draw' | 'selected', value: string) {
-  const [direction, type] = value.split('-');
+  const [direction, ...parts] = value.split('-');
+  const type = parts.join('-');
   if (direction !== 'free') {
     await page
       .getByRole('button', {
