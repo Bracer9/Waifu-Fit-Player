@@ -194,6 +194,7 @@ export function changeNoteForm(
     lane: note.lane,
     direction,
     timeMs: note.timeMs,
+    ...(follow && note.connectPrevious === false ? { connectPrevious: false } : {}),
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
     ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
     ...(note.lane === 'step' && direction !== 'free' && !follow && note.distance

@@ -75,6 +75,8 @@ export type Note = {
   timeMs: number;
   distance?: StepDistance;
   follow?: true;
+  /** FOLLOW links to the preceding STEP unless explicitly disabled. */
+  connectPrevious?: boolean;
   armAction?: ArmAction;
   hand?: ArmHand;
   foot?: StepFoot;
@@ -396,6 +398,11 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
           note.distance !== undefined)
       )
         errors.push(`${label}：FOLLOW 仅适用于 STEP 左右 TAP 或 SWAY，不设置跨度。`);
+      if (
+        note.connectPrevious !== undefined &&
+        (typeof note.connectPrevious !== 'boolean' || note.follow !== true || note.lane !== 'step')
+      )
+        errors.push(`${label}：连接前一个音符仅适用于 FOLLOW，必须为布尔值。`);
       if (
         note.distance !== undefined &&
         (note.lane !== 'step' ||

@@ -15,6 +15,8 @@ import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
+import { FollowConnection } from '../components/FollowConnection';
+import { followConnections } from '../follow-connections';
 import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
 import { usePlayerRenderPreparation } from '../usePlayerRenderPreparation';
@@ -96,6 +98,7 @@ export function Player({
     }
     return { joinedTails, joinedTaps };
   }, [displayNotes]);
+  const followLinks = useMemo(() => followConnections(displayNotes), [displayNotes]);
   const noteStyle = (note: DisplayNote): React.CSSProperties => {
     return {
       '--lane':
@@ -197,6 +200,23 @@ export function Player({
                 <div className="highway-line" />
                 <div className="highway-grid" />
                 {!showGuide && <div className="judgement-ring" aria-hidden="true" />}
+                {lane.id === 'step' &&
+                  followLinks
+                    .filter(
+                      ({ previous, follow }) =>
+                        follow.timeMs > time && previous.timeMs <= time + previewMs + 300,
+                    )
+                    .map(({ previous, follow }) => (
+                      <FollowConnection
+                        key={follow.id}
+                        previous={previous}
+                        follow={follow}
+                        time={time}
+                        previewMs={previewMs}
+                        width={metrics.width}
+                        size={metrics.marker}
+                      />
+                    ))}
                 {visible.map((note) => {
                   const head = noteX(note.timeMs, time, 88, previewMs);
                   if (note.kind === 'tap')

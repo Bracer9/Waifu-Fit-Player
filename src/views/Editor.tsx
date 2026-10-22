@@ -250,6 +250,7 @@ export function Editor({
   const [drawFoot, setDrawFoot] = useState<StepFoot>('left');
   const [stepDistance, setDrawDistance] = useState<StepDistance>(1);
   const [drawType, setDrawType] = useState<NoteType>('tap');
+  const [drawConnectPrevious, setDrawConnectPrevious] = useState(true);
   const [recording, setRecording] = useState(false),
     [snap, setSnap] = useState<Snap>(2);
   const [tool, setTool] = useState<'select' | 'draw'>('draw');
@@ -328,6 +329,7 @@ export function Editor({
     hand: drawHand,
     onHand: () => setDrawHand((hand) => nextArmHand(hand)),
     foot: drawFoot,
+    connectPrevious: drawConnectPrevious,
     onFoot: () => setDrawFoot((foot) => nextStepFoot(foot, lane === 'step')),
     onLane: pickLane,
     onNote: (note) => onChange({ ...chart, notes: [...chart.notes, note] }),
@@ -726,6 +728,7 @@ export function Editor({
           ...(isFollow ? { follow: true } : {}),
         };
     if (d.lane === 'step' && dir !== 'free' && stepDistance === 2 && !isFollow) note.distance = 2;
+    if (isFollow && !drawConnectPrevious) note.connectPrevious = false;
     if (d.lane === 'step' || d.lane === 'side_crunch') note.foot = drawFoot;
     if (d.lane === 'punch') {
       note.armAction = drawArmAction;
@@ -1262,6 +1265,17 @@ export function Editor({
             </>
           )}
         </select>
+        {lane === 'step' && (recording || drawType === 'follow' || drawType === 'follow-sway') && (
+          <label className="inline-field">
+            <input
+              type="checkbox"
+              aria-label="新建 FOLLOW 连接前一个音符"
+              checked={drawConnectPrevious}
+              onChange={(e) => setDrawConnectPrevious(e.target.checked)}
+            />
+            虚线连接前一个音符
+          </label>
+        )}
         <span className="record-hint">
           {recording
             ? lane === 'step'
@@ -1488,6 +1502,19 @@ export function Editor({
                       )}
                     </select>
                   </label>
+                  {selectedNote && isFollowStep(selectedNote) && (
+                    <label className="inline-field">
+                      <input
+                        type="checkbox"
+                        aria-label="选中 FOLLOW 连接前一个音符"
+                        checked={selectedNote.connectPrevious !== false}
+                        onChange={(e) =>
+                          patchEvent({ connectPrevious: e.target.checked ? undefined : false })
+                        }
+                      />
+                      虚线连接前一个音符
+                    </label>
+                  )}
                   {'endTimeMs' in event && event.endTimeMs !== undefined && (
                     <NumberField
                       label="结束 / ms"

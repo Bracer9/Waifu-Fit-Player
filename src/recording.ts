@@ -35,6 +35,7 @@ type Options = {
   hand: ArmHand;
   onHand: () => void;
   foot: StepFoot;
+  connectPrevious?: boolean;
   onFoot: () => void;
 };
 export function useRecording(options: Options) {
@@ -50,6 +51,7 @@ export function useRecording(options: Options) {
     modifier: 'none' | 'sway';
     distance?: StepDistance;
     follow?: true;
+    connectPrevious?: boolean;
     armAction?: ArmAction;
     hand?: ArmHand;
     foot?: StepFoot;
@@ -173,6 +175,7 @@ export function useRecording(options: Options) {
         videoOffsetMs: o.chart.videoOffsetMs ?? 0,
         modifier: e.ctrlKey || dir === 'free' ? 'sway' : 'none',
         ...(follow ? { follow: true } : {}),
+        ...(follow && o.connectPrevious === false ? { connectPrevious: false } : {}),
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
         ...(armAction ? { armAction } : {}),
         ...(armAction === 'reach' && o.hand !== 'any' ? { hand: o.hand } : {}),
@@ -208,6 +211,7 @@ export function useRecording(options: Options) {
           timeMs: p.timeMs,
           ...(p.distance ? { distance: p.distance } : {}),
           ...(p.follow ? { follow: true } : {}),
+          ...(p.connectPrevious === false ? { connectPrevious: false } : {}),
           ...(p.armAction ? { armAction: p.armAction } : {}),
           ...(p.hand ? { hand: p.hand } : {}),
           ...(p.foot ? { foot: p.foot } : {}),
@@ -235,6 +239,7 @@ export function useRecording(options: Options) {
           modifier: p.modifier,
           endTimeMs,
           ...(p.follow ? { follow: true } : {}),
+          ...(p.connectPrevious === false ? { connectPrevious: false } : {}),
           ...(p.distance ? { distance: p.distance } : {}),
           ...(p.armAction ? { armAction: p.armAction } : {}),
           ...(p.hand ? { hand: p.hand } : {}),

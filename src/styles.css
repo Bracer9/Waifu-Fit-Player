@@ -664,6 +664,22 @@ nav button.active:after {
   stroke: #faffff;
   stroke-width: 7;
 }
+.follow-connection {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 88%;
+  transform: translateY(-50%);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.follow-connection line {
+  stroke: #faffff;
+  stroke-width: 2.5;
+  stroke-dasharray: 8 7;
+  opacity: 0.75;
+}
 .follow-color {
   stroke: var(--lane);
   stroke-width: 5;
