@@ -280,11 +280,10 @@ export function Player({
                       <span className="hold-caption">
                         {showGuide &&
                           ((note.lane === 'squat' && note.modifier === 'none') ||
-                            ((note.lane === 'step' || note.lane === 'punch') &&
+                            note.lane === 'punch' ||
+                            (note.lane === 'step' &&
                               note.modifier === 'sway' &&
-                              (note.lane === 'punch' ||
-                                note.direction === 'left' ||
-                                note.direction === 'right'))) && (
+                              (note.direction === 'left' || note.direction === 'right'))) && (
                             <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
                               {note.lane === 'squat' ? (
                                 <SquatDownCue />

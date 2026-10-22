@@ -217,7 +217,7 @@ export function ShoePrint() {
   );
 }
 
-/** An upright open palm, shared by both punch-sway directions. */
+/** An upright open palm, shared by ARMS hold and sway ribbon cues. */
 export function PalmPrint() {
   return <path className="palm-print" d={PALM_PATH} />;
 }

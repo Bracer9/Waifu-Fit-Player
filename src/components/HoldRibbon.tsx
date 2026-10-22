@@ -72,9 +72,10 @@ export function HoldRibbon({
   const cueSize = note.lane === 'squat' ? size * 0.9 : (size / 1.25) * 0.82;
   const showCue =
     ((note.lane === 'squat' && !sway) ||
-      ((note.lane === 'step' || note.lane === 'punch') &&
+      note.lane === 'punch' ||
+      (note.lane === 'step' &&
         sway &&
-        (note.lane === 'punch' || note.direction === 'left' || note.direction === 'right'))) &&
+        (note.direction === 'left' || note.direction === 'right'))) &&
     cueX > size * 0.75;
   const path = useMemo(
     () =>
