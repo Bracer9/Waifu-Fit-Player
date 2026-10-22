@@ -39,19 +39,55 @@ function SettingsVolume({
   onChange: (value: number) => void;
   Icon: LucideIcon;
 }) {
+  const restoreKey = `waifu-fit-player-${id}-restore-volume`;
+  const [restoreVolume, setRestoreVolume] = useState(() => {
+    if (value > 0) return value;
+    try {
+      const saved = Number(localStorage.getItem(restoreKey));
+      if (saved > 0 && saved <= 1) return saved;
+    } catch {
+      // Use a moderate volume if this channel has never been audible here.
+    }
+    return 0.5;
+  });
+  useEffect(() => {
+    if (value <= 0) return;
+    setRestoreVolume(value);
+    try {
+      localStorage.setItem(restoreKey, String(value));
+    } catch {
+      // The toggle still remembers the volume for this mounted session.
+    }
+  }, [value, restoreKey]);
+  const muted = value === 0;
+  const toggleLabel = muted ? `恢复${label}` : `静音${label}`;
   return (
-    <div className="corner-settings-row">
-      <Icon className="settings-row-icon" size={27} aria-hidden="true" />
+    <div className="corner-settings-row" data-muted={muted ? '' : undefined}>
+      <button
+        type="button"
+        className="settings-row-icon settings-mute"
+        aria-label={toggleLabel}
+        aria-pressed={muted}
+        aria-controls={id}
+        title={muted ? `${toggleLabel}（${Math.round(restoreVolume * 100)}%）` : toggleLabel}
+        onClick={() => onChange(muted ? restoreVolume : 0)}
+      >
+        <Icon size={27} aria-hidden="true" />
+      </button>
       <div className="settings-row-content">
         <div className="settings-row-heading">
           <label htmlFor={id}>{name}</label>
-          <output htmlFor={id}>{Math.round(value * 100)}%</output>
+          <output htmlFor={id} className={muted ? 'settings-muted-label' : undefined}>
+            {muted ? 'MUTED' : `${Math.round(value * 100)}%`}
+          </output>
         </div>
         <input
           id={id}
           className="music-range"
           aria-label={label}
-          aria-description="左右调整，Enter 确认，上下切换设置项。"
+          aria-valuetext={muted ? '静音' : `${Math.round(value * 100)}%`}
+          aria-description="左右调整音量，Enter 静音或恢复，上下切换设置项。"
+          title="左右调整音量 · Enter 静音／恢复"
           type="range"
           min="0"
           max="1"
@@ -171,7 +207,7 @@ export function MenuSettings({
         const target = event.target as HTMLElement;
         const node =
           target.closest<HTMLElement>(
-            '[role="tab"], input[type="range"], [role="radiogroup"]',
+            '[role="tab"], .settings-mute, input[type="range"], [role="radiogroup"]',
           ) ?? target.closest('.corner-settings-row')?.querySelector<HTMLInputElement>('input');
         if (!node) return;
         select(node, false);
@@ -206,10 +242,30 @@ export function MenuSettings({
           return;
         }
         const frameRate = target.matches('[role="radiogroup"]');
+        if (target.matches('.settings-mute')) {
+          if (event.key === 'Enter') {
+            if (!event.repeat) target.click();
+          } else {
+            const input = target.closest('.corner-settings-row')?.querySelector('input');
+            const index = ranges.indexOf(input!);
+            if (event.key === 'ArrowUp') focus(index > 0 ? ranges[index - 1] : activeTab);
+            else if (event.key === 'ArrowDown')
+              focus(ranges[Math.min(ranges.length - 1, index + 1)]);
+            else focus(input);
+          }
+          return;
+        }
         if (!(target instanceof HTMLInputElement) && !frameRate) return;
         if (event.key === 'Enter') {
           if (!event.repeat) {
-            if (!frameRate) target.toggleAttribute('data-adjusting');
+            if (target instanceof HTMLInputElement) {
+              if (target.id === 'menu-note-speed') target.toggleAttribute('data-adjusting');
+              else
+                target
+                  .closest('.corner-settings-row')
+                  ?.querySelector<HTMLButtonElement>('.settings-mute')
+                  ?.click();
+            }
             onSound('settings');
           }
           return;

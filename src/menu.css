@@ -501,6 +501,48 @@
   margin-top: 2px;
   color: #161b23;
 }
+.settings-mute {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  margin: -2px -4px 0;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+.settings-mute:hover,
+.settings-mute[data-settings-highlighted] {
+  border-color: var(--settings-pink);
+  background: #f64e9314;
+}
+.settings-mute:focus-visible {
+  outline: 2px solid var(--settings-pink);
+  outline-offset: 3px;
+}
+.settings-mute[aria-pressed='true'] {
+  color: var(--settings-pink);
+  border-color: #f64e9366;
+  background: #f64e9314;
+}
+.settings-mute[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  width: 29px;
+  height: 2px;
+  background: currentColor;
+  box-shadow: 0 0 0 2px #fffaf5;
+  transform: rotate(-45deg);
+  pointer-events: none;
+}
+.corner-settings-row[data-muted] .settings-muted-label {
+  color: var(--settings-pink);
+  font-size: 15px;
+  letter-spacing: 1px;
+}
 .settings-row-content {
   flex: 1;
   min-width: 0;

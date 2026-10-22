@@ -45,12 +45,17 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await page.keyboard.press('ArrowRight');
   await expect(menuVolume).toHaveValue('0.55');
   await page.keyboard.press('Enter');
-  await expect(menuVolume).not.toHaveAttribute('data-adjusting');
+  await expect(menuVolume).toHaveValue('0');
+  await page.keyboard.press('Enter');
+  await expect(menuVolume).toHaveValue('0.55');
   await page.keyboard.press('ArrowDown');
   await focused(videoVolume);
   await page.keyboard.press('ArrowLeft');
   await expect(videoVolume).toHaveValue('0.65');
   await page.keyboard.press('Enter');
+  await expect(videoVolume).toHaveValue('0');
+  await page.keyboard.press('Enter');
+  await expect(videoVolume).toHaveValue('0.65');
   await page.keyboard.press('ArrowDown');
   await focused(seVolume);
   await page.keyboard.press('ArrowLeft');
@@ -138,6 +143,9 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
     await page.keyboard.press('ArrowLeft');
     await expect(menuVolume).toHaveValue(String(Math.round((before - 0.05) * 100) / 100));
     await page.keyboard.press('Enter');
+    await expect(menuVolume).toHaveValue('0');
+    await page.keyboard.press('Enter');
+    await expect(menuVolume).toHaveValue(String(Math.round((before - 0.05) * 100) / 100));
     await page.keyboard.press('ArrowUp');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowDown');
