@@ -314,6 +314,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [afterShow, setAfterShow] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [afterShowRewardReady, setAfterShowRewardReady] = useState(false);
+  const [afterShowPhotoStarted, setAfterShowPhotoStarted] = useState(false);
+  const afterShowSummaryReady = afterShow && afterShowRewardReady;
   const [resultMusicReady, setResultMusicReady] = useState(false);
   useEffect(() => {
     if (mode !== 'player') {
@@ -328,6 +330,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         setGamePauseOpen(false);
         setReadyPhase(null);
         setAfterShowRewardReady(false);
+        setAfterShowPhotoStarted(false);
         setFinishing(true);
       }),
     [media, mode, startPending, gamePauseOpen, preparation.pending],
@@ -1284,11 +1287,23 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           data-render-preparing={renderPreparing ? '' : undefined}
           data-paused={mode === 'player' && gamePauseOpen ? '' : undefined}
           data-finished={mode === 'player' && afterShow ? '' : undefined}
+          data-after-show={
+            mode === 'player' && afterShow
+              ? afterShowSummaryReady
+                ? 'summary'
+                : afterShowPhotoStarted
+                  ? 'photo'
+                  : 'waiting'
+              : undefined
+          }
           style={{ ...readyCountdownStyle, ...afterShowLightingStyle }}
         >
-          {mode === 'player' && <PracticeBackdrop finished={afterShow} />}
-          {mode === 'player' && (readyPhase !== null || gamePauseOpen || afterShow) && (
-            <PracticeStartupLighting key={afterShow ? 'finish' : 'startup'} finishing={afterShow} />
+          {mode === 'player' && <PracticeBackdrop finished={afterShowSummaryReady} />}
+          {mode === 'player' && (readyPhase !== null || gamePauseOpen || afterShowSummaryReady) && (
+            <PracticeStartupLighting
+              key={afterShowSummaryReady ? 'finish' : 'startup'}
+              finishing={afterShowSummaryReady}
+            />
           )}
           <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
@@ -1398,7 +1413,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   />
                 )}
               </div>
-              {mode === 'player' && afterShow && (
+              {mode === 'player' && afterShowSummaryReady && (
                 <AfterShow
                   chart={gameChart}
                   durationMs={status.durationMs}
@@ -1466,6 +1481,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       media={media}
                       trackNumber={finishedTrackNumber}
                       onSound={playMenuSound}
+                      onCapture={() => setAfterShowPhotoStarted(true)}
                       onReady={() => setAfterShowRewardReady(true)}
                     />
                   )}

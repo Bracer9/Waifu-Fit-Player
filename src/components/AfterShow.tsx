@@ -19,24 +19,27 @@ function AfterShowMetrics({ summary }: { summary: ReturnType<typeof afterShowSum
   useEffect(() => {
     setElapsed(null);
     let frame = 0;
-    const timer = window.setTimeout(() => {
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        setElapsed(AFTER_SHOW_FINISH.metricsCountMs);
-        return;
-      }
-      const start = performance.now();
-      let last = -Infinity;
-      setElapsed(0);
-      const tick = (now: number) => {
-        const time = Math.min(AFTER_SHOW_FINISH.metricsCountMs, now - start);
-        if (time === AFTER_SHOW_FINISH.metricsCountMs || now - last >= 1000 / 30) {
-          setElapsed(time);
-          last = now;
+    const timer = window.setTimeout(
+      () => {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          setElapsed(AFTER_SHOW_FINISH.metricsCountMs);
+          return;
         }
-        if (time < AFTER_SHOW_FINISH.metricsCountMs) frame = requestAnimationFrame(tick);
-      };
-      frame = requestAnimationFrame(tick);
-    }, AFTER_SHOW_FINISH.metricsDelayMs);
+        const start = performance.now();
+        let last = -Infinity;
+        setElapsed(0);
+        const tick = (now: number) => {
+          const time = Math.min(AFTER_SHOW_FINISH.metricsCountMs, now - start);
+          if (time === AFTER_SHOW_FINISH.metricsCountMs || now - last >= 1000 / 30) {
+            setElapsed(time);
+            last = now;
+          }
+          if (time < AFTER_SHOW_FINISH.metricsCountMs) frame = requestAnimationFrame(tick);
+        };
+        frame = requestAnimationFrame(tick);
+      },
+      matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : AFTER_SHOW_FINISH.metricsDelayMs,
+    );
     return () => {
       window.clearTimeout(timer);
       cancelAnimationFrame(frame);

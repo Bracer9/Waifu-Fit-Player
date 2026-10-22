@@ -5,10 +5,12 @@ import { createCalorieIndex } from './calories';
 import { chartTimeAt, segmentAt } from './timing';
 import type { MenuSoundPlayer } from './useMenuSounds';
 import type { CSSProperties } from 'react';
+import { AFTER_SHOW_SNAP } from './after-show-snap';
 
 export const AFTER_SHOW_FINISH = {
   tailMs: 300,
-  metricsDelayMs: 450,
+  lightReturnMs: 2250,
+  metricsDelayMs: 850,
   metricsCountMs: 1800,
   bgmDelayMs: 700,
   confettiMs: 2300,
@@ -16,7 +18,8 @@ export const AFTER_SHOW_FINISH = {
 } as const;
 
 export const afterShowLightingStyle = {
-  '--after-light-duration': `${AFTER_SHOW_FINISH.metricsDelayMs + AFTER_SHOW_FINISH.metricsCountMs}ms`,
+  '--after-light-duration': `${AFTER_SHOW_FINISH.lightReturnMs}ms`,
+  '--after-tracks-fade-ms': `${AFTER_SHOW_SNAP.flashMs + AFTER_SHOW_SNAP.revealMs}ms`,
 } as CSSProperties;
 
 /** Finish the last visual burst after the media clock stops, then enter After Show. */

@@ -35,7 +35,7 @@ async function setup(page: Page, range: boolean, withNext = false) {
     await putSongs(page, [
       { ...song, released: { dance: edition } },
       {
-        id: 'after-show-next',
+        id: 'b6b7c8d9-1234-4234-8234-0123456789ab',
         drafts: {},
         released: {
           fitness: {
@@ -43,7 +43,7 @@ async function setup(page: Page, range: boolean, withNext = false) {
             updatedAt: 10,
             chart: {
               ...edition.chart,
-              songId: 'after-show-next',
+              songId: 'b6b7c8d9-1234-4234-8234-0123456789ab',
               chartType: 'fitness',
               title: 'After Show / next',
             },
@@ -58,6 +58,12 @@ async function setup(page: Page, range: boolean, withNext = false) {
     await expect(page.getByRole('button', { name: '试玩谱面', exact: true })).toBeEnabled();
   }
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  await expect(page.locator('.practice')).toBeVisible();
+  if (
+    (await page.locator('video').evaluate((video: HTMLVideoElement) => video.paused)) &&
+    !(await page.locator('.ready-countdown').count())
+  )
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect
     .poll(() => page.locator('video').evaluate((video: HTMLVideoElement) => video.paused))
     .toBe(false);
@@ -70,6 +76,35 @@ async function finish(page: Page, end: number) {
   await expect(page.locator('.after-show')).toBeVisible();
   await expect(page.locator('video')).toHaveJSProperty('paused', true);
 }
+
+test('photo settles before room lighting, results entry and metric counting begin', async ({
+  page,
+}) => {
+  await setup(page, true);
+  await expect(page.locator('.studio-startup-lighting')).toHaveCount(0);
+  await page.locator('video').evaluate((video: HTMLVideoElement) => {
+    video.currentTime = 3.7;
+  });
+  const snap = page.locator('.after-show-snap');
+  await expect(snap).toHaveAttribute('data-phase', 'photo');
+  await expect(snap).not.toHaveAttribute('data-settled');
+  await expect(page.locator('.practice')).toHaveAttribute('data-after-show', 'photo');
+  await expect(page.locator('.after-show')).toHaveCount(0);
+  await expect(page.locator('.studio-finish-lighting')).toHaveCount(0);
+  await expect(page.locator('.studio-afterglow')).toHaveCount(0);
+  const fade = await page.locator('.practice-performance .player-lanes').evaluate((node) => ({
+    opacity: Number(getComputedStyle(node).opacity),
+    animation: getComputedStyle(node).animationName,
+  }));
+  expect(fade.opacity).toBeGreaterThan(0);
+  expect(fade.animation).toBe('after-show-tracks-out');
+  await expect(snap).toHaveAttribute('data-settled', 'true');
+  await expect(page.locator('.practice')).toHaveAttribute('data-after-show', 'summary');
+  await expect(page.locator('.studio-finish-lighting')).toHaveCount(1);
+  await expect(page.locator('.studio-afterglow')).toHaveCount(1);
+  await expect(page.locator('.after-show-metrics dd').first()).toHaveText('\u00a0');
+  await expect(page.locator('.after-show-metrics dd').first()).toHaveText('00:03');
+});
 
 test('range end keeps the same stage frame, hides controls and supports encore plus keyboard return', async ({
   page,
@@ -189,7 +224,10 @@ test('full video naturally ends and Next Track uses the next available edition a
   await setup(page, false, true);
   await finish(page, 60);
   await expect(page.locator('.after-show-metrics dd').first()).toHaveText('01:00');
-  await page.getByRole('button', { name: /NEXT TRACK/ }).click();
+  // The button intentionally pulses with the BGM; click its centre without
+  // waiting for Playwright's stable-box condition to stop that motion.
+  const next = (await page.getByRole('button', { name: /NEXT TRACK/ }).boundingBox())!;
+  await page.mouse.click(next.x + next.width / 2, next.y + next.height / 2);
   await expect(page.locator('.practice-track-info h1')).toHaveText('After Show / next');
   await expect(page.locator('.practice-chart-type')).toContainText('FITNESS');
   await expect(page.locator('.ready-countdown')).toBeVisible();

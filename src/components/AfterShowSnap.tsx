@@ -8,11 +8,13 @@ export function AfterShowSnap({
   media,
   trackNumber,
   onSound,
+  onCapture,
   onReady,
 }: {
   media: MediaController;
   trackNumber?: number;
   onSound: MenuSoundPlayer;
+  onCapture: () => void;
   onReady: () => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -21,21 +23,38 @@ export function AfterShowSnap({
   sound.current = onSound;
   const ready = useRef(onReady);
   ready.current = onReady;
+  const started = useRef(onCapture);
+  started.current = onCapture;
   const [phase, setPhase] = useState<'waiting' | 'flash' | 'photo'>('waiting');
   const [layout, setLayout] = useState<ReturnType<typeof afterShowSnapLayout>>();
   const [capturedAt, setCapturedAt] = useState<Date>();
+  const [settled, setSettled] = useState(false);
   useEffect(() => {
     const video = media.element;
     const node = root.current!;
     const image = canvas.current!;
-    if (!video) {
+    let released = false;
+    let disposed = false;
+    let readyTimer = 0;
+    const complete = () => {
+      if (disposed || released) return;
+      released = true;
+      window.clearTimeout(readyTimer);
+      setSettled(true);
       ready.current();
+    };
+    if (!video) {
+      complete();
       return;
     }
     let captured = false;
     let revealTimer = 0;
-    let readyTimer = 0;
     let stopSound: ReturnType<MenuSoundPlayer>;
+    const card = node.querySelector<HTMLElement>('.after-show-snap-card')!;
+    const onSettled = (event: AnimationEvent) => {
+      if (event.target === card && event.animationName === 'after-show-snap-reveal') complete();
+    };
+    card.addEventListener('animationend', onSettled);
     const resize = () => {
       if (!captured || !node.clientWidth || !node.clientHeight) return;
       setLayout(
@@ -59,16 +78,29 @@ export function AfterShowSnap({
       window.clearTimeout(deadline);
       resize();
       setCapturedAt(new Date());
+      started.current();
       stopSound = sound.current('shutter');
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setPhase('photo');
-        ready.current();
+        complete();
       } else {
         setPhase('flash');
         revealTimer = window.setTimeout(() => setPhase('photo'), AFTER_SHOW_SNAP.flashMs);
         readyTimer = window.setTimeout(
-          () => ready.current(),
-          AFTER_SHOW_SNAP.flashMs + AFTER_SHOW_SNAP.revealMs,
+          () => {
+            const animation = card
+              .getAnimations()
+              .find(
+                (candidate) =>
+                  (candidate as CSSAnimation).animationName === 'after-show-snap-reveal',
+              );
+            if (animation && animation.playState !== 'finished' && animation.playState !== 'idle')
+              void animation.finished.then(complete, complete);
+            else complete();
+          },
+          // Animationend is authoritative; this only prevents a missing event
+          // from stranding the finish screen (e.g. custom animation overrides).
+          AFTER_SHOW_SNAP.flashMs + AFTER_SHOW_SNAP.revealMs + 250,
         );
       }
     };
@@ -81,15 +113,17 @@ export function AfterShowSnap({
     // Failure leaves the original paused video completely intact, with no empty paper or flash.
     const deadline = window.setTimeout(() => {
       detach();
-      ready.current();
+      complete();
     }, AFTER_SHOW_SNAP.frameWaitMs);
     const observer = new ResizeObserver(resize);
     observer.observe(node);
     return () => {
+      disposed = true;
       window.clearTimeout(timer);
       window.clearTimeout(deadline);
       window.clearTimeout(revealTimer);
       window.clearTimeout(readyTimer);
+      card.removeEventListener('animationend', onSettled);
       observer.disconnect();
       detach();
       if (typeof stopSound === 'function') stopSound();
@@ -122,6 +156,7 @@ export function AfterShowSnap({
       className="after-show-snap"
       ref={root}
       data-phase={phase}
+      data-settled={settled || undefined}
       style={style}
       aria-hidden={phase !== 'photo'}
     >

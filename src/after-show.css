@@ -1,9 +1,11 @@
 .practice-performance {
   display: contents;
 }
-.practice[data-finished] .practice-performance > :is(.practice-heading, .player-lanes) {
+.practice:is([data-after-show='photo'], [data-after-show='summary'])
+  .practice-performance
+  > :is(.practice-heading, .player-lanes) {
   pointer-events: none;
-  animation: after-show-tracks-out 160ms ease-out both;
+  animation: after-show-tracks-out var(--after-tracks-fade-ms) ease-in-out both;
 }
 .after-show {
   position: absolute;
@@ -266,7 +268,7 @@
   animation: after-show-light-breathe 5400ms var(--after-light-duration) ease-in-out infinite
     backwards;
 }
-.practice[data-finished] .stage-skirt {
+.practice[data-after-show='summary'] .stage-skirt {
   animation: after-show-neon-breathe 5400ms var(--after-light-duration) ease-in-out infinite
     backwards;
 }
@@ -411,7 +413,7 @@
     transition: none;
   }
   .studio-afterglow,
-  .practice[data-finished] .stage-skirt {
+  .practice[data-after-show='summary'] .stage-skirt {
     animation: none;
   }
   .after-show-celebration {
@@ -420,7 +422,9 @@
   .after-show {
     animation: none;
   }
-  .practice[data-finished] .practice-performance > :is(.practice-heading, .player-lanes) {
+  .practice:is([data-after-show='photo'], [data-after-show='summary'])
+    .practice-performance
+    > :is(.practice-heading, .player-lanes) {
     animation: none;
     opacity: 0;
   }
