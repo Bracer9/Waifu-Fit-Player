@@ -70,6 +70,11 @@ import {
   PracticeStartupLighting,
 } from './components/PracticeArtwork';
 import { PracticePause } from './components/PracticePause';
+import { AfterShow } from './components/AfterShow';
+import { AfterShowCelebration } from './components/AfterShowCelebration';
+import { AfterShowSnap } from './components/AfterShowSnap';
+import { afterShowTrackNumber } from './after-show-snap';
+import { afterShowLightingStyle, beginAfterShowAudio, nextAfterShowTrack } from './after-show';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
 import { GameEntrance } from './components/GameEntrance';
@@ -306,6 +311,35 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const [countdownOrigin, setCountdownOrigin] = useState<'start' | 'resume'>('start');
   const startPending = readyPhase === 'waiting' || readyPhase === 'counting';
   const [gamePauseOpen, setGamePauseOpen] = useState(false);
+  const [afterShow, setAfterShow] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const [afterShowRewardReady, setAfterShowRewardReady] = useState(false);
+  const [resultMusicReady, setResultMusicReady] = useState(false);
+  useEffect(() => {
+    if (mode !== 'player') {
+      setAfterShow(false);
+      setFinishing(false);
+    }
+  }, [mode]);
+  useEffect(
+    () =>
+      media.subscribeEnded(() => {
+        if (mode !== 'player' || startPending || gamePauseOpen || preparation.pending) return;
+        setGamePauseOpen(false);
+        setReadyPhase(null);
+        setAfterShowRewardReady(false);
+        setFinishing(true);
+      }),
+    [media, mode, startPending, gamePauseOpen, preparation.pending],
+  );
+  const nextTrack = useMemo(
+    () => nextAfterShowTrack(library.songs, albumId, chart.songId, chart.chartType ?? 'dance'),
+    [library.songs, albumId, chart.songId, chart.chartType],
+  );
+  const finishedTrackNumber = useMemo(
+    () => afterShowTrackNumber(library.songs, albumId, chart.songId),
+    [library.songs, albumId, chart.songId],
+  );
   useLayoutEffect(() => {
     if (mode !== 'player' || gamePauseOpen) setReadyPhase(null);
   }, [mode, gamePauseOpen]);
@@ -327,11 +361,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     [],
   );
   const menuMusic = useMenuMusic(
-    mode === 'songs' || (mode === 'albums' && albumPlayerOpen)
-      ? 'preview'
-      : mode === 'home' || mode === 'albums'
-        ? 'theme'
-        : null,
+    mode === 'player' && afterShow && !menuTransition
+      ? 'result'
+      : mode === 'songs' || (mode === 'albums' && albumPlayerOpen)
+        ? 'preview'
+        : mode === 'home' || mode === 'albums'
+          ? 'theme'
+          : null,
     previewAsset,
     notify,
     status.volume,
@@ -340,8 +376,20 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     seVolume,
     shuffleAlbumPreview,
     previewFromStart,
+    resultMusicReady,
   );
   const playMenuSound = useMenuSounds(seVolume);
+  const celebrationSound = useRef(playMenuSound);
+  celebrationSound.current = playMenuSound;
+  useEffect(() => {
+    setResultMusicReady(false);
+    if (mode !== 'player' || !afterShow) {
+      setAfterShowRewardReady(false);
+      return;
+    }
+    if (!afterShowRewardReady) return;
+    return beginAfterShowAudio(celebrationSound.current, () => setResultMusicReady(true));
+  }, [mode, afterShow, afterShowRewardReady]);
   const openSettings = () => {
     setAlbumPlayerOpen(false);
     playMenuSound('settings');
@@ -523,6 +571,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     }
     deletedSongs.current.delete(paired.songId!);
     setDraftMeta(meta);
+    setFinishing(false);
+    setAfterShow(false);
     setPlayOrigin(context?.play ? 'library' : 'editor');
     setCountdownOrigin('start');
     setReadyPhase(context?.play ? 'waiting' : null);
@@ -669,13 +719,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     }
   };
   const pauseGame = () => {
-    if (startPending || preparation.pending || !status.ready) return;
+    if (afterShow || finishing || startPending || preparation.pending || !status.ready) return;
     playMenuSound('settings');
     media.pause();
     setGamePauseOpen(true);
   };
   const resumeGame = (sound: 'mode' | 'song' = 'mode') => {
-    if (!status.ready || status.preparing || startPending) return;
+    if (afterShow || finishing || !status.ready || status.preparing || startPending) return;
     if (!media.element?.paused) {
       setGamePauseOpen(false);
       return;
@@ -688,6 +738,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     preparation.retry();
   };
   const toggleGamePlayback = () => {
+    if (afterShow || finishing) return;
     if (gamePauseOpen || media.element?.paused) resumeGame();
     else pauseGame();
   };
@@ -696,6 +747,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     playMenuSound('song');
     media.pause();
     media.seek(playStart ?? 0);
+    setFinishing(false);
+    setAfterShow(false);
     setGamePauseOpen(false);
     setCountdownOrigin('start');
     setReadyPhase('waiting');
@@ -705,6 +758,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const backToSelect = () => {
     playMenuSound('back');
     media.pause();
+    setFinishing(false);
+    setAfterShow(false);
     setGamePauseOpen(false);
     setReadyPhase(null);
     setSelectedSong(chart.songId ?? selectedSong);
@@ -733,6 +788,11 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         return;
       }
       if (isTyping(e.target)) return;
+      if (mode === 'player' && finishing) {
+        e.preventDefault();
+        return;
+      }
+      if (mode === 'player' && afterShow) return;
       if (mode === 'player' && (e.key === 'Escape' || e.key === 'Backspace')) {
         e.preventDefault();
         if (!e.repeat) gamePauseOpen ? resumeGame() : pauseGame();
@@ -1008,6 +1068,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       data-album-tuning={albumTuning === 'reveal' || undefined}
       {...(menuPage ? menuHighlight.handlers : {})}
     >
+      {mode === 'player' &&
+        afterShow &&
+        afterShowRewardReady &&
+        createPortal(<AfterShowCelebration />, menuPortalRoot())}
       <div className="ambient-shape pink">
         <AlbumHousing open={mode === 'albums' && albumPlayerOpen} />
       </div>
@@ -1219,11 +1283,12 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           data-ready={mode === 'player' && !renderPreparing ? (readyPhase ?? undefined) : undefined}
           data-render-preparing={renderPreparing ? '' : undefined}
           data-paused={mode === 'player' && gamePauseOpen ? '' : undefined}
-          style={readyCountdownStyle}
+          data-finished={mode === 'player' && afterShow ? '' : undefined}
+          style={{ ...readyCountdownStyle, ...afterShowLightingStyle }}
         >
-          {mode === 'player' && <PracticeBackdrop />}
-          {mode === 'player' && (readyPhase !== null || gamePauseOpen) && (
-            <PracticeStartupLighting />
+          {mode === 'player' && <PracticeBackdrop finished={afterShow} />}
+          {mode === 'player' && (readyPhase !== null || gamePauseOpen || afterShow) && (
+            <PracticeStartupLighting key={afterShow ? 'finish' : 'startup'} finishing={afterShow} />
           )}
           <div className="album-spine" hidden={mode === 'player'}>
             <span>WFP / PERSONAL RHYTHM COLLECTION</span>
@@ -1301,16 +1366,60 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           <div className="stage-grid">
             <div className="stage-left">
               {mode === 'player' && <span className="stage-skirt" aria-hidden="true" />}
-              {mode === 'player' && <PracticeCover chart={gameChart} media={media} />}
-              {(mode === 'editor' || mode === 'player') && (
-                <Player
-                  chart={mode === 'player' ? gameChart : chart}
-                  media={media}
-                  showGuide={mode === 'editor'}
-                  noteSpeed={noteSpeed}
-                  prepareEffects={renderPreparing}
-                  onEffectsReady={finishRenderPreparation}
-                  onPreparationProgress={setRenderProgress}
+              <div
+                className="practice-performance"
+                aria-hidden={afterShow || undefined}
+                inert={afterShow}
+              >
+                {mode === 'player' && <PracticeCover chart={gameChart} media={media} />}
+                {(mode === 'editor' || mode === 'player') && (
+                  <Player
+                    chart={mode === 'player' ? gameChart : chart}
+                    media={media}
+                    showGuide={mode === 'editor'}
+                    noteSpeed={noteSpeed}
+                    prepareEffects={renderPreparing}
+                    onEffectsReady={finishRenderPreparation}
+                    onPreparationProgress={setRenderProgress}
+                    finishPhase={
+                      mode === 'player'
+                        ? finishing
+                          ? 'tail'
+                          : afterShow
+                            ? 'finished'
+                            : undefined
+                        : undefined
+                    }
+                    onFinishTailComplete={() => {
+                      if (mode !== 'player') return;
+                      setFinishing(false);
+                      setAfterShow(true);
+                    }}
+                  />
+                )}
+              </div>
+              {mode === 'player' && afterShow && (
+                <AfterShow
+                  chart={gameChart}
+                  durationMs={status.durationMs}
+                  music={menuMusic}
+                  hasNext={!!nextTrack}
+                  disabled={
+                    !!busy ||
+                    !!binding ||
+                    !!menuTransition ||
+                    preparation.pending ||
+                    help ||
+                    settings
+                  }
+                  onEncore={restartGame}
+                  onNext={async () => {
+                    if (!nextTrack) return;
+                    playMenuSound('song');
+                    await playSong(nextTrack.song, nextTrack.chartType);
+                  }}
+                  onBack={backToSelect}
+                  onSound={playMenuSound}
                 />
               )}
               {mode === 'player' && gamePauseOpen && (
@@ -1325,9 +1434,12 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   cover={draftMeta.cover}
                   media={media}
                   paused={gamePauseOpen}
+                  finished={afterShow}
                   pauseTrigger={gamePauseTrigger}
                   onPause={() => (gamePauseOpen ? resumeGame() : pauseGame())}
-                  disabled={startPending || preparation.pending || !status.ready}
+                  disabled={
+                    afterShow || finishing || startPending || preparation.pending || !status.ready
+                  }
                 />
               )}
               <section className="video-panel" aria-label="Video">
@@ -1348,6 +1460,15 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                       mode === 'player' ? toggleGamePlayback() : media.toggle().catch(() => {})
                     }
                   />
+                  {mode === 'player' && afterShow && (
+                    <AfterShowSnap
+                      key={source}
+                      media={media}
+                      trackNumber={finishedTrackNumber}
+                      onSound={playMenuSound}
+                      onReady={() => setAfterShowRewardReady(true)}
+                    />
+                  )}
                   {!source && (
                     <div className="video-placeholder">
                       <div className="placeholder-icon">
@@ -1420,14 +1541,17 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   </span>
                   <span>VIDEO + MUSIC</span>
                 </div>
-                {mode === 'player' && (
+                {mode === 'player' && afterShow && (
+                  <div className="after-show-transport" aria-hidden="true" />
+                )}
+                {mode === 'player' && !afterShow && (
                   <Transport
                     media={media}
                     notify={notify}
                     playRange={chart.playRange}
                     onToggle={toggleGamePlayback}
                     onRestart={restartGame}
-                    disabled={startPending}
+                    disabled={startPending || finishing}
                   />
                 )}
               </section>

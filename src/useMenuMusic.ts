@@ -4,6 +4,7 @@ import { audioOutputErrorMessage, previewFadeOutGain } from './media';
 import type { PlayRange } from './model';
 import { loadMenuBgm } from './menu-bgm-source';
 import { createAlbumPreviewAudio } from './album-preview-audio';
+import resultBgm from './assets/result-bgm/Sparkling Game Loop.m4a';
 
 const files = import.meta.glob<string>('./assets/menu-bgm/*.{mp3,ogg,wav,m4a,MP3,OGG,WAV,M4A}', {
   eager: true,
@@ -17,7 +18,7 @@ export const themeTracks = Object.entries(files)
     return { id, title: id.replace(/\.[^.]+$/, ''), url };
   });
 export type MusicOrder = 'list' | 'random' | 'repeat';
-type Scene = 'theme' | 'preview' | null;
+type Scene = 'theme' | 'preview' | 'result' | null;
 const FADE_OUT_MS = 500;
 const FADE_IN_MS = 700;
 function preference(key: string, fallback: string) {
@@ -45,6 +46,7 @@ export function useMenuMusic(
   seVolume = 0.5,
   onPreviewEnd?: () => boolean,
   previewFromStart = false,
+  resultPlaybackReady = true,
 ) {
   // Keep theme and preview independent. Only one element plays at a time.
   const [bgm] = useState(() => new Audio());
@@ -91,6 +93,10 @@ export function useMenuMusic(
     album: ReturnType<typeof createAlbumPreviewAudio>;
   } | null>(null);
   const active = useRef<HTMLAudioElement | null>(null);
+  const musicScene = useRef(scene);
+  musicScene.current = scene;
+  const resultReady = useRef(resultPlaybackReady);
+  resultReady.current = resultPlaybackReady;
   const albumState = useRef({ albumPreview, seVolume });
   albumState.current = { albumPreview, seVolume };
   const previewEndAction = useRef(onPreviewEnd);
@@ -143,7 +149,7 @@ export function useMenuMusic(
   const fadeIn = useRef(false);
   const fading = useRef<{ frame: number; finish: (done: boolean) => void } | null>(null);
   const track = themeTracks.find((t) => t.id === selected) ?? themeTracks[0];
-  const themeUrl = scene === 'theme' ? track?.url : undefined;
+  const themeUrl = scene === 'result' ? resultBgm : scene === 'theme' ? track?.url : undefined;
   const assetId = scene === 'preview' ? previewAsset : undefined;
   const previewStart = scene === 'preview' ? (previewRange?.startMs ?? 0) / 1000 : 0;
   const previewEnd = scene === 'preview' && previewRange ? previewRange.endMs / 1000 : undefined;
@@ -206,7 +212,8 @@ export function useMenuMusic(
     const audio = active.current;
     if (
       !audio?.getAttribute('src') ||
-      (audio === bgm && manuallyPaused.current) ||
+      (audio === bgm && musicScene.current === 'result' && !resultReady.current) ||
+      (audio === bgm && musicScene.current !== 'result' && manuallyPaused.current) ||
       (audio === preview && previewPaused.current)
     )
       return;
@@ -218,10 +225,16 @@ export function useMenuMusic(
       });
   }, [bgm, preview]);
 
+  // Result audio loads during the finish accent; the cue only starts playback,
+  // without changing the source or creating another audio element.
+  useEffect(() => {
+    if (scene === 'result' && resultPlaybackReady) play();
+  }, [scene, resultPlaybackReady, play]);
+
   useEffect(() => {
     const unlock = () => {
       if (
-        (active.current === bgm && manuallyPaused.current) ||
+        (active.current === bgm && musicScene.current !== 'result' && manuallyPaused.current) ||
         (active.current === preview && previewPaused.current)
       )
         return;
@@ -274,7 +287,7 @@ export function useMenuMusic(
     const startFade = (event: Event) => {
       if (event.target === active.current && fadeIn.current) {
         fadeIn.current = false;
-        void fade(1, FADE_IN_MS);
+        void fade(1, event.target === bgm && musicScene.current === 'result' ? 250 : FADE_IN_MS);
       }
       update();
     };
@@ -335,6 +348,7 @@ export function useMenuMusic(
             return;
           }
         }
+        if (scene === 'result') bgm.currentTime = 0;
       } else if (assetId) {
         // The fade also lets fast carousel scrolling settle before reading a video.
         const result = await resolveVideo(assetId).catch(() => null);
@@ -453,7 +467,7 @@ export function useMenuMusic(
   }, [preview, play, applyVolume]);
 
   useEffect(() => {
-    bgm.loop = order === 'repeat' || themeTracks.length < 2;
+    bgm.loop = scene === 'result' || order === 'repeat' || themeTracks.length < 2;
     const next = () => {
       if (scene !== 'theme' || !track) return;
       const index = themeTracks.indexOf(track);

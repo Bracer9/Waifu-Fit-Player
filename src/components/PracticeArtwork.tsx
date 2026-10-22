@@ -8,21 +8,34 @@ import { chartTimeAt } from '../timing';
 import { CoverArt } from './CoverArt';
 import { ratingValue } from '../chart-types';
 
-export function PracticeStartupLighting() {
+export function PracticeStartupLighting({ finishing = false }: { finishing?: boolean }) {
+  const [complete, setComplete] = useState(false);
+  if (finishing && complete) return null;
   return (
-    <div className="studio-startup-lighting" aria-hidden="true">
+    <div
+      className={`studio-startup-lighting${finishing ? ' studio-finish-lighting' : ''}`}
+      aria-hidden="true"
+      onAnimationEnd={
+        finishing
+          ? (event) => {
+              if (event.animationName === 'after-show-room-transition') setComplete(true);
+            }
+          : undefined
+      }
+    >
       <span className="ready-room-shade" />
       <span className="ready-lamp-cap" />
       <span className="ready-light-wash" />
-      <span className="ready-room-focus" />
+      {!finishing && <span className="ready-room-focus" />}
     </div>
   );
 }
 
-export function PracticeBackdrop() {
+export function PracticeBackdrop({ finished = false }: { finished?: boolean }) {
   return (
     <div className="practice-backdrop" aria-hidden="true">
       <img className="studio-scene" src="/art/studio-scene-v5.png" alt="" />
+      {finished && <span className="studio-afterglow" />}
       <div className="studio-floor-print">
         <svg className="studio-floor-mark" viewBox="478 800 716 150" preserveAspectRatio="none">
           <g
@@ -97,6 +110,7 @@ export function PracticeMasthead({
   cover,
   media,
   paused,
+  finished = false,
   onPause,
   pauseTrigger,
   disabled,
@@ -105,6 +119,7 @@ export function PracticeMasthead({
   cover: string;
   media: MediaController;
   paused: boolean;
+  finished?: boolean;
   onPause: () => void;
   pauseTrigger: RefObject<HTMLButtonElement | null>;
   disabled: boolean;
@@ -116,7 +131,7 @@ export function PracticeMasthead({
       <div className="practice-song-cover">
         <CoverArt src={cover} eager />
       </div>
-      <span className="track-status">NOW PLAYING</span>
+      <span className="track-status">{finished ? 'AFTER SHOW' : 'NOW PLAYING'}</span>
       <div className="practice-track-info">
         <h1 title={chart.title}>{chart.title}</h1>
       </div>

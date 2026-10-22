@@ -9,8 +9,23 @@ import charged from './assets/menu-sfx/charged.wav';
 import release from './assets/menu-sfx/release.wav';
 import liquid from './assets/menu-sfx/liquid.wav';
 import insert from './assets/menu-sfx/insert.wav';
+import celebrate from './assets/menu-sfx/celebrate.wav';
+import shutter from './assets/menu-sfx/shutter.wav';
 
-const sources = { mode, album, song, settings, back, charge, charged, release, liquid, insert };
+const sources = {
+  mode,
+  album,
+  song,
+  settings,
+  back,
+  charge,
+  charged,
+  release,
+  liquid,
+  insert,
+  celebrate,
+  shutter,
+};
 type MenuSound = keyof typeof sources;
 export type MenuSoundPlayer = (name: MenuSound) => void | (() => void);
 
@@ -27,11 +42,18 @@ export function useMenuSounds(volume: number) {
         }),
       ) as Record<MenuSound, HTMLAudioElement>,
   );
-  const current = useRef<{ ui: HTMLAudioElement | null; liquid: HTMLAudioElement | null }>({
+  const current = useRef<{
+    ui: HTMLAudioElement | null;
+    liquid: HTMLAudioElement | null;
+    celebration: HTMLAudioElement | null;
+    shutter: HTMLAudioElement | null;
+  }>({
     ui: null,
     liquid: null,
+    celebration: null,
+    shutter: null,
   });
-  const playback = useRef({ ui: 0, liquid: 0 });
+  const playback = useRef({ ui: 0, liquid: 0, celebration: 0, shutter: 0 });
   useEffect(
     () => () => {
       Object.values(sounds).forEach((audio) => {
@@ -45,7 +67,14 @@ export function useMenuSounds(volume: number) {
   return useCallback(
     (name: MenuSound) => {
       // Water is a quiet transition bed; it must not interrupt the triggering UI click.
-      const channel = name === 'liquid' ? 'liquid' : 'ui';
+      const channel =
+        name === 'liquid'
+          ? 'liquid'
+          : name === 'celebrate'
+            ? 'celebration'
+            : name === 'shutter'
+              ? 'shutter'
+              : 'ui';
       current.current[channel]?.pause();
       const token = ++playback.current[channel];
       if (volume === 0) return;

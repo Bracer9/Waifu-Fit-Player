@@ -19,7 +19,7 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
   useEffect(() => {
     const node = canvas.current!;
     const ctx = waveform ? node.getContext('2d') : null;
-    const menu = node.closest<HTMLElement>('.menu-app');
+    const menu = node.closest<HTMLElement>('.menu-app, .after-show');
     // These inherited variables must stay on the visuals that use them. Updating
     // .menu-app/body invalidates the entire menu, hidden workbench and briefing.
     const beatSelector = [
@@ -30,6 +30,9 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
       '.main-menu-down-hint-arrows',
       '.album-deck-insert-hint-beat',
       '.collection-album[aria-current="true"]',
+      '.after-show-option:not(:disabled)',
+      '.after-show-metrics dd',
+      '.after-show-slash',
     ].join(',');
     let beatTargets = new Set<HTMLElement>();
     let chargeTarget: HTMLElement | null = null;

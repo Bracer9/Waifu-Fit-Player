@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   type Chart,
   LANES,
@@ -17,6 +17,7 @@ import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
 import { HoldRibbon } from '../components/HoldRibbon';
 import { FollowConnection } from '../components/FollowConnection';
 import { followConnections } from '../follow-connections';
+import { beginAfterShowTail } from '../after-show';
 import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
 import { usePlayerRenderPreparation } from '../usePlayerRenderPreparation';
@@ -29,6 +30,8 @@ export function Player({
   prepareEffects = false,
   onEffectsReady,
   onPreparationProgress,
+  finishPhase,
+  onFinishTailComplete,
 }: {
   chart: Chart;
   media: MediaController;
@@ -37,6 +40,8 @@ export function Player({
   prepareEffects?: boolean;
   onEffectsReady?: () => void;
   onPreparationProgress?: (value: number) => void;
+  finishPhase?: 'tail' | 'finished';
+  onFinishTailComplete?: () => void;
 }) {
   const tracks = useRef<HTMLElement>(null);
   const actualTime = chartTimeAt(chart, useTime(media));
@@ -47,7 +52,18 @@ export function Player({
     onEffectsReady,
     onPreparationProgress,
   );
-  const time = preparedTime ?? actualTime;
+  const [finishProgress, setFinishProgress] = useState(0);
+  const finishComplete = useRef(onFinishTailComplete);
+  finishComplete.current = onFinishTailComplete;
+  useEffect(() => {
+    if (finishPhase !== 'tail') {
+      if (!finishPhase) setFinishProgress(0);
+      return;
+    }
+    return beginAfterShowTail(setFinishProgress, () => finishComplete.current?.());
+  }, [finishPhase]);
+  // Presentation only: keep video/audio and summary statistics at the real endpoint.
+  const time = preparedTime ?? actualTime + (finishPhase ? finishProgress * IMPACT_MS : 0);
   const previewMs = (BASE_PREVIEW_MS * DEFAULT_NOTE_SPEED) / noteSpeed;
   const [metrics, setMetrics] = useState({ width: 600, marker: 52 });
   useLayoutEffect(() => {

@@ -63,7 +63,6 @@ test('整首合成视频 1x 播放，五轨状态与媒体时间保持一致 @en
             states: Array.from(document.querySelectorAll('.hit-target')).map((el) =>
               el.getAttribute('data-state'),
             ),
-            timeText: document.querySelector('[data-testid="current-time"]')!.textContent,
           };
         });
         if (
@@ -92,7 +91,8 @@ test('整首合成视频 1x 播放，五轨状态与媒体时间保持一致 @en
     )
     .toBe(true);
   expect(samples).toBeGreaterThan(60);
-  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  await expect(page.locator('.after-show')).toBeVisible();
+  await expect(page.getByRole('button', { name: /ENCORE/ })).toBeVisible();
   const measured = await monitoring;
   const p95 = (xs: number[]) => xs.sort((a, b) => a - b)[Math.floor(xs.length * 0.95)];
   const specialFrames = measured.frames.filter((f) => f.special);

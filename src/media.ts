@@ -36,6 +36,8 @@ export class MediaController {
   };
   private timeListeners = new Set<() => void>();
   private statusListeners = new Set<() => void>();
+  private endListeners = new Set<() => void>();
+  private completed = false;
   private frame = 0;
   private nextFrameAt = 0;
   private cleanup?: () => void;
@@ -65,6 +67,17 @@ export class MediaController {
   };
   getTime = () => this.timeMs;
   getStatus = () => this.status;
+  subscribeEnded = (listener: () => void) => {
+    this.endListeners.add(listener);
+    return () => {
+      this.endListeners.delete(listener);
+    };
+  };
+  private completePlayback = () => {
+    if (this.completed) return;
+    this.completed = true;
+    this.endListeners.forEach((fn) => fn());
+  };
   setPreparing = (preparing: boolean) => {
     if (this.status.preparing === preparing) return;
     this.status = { ...this.status, preparing };
@@ -100,14 +113,17 @@ export class MediaController {
     const video = this.element;
     const range = this.playbackRange ? null : this.loopRange;
     const playbackEnd = this.playbackRange?.endMs;
+    let finished = false;
     if (
       video &&
       playbackEnd !== undefined &&
       !video.paused &&
+      !video.seeking &&
       video.currentTime * 1000 >= playbackEnd
     ) {
       video.currentTime = playbackEnd / 1000;
       video.pause();
+      finished = true;
     }
     // Seek the actual video (and its audio), never rewind a separate chart clock.
     if (video && range && !video.paused && !video.seeking && !video.ended) {
@@ -121,15 +137,21 @@ export class MediaController {
       this.timeMs = time;
       this.timeListeners.forEach((fn) => fn());
     }
+    if (finished) this.completePlayback();
   };
   private onEnded = () => {
-    if (this.playbackRange || !this.loopRange || !this.element) return;
+    if (!this.element) return;
+    if (this.playbackRange || !this.loopRange) {
+      this.completePlayback();
+      return;
+    }
     this.seek(this.loopRange.startMs);
     void this.element.play().catch(this.readStatus);
   };
   private readStatus = (event?: Event) => {
     const v = this.element;
     if (!v) return;
+    if (event?.type === 'play') this.completed = false;
     if (event?.type === 'loadedmetadata' && this.playbackRange)
       v.currentTime = this.playbackRange.startMs / 1000;
     const next: MediaStatus = {
@@ -165,6 +187,7 @@ export class MediaController {
   attach = (video: HTMLVideoElement | null) => {
     this.cleanup?.();
     this.element = video;
+    this.completed = false;
     if (!video) return;
     video.volume = this.status.volume;
     const events = [

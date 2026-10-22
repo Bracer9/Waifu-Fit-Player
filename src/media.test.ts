@@ -171,6 +171,53 @@ describe('工作台区间循环', () => {
     expect(callbacks.size).toBe(0);
   });
 });
+describe('曲终通知', () => {
+  it('range completion fires once after stopping; restart re-arms it and paused seeks do not finish', async () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.paused = true;
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setPlaybackRange({ startMs: 5000, endMs: 10000 });
+    const ended = vi.fn(() => expect(video.paused).toBe(true));
+    const unsubscribe = media.subscribeEnded(ended);
+    media.seek(10000);
+    expect(ended).not.toHaveBeenCalled();
+    await media.toggle();
+    video.currentTime = 10.05;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(ended).toHaveBeenCalledOnce();
+    video.ended = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).toHaveBeenCalledOnce();
+    media.seek(5000);
+    await media.toggle();
+    video.currentTime = 10;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(ended).toHaveBeenCalledTimes(2);
+    unsubscribe();
+    media.attach(null);
+  });
+  it('native full-video end notifies, while editor loop end continues looping', () => {
+    const media = new MediaController(),
+      video = new Video();
+    media.attach(video as unknown as HTMLVideoElement);
+    const ended = vi.fn();
+    media.subscribeEnded(ended);
+    media.setLoopRange({ startMs: 1000, endMs: 2000 });
+    video.currentTime = 60;
+    video.paused = video.ended = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).not.toHaveBeenCalled();
+    expect(video.currentTime).toBe(1);
+    media.setLoopRange(null);
+    video.currentTime = 60;
+    video.paused = video.ended = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).toHaveBeenCalledOnce();
+    expect(video.currentTime).toBe(60);
+    media.attach(null);
+  });
+});
 afterEach(() => vi.unstubAllGlobals());
 describe('published playback range', () => {
   it('seeks to the range start, stops video/audio at its end, and replays from its start', async () => {
