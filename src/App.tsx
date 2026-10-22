@@ -28,7 +28,12 @@ import {
 import { blankChart, parseChart, serializeChart, type Chart, type PlayRange } from './model';
 import { playableChart } from './play-range';
 import { historyReducer } from './editing';
-import { MediaController, audioOutputErrorMessage, useMediaStatus } from './media';
+import {
+  MediaController,
+  audioOutputErrorMessage,
+  useMediaStatus,
+  type GameplayFrameRate,
+} from './media';
 import { usePlayerPreparation } from './usePlayerPreparation';
 import { isTyping } from './recording';
 import { DEFAULT_NOTE_SPEED } from './timing';
@@ -103,6 +108,7 @@ const LAST_DRAFT_KEY = 'waifu-last-draft';
 const DRAFT_KEY = 'waifu-fit-player-draft-v1';
 const WORKBENCH_THEME_KEY = 'waifu-fit-player-workbench-theme';
 const NOTE_SPEED_KEY = 'waifu-fit-player-note-speed';
+const GAMEPLAY_FRAME_RATE_KEY = 'waifu-fit-player-gameplay-frame-rate';
 const SE_VOLUME_KEY = 'waifu-fit-player-se-volume';
 const fileTitle = (name: string) => name.replace(/\.[^.]+$/, '');
 type VideoRequest = {
@@ -250,6 +256,25 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setNoteSpeed(value);
     try {
       localStorage.setItem(NOTE_SPEED_KEY, String(value));
+    } catch {
+      // Keep the preference for this session if local storage is unavailable.
+    }
+  };
+  const [gameplayFrameRate, setGameplayFrameRate] = useState<GameplayFrameRate>(() => {
+    try {
+      const stored = localStorage.getItem(GAMEPLAY_FRAME_RATE_KEY);
+      return stored === 'display' ? 'display' : stored === '120' ? 120 : 60;
+    } catch {
+      return 60;
+    }
+  });
+  useLayoutEffect(() => {
+    media.setRenderFrameRate(gameplayFrameRate);
+  }, [media, gameplayFrameRate]);
+  const changeGameplayFrameRate = (value: GameplayFrameRate) => {
+    setGameplayFrameRate(value);
+    try {
+      localStorage.setItem(GAMEPLAY_FRAME_RATE_KEY, String(value));
     } catch {
       // Keep the preference for this session if local storage is unavailable.
     }
@@ -1799,6 +1824,8 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           onSeVolume={changeSeVolume}
           noteSpeed={noteSpeed}
           onNoteSpeed={changeNoteSpeed}
+          gameplayFrameRate={gameplayFrameRate}
+          onGameplayFrameRate={changeGameplayFrameRate}
         />
       )}
       {manageSongs && (

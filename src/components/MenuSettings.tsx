@@ -9,6 +9,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { MenuSoundPlayer } from '../useMenuSounds';
+import type { GameplayFrameRate } from '../media';
+
+const FRAME_RATES = [60, 120, 'display'] as const;
 
 export function SettingsGearHalo() {
   return (
@@ -75,6 +78,8 @@ export function MenuSettings({
   onSeVolume,
   noteSpeed,
   onNoteSpeed,
+  gameplayFrameRate,
+  onGameplayFrameRate,
 }: {
   open: boolean;
   trigger: RefObject<HTMLButtonElement | null>;
@@ -88,6 +93,8 @@ export function MenuSettings({
   onSeVolume: (volume: number) => void;
   noteSpeed: number;
   onNoteSpeed: (speed: number) => void;
+  gameplayFrameRate: GameplayFrameRate;
+  onGameplayFrameRate: (rate: GameplayFrameRate) => void;
 }) {
   const [tab, setTab] = useState<'audio' | 'system'>('audio');
   const root = useRef<HTMLElement>(null);
@@ -151,7 +158,10 @@ export function MenuSettings({
       aria-modal={false}
       aria-hidden={!open}
       inert={!open}
-      onFocusCapture={(event) => select(event.target as HTMLElement)}
+      onFocusCapture={(event) => {
+        const target = event.target as HTMLElement;
+        select(target.closest<HTMLElement>('[role="radiogroup"]') ?? target);
+      }}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) clearSelection();
       }}
@@ -160,8 +170,9 @@ export function MenuSettings({
         pointer.current = { x: event.clientX, y: event.clientY };
         const target = event.target as HTMLElement;
         const node =
-          target.closest<HTMLElement>('[role="tab"], input[type="range"]') ??
-          target.closest('.corner-settings-row')?.querySelector<HTMLInputElement>('input');
+          target.closest<HTMLElement>(
+            '[role="tab"], input[type="range"], [role="radiogroup"]',
+          ) ?? target.closest('.corner-settings-row')?.querySelector<HTMLInputElement>('input');
         if (!node) return;
         select(node, false);
         node.focus({ preventScroll: true });
@@ -171,13 +182,14 @@ export function MenuSettings({
           return;
         event.preventDefault();
         event.stopPropagation();
-        const target = event.target as HTMLElement;
+        const element = event.target as HTMLElement;
+        const target = element.closest<HTMLElement>('[role="radiogroup"]') ?? element;
         const activeTab = root.current?.querySelector<HTMLElement>(
           '[role="tab"][aria-selected="true"]',
         );
         const ranges = Array.from(
-          root.current?.querySelectorAll<HTMLInputElement>(
-            '.corner-settings-pane:not([hidden]) input',
+          root.current?.querySelectorAll<HTMLElement>(
+            '.corner-settings-pane:not([hidden]) :is(input, [role="radiogroup"])',
           ) ?? [],
         );
         if (target.matches('[role="tab"]')) {
@@ -193,10 +205,11 @@ export function MenuSettings({
           }
           return;
         }
-        if (!(target instanceof HTMLInputElement)) return;
+        const frameRate = target.matches('[role="radiogroup"]');
+        if (!(target instanceof HTMLInputElement) && !frameRate) return;
         if (event.key === 'Enter') {
           if (!event.repeat) {
-            target.toggleAttribute('data-adjusting');
+            if (!frameRate) target.toggleAttribute('data-adjusting');
             onSound('settings');
           }
           return;
@@ -204,7 +217,15 @@ export function MenuSettings({
         const index = ranges.indexOf(target);
         if (event.key === 'ArrowUp') focus(index > 0 ? ranges[index - 1] : activeTab);
         else if (event.key === 'ArrowDown') focus(ranges[Math.min(ranges.length - 1, index + 1)]);
-        else {
+        else if (frameRate) {
+          const index = FRAME_RATES.indexOf(gameplayFrameRate);
+          const next =
+            FRAME_RATES[Math.max(0, Math.min(2, index + (event.key === 'ArrowRight' ? 1 : -1)))];
+          if (next !== gameplayFrameRate) {
+            onGameplayFrameRate(next);
+            onSound('settings');
+          }
+        } else if (target instanceof HTMLInputElement) {
           target.setAttribute('data-adjusting', '');
           const speed = target.id === 'menu-note-speed';
           const change = speed
@@ -321,7 +342,7 @@ export function MenuSettings({
                 id="menu-note-speed"
                 className="music-range"
                 aria-label="音符流速"
-                aria-description="左右每次调整 0.5，Enter 确认，上方向键返回 SYSTEM 标签。"
+                aria-description="左右每次调整 0.5，Enter 确认，上下切换设置项。"
                 type="range"
                 min="0.5"
                 max="10"
@@ -338,6 +359,42 @@ export function MenuSettings({
                 <span>0.5 / SLOW</span>
                 <span>10 / FAST</span>
               </div>
+            </div>
+          </div>
+          <div className="corner-settings-row">
+            <Monitor className="settings-row-icon" size={27} aria-hidden="true" />
+            <div className="settings-row-content">
+              <div className="settings-row-heading">
+                <span>GAMEPLAY FPS</span>
+              </div>
+              <div
+                className="settings-frame-rates"
+                role="radiogroup"
+                aria-label="游玩帧率"
+                aria-describedby="settings-frame-rate-hint"
+                aria-description="左右选择，Enter 确认，上下切换设置项。"
+                tabIndex={0}
+              >
+                {FRAME_RATES.map((rate) => (
+                  <button
+                    key={rate}
+                    type="button"
+                    role="radio"
+                    aria-checked={gameplayFrameRate === rate}
+                    tabIndex={-1}
+                    onClick={(event) => {
+                      onGameplayFrameRate(rate);
+                      onSound('settings');
+                      event.currentTarget.parentElement?.focus({ preventScroll: true });
+                    }}
+                  >
+                    {rate === 'display' ? '跟随显示器' : `${rate} FPS`}
+                  </button>
+                ))}
+              </div>
+              <p className="settings-frame-hint" id="settings-frame-rate-hint">
+                仅调整游玩音符的更新频率，高帧率负载更高。
+              </p>
             </div>
           </div>
         </div>

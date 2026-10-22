@@ -28,7 +28,7 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
     await expect(settings).toBeVisible();
     await expect(settings).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
     await expect(pink).toHaveCSS('scale', '1.22');
-    await expect(pink).toHaveCSS('background-color', 'rgb(246, 78, 147)');
+    await expect(pink.locator('.album-housing-surface')).toHaveCSS('fill', 'rgb(246, 78, 147)');
     await expect(settings.locator('.corner-settings-sheet')).toHaveCSS(
       'transform',
       'matrix(1, 0, 0, 1, 0, 0)',
@@ -40,7 +40,7 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
     await expect(gear).toHaveAttribute('aria-expanded', 'false');
     await expect(settings).toBeHidden();
     await expect(pink).toHaveCSS('scale', '1');
-    await expect(pink).toHaveCSS('background-color', 'rgb(246, 78, 147)');
+    await expect(pink.locator('.album-housing-surface')).toHaveCSS('fill', 'rgb(246, 78, 147)');
   };
   await page.getByRole('button', { name: '选择主界面 BGM' }).click();
   const music = page.getByRole('region', { name: '主界面音乐' });
@@ -78,7 +78,9 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
       .evaluate((node) => (node as HTMLElement).style.getPropertyValue('--music-beat'));
   const before = await beat();
   await expect.poll(beat, { timeout: 10000 }).not.toBe(before);
-  const edge = await pink.evaluate((node) => getComputedStyle(node, '::after').opacity);
+  const edge = await pink
+    .locator('.album-housing-details')
+    .evaluate((node) => getComputedStyle(node, '::after').opacity);
   expect(edge).toBe('1');
   await page.screenshot({ path: 'artifacts/settings-home-audio-1080p.png' });
   await systemTab.hover();
@@ -90,6 +92,11 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   expect(await page.evaluate(() => localStorage.getItem('waifu-fit-player-note-speed'))).toBe(
     '6.5',
   );
+  await settings.getByRole('radio', { name: '120 FPS', exact: true }).click();
+  await expect(settings.getByRole('radio', { name: '120 FPS', exact: true })).toBeChecked();
+  expect(
+    await page.evaluate(() => localStorage.getItem('waifu-fit-player-gameplay-frame-rate')),
+  ).toBe('120');
   await page.screenshot({ path: 'artifacts/settings-home-system-1080p.png' });
   await audioTab.hover();
   await expect(audioTab).toHaveAttribute('aria-selected', 'true');
@@ -109,7 +116,8 @@ test('右上几何设置在三页一致，悬停切换等宽标签，共享音�
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.locator('.title-menu')).toBeVisible();
+  await page.locator('.play-mode').click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await open();
   expect(await settings.boundingBox()).toEqual(homeBounds);

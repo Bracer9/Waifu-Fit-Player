@@ -22,6 +22,7 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   const videoVolume = settings.getByRole('slider', { name: '游戏／视频音量', exact: true });
   const seVolume = settings.getByRole('slider', { name: '音效（SE）音量', exact: true });
   const speed = settings.getByRole('slider', { name: '音符流速', exact: true });
+  const frameRate = settings.getByRole('radiogroup', { name: '游玩帧率', exact: true });
   const focused = async (node: typeof menuVolume) => {
     await expect(node).toBeFocused();
     await expect(node).toHaveAttribute('data-settings-highlighted', '');
@@ -29,6 +30,7 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
     await expect(node).toHaveCSS('outline-style', 'solid');
   };
   await expect(gear).toBeVisible();
+  await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
   await page.mouse.move(10, 10);
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
@@ -79,6 +81,20 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await speed.fill('0.5');
   await page.keyboard.press('ArrowLeft');
   await expect(speed).toHaveValue('0.5');
+  await page.keyboard.press('ArrowDown');
+  await focused(frameRate);
+  await expect(frameRate.getByRole('radio', { name: '60 FPS', exact: true })).toBeChecked();
+  await page.keyboard.press('ArrowRight');
+  await expect(frameRate.getByRole('radio', { name: '120 FPS', exact: true })).toBeChecked();
+  await page.keyboard.press('ArrowRight');
+  await expect(frameRate.getByRole('radio', { name: '跟随显示器', exact: true })).toBeChecked();
+  await page.keyboard.press('ArrowRight');
+  await expect(frameRate.getByRole('radio', { name: '跟随显示器', exact: true })).toBeChecked();
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Enter');
+  await expect(frameRate.getByRole('radio', { name: '120 FPS', exact: true })).toBeChecked();
+  await page.keyboard.press('ArrowUp');
+  await focused(speed);
   await page.keyboard.press('ArrowUp');
   await focused(system);
   await page.keyboard.press('ArrowUp');
@@ -102,7 +118,8 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.locator('.title-menu')).toBeVisible();
+  await page.locator('.play-mode').click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   for (const scene of ['albums', 'songs']) {
     if (scene === 'songs') {
@@ -144,4 +161,8 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
     '0.45',
   );
   expect(errors).toEqual([]);
+  await page.reload();
+  await gear.click();
+  await system.click();
+  await expect(frameRate.getByRole('radio', { name: '120 FPS', exact: true })).toBeChecked();
 });

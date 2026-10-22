@@ -525,10 +525,10 @@
 .corner-settings .music-range {
   --pink: var(--settings-pink);
 }
-.corner-settings :is(.music-range, .corner-settings-tab):focus-visible {
+.corner-settings :is(.music-range, .corner-settings-tab, .settings-frame-rates):focus-visible {
   outline: none;
 }
-.corner-settings .music-range[data-settings-highlighted] {
+.corner-settings :is(.music-range, .settings-frame-rates)[data-settings-highlighted] {
   outline: 2px solid var(--settings-pink);
   outline-offset: 3px;
   border-radius: 5px;
@@ -562,6 +562,34 @@
     600 12px 'Barlow Condensed',
     sans-serif;
   letter-spacing: 1px;
+}
+.settings-frame-rates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.settings-frame-rates button {
+  min-width: 0;
+  padding: 9px 0;
+  border: 2px solid var(--ink);
+  background: #fffaf1;
+  color: var(--ink);
+  font:
+    700 16px 'Barlow Condensed',
+    sans-serif;
+  cursor: pointer;
+}
+.settings-frame-rates button:last-child {
+  font-size: 12px;
+}
+.settings-frame-rates button[aria-checked='true'] {
+  background: var(--settings-pink);
+}
+.settings-frame-hint {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #74676c;
 }
 .menu-scene {
   height: 100%;

@@ -278,6 +278,84 @@ function frame(timestamp = (frameTime += 1000 / 60)) {
   next.forEach((callback) => callback(timestamp));
 }
 describe('媒体时钟不受渲染掉帧影响', () => {
+  it.each([60, 120, 144, 165, 240])('%i Hz 下游玩档位独立更新，常规订阅保持 60 Hz', (hz) => {
+    for (const rate of [60, 120, 'display'] as const) {
+      const media = new MediaController(),
+        video = new Video();
+      media.setRenderFrameRate(rate);
+      media.attach(video as unknown as HTMLVideoElement);
+      const render = vi.fn(),
+        shared = vi.fn();
+      const unsubscribe = media.subscribeRenderTime(render);
+      media.subscribeTime(shared);
+      for (let i = 0; i < hz; i++) {
+        video.currentTime = i / hz;
+        frame((i * 1000) / hz);
+      }
+      const target = rate === 'display' ? hz : Math.min(rate, hz);
+      expect(render.mock.calls.length).toBeGreaterThanOrEqual(target - 2);
+      expect(render.mock.calls.length).toBeLessThanOrEqual(target);
+      expect(shared.mock.calls.length).toBeGreaterThanOrEqual(58);
+      expect(shared.mock.calls.length).toBeLessThanOrEqual(60);
+      expect(video.playbackRate).toBe(1);
+      unsubscribe();
+      media.attach(null);
+      expect(callbacks.size).toBe(0);
+    }
+  });
+  it('切档、暂停、回拖与恢复同步绘制快照，不新增播放循环或外推时间', async () => {
+    const media = new MediaController(),
+      video = new Video();
+    media.attach(video as unknown as HTMLVideoElement);
+    media.subscribeRenderTime(vi.fn());
+    media.setRenderFrameRate(120);
+    video.currentTime = 3.25;
+    frame(1000);
+    expect(media.getRenderTime()).toBe(3250);
+    frame(1008.33);
+    expect(media.getRenderTime()).toBe(3250);
+    media.setRenderFrameRate('display');
+    video.currentTime = 3.26;
+    frame(1012);
+    expect(media.getRenderTime()).toBe(3260);
+    expect(callbacks.size).toBe(1);
+    media.pause();
+    expect(callbacks.size).toBe(0);
+    media.seek(2100);
+    expect(media.getTime()).toBe(2100);
+    expect(media.getRenderTime()).toBe(2100);
+    media.setRenderFrameRate(60);
+    await media.toggle();
+    video.currentTime = 5.7;
+    frame(5000);
+    expect(media.getTime()).toBe(5700);
+    expect(media.getRenderTime()).toBe(5700);
+    expect(callbacks.size).toBe(1);
+    media.attach(null);
+    expect(callbacks.size).toBe(0);
+  });
+  it('高帧率绘制不会越过游玩结束时间，结束事件仍只触发一次', () => {
+    const media = new MediaController(),
+      video = new Video();
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setPlaybackRange({ startMs: 0, endMs: 10000 });
+    media.setRenderFrameRate(120);
+    media.subscribeRenderTime(vi.fn());
+    const ended = vi.fn();
+    media.subscribeEnded(ended);
+    video.currentTime = 9.99;
+    frame(0);
+    video.currentTime = 10.008;
+    frame(8.33);
+    expect(media.getRenderTime()).toBe(10000);
+    frame(16.67);
+    expect(video.paused).toBe(true);
+    expect(media.getTime()).toBe(10000);
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).toHaveBeenCalledOnce();
+    expect(callbacks.size).toBe(0);
+    media.attach(null);
+  });
   it.each([60, 120, 144, 240])('%i Hz 下最多每秒发布 60 次绘制，读取最新媒体时间', (hz) => {
     const media = new MediaController(),
       video = new Video();

@@ -7,6 +7,7 @@ import { putSongs, readSongs } from './helpers/library';
 
 async function setup(page: Page, range: boolean, withNext = false) {
   await page.addInitScript(() => {
+    localStorage.setItem('waifu-fit-player-gameplay-frame-rate', '120');
     const probe = { music: [] as HTMLAudioElement[], events: [] as { name: string; at: number }[] };
     Object.assign(window, { afterShowAudio: probe });
     const NativeAudio = window.Audio;

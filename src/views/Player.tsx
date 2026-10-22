@@ -8,7 +8,7 @@ import {
   isFollowStep,
   specialMoveLabel,
 } from '../model';
-import { MediaController, useTime } from '../media';
+import { MediaController, useRenderTime } from '../media';
 import { chartTimeAt, DEFAULT_NOTE_SPEED, noteX, specialAt } from '../timing';
 import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
@@ -44,7 +44,7 @@ export function Player({
   onFinishTailComplete?: () => void;
 }) {
   const tracks = useRef<HTMLElement>(null);
-  const actualTime = chartTimeAt(chart, useTime(media));
+  const actualTime = chartTimeAt(chart, useRenderTime(media, !showGuide));
   const preparedTime = usePlayerRenderPreparation(
     chart,
     prepareEffects,

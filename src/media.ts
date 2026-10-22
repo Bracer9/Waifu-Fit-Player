@@ -23,9 +23,14 @@ export type MediaStatus = {
   preparing: boolean;
 };
 export type LoopRange = { startMs: number; endMs: number };
+export type GameplayFrameRate = 60 | 120 | 'display';
 export class MediaController {
   element: HTMLVideoElement | null = null;
   private timeMs = 0;
+  private renderTimeMs = 0;
+  private renderFrameRate: GameplayFrameRate = 60;
+  private renderListeners = new Set<() => void>();
+  private nextRenderFrameAt = 0;
   private status: MediaStatus = {
     ready: false,
     playing: false,
@@ -58,6 +63,25 @@ export class MediaController {
     return () => {
       this.timeListeners.delete(listener);
     };
+  };
+  // Only the gameplay lanes subscribe here. Transport, statistics and the editor
+  // retain the existing 60 Hz publication cadence.
+  subscribeRenderTime = (listener: () => void) => {
+    this.renderListeners.add(listener);
+    return () => {
+      this.renderListeners.delete(listener);
+    };
+  };
+  getRenderTime = () => this.renderTimeMs;
+  setRenderFrameRate = (rate: GameplayFrameRate) => {
+    if (rate === this.renderFrameRate) return;
+    this.renderFrameRate = rate;
+    this.nextRenderFrameAt = 0;
+  };
+  private publishRenderTime = (time: number) => {
+    if (time === this.renderTimeMs) return;
+    this.renderTimeMs = time;
+    this.renderListeners.forEach((fn) => fn());
   };
   subscribeStatus = (listener: () => void) => {
     this.statusListeners.add(listener);
@@ -109,7 +133,8 @@ export class MediaController {
       if (target !== current) this.seek(target);
     }
   };
-  private readTime = () => {
+  private readTime = () => this.updateTime(true);
+  private updateTime = (syncRender: boolean) => {
     const video = this.element;
     const range = this.playbackRange ? null : this.loopRange;
     const playbackEnd = this.playbackRange?.endMs;
@@ -137,6 +162,8 @@ export class MediaController {
       this.timeMs = time;
       this.timeListeners.forEach((fn) => fn());
     }
+    // Commands and media events (seek, pause, end) synchronize both snapshots.
+    if (syncRender || !this.renderListeners.size) this.publishRenderTime(time);
     if (finished) this.completePlayback();
   };
   private onEnded = () => {
@@ -171,16 +198,27 @@ export class MediaController {
     }
     this.readTime();
     cancelAnimationFrame(this.frame);
+    this.nextFrameAt = this.nextRenderFrameAt = 0;
     if (!v.paused && !v.ended) this.frame = requestAnimationFrame(this.tick);
   };
   private tick = (timestamp: number) => {
-    // High-refresh displays must not rebuild all SVG tracks 120/144 times per second.
-    // Only rendering is capped; every published time is read fresh from the video.
+    // The shared clock stays at 60 Hz even when gameplay opts into more frames.
     const frameMs = 1000 / 60;
     if (timestamp + 0.5 >= this.nextFrameAt) {
-      this.readTime();
+      this.updateTime(false);
       this.nextFrameAt +=
         (Math.floor(Math.max(0, timestamp - this.nextFrameAt) / frameMs) + 1) * frameMs;
+    }
+    if (this.renderListeners.size) {
+      const interval = this.renderFrameRate === 'display' ? 0 : 1000 / this.renderFrameRate;
+      if (!interval || timestamp + 0.5 >= this.nextRenderFrameAt) {
+        const video = this.element;
+        const time = (video?.currentTime ?? 0) * 1000;
+        this.publishRenderTime(Math.min(time, this.playbackRange?.endMs ?? Infinity));
+        if (interval)
+          this.nextRenderFrameAt +=
+            (Math.floor(Math.max(0, timestamp - this.nextRenderFrameAt) / interval) + 1) * interval;
+      }
     }
     if (this.element && !this.element.paused) this.frame = requestAnimationFrame(this.tick);
   };
@@ -256,5 +294,10 @@ export class MediaController {
 }
 export const useTime = (media: MediaController) =>
   useSyncExternalStore(media.subscribeTime, media.getTime);
+export const useRenderTime = (media: MediaController, gameplay: boolean) =>
+  useSyncExternalStore(
+    gameplay ? media.subscribeRenderTime : media.subscribeTime,
+    gameplay ? media.getRenderTime : media.getTime,
+  );
 export const useMediaStatus = (media: MediaController) =>
   useSyncExternalStore(media.subscribeStatus, media.getStatus);
