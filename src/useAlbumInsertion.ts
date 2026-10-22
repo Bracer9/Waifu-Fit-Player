@@ -44,6 +44,7 @@ export function useAlbumInsertion({
     const current = flight.current;
     if (!current || current.phase !== 'inserting') return;
     current.phase = 'returning';
+    current.copy.setAttribute('data-returning', '');
     const { translate, opacity } = getComputedStyle(current.copy);
     current.animation.cancel();
     current.animation = current.copy.animate(
@@ -79,6 +80,8 @@ export function useAlbumInsertion({
     mask.style.clipPath = `inset(0 ${Math.max(0, menuViewport().width - edge)}px 0 0)`;
     const copy = card.cloneNode(true) as HTMLElement;
     copy.classList.add('album-flight-card');
+    const duration = quick ? ALBUM_DECK_TIMING.quickInsert : ALBUM_DECK_TIMING.insert;
+    copy.style.setProperty('--album-insert-ms', `${duration}ms`);
     copy.setAttribute('aria-hidden', 'true');
     copy.inert = true;
     Object.assign(copy.style, {
@@ -100,7 +103,7 @@ export function useAlbumInsertion({
         ? [{ opacity: 1 }, { opacity: 0.3 }]
         : [{ translate: '0 0' }, { translate: `${edge - box.left + 30}px 0` }],
       {
-        duration: quick ? ALBUM_DECK_TIMING.quickInsert : ALBUM_DECK_TIMING.insert,
+        duration,
         easing: 'cubic-bezier(0.45, 0, 0.2, 1)',
         fill: 'forwards',
       },

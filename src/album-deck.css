@@ -203,7 +203,7 @@
       var(--deck-slot-height, calc(var(--menu-vh, 1vh) * 32)) / 2
   );
   width: 15px;
-  height: var(--deck-slot-height, calc(var(--menu-vh, 1vh) * 32));
+  height: calc(var(--deck-slot-height, calc(var(--menu-vh, 1vh) * 32)) + 10px);
   background: var(--ink);
   border: 1px solid #fff;
   box-shadow:

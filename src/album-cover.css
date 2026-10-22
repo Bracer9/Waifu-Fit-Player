@@ -1,7 +1,163 @@
 /* A moving scene behind the existing 7:2 aperture; the card frame stays still. */
-.collection-art {
+.collection-art,
+.record-jacket {
   /* Stage lights blend with this cover only, never with menu backgrounds or captions. */
   isolation: isolate;
+}
+/* A clear window and matte shell share one rigid cartridge. Reflections stay
+   still on the shelf and shift once on the existing insertion copy. */
+.collection-album::after,
+.record-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 #ffffff99,
+    inset 1px 0 0 #ffffff55,
+    inset -2px -2px 0 #100e183d;
+}
+.collection-art::before,
+.collection-art::after,
+.record-jacket::before,
+.record-jacket::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.collection-art::before,
+.record-jacket::before {
+  z-index: 1;
+  inset: -1px -12%;
+  background: linear-gradient(
+    112deg,
+    transparent 0 14%,
+    #ffffff06 17%,
+    #ffffff2e 21%,
+    #ffffff32 27%,
+    #ffffff0a 32%,
+    transparent 36% 59%,
+    #ffffff0a 60.5%,
+    #ffffff3d 61%,
+    #ffffff10 61.5%,
+    transparent 63%
+  );
+}
+.collection-art::after,
+.record-jacket::after {
+  z-index: 2;
+  border: 1px solid #eaffff80;
+  background:
+    repeating-linear-gradient(0deg, #10203003 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #eaffff19, transparent 38%, #091c3224);
+  box-shadow:
+    inset 0 2px 0 #ffffffa6,
+    inset 1px 0 0 #ffffff70,
+    inset 0 -2px 1px #0b172766,
+    inset 0 0 12px #08162126;
+}
+.collection-album .collection-label {
+  isolation: isolate;
+  background: linear-gradient(180deg, #f3e9dc, #e5d8c7);
+  box-shadow:
+    inset 0 3px 0 #fffaf2,
+    inset 3px 0 0 #fffaf299,
+    inset 0 -5px 0 #b6a58e,
+    inset -3px 0 0 #c7b69f;
+}
+.collection-label::before {
+  content: '';
+  position: absolute;
+  inset: 7px 9px 10px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid #89765e80;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle, #62513f0b 0 0.55px, transparent 0.8px) 0 0 / 5px 7px,
+    radial-gradient(circle, #ffffff70 0 0.55px, transparent 0.8px) 2px 3px / 7px 5px,
+    linear-gradient(180deg, #fff7ed, #fff0df);
+  box-shadow:
+    0 1px 0 #ffffffb3,
+    inset 0 2px 3px #49382033,
+    inset 1px 0 1px #4938201a,
+    inset 0 -1px 0 #ffffffcc;
+}
+.collection-label::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  bottom: 2px;
+  width: 46px;
+  height: 3px;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg, #6e625970 0 7px, transparent 7px 10px);
+  box-shadow: 0 1px 0 #fffaf299;
+}
+/* The song sleeve uses the same materials without changing its hit areas or
+   placing the edit button behind the full-card selection button. */
+.record-jacket .cover-trace {
+  z-index: 3;
+}
+.record-caption {
+  position: relative;
+  background:
+    radial-gradient(circle, #62513f0b 0 0.55px, transparent 0.8px) 0 0 / 5px 7px,
+    radial-gradient(circle, #ffffff70 0 0.55px, transparent 0.8px) 2px 3px / 7px 5px,
+    linear-gradient(180deg, #fff7ed, #f3e4d2);
+  box-shadow:
+    inset 0 3px 0 #fffaf2,
+    inset 3px 0 0 #fffaf299,
+    inset 0 -5px 0 #b6a58e,
+    inset -3px 0 0 #c7b69f;
+}
+.record-caption::before {
+  content: '';
+  position: absolute;
+  inset: 7px 9px 10px;
+  pointer-events: none;
+  border: 1px solid #89765e80;
+  border-radius: 2px;
+  box-shadow:
+    0 1px 0 #ffffffb3,
+    inset 0 2px 3px #49382033,
+    inset 1px 0 1px #4938201a,
+    inset 0 -1px 0 #ffffffcc;
+}
+.record-caption::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  bottom: 2px;
+  width: 36px;
+  height: 3px;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg, #6e625970 0 5px, transparent 5px 8px);
+  box-shadow: 0 1px 0 #fffaf299;
+}
+.collection-album .album-binding {
+  background: linear-gradient(90deg, #141318, #303039 35%, #1d1c21 70%, #111015);
+  box-shadow:
+    inset 1px 0 0 #ffffff29,
+    inset -1px 0 0 #00000066;
+}
+.album-flight-card .collection-art::before {
+  animation: album-card-reflection-shift var(--album-insert-ms) cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+.album-flight-card[data-returning] .collection-art::before {
+  animation-play-state: paused;
+}
+@keyframes album-card-reflection-shift {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-8%);
+    opacity: 0.75;
+  }
 }
 .album-cover-scene {
   display: block;
@@ -208,6 +364,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .album-flight-card .collection-art::before {
+    animation: none;
+  }
   .album-cover-detail:not([data-persistent]) {
     display: none;
   }
