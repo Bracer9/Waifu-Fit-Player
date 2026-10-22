@@ -40,7 +40,31 @@ async function geometry(page: Page) {
   });
 }
 
-test('dragging the preview enlarges the real video without restarting playback or changing timeline editing', async ({
+async function expectWorkspaceFits(page: Page) {
+  const layout = await page.evaluate(() => {
+    const timeline = document.querySelector('.timeline-scroll')!;
+    const surface = document.querySelector('.timeline-surface')!;
+    const workspace = document.querySelector('.editing')!.getBoundingClientRect();
+    return {
+      width: innerWidth,
+      height: innerHeight,
+      pageWidth: document.documentElement.scrollWidth,
+      pageHeight: document.documentElement.scrollHeight,
+      workspaceWidth: workspace.width,
+      bottom: document.querySelector('.workspace-bottom')!.getBoundingClientRect().bottom,
+      timelineHeight: timeline.clientHeight,
+      surfaceHeight: surface.getBoundingClientRect().height,
+    };
+  });
+  expect(layout.pageWidth).toBe(layout.width);
+  expect(layout.pageHeight).toBe(layout.height);
+  expect(layout.workspaceWidth).toBeGreaterThan(layout.width - 60);
+  expect(layout.bottom).toBeLessThanOrEqual(layout.height);
+  if (layout.height >= 1080)
+    expect(layout.timelineHeight).toBeGreaterThanOrEqual(layout.surfaceHeight);
+}
+
+test('dragging the preview enlarges the real video within the workspace without restarting playback or changing timeline editing', async ({
   page,
 }) => {
   await emptyEditor(page);
@@ -53,8 +77,9 @@ test('dragging the preview enlarges the real video without restarting playback o
   await resize(page, -220, 150);
   const after = await geometry(page);
   expect(after.video.width).toBeGreaterThan(before.video.width + 150);
-  expect(after.video.height).toBeGreaterThan(before.video.height + 100);
-  expect(after.viewport.height).toBeGreaterThan(before.viewport.height + 100);
+  // Height is capped by the full timeline, even when the pointer drags farther.
+  expect(after.video.height).toBeGreaterThanOrEqual(before.video.height);
+  await expectWorkspaceFits(page);
   expect(after.left.width).toBeGreaterThanOrEqual(419);
   expect(after.timeline.width).toBeCloseTo(before.timeline.width, 0);
   expect(after.transport.top).toBeGreaterThanOrEqual(after.stage.bottom);
@@ -98,7 +123,7 @@ test('preview bounds, persistence, small windows and keyboard reset preserve usa
   const large = await geometry(page);
   expect(large.left.width).toBeGreaterThanOrEqual(419);
   expect(large.stage.height).toBeLessThanOrEqual(680);
-  expect(large.stage.bottom).toBeLessThanOrEqual(1080 - 249);
+  await expectWorkspaceFits(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1920);
   await page.reload();
   await emptyEditor(page);
@@ -111,7 +136,7 @@ test('preview bounds, persistence, small windows and keyboard reset preserve usa
   expect(small.left.width).toBeGreaterThanOrEqual(319);
   expect(small.video.width).toBeGreaterThanOrEqual(319);
   expect(small.video.right).toBeLessThanOrEqual(1280);
-  expect(small.stage.bottom).toBeLessThanOrEqual(800 - 249);
+  await expectWorkspaceFits(page);
   expect(small.transport.top).toBeGreaterThanOrEqual(small.stage.bottom);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1280);
   expect(await currentVideo.evaluate((node) => node === document.querySelector('video'))).toBe(

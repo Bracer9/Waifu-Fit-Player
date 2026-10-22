@@ -122,3 +122,115 @@ body:has(.app[data-workbench-theme]) .modal {
   max-height: calc(100dvh - 60px);
   overflow-y: auto;
 }
+
+/* The studio is a viewport workspace, not the centred album/menu page.
+   Keep native CSS pixels so timeline drawing and dragging retain exact coordinates. */
+body:has(.app[data-workbench-theme]) {
+  min-width: 0;
+  height: 100dvh;
+  overflow: hidden;
+}
+.app[data-workbench-theme] {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  padding: 0 20px 8px;
+}
+.app[data-workbench-theme] .app-header {
+  flex: none;
+  width: 100%;
+  max-width: none;
+  height: 68px;
+  margin: 0;
+}
+.app[data-workbench-theme] > main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.app[data-workbench-theme] .album-workspace.editing {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 12px 16px 0 28px;
+}
+.app[data-workbench-theme] .workspace-header {
+  flex: none;
+  margin-bottom: 10px;
+}
+.app[data-workbench-theme] .editing .stage-grid {
+  flex: none;
+  min-height: 0;
+  height: min(30dvh, 420px, var(--editor-preview-max-height, 420px));
+}
+.app[data-workbench-theme] .editing .stage-grid[data-preview-custom] {
+  height: min(var(--editor-preview-height), var(--editor-preview-max-height));
+}
+.app[data-workbench-theme] .editing .stage-left,
+.app[data-workbench-theme] .editing .video-panel {
+  min-height: 0;
+}
+.app[data-workbench-theme] .editing .transport {
+  flex: none;
+  margin-top: 8px;
+  padding-block: 4px;
+}
+.app[data-workbench-theme] .editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin-top: 8px;
+}
+.app[data-workbench-theme] .editor > :not(.editor-body) {
+  flex: none;
+}
+.app[data-workbench-theme] .editor-body {
+  flex: 1;
+  min-height: 0;
+}
+.app[data-workbench-theme] .timeline-panel,
+.app[data-workbench-theme] .inspector {
+  min-height: 0;
+}
+.app[data-workbench-theme] .timeline-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.app[data-workbench-theme] .timeline-footer {
+  flex: none;
+}
+.app[data-workbench-theme] .inspector {
+  display: flex;
+  flex-direction: column;
+}
+.app[data-workbench-theme] .inspector-tabs {
+  flex: none;
+}
+.app[data-workbench-theme] .inspector-content {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.app[data-workbench-theme] .workspace-bottom {
+  flex: none;
+  min-height: 32px;
+}
+
+/* Let the five preview lanes share the remaining height without crushing
+   the heading, special-action hint or video caption when the editor grows. */
+.app[data-workbench-theme] .editing .lanes-stack {
+  min-height: 0;
+}
+.app[data-workbench-theme]
+  .editing
+  :is(.lane-heading, .special-slot, .video-topline, .video-caption) {
+  flex-shrink: 0;
+}

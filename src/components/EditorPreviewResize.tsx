@@ -38,6 +38,16 @@ export function EditorPreviewResize() {
     const handle = grip.current!;
     const stage = handle.closest<HTMLElement>('.stage-grid')!;
     const panel = handle.closest<HTMLElement>('.video-panel')!;
+    const workspace = stage.closest<HTMLElement>('.editing')!;
+    const editor = workspace.querySelector<HTMLElement>('.editor')!;
+    const outerHeight = (node: Element) => {
+      const style = getComputedStyle(node);
+      return (
+        node.getBoundingClientRect().height +
+        (parseFloat(style.marginTop) || 0) +
+        (parseFloat(style.marginBottom) || 0)
+      );
+    };
 
     const limits = (): Limits => {
       const width = stage.clientWidth;
@@ -61,20 +71,48 @@ export function EditorPreviewResize() {
       );
       const minLeft = Math.min(420, Math.max(320, width * 0.28));
       const maxWidth = Math.max(300, width - gap - minLeft);
-      // Leave room for transport/tools and part of the timeline, with normal
-      // document scrolling for the remaining editor. Page scroll is not a resize.
-      const stageTop = stage.getBoundingClientRect().top + window.scrollY;
+      // Reserve the actual toolbar/footer heights and all timeline rows at desktop
+      // sizes. Smaller windows scroll inside the timeline, never the whole studio.
+      const workspaceStyle = getComputedStyle(workspace);
+      const editorStyle = getComputedStyle(editor);
+      const chrome = Array.from(editor.children)
+        .filter((node) => !node.classList.contains('editor-body'))
+        .reduce((sum, node) => sum + outerHeight(node), 0);
+      const timeline = editor.querySelector<HTMLElement>('.timeline-surface')!;
+      const footer = editor.querySelector<HTMLElement>('.timeline-footer')!;
+      const reservedTimeline = Math.min(timeline.offsetHeight + 8, window.innerHeight * 0.4);
+      const remaining =
+        workspace.clientHeight -
+        parseFloat(workspaceStyle.paddingTop) -
+        parseFloat(workspaceStyle.paddingBottom) -
+        Array.from(workspace.children)
+          .filter(
+            (node) =>
+              node !== stage &&
+              node !== editor &&
+              ['workspace-header', 'transport', 'workspace-bottom'].some((name) =>
+                node.classList.contains(name),
+              ),
+          )
+          .reduce((sum, node) => sum + outerHeight(node), 0) -
+        (parseFloat(editorStyle.marginTop) || 0) -
+        (parseFloat(editorStyle.borderTopWidth) || 0) -
+        (parseFloat(editorStyle.borderBottomWidth) || 0) -
+        chrome -
+        outerHeight(footer) -
+        reservedTimeline;
       return {
         width,
         gap,
         minWidth: Math.min(320, maxWidth),
         maxWidth,
         minHeight,
-        maxHeight: Math.max(minHeight, Math.min(680, window.innerHeight - stageTop - 250)),
+        maxHeight: Math.max(minHeight, Math.min(680, Math.floor(remaining))),
       };
     };
 
     const paint = (requested: Size | null, bounds = limits()) => {
+      stage.style.setProperty('--editor-preview-max-height', `${bounds.maxHeight}px`);
       if (!requested) {
         delete stage.dataset.previewCustom;
         stage.style.removeProperty('--editor-preview-width');
@@ -211,6 +249,22 @@ export function EditorPreviewResize() {
       /* Invalid preferences fall back to the unchanged default layout. */
     }
     paint(size.current);
+    // Rebudget when the window, toolbar wrapping or expanded STEP checks change.
+    // Do not interrupt a pointer drag when its stage height changes the editor.
+    const layoutObserver = new ResizeObserver(() => {
+      if (!drag.current) paint(size.current);
+    });
+    layoutObserver.observe(workspace);
+    layoutObserver.observe(editor);
+    layoutObserver.observe(workspace.querySelector('.workspace-header')!);
+    const observeChrome = () => {
+      for (const node of editor.children)
+        if (!node.classList.contains('editor-body')) layoutObserver.observe(node);
+      layoutObserver.observe(editor.querySelector('.timeline-footer')!);
+    };
+    observeChrome();
+    const chromeObserver = new MutationObserver(observeChrome);
+    chromeObserver.observe(editor, { childList: true });
     handle.addEventListener('pointermove', move);
     handle.addEventListener('pointerup', finish);
     handle.addEventListener('lostpointercapture', cancel);
@@ -219,6 +273,8 @@ export function EditorPreviewResize() {
     window.addEventListener('resize', refresh);
     window.addEventListener('keydown', key, true);
     return () => {
+      chromeObserver.disconnect();
+      layoutObserver.disconnect();
       cancelAnimationFrame(frame.current);
       drag.current = null;
       pending.current = null;
@@ -234,6 +290,7 @@ export function EditorPreviewResize() {
       delete stage.dataset.previewCustom;
       stage.style.removeProperty('--editor-preview-width');
       stage.style.removeProperty('--editor-preview-height');
+      stage.style.removeProperty('--editor-preview-max-height');
     };
   }, []);
 
