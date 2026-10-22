@@ -34,7 +34,7 @@ export function PracticeStartupLighting({ finishing = false }: { finishing?: boo
 export function PracticeBackdrop({ finished = false }: { finished?: boolean }) {
   return (
     <div className="practice-backdrop" aria-hidden="true">
-      <img className="studio-scene" src="/art/studio-scene-v5.png" alt="" />
+      <img className="studio-scene" src="/art/studio-scene-v6.png?light=soft1" alt="" />
       {finished && <span className="studio-afterglow" />}
       <div className="studio-floor-print">
         <svg className="studio-floor-mark" viewBox="478 800 716 150" preserveAspectRatio="none">

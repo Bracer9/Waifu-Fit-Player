@@ -381,19 +381,10 @@
   transform: translate(-50%, -50%) rotate(18deg);
 }
 .ready-light-wash {
-  /* Three static gradients, composited only by opacity. No scene-wide filter. */
+  /* Plate-space cone and two clipped wall pools share the real aperture/axis.
+     The final layer retains the subtle floor bounce; only opacity is animated. */
   background:
-    radial-gradient(
-      ellipse calc(var(--menu-vw, 1vw) * 2.8) calc(var(--menu-vh, 1vh) * 2.3) at 40.67% 3.44%,
-      #fffdebb3,
-      #fff1ce26 40%,
-      transparent 75%
-    ),
-    radial-gradient(
-      ellipse calc(var(--menu-vw, 1vw) * 28) calc(var(--menu-vh, 1vh) * 66) at 40.67% 5%,
-      #fff5e014,
-      transparent 72%
-    ),
+    url('/art/studio-spotlight-wash.svg?light=soft1') 0 0 / 100% 100% no-repeat,
     radial-gradient(
       ellipse calc(var(--menu-vw, 1vw) * 30) calc(var(--menu-vh, 1vh) * 8) at 50% 90%,
       #fff4d81a,

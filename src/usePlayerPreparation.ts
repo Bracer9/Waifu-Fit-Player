@@ -8,7 +8,12 @@ import { armDisplayNotes } from './armDisplay';
 export function playerAssets(chart: Chart, gameplay = false): AssetManifest {
   // Editor assets stay stable while recording adds notes. Only gameplay needs
   // the baked impact atlases, and it prepares only the displayed note palettes.
-  const images = ['/art/studio-scene-v5.png', '/art/crunch/impact.png', '/art/crunch/trail.png'];
+  const images = [
+    '/art/studio-scene-v6.png?light=soft1',
+    '/art/studio-spotlight-wash.svg?light=soft1',
+    '/art/crunch/impact.png',
+    '/art/crunch/trail.png',
+  ];
   if (gameplay) {
     const used = new Set(
       armDisplayNotes(chart.notes)

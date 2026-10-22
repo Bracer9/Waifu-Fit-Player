@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1672" height="941" viewBox="0 0 1672 941" preserveAspectRatio="none">
+  <!-- Same plate coordinates as the lamp aperture (680, 32), aimed down-left.
+       These static gradients need only an opacity animation, never a live blur. -->
+  <defs>
+    <linearGradient id="beam-sides">
+      <stop stop-color="#fff4d7" stop-opacity="0"/>
+      <stop offset=".2" stop-color="#fff7e2" stop-opacity=".05"/>
+      <stop offset=".5" stop-color="#fffbea" stop-opacity=".25"/>
+      <stop offset=".8" stop-color="#fff7e2" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#fff4d7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beam-falloff" gradientUnits="userSpaceOnUse" x1="680" y1="32" x2="606" y2="320">
+      <stop stop-color="white"/>
+      <stop offset=".4" stop-color="white" stop-opacity=".65"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="wall-pool">
+      <stop stop-color="#fff6dc" stop-opacity=".2"/>
+      <stop offset=".45" stop-color="#fff5df" stop-opacity=".085"/>
+      <stop offset="1" stop-color="#fff5df" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="aperture-glow">
+      <stop stop-color="#fffbed" stop-opacity=".45"/>
+      <stop offset=".45" stop-color="#fff5de" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#fff5de" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="left-wall"><path d="M0 0H310L706 100V736L0 800Z"/></clipPath>
+    <clipPath id="right-wall"><path d="M706 100L1050 0H1672V790L706 736Z"/></clipPath>
+    <mask id="beam-fade"><path d="M665 36L694 42L755 320Q600 365 445 290Z" fill="url(#beam-falloff)"/></mask>
+  </defs>
+  <ellipse cx="610" cy="190" rx="150" ry="160" transform="rotate(18 610 190)" fill="url(#wall-pool)" clip-path="url(#left-wall)"/>
+  <ellipse cx="708" cy="176" rx="66" ry="142" transform="rotate(-12 708 176)" fill="url(#wall-pool)" clip-path="url(#right-wall)"/>
+  <path d="M665 36L694 42L755 320Q600 365 445 290Z" fill="url(#beam-sides)" mask="url(#beam-fade)"/>
+  <ellipse cx="680" cy="32" rx="43" ry="26" transform="rotate(18 680 32)" fill="url(#aperture-glow)"/>
+</svg>
