@@ -59,4 +59,18 @@ describe('video audio BPM detection', () => {
     });
     expect(estimateBpm(noise)).toBeNull();
   });
+
+  it('recognizes beats with small attack-time variations over a noisy mix', () => {
+    let seed = 37;
+    const random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+      return (seed >>> 0) / 4294967296;
+    };
+    const onsets = Float32Array.from({ length: 18000 }, () => random() * 0.5);
+    for (let beat = 0; beat < 170; beat++) {
+      const index = Math.round((beat * 200 * 60) / 114) + Math.floor(random() * 5) - 2;
+      if (index >= 0 && index < onsets.length) onsets[index] += 2;
+    }
+    expect(estimateBpm(onsets)?.bpm).toBeCloseTo(114, 0);
+  });
 });

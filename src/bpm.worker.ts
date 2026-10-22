@@ -1,14 +1,12 @@
-import { AudioSampleSink, Input, MP4, UrlSource } from 'mediabunny';
+import { AudioSampleSink, Input, MP4 } from 'mediabunny';
 import { BpmEnvelope, estimateBpm, type BpmRequest, type BpmResponse } from './bpm';
+import { createBpmSource } from './bpm-source';
 
 const send = (message: BpmResponse) => self.postMessage(message);
 self.onmessage = async ({ data }: MessageEvent<BpmRequest>) => {
   const input = new Input({
     formats: [MP4],
-    source: new UrlSource(data.source, {
-      maxCacheSize: 8 * 1024 * 1024,
-      getRetryDelay: () => null,
-    }),
+    source: createBpmSource(data.source),
   });
   try {
     const track = await input.getPrimaryAudioTrack();

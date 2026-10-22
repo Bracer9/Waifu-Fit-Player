@@ -85,7 +85,16 @@ export function estimateBpm(onsets: Float32Array, rate = ENVELOPE_RATE): BpmResu
   }
   if (peaks < 8) return null;
 
-  const centered = Float32Array.from(onsets, (value) => value - mean);
+  // A short attack can land in adjacent 5 ms bins. Allow 10 ms of timing spread
+  // before correlation, without lowering the confidence or nonrhythmic-noise gates.
+  const radius = Math.max(1, Math.round(rate * 0.01));
+  const centered = Float32Array.from(onsets, (_, index) => {
+    let value = 0;
+    for (let offset = -radius; offset <= radius; offset++) {
+      value += (onsets[index + offset] ?? mean) * (radius + 1 - Math.abs(offset));
+    }
+    return value / (radius + 1) ** 2 - mean;
+  });
   const maxLag = Math.min(onsets.length - 1, Math.ceil((rate * 60 * 3) / 55) + 2);
   const correlation = new Float32Array(maxLag + 1);
   for (let lag = 0; lag <= maxLag; lag++) {
