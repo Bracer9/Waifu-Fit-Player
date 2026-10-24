@@ -85,6 +85,7 @@ import { AfterShowSnap } from './components/AfterShowSnap';
 import { afterShowTrackNumber } from './after-show-snap';
 import { afterShowLightingStyle, beginAfterShowAudio, nextAfterShowTrack } from './after-show';
 import { DraftSaveMenu } from './components/DraftSaveMenu';
+import { useFitLogRecording } from './useFitLog';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
 import { GameEntrance } from './components/GameEntrance';
@@ -324,6 +325,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const staleDraft = useRef(false);
   const savedDraftMeta = useRef(JSON.stringify({ albumId: '', cover: '' }));
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
+  const [fitLogAttempt, setFitLogAttempt] = useState(0);
+  useFitLogRecording(
+    media,
+    gameChart,
+    mode === 'player' && playOrigin === 'library',
+    fitLogAttempt,
+  );
   const [albumId, setAlbumId] = useState('all');
   const [albumPlayerOpen, setAlbumPlayerOpen] = useState(false);
   const [albumTuning, setAlbumTuning] = useState<'cover' | 'reveal' | null>(null);
@@ -821,6 +829,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     if (!status.ready || status.preparing || startPending) return;
     playMenuSound('song');
     media.pause();
+    setFitLogAttempt((attempt) => attempt + 1);
     media.seek(playStart ?? 0);
     setFinishing(false);
     setAfterShow(false);

@@ -6,6 +6,7 @@ import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { MapsWorkspace } from './maps-workspace';
+import { FitLogStore, serveFitLog } from './fit-log-store';
 import { CHART_TYPES } from '../src/chart-types';
 import type { Song, Album } from '../src/library';
 import {
@@ -308,16 +309,24 @@ export function mapsLibraryPlugin(
   const base = path.resolve(process.env.WFP_MAPS_DIR ?? 'maps');
   const createMiddleware = (directory: string) => {
     const workspace = new MapsWorkspace(directory, options.demoFile);
+    const fitLog = new FitLogStore(
+      process.env.WFP_MAPS_DIR ? path.join(directory, '.fit-log') : path.resolve('data/fit-log'),
+    );
     let writes: Promise<unknown> = Promise.resolve();
     const middleware = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
       const pathname = req.url?.split('?')[0] ?? '';
       if (
+        pathname !== '/__wfp/fit-log' &&
         pathname !== '/__wfp/maps' &&
         pathname !== '/__wfp/find-video' &&
         !pathname.startsWith('/__wfp/workspace/') &&
         !pathname.startsWith('/__wfp/map-file/')
       ) {
         next();
+        return;
+      }
+      if (pathname === '/__wfp/fit-log') {
+        void serveFitLog(req, res, fitLog);
         return;
       }
       if (pathname.startsWith('/__wfp/workspace/')) {
