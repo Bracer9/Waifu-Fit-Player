@@ -18,6 +18,8 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   const settings = page.getByRole('dialog', { name: '全局设置', exact: true });
   const audio = page.getByRole('tab', { name: 'AUDIO', exact: true });
   const system = page.getByRole('tab', { name: 'SYSTEM', exact: true });
+  const diamond = (tab: typeof audio) =>
+    tab.evaluate((node) => getComputedStyle(node, '::after').opacity);
   const menuVolume = settings.getByRole('slider', { name: '菜单 BGM 音量', exact: true });
   const videoVolume = settings.getByRole('slider', { name: '游戏／视频音量', exact: true });
   const seVolume = settings.getByRole('slider', { name: '音效（SE）音量', exact: true });
@@ -37,10 +39,12 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await expect(gear).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(settings).toBeVisible();
-  await page.keyboard.press('ArrowDown');
   await focused(audio);
+  await expect.poll(() => diamond(audio)).toBe('1');
+  await expect.poll(() => diamond(system)).toBe('0');
   await page.keyboard.press('ArrowDown');
   await focused(menuVolume);
+  await expect.poll(() => diamond(audio)).toBe('0');
   await expect(menuVolume).toHaveAttribute('data-adjusting', '');
   await page.keyboard.press('ArrowRight');
   await expect(menuVolume).toHaveValue('0.55');
@@ -70,6 +74,8 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await focused(audio);
   await page.keyboard.press('ArrowRight');
   await focused(system);
+  await expect.poll(() => diamond(audio)).toBe('0');
+  await expect.poll(() => diamond(system)).toBe('1');
   await page.keyboard.press('Enter');
   await focused(speed);
   await page.keyboard.press('ArrowRight');
@@ -107,6 +113,12 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   await expect(settings.locator('[data-settings-highlighted]')).toHaveCount(0);
   await page.keyboard.press('Backspace');
   await expect(settings).toBeHidden();
+  await gear.click();
+  await focused(audio);
+  await expect(audio).toHaveAttribute('aria-selected', 'true');
+  await expect(system).toHaveAttribute('aria-selected', 'false');
+  await page.screenshot({ path: 'artifacts/settings-default-audio.png' });
+  await page.keyboard.press('Escape');
   const headphone = page.getByRole('button', { name: '选择主界面 BGM' });
   await headphone.click();
   const music = page.getByRole('region', { name: '主界面音乐' });
@@ -134,8 +146,6 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
     }
     await gear.click();
     await expect(settings).toBeVisible();
-    await page.keyboard.press('ArrowDown');
-    await audio.hover();
     await focused(audio);
     await page.keyboard.press('ArrowDown');
     await focused(menuVolume);

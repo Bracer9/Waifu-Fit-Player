@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import {
   AudioLines,
   Gauge,
@@ -157,8 +157,15 @@ export function MenuSettings({
       node.focus({ preventScroll: true });
     }
   };
-  useEffect(() => {
-    if (!open) clearSelection();
+  useLayoutEffect(() => {
+    clearSelection();
+    if (!open) return;
+    setTab('audio');
+    const audio = root.current?.querySelector<HTMLElement>('#menu-settings-tab-audio');
+    if (audio) {
+      select(audio);
+      audio.focus({ preventScroll: true });
+    }
   }, [open]);
   const close = useRef(onClose);
   close.current = onClose;
@@ -201,6 +208,9 @@ export function MenuSettings({
       }}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) clearSelection();
+      }}
+      onPointerLeave={() => {
+        pointer.current = { x: -1, y: -1 };
       }}
       onPointerMoveCapture={(event) => {
         if (pointer.current.x === event.clientX && pointer.current.y === event.clientY) return;
