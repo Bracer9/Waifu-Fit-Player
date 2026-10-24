@@ -19,12 +19,13 @@ export function AlbumHousing({ open }: { open: boolean }) {
     const update = (animate = false) => {
       const { width, height } = fitMenuViewport(innerWidth, innerHeight);
       const shape = albumHousingOutline(width, height);
-      const target = open ? shape.points : CLOSED;
+      const target = open ? shape.points : shape.closedPoints;
       const from = Array.from({ length: polygon.animatedPoints.numberOfItems }, (_, i) => {
         const point = polygon.animatedPoints.getItem(i);
         return `${point.x},${point.y}`;
       }).join(' ');
       polygon.setAttribute('points', target);
+      corner.style.setProperty('--album-corner-clip', shape.closedClip);
       corner.style.setProperty('--album-deck-clip', shape.clip);
       outline.current!.setAttribute('points', shape.outline);
       if (animate && !reduced.matches) {

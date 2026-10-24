@@ -274,7 +274,8 @@ export function AfterShow({
         ))}
       </div>
       <p className="after-show-key-hints">
-        ← → SELECT <span>ENTER / A CONFIRM</span>
+        <span>← → SELECT</span>
+        <span>ENTER / A CONFIRM</span>
         <span>ESC / B BACK</span>
       </p>
     </section>

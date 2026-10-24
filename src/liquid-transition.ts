@@ -1,3 +1,5 @@
+import { menuViewport, pointInMenu } from './menu-viewport';
+
 export type LiquidPoint = { x: number; y: number };
 
 export const LIQUID_TRANSITION = {
@@ -24,8 +26,19 @@ export function easeOutBetween(start: number, end: number, value: number) {
   return 1 - (1 - t) ** 3;
 }
 
-/** Read all four corners, including the live music transform and settings scale. */
+/** Read the painted silhouette, including the live music transform and settings scale. */
 export function cornerQuad(node: HTMLElement): LiquidPoint[] {
+  const polygon = node.querySelector<SVGPolygonElement>(
+    '.album-housing-surface > polygon, .fit-log-corner-surface > polygon',
+  );
+  const screen = polygon?.getScreenCTM();
+  if (polygon && screen) {
+    const viewport = menuViewport();
+    return Array.from({ length: polygon.animatedPoints.numberOfItems }, (_, i) => {
+      const point = polygon.animatedPoints.getItem(i);
+      return pointInMenu(new DOMPoint(point.x, point.y).matrixTransform(screen), viewport);
+    });
+  }
   const style = getComputedStyle(node);
   const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
   const shift = style.translate === 'none' ? [0, 0] : style.translate.split(' ').map(parseFloat);

@@ -1,4 +1,13 @@
 .menu-app {
+  --menu-corner-inset-block: 32px;
+  --menu-corner-icon-size: 96px;
+  --menu-corner-button-size: 112px;
+  --menu-corner-expand: 460ms;
+  --menu-corner-ease: cubic-bezier(0.22, 0.7, 0.2, 1);
+  --album-player-inset: calc(var(--menu-vw, 1vw) * 2.8);
+  --album-player-padding: 10px;
+  --menu-chrome-inset: calc(var(--album-player-inset) + var(--album-player-padding));
+  --menu-chrome-outset: calc(var(--menu-vw, 1vw) * 5 - var(--menu-chrome-inset));
   /* Size two cards down to the footer's text baseline while keeping the cover ratio. */
   --album-shelf-width: min(
     1120px,
@@ -31,7 +40,12 @@
   width: calc(var(--menu-vw, 1vw) * 25);
   height: calc(var(--menu-vh, 1vh) * 130);
   top: calc(var(--menu-vh, 1vh) * 50);
-  left: calc(var(--menu-vw, 1vw) * -15);
+  /* Grow the clipped triangle's resting area by 1.953125 (edge length × sqrt(1.953125)).
+     Move only its base geometry; keep music transforms and transition motion intact. */
+  left: calc(
+    var(--menu-vw, 1vw) * -15 + (var(--menu-vw, 1vw) * 12.40454 - var(--menu-vh, 1vh) * 9.74111) *
+      0.397542486
+  );
   background: var(--cyan);
   transform: translate(calc(var(--music-beat, 0) * 44px), calc(var(--music-beat, 0) * -32px))
     rotate(-33deg) scale(calc(1 + var(--music-beat, 0) * 0.024));
@@ -230,20 +244,21 @@
   stroke-width: 3;
 }
 .menu-settings {
+  color: #fff9f4;
   position: fixed;
-  top: 28px;
-  right: calc(var(--menu-vw, 1vw) * 5);
+  top: var(--menu-corner-inset-block);
+  right: calc(var(--menu-chrome-inset) - 8px);
   padding: 8px;
-  width: 112px;
-  height: 112px;
+  width: var(--menu-corner-button-size);
+  height: var(--menu-corner-button-size);
   z-index: 10;
 }
 .menu-settings:hover {
   background: transparent;
 }
 .menu-settings > svg {
-  width: 96px;
-  height: 96px;
+  width: var(--menu-corner-icon-size);
+  height: var(--menu-corner-icon-size);
   scale: 1;
   transition:
     transform 180ms ease-out,
@@ -1056,11 +1071,11 @@
 }
 .music-menu-header {
   flex: none;
+  margin-inline: calc(-1 * var(--menu-chrome-outset));
   height: 156px;
   display: flex;
   align-items: center;
   gap: 32px;
-  border-bottom: 2px solid var(--ink);
   padding: 12px 128px 0 var(--title-inset);
 }
 .music-menu-header h1 {
@@ -1083,6 +1098,7 @@
   display: flex;
   flex: none;
   align-items: center;
+  justify-content: flex-end;
   margin-left: 8px;
   padding-bottom: clamp(20px, calc(var(--menu-vh, 1vh) * 2.8), 40px);
   color: var(--ink);
@@ -1090,18 +1106,20 @@
 .menu-controls-actions {
   display: flex;
   flex: none;
-  margin-left: auto;
-  margin-right: 8px;
-  gap: clamp(20px, calc(var(--menu-vw, 1vw) * 2.21), 44px);
+  align-items: center;
+  gap: clamp(14px, calc(var(--menu-vw, 1vw) * 0.88), 24px);
 }
 .menu-control-label {
-  font-size: calc(var(--control-size) * 0.7);
+  font-size: calc(var(--control-size) * 0.64);
+}
+.music-menu .menu-controls {
+  margin-right: calc(-1 * var(--menu-chrome-outset));
 }
 .title-menu .menu-controls {
   position: fixed;
   bottom: 0;
-  left: calc(calc(var(--menu-vw, 1vw) * 5) + 8px);
-  right: calc(var(--menu-vw, 1vw) * 5);
+  left: var(--menu-chrome-inset);
+  right: var(--menu-chrome-inset);
   margin-left: 0;
 }
 .menu-control,
@@ -1111,11 +1129,10 @@
 }
 .menu-control {
   gap: 8px;
+  min-height: var(--control-size);
+  white-space: nowrap;
 }
 .menu-control-back {
-  position: absolute;
-  left: 0;
-  top: 0;
   padding: 0;
 }
 .menu-control-back svg {
@@ -1140,7 +1157,7 @@
   align-items: center;
   position: absolute;
   top: 28px;
-  left: calc(var(--menu-vw, 1vw) * 5);
+  left: calc(var(--menu-chrome-inset) - 8px);
   width: 112px;
   height: 112px;
   justify-content: center;
@@ -1178,7 +1195,7 @@
   height: 0;
 }
 .music-menu.albums .album-shelf {
-  /* The centred cards use the empty space between the two footer control groups. */
+  /* The centred cards extend into the clear space left of the footer controls. */
   margin-bottom: calc(-1 * clamp(29px, calc(var(--menu-vw, 1vw) * 2.295), 37.4px));
 }
 .music-menu.albums .menu-controls {

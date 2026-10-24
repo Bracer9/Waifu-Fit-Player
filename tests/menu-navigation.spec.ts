@@ -303,11 +303,16 @@ test('菜单齿轮归位一致，前进返回动画与菜单操作音效', async
   await expect(page.locator('.music-menu.albums')).toBeVisible();
   const enter = (await enterGuide.boundingBox())!;
   const gearIcon = (await gear.locator(':scope > svg').boundingBox())!;
-  expect(enter.x + enter.width).toBeCloseTo(gearIcon.x + gearIcon.width, 0);
   await page.mouse.move(10, 10);
-  expect((await page.locator('.menu-control-back svg').boundingBox())!.x).toBe(
-    (await page.locator('.menu-back svg').boundingBox())!.x,
-  );
+  const back = (await page.locator('.menu-control-back').boundingBox())!;
+  const select = (await selectGuide.boundingBox())!;
+  const header = (await page.locator('.music-menu-header').boundingBox())!;
+  expect(back.x + back.width).toBeCloseTo(gearIcon.x + gearIcon.width, 0);
+  expect(back.x + back.width).toBeCloseTo(header.x + header.width, 0);
+  expect((await page.locator('.menu-back > svg').boundingBox())!.x).toBeCloseTo(header.x, 0);
+  expect(select.x + select.width).toBeLessThan(enter.x);
+  expect(enter.x + enter.width).toBeLessThan(back.x);
+  expect(back.y + back.height / 2).toBeCloseTo(select.y + select.height / 2, 0);
   expect([await selectGuide.boundingBox(), await enterGuide.boundingBox()]).toEqual(wideGuides);
   await page.screenshot({ path: 'artifacts/menu-controls-albums-2560.png' });
   await page.locator('.collection-album').first().click();

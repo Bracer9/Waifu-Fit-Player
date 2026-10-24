@@ -36,7 +36,24 @@ export function albumHousingOutline(width: number, height: number) {
     const length = Math.hypot(dx, dy);
     return toLocal([x + (dx / length) * 8, y + (dy / length) * 8]);
   });
+  // Shrink only the closed silhouette about the viewport's top-right corner.
+  // The inverse includes the open state's existing 2vw / 83vh translation;
+  // neither the corner's music transform nor the open player geometry changes.
+  const anchor = toLocal([width * 1.02, height * 0.83]);
+  const closed = [
+    [0, 0],
+    [boxWidth, 0],
+    [boxWidth, boxHeight],
+    [0, boxHeight],
+    [0, boxHeight / 2],
+    [0, 0],
+  ].map(([x, y]) => ({
+    x: anchor.x + (x - anchor.x) * Math.sqrt(0.75),
+    y: anchor.y + (y - anchor.y) * Math.sqrt(0.75),
+  }));
   return {
+    closedPoints: points(closed),
+    closedClip: `polygon(${closed.map(({ x, y }) => `${x.toFixed(3)}px ${y.toFixed(3)}px`).join(',')})`,
     points: points(local),
     clip: `polygon(${local.map(({ x, y }) => `${x.toFixed(3)}px ${y.toFixed(3)}px`).join(',')})`,
     outline: points(inset),

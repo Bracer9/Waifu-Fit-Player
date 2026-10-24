@@ -156,13 +156,13 @@ export function PracticePause({
           ))}
         </div>
         <div className="pause-key-hints" aria-hidden="true">
-          <kbd>ESC</kbd>
-          <span>/ Back · Resume</span>
-          <i />
           <kbd>
             <CornerDownLeft />
           </kbd>
           <span>Confirm</span>
+          <i />
+          <kbd>ESC</kbd>
+          <span>/ Back · Resume</span>
         </div>
       </div>
     </div>
