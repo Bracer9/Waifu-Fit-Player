@@ -11,7 +11,7 @@ function effortFor(note: Note): [number, number] {
   switch (note.lane) {
     case 'squat':
       // Static holds carry more sustained effort than swaying in the squat.
-      return note.direction === 'down' ? [3, sway ? 3 : 3.5] : [1.5, 0];
+      return note.direction === 'down' ? [3.6, sway ? 3.6 : 4.2] : [1.8, 0];
     case 'calf_raise':
       return note.direction === 'up' ? [0.4, 0.25] : [0.2, 0];
     case 'punch':

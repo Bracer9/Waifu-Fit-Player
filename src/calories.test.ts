@@ -12,20 +12,20 @@ describe('chart calorie estimate', () => {
     expect(total([])).toBe(0);
     const index = createCalorieIndex([squat]);
     expect(caloriesAt(index, 999)).toBe(0);
-    expect(caloriesAt(index, 1000)).toBeCloseTo(0.1242);
+    expect(caloriesAt(index, 1000)).toBeCloseTo(0.14904);
     expect(caloriesAt(index, 60000)).toBe(caloriesAt(index, 1000));
     expect(total([squat])).toBeGreaterThan(total([{ ...squat, lane: 'step', direction: 'left' }]));
   });
 
   it('accrues only the elapsed hold portion and does not award its tail twice', () => {
     const index = createCalorieIndex([squatHold]);
-    expect(caloriesAt(index, 1000)).toBeCloseTo(0.1242);
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.414);
-    expect(caloriesAt(index, 5000)).toBeCloseTo(0.7038);
+    expect(caloriesAt(index, 1000)).toBeCloseTo(0.14904);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.4968);
+    expect(caloriesAt(index, 5000)).toBeCloseTo(0.84456);
     expect(caloriesAt(index, 60000)).toBe(caloriesAt(index, 5000));
     // A paused frame and a backward seek are lookups, not additional exercise.
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.414);
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.414);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.4968);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.4968);
     expect(caloriesAt(index, 0)).toBe(0);
   });
 
@@ -34,12 +34,12 @@ describe('chart calorie estimate', () => {
     const sway: Note = { ...hold, modifier: 'sway' };
     const holdIndex = createCalorieIndex([hold]);
     const swayIndex = createCalorieIndex([sway]);
-    expect(caloriesAt(holdIndex, 1000)).toBeCloseTo(0.1242);
-    expect(caloriesAt(swayIndex, 1000)).toBeCloseTo(0.1242);
-    expect(total([hold])).toBeCloseTo(1.5732);
-    expect(total([sway])).toBeCloseTo(1.3662);
-    expect(total([{ ...hold, direction: 'up' }])).toBeCloseTo(0.0621);
-    expect(total([{ ...sway, direction: 'up' }])).toBeCloseTo(0.0621);
+    expect(caloriesAt(holdIndex, 1000)).toBeCloseTo(0.14904);
+    expect(caloriesAt(swayIndex, 1000)).toBeCloseTo(0.14904);
+    expect(total([hold])).toBeCloseTo(1.88784);
+    expect(total([sway])).toBeCloseTo(1.63944);
+    expect(total([{ ...hold, direction: 'up' }])).toBeCloseTo(0.07452);
+    expect(total([{ ...sway, direction: 'up' }])).toBeCloseTo(0.07452);
   });
 
   it('combines overlapping lanes and removes each hold rate at its own ending', () => {
@@ -58,10 +58,10 @@ describe('chart calorie estimate', () => {
     ];
     const before = structuredClone(notes);
     const index = createCalorieIndex(notes);
-    expect(caloriesAt(index, 2000)).toBeCloseTo(0.276552);
-    expect(caloriesAt(index, 3000)).toBeCloseTo(0.493902);
-    expect(caloriesAt(index, 4000)).toBeCloseTo(0.661572);
-    expect(caloriesAt(index, 5000)).toBeCloseTo(0.806472);
+    expect(caloriesAt(index, 2000)).toBeCloseTo(0.330372);
+    expect(caloriesAt(index, 3000)).toBeCloseTo(0.576702);
+    expect(caloriesAt(index, 4000)).toBeCloseTo(0.773352);
+    expect(caloriesAt(index, 5000)).toBeCloseTo(0.947232);
     expect(notes).toEqual(before);
   });
 
@@ -87,6 +87,6 @@ describe('chart calorie estimate', () => {
     const chart = { ...blankChart(), videoOffsetMs: 200 };
     const index = createCalorieIndex([squat]);
     expect(caloriesAt(index, chartTimeAt(chart, 799))).toBe(0);
-    expect(caloriesAt(index, chartTimeAt(chart, 800))).toBeCloseTo(0.1242);
+    expect(caloriesAt(index, chartTimeAt(chart, 800))).toBeCloseTo(0.14904);
   });
 });
