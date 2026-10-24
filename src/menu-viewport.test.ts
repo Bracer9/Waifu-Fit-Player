@@ -25,13 +25,13 @@ describe('menu composition fitting', () => {
     });
   });
 
-  it('fits the complete 16:9 composition, centres the spare space and maps input back to design pixels', () => {
+  it('fills taller laptop windows without stretching the design pixel scale and maps input back', () => {
     expect(fitMenuViewport(1440, 900)).toEqual({
       width: 1920,
-      height: 1080,
+      height: 1200,
       scale: 0.75,
       x: 0,
-      y: 45,
+      y: 0,
       scaled: true,
     });
     for (const [width, height] of [

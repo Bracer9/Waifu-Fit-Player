@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { importDemo, insertAlbum } from './helpers/project';
 import { blankChart } from '../src/model';
+import { fitMenuViewport } from '../src/menu-viewport';
 
 async function project(page: Page) {
   await page.goto('/');
@@ -53,7 +54,6 @@ test('gameplay preserves desktop composition, media identity and pause input acr
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.evaluate(() => document.fonts.ready);
   const video = (await page.locator('video').elementHandle())!;
-  const reference = await geometry(page);
   for (const [width, height] of [
     [1470, 956],
     [1440, 800],
@@ -61,6 +61,9 @@ test('gameplay preserves desktop composition, media identity and pause input acr
     [1280, 800],
     [2560, 900],
   ]) {
+    const fitted = fitMenuViewport(width, height);
+    await page.setViewportSize({ width: 1920, height: Math.round(fitted.height) });
+    const reference = await geometry(page);
     await page.setViewportSize({ width, height });
     const stage = (await page.locator('#root').boundingBox())!;
     const scale = stage.width / 1920;
@@ -72,7 +75,7 @@ test('gameplay preserves desktop composition, media identity and pause input acr
           expect(
             Math.abs(logical - reference[selector][index][key]),
             `${width} ${selector} ${key}`,
-          ).toBeLessThan(0.3);
+          ).toBeLessThan(1);
         }
       }
     expect(await video.evaluate((v) => v.isConnected)).toBe(true);
@@ -83,10 +86,11 @@ test('gameplay preserves desktop composition, media identity and pause input acr
   const slider = (await page
     .getByRole('slider', { name: 'Playback position', exact: true })
     .boundingBox())!;
+  const duration = await video.evaluate((v: HTMLVideoElement) => v.duration);
   await page.mouse.click(slider.x + slider.width / 2, slider.y + slider.height / 2);
   await expect
     .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
-    .toBeGreaterThan(70);
+    .toBeGreaterThan(duration * 0.4);
   await page.screenshot({ path: 'artifacts/player-fit-1470.png' });
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: 'PAUSED', exact: true })).toBeVisible();
@@ -95,8 +99,45 @@ test('gameplay preserves desktop composition, media identity and pause input acr
   await page.getByRole('button', { name: 'EDIT IN STUDIO', exact: true }).click();
   await expect(page.locator('html')).not.toHaveAttribute('data-menu-fit');
   expect(await video.evaluate((v) => v.isConnected)).toBe(true);
-  expect(await video.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThan(70);
+  expect(await video.evaluate((v: HTMLVideoElement) => v.currentTime)).toBeGreaterThan(
+    duration * 0.4,
+  );
   expect(errors).toEqual([]);
+});
+
+test('tall laptop fills the room through natural finish and preserves the video frame', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1470, height: 956 });
+  await page.goto('/');
+  await importDemo(page, {
+    ...blankChart('Tall screen finish'),
+    playRange: { startMs: 0, endMs: 2500 },
+    notes: [{ id: 'first', lane: 'squat', kind: 'tap', direction: 'down', timeMs: 1000 }],
+  });
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  const video = (await page.locator('video').elementHandle())!;
+  if (await video.evaluate((v: HTMLVideoElement) => v.paused))
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.locator('.after-show')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('.after-show-snap')).toHaveAttribute('data-phase', 'photo');
+  const root = (await page.locator('#root').boundingBox())!;
+  expect(root.y).toBeCloseTo(0, 1);
+  expect(root.height).toBeCloseTo(956, 1);
+  expect(await video.evaluate((v) => v.isConnected)).toBe(true);
+  await page.locator('.practice').evaluate((node) =>
+    Promise.all(
+      node
+        .getAnimations({ subtree: true })
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
+  await page.screenshot({ path: 'artifacts/player-fit-after-show-1470.png' });
+  await page.getByRole('button', { name: /ENCORE/ }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.after-show')).toHaveCount(0);
+  expect(await video.evaluate((v) => v.isConnected)).toBe(true);
 });
 
 test('laptop song confirmation, full-window entrance, countdown and resume share the stage', async ({

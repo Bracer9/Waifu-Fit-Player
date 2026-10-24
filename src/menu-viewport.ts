@@ -9,18 +9,21 @@ export type MenuViewport = {
   scaled: boolean;
 };
 
-/** Keep existing large-window layouts; fit the desktop composition into smaller windows. */
+/** Fit desktop UI uniformly; use the extra height of laptop screens instead of letterboxing. */
 export function fitMenuViewport(width: number, height: number, enabled = true): MenuViewport {
   width = Math.max(1, width);
   height = Math.max(1, height);
   const scale = enabled ? Math.min(1, width / MENU_DESIGN.width, height / MENU_DESIGN.height) : 1;
   const scaled = scale < 1;
+  const laptopAspect =
+    width / height >= 1.45 && width / height < MENU_DESIGN.width / MENU_DESIGN.height;
+  const logicalHeight = scaled && laptopAspect ? height / scale : MENU_DESIGN.height;
   return {
     width: scaled ? MENU_DESIGN.width : width,
-    height: scaled ? MENU_DESIGN.height : height,
+    height: scaled ? logicalHeight : height,
     scale,
     x: scaled ? (width - MENU_DESIGN.width * scale) / 2 : 0,
-    y: scaled ? (height - MENU_DESIGN.height * scale) / 2 : 0,
+    y: scaled ? (height - logicalHeight * scale) / 2 : 0,
     scaled,
   };
 }
@@ -36,10 +39,17 @@ export function syncMenuViewport(active: boolean) {
   enabled = active;
   const viewport = menuViewport();
   const root = document.getElementById('root')!;
+  document.documentElement.toggleAttribute(
+    'data-menu-tall',
+    active &&
+      innerWidth / innerHeight >= 1.45 &&
+      innerWidth / innerHeight < MENU_DESIGN.width / MENU_DESIGN.height,
+  );
   if (viewport.scaled) {
     document.documentElement.dataset.menuFit = '';
     root.style.setProperty('--menu-vw', `${MENU_DESIGN.width / 100}px`);
-    root.style.setProperty('--menu-vh', `${MENU_DESIGN.height / 100}px`);
+    root.style.setProperty('--menu-vh', `${viewport.height / 100}px`);
+    root.style.setProperty('--menu-stage-height', `${viewport.height}px`);
     root.style.setProperty('--menu-scale', String(viewport.scale));
     root.style.setProperty('--menu-offset-x', `${viewport.x}px`);
     root.style.setProperty('--menu-offset-y', `${viewport.y}px`);
@@ -48,6 +58,7 @@ export function syncMenuViewport(active: boolean) {
     for (const property of [
       '--menu-vw',
       '--menu-vh',
+      '--menu-stage-height',
       '--menu-scale',
       '--menu-offset-x',
       '--menu-offset-y',

@@ -8,11 +8,22 @@ html[data-menu-fit] #root {
   left: var(--menu-offset-x);
   top: var(--menu-offset-y);
   width: 1920px;
-  height: 1080px;
+  height: var(--menu-stage-height);
   transform: scale(var(--menu-scale));
   transform-origin: 0 0;
   overflow: clip;
   isolation: isolate;
+}
+/* Extra ceiling/floor room belongs to the backdrop, not stretched lanes or video walls. */
+html[data-menu-tall] .album-workspace.practice {
+  --album-height: calc(var(--menu-vw, 1vw) * 36.3375);
+}
+/* The taller diagonal needs a little more paint behind the unchanged white corner icon. */
+html[data-menu-tall]
+  .menu-app:not(:has(> .fit-log[data-open]))
+  > .ambient-shape.cyan
+  :is(.fit-log-corner-surface, .fit-log-corner-details) {
+  transform: translateX(calc(var(--menu-vw, 1vw) * 2.65 + 16px));
 }
 /* Use the same open-panel clearance as the 1080p reference on fitted stages. */
 html[data-menu-fit] .title-menu:has(.music-console[data-open]) .mode-records {

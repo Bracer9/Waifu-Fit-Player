@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { importDemo } from './helpers/project';
 import { blankChart } from '../src/model';
 import { albumHousingOutline } from '../src/album-deck-motion';
+import { fitMenuViewport } from '../src/menu-viewport';
 
 const selectors = [
   '.title-brand',
@@ -24,7 +25,7 @@ test('entering albums directly from the editor fits the housing before the first
   await page.getByRole('button', { name: '音游模式', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-menu-fit');
   const corner = page.locator('.ambient-shape.pink');
-  const expected = albumHousingOutline(1920, 1080).clip;
+  const expected = albumHousingOutline(1920, fitMenuViewport(1470, 956).height).clip;
   expect(
     await corner.evaluate((node) =>
       (node as HTMLElement).style.getPropertyValue('--album-deck-clip'),
@@ -40,7 +41,7 @@ test('entering albums directly from the editor fits the housing before the first
     await corner.evaluate((node) =>
       (node as HTMLElement).style.getPropertyValue('--album-deck-clip'),
     ),
-  ).toBe(expected);
+  ).toBe(albumHousingOutline(1920, 1080).clip);
 });
 async function home(page: Page) {
   await page.goto('/');
@@ -87,10 +88,24 @@ test('Retina pixel density does not change the logical menu size', async ({ brow
     await expect(page.locator('html')).toHaveAttribute('data-menu-fit', '');
     const stage = (await page.locator('#root').boundingBox())!;
     expect(stage.width).toBeCloseTo(1470, 1);
-    expect(stage.height).toBeCloseTo((1080 * 1470) / 1920, 1);
+    expect(stage.height).toBeCloseTo(956, 1);
+    expect(stage.y).toBeCloseTo(0, 1);
     await page.getByRole('button', { name: '全局设置', exact: true }).click();
     await expect(page.getByRole('tab', { name: /AUDIO/ })).toBeVisible();
     await page.screenshot({ path: 'artifacts/menu-fit-retina-1470.png' });
+    await page.keyboard.press('Escape');
+    await page.locator('.play-mode').click();
+    await expect(page.locator('.menu-curtain')).toHaveCount(0);
+    await page.locator('.fit-log-trigger').hover();
+    await expect(page.locator('.fit-log-panel')).toHaveCSS('opacity', '1');
+    await page.screenshot({ path: 'artifacts/menu-fit-retina-albums-1470.png' });
+    await page.mouse.move(1000, 650);
+    await page.locator('.collection-album[data-id="all"]').click();
+    await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+    const card = (await page.locator('.collection-album[aria-current="true"]').boundingBox())!;
+    const slot = (await page.locator('.album-deck-slot').boundingBox())!;
+    expect(Math.abs(slot.y + slot.height / 2 - card.y - card.height / 2)).toBeLessThan(6);
+    await page.screenshot({ path: 'artifacts/menu-fit-retina-player-1470.png' });
   } finally {
     await context.close();
   }
@@ -103,7 +118,8 @@ for (const [width, height] of [
   [1440, 800],
 ]) {
   test(`home retains its desktop composition at ${width}x${height}`, async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 });
+    const logicalHeight = Math.round(fitMenuViewport(width, height).height);
+    await page.setViewportSize({ width: 1920, height: logicalHeight });
     await home(page);
     await freeze(page);
     const reference = await geometry(page);
@@ -118,14 +134,15 @@ for (const [width, height] of [
         for (const edge of ['x', 'y', 'width', 'height'] as const) {
           const value =
             (rect[edge] - (edge === 'x' ? stage.x : edge === 'y' ? stage.y : 0)) / scale;
-          expect(Math.abs(value - expected[edge]), `${selector} ${edge}`).toBeLessThan(0.2);
+          // The native reference viewport rounds the fitted stage's fractional logical height.
+          expect(Math.abs(value - expected[edge]), `${selector} ${edge}`).toBeLessThan(1);
         }
       }
     expect(stage.x).toBeCloseTo((width - stage.width) / 2, 1);
     expect(stage.y).toBeCloseTo((height - stage.height) / 2, 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     await page.screenshot({ path: `artifacts/menu-fit-home-${width}-${height}.png` });
-    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.setViewportSize({ width: 1920, height: logicalHeight });
     await expect(page.locator('html')).not.toHaveAttribute('data-menu-fit');
     expect(await geometry(page)).toEqual(reference);
   });
