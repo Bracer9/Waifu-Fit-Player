@@ -32,6 +32,7 @@ import {
   noteAction,
   isStepMove,
   isFollowStep,
+  isLegHold,
   isPunchAction,
   armHand,
   stepFoot,
@@ -51,6 +52,7 @@ import {
   type ArmAction,
   type ArmHand,
   type StepFoot,
+  type SpinDirection,
 } from '../model';
 import { MediaController, useMediaStatus, useTime, type LoopRange } from '../media';
 import { LoopPositionField, TimelineLoop } from '../components/TimelineLoop';
@@ -79,7 +81,7 @@ import {
   setStepFoot,
 } from '../editing';
 import { isTyping, useRecording } from '../recording';
-import { NoteGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
+import { NoteGlyph, PalmPrint, ShoePrint, SquatDownCue, LegUpCue } from '../components/Glyph';
 import { checkStepPositions } from '../stepping';
 import { ArmActionPicker, ArmHandPicker } from '../components/ArmPicker';
 import { armDisplayNotes, armEventIds, type DisplayNote } from '../armDisplay';
@@ -251,6 +253,7 @@ export function Editor({
   const [stepDistance, setDrawDistance] = useState<StepDistance>(1);
   const [drawType, setDrawType] = useState<NoteType>('tap');
   const [drawConnectPrevious, setDrawConnectPrevious] = useState(true);
+  const [drawSpinDirection, setDrawSpinDirection] = useState<SpinDirection>('clockwise');
   const [recording, setRecording] = useState(false),
     [snap, setSnap] = useState<Snap>(2);
   const [tool, setTool] = useState<'select' | 'draw'>('draw');
@@ -302,6 +305,8 @@ export function Editor({
   const stepIssues = useMemo(() => checkStepPositions(shown), [shown]);
   const pickLane = (newLane: Lane) => {
     setLane(newLane);
+    if (newLane === 'punch' && drawArmAction === 'clap')
+      setDrawType((current) => (current === 'tap' || current === 'follow' ? 'tap' : 'hold'));
     if (newLane === 'side_crunch') setDrawFoot((foot) => (foot === 'both' ? 'left' : foot));
     if (newLane !== 'step')
       setDrawType((current) =>
@@ -309,7 +314,7 @@ export function Editor({
       );
     const dirs = LANES.find((l) => l.id === newLane)!.directions as readonly Direction[];
     setDirection((current) =>
-      newLane === 'punch' && drawArmAction === 'forward'
+      newLane === 'punch' && (drawArmAction === 'forward' || drawArmAction === 'clap')
         ? 'forward'
         : newLane === 'punch' && drawArmAction === 'punch'
           ? current === 'right'
@@ -330,6 +335,7 @@ export function Editor({
     onHand: () => setDrawHand((hand) => nextArmHand(hand)),
     foot: drawFoot,
     connectPrevious: drawConnectPrevious,
+    spinDirection: drawSpinDirection,
     onFoot: () => setDrawFoot((foot) => nextStepFoot(foot, lane === 'step')),
     onLane: pickLane,
     onNote: (note) => onChange({ ...chart, notes: [...chart.notes, note] }),
@@ -364,12 +370,12 @@ export function Editor({
       n.lane === 'punch' &&
       !spreadIds.has(n.id) &&
       n.armAction !== 'forward' &&
+      n.armAction !== 'clap' &&
       !isPunchAction(n.lane, n.direction, n.armAction),
   );
   const canFlip = chart.notes.some(
     (n) =>
       selected.includes(n.id) &&
-      n.direction !== 'free' &&
       (n.direction !== 'forward' || n.hand !== 'both') &&
       !spreadIds.has(n.id),
   );
@@ -677,6 +683,7 @@ export function Editor({
     setDraft(value);
   };
   const drawEvent = (d: Drag, end: number): Chart => {
+    const clap = d.lane === 'punch' && drawArmAction === 'clap';
     const isFollow = d.lane === 'step' && (drawType === 'follow' || drawType === 'follow-sway');
     const followTap = isFollow && drawType === 'follow';
     const isHold =
@@ -700,8 +707,9 @@ export function Editor({
         ],
       };
     const dirs = LANES.find((l) => l.id === d.lane)!.directions as readonly Direction[];
-    const dir =
-      d.lane === 'punch' && drawArmAction === 'punch'
+    const dir = clap
+      ? 'forward'
+      : d.lane === 'punch' && drawArmAction === 'punch'
         ? direction === 'right'
           ? 'right'
           : 'left'
@@ -729,10 +737,12 @@ export function Editor({
         };
     if (d.lane === 'step' && dir !== 'free' && stepDistance === 2 && !isFollow) note.distance = 2;
     if (isFollow && !drawConnectPrevious) note.connectPrevious = false;
+    if (d.lane === 'step' && dir === 'free') note.spinDirection = drawSpinDirection;
     if (d.lane === 'step' || d.lane === 'side_crunch') note.foot = drawFoot;
     if (d.lane === 'punch') {
       note.armAction = drawArmAction;
-      if ((drawArmAction === 'reach' && drawHand !== 'any') || drawArmAction === 'forward')
+      if (drawArmAction === 'clap') note.hand = 'both';
+      else if ((drawArmAction === 'reach' && drawHand !== 'any') || drawArmAction === 'forward')
         note.hand = drawHand;
       if (drawSpread) {
         const left: Note = { ...note, direction: 'left', armAction: 'reach', hand: 'left' };
@@ -866,7 +876,9 @@ export function Editor({
           <span className="event-glyph">
             <NoteGlyph
               lane={n.lane}
+              legHold={isLegHold(n)}
               direction={n.direction}
+              spinDirection={n.spinDirection}
               armAction={n.armAction}
               hand={n.hand}
               distance={n.distance}
@@ -880,11 +892,14 @@ export function Editor({
           <span className="event-caption">
             {!isSpecial &&
               ((n.lane === 'squat' && !isSway) ||
+                isLegHold(n) ||
                 (isSway &&
                   (n.lane === 'step' || n.lane === 'punch') &&
                   (n.lane === 'punch' || n.direction === 'left' || n.direction === 'right'))) && (
                 <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                  {n.lane === 'squat' ? (
+                  {isLegHold(n) ? (
+                    <LegUpCue />
+                  ) : n.lane === 'squat' ? (
                     <SquatDownCue />
                   ) : n.lane === 'punch' ? (
                     <PalmPrint />
@@ -1186,6 +1201,15 @@ export function Editor({
                 hand={drawHand}
                 onChange={(value) => {
                   setDrawSpread(value === 'spread');
+                  if (value === 'clap') {
+                    setDrawArmAction('clap');
+                    setDrawHand('both');
+                    setDirection('forward');
+                    setDrawType((current) =>
+                      current === 'tap' || current === 'follow' ? 'tap' : 'hold',
+                    );
+                    return;
+                  }
                   if (value === 'spread') {
                     setDrawArmAction('reach');
                     setDrawHand('both');
@@ -1261,10 +1285,25 @@ export function Editor({
             <>
               <option value="tap">TAP</option>
               <option value="hold">HOLD</option>
-              <option value="sway">SWAY</option>
+              {!(lane === 'punch' && drawArmAction === 'clap') && (
+                <option value="sway">SWAY</option>
+              )}
             </>
           )}
         </select>
+        {lane === 'step' && (recording || direction === 'free') && (
+          <label className="inline-field">
+            SPIN 方向
+            <select
+              aria-label="绘制 SPIN 旋转方向"
+              value={drawSpinDirection}
+              onChange={(e) => setDrawSpinDirection(e.target.value as SpinDirection)}
+            >
+              <option value="clockwise">↻ 顺时针</option>
+              <option value="counterclockwise">↺ 逆时针</option>
+            </select>
+          </label>
+        )}
         {lane === 'step' && (recording || drawType === 'follow' || drawType === 'follow-sway') && (
           <label className="inline-field">
             <input
@@ -1279,9 +1318,9 @@ export function Editor({
         <span className="record-hint">
           {recording
             ? lane === 'step'
-              ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · Ctrl + Alt + 长按 FOLLOW SWAY · ↓ FREE SWAY · Shift 跨两格 · 长按 HOLD · Ctrl + 长按 SWAY'
+              ? '←/→ 方向 · H 换脚颜色 · Alt + ←/→ FOLLOW · Ctrl + Alt + 长按 FOLLOW SWAY · ↓ SPIN 原地转圈 · Shift 跨两格 · 长按 LEG HOLD 抬腿 · Ctrl + 长按 SWAY'
               : lane === 'punch'
-                ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · U/I/O 左/右/双手前伸 · H 箭头换手 · 长按 HOLD · Ctrl+长按 SWAY'
+                ? '↑↓←→ · Shift+←/→ ↖↗ · Alt+←/→ ↙↘ · J/K 拳套 · U/I/O 左/右/双手前伸 · P 拍手 · H 箭头换手 · 长按 HOLD · Ctrl+长按 SWAY'
                 : lane === 'side_crunch'
                   ? '←/→ 动作方向 · H 换腿颜色 · 长按 HOLD · Ctrl + 长按 SWAY'
                   : '1–5 选轨 · 点按 TAP · 长按 HOLD · Ctrl + 长按 SWAY'
@@ -1497,11 +1536,28 @@ export function Editor({
                         <>
                           <option value="tap">{selectedNote ? 'TAP' : 'SPECIAL'}</option>
                           <option value="hold">{selectedNote ? 'HOLD' : 'SPECIAL HOLD'}</option>
-                          {selectedNote && <option value="sway">SWAY</option>}
+                          {selectedNote && selectedNote.armAction !== 'clap' && (
+                            <option value="sway">SWAY</option>
+                          )}
                         </>
                       )}
                     </select>
                   </label>
+                  {selectedNote?.lane === 'step' && selectedNote.direction === 'free' && (
+                    <label className="field">
+                      <span>SPIN 旋转方向</span>
+                      <select
+                        aria-label="选中 SPIN 旋转方向"
+                        value={selectedNote.spinDirection ?? 'clockwise'}
+                        onChange={(e) =>
+                          patchEvent({ spinDirection: e.target.value as SpinDirection })
+                        }
+                      >
+                        <option value="clockwise">↻ 顺时针</option>
+                        <option value="counterclockwise">↺ 逆时针</option>
+                      </select>
+                    </label>
+                  )}
                   {selectedNote && isFollowStep(selectedNote) && (
                     <label className="inline-field">
                       <input
@@ -1575,7 +1631,7 @@ export function Editor({
                   )}
                   {selectedNote?.lane === 'punch' && (
                     <div className="arm-inspector">
-                      <span>动作方向 / 拳套</span>
+                      <span>手臂动作</span>
                       <ArmActionPicker
                         label="选中手臂动作"
                         value={selectedSpread ? 'spread' : armActionValue(selectedNote)}
@@ -1586,7 +1642,11 @@ export function Editor({
                           setSelected(next.ids);
                         }}
                       />
-                      {selectedNote.armAction === 'forward' ? (
+                      {selectedNote.armAction === 'clap' ? (
+                        <p className="inspector-tip">
+                          CLAP 拍手：双手紫色，支持 TAP／HOLD。录谱点按 P，长按 P 保持。
+                        </p>
+                      ) : selectedNote.armAction === 'forward' ? (
                         <p className="inspector-tip">
                           水平前伸：L 左手蓝色，R 右手红色，BOTH
                           双手紫色；左掌拇指朝右，右掌拇指朝左。F 互换单手。

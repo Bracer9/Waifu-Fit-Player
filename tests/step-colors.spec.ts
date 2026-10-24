@@ -89,9 +89,9 @@ test('STEP separates type, direction and foot color in editing, recording and ga
     'TAP',
     'FOLLOW',
     'FOLLOW SWAY',
-    'HOLD',
+    'LEG HOLD',
     'SWAY',
-    'FREE SWAY',
+    'SPIN',
   ]);
   await expect(
     page.getByRole('group', { name: '录入用脚', exact: true }).getByRole('button'),
@@ -197,6 +197,6 @@ test('STEP separates type, direction and foot color in editing, recording and ga
     'fill',
     'rgb(181, 138, 238)',
   );
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SPIN');
   expect(errors).toEqual([]);
 });

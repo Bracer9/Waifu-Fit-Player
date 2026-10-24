@@ -22,6 +22,7 @@ import {
 } from './editing';
 import { checkStepPositions } from './stepping';
 import { demoChart } from './demo';
+import { noteGlyphShape } from './components/Glyph';
 
 const tap = (id: string, direction: Note['direction'], timeMs: number, distance?: 1 | 2): Note => ({
   id,
@@ -250,7 +251,7 @@ describe('统一 STEP 动作', () => {
   ])('拒绝无效自由摇摆或跨度组合 %#', (note) => {
     expect(() => parseChart(chartOf([note as Note]))).toThrow();
   });
-  it('反向、跨度与跨轨保留左右长条；FREE 不反向、不跨轨、不设置跨度', () => {
+  it('反向、跨度与跨轨保留左右长条；SPIN 反向但不跨轨、不设置跨度', () => {
     const chart = chartOf([
       hold('l', 'left', 0, 1000, 'sway', 2),
       hold('f', 'free', 1000, 2000),
@@ -258,7 +259,7 @@ describe('统一 STEP 动作', () => {
     ]);
     expect(flipNotes(chart, ['l', 'f']).notes).toEqual([
       { ...chart.notes[0], direction: 'right', foot: 'left' },
-      chart.notes[1],
+      { ...chart.notes[1], spinDirection: 'counterclockwise' },
       chart.notes[2],
     ]);
     expect(setStepDistance(chart, ['l', 'f'], 1).notes[0].distance).toBeUndefined();
@@ -268,6 +269,31 @@ describe('统一 STEP 动作', () => {
       lane: 'punch',
       direction: 'right',
     });
+  });
+  it('SPIN 两种方向保存重开、复制和反向一致，旧谱默认顺时针', () => {
+    const legacy = hold('spin', 'free', 1000, 2000);
+    const clockwise = chartOf([legacy]);
+    expect(parseChart(JSON.parse(serializeChart(clockwise))).notes[0]).toEqual(legacy);
+    expect(noteGlyphShape('step', 'free').mirror).toBe(false);
+    const reversed = flipNotes(clockwise, ['spin']);
+    const note = reversed.notes[0];
+    expect(note.spinDirection).toBe('counterclockwise');
+    expect(
+      noteGlyphShape('step', 'free', 1, undefined, undefined, false, note.spinDirection).mirror,
+    ).toBe(true);
+    expect(parseChart(JSON.parse(serializeChart(reversed)))).toEqual(reversed);
+    expect(pasteEvents(reversed, [note], [], 3000, 20000).chart.notes[1].spinDirection).toBe(
+      'counterclockwise',
+    );
+    expect(changeNoteForm(note, 'sway', 'free', 2500).spinDirection).toBe('counterclockwise');
+    expect(changeNoteForm(note, 'tap', 'left', 2500).spinDirection).toBeUndefined();
+    expect(flipNotes(reversed, ['spin']).notes[0].spinDirection).toBe('clockwise');
+    expect(() =>
+      parseChart(chartOf([{ ...legacy, spinDirection: 'wrong' } as unknown as Note])),
+    ).toThrow();
+    expect(() =>
+      parseChart(chartOf([{ ...tap('tap', 'left', 0), spinDirection: 'clockwise' }])),
+    ).toThrow();
   });
   it('只检查 STEP 时间冲突，不再依赖合腿推断站位', () => {
     const chart = chartOf([
@@ -283,7 +309,7 @@ describe('统一 STEP 动作', () => {
     expect(checkStepPositions(chart).map((i) => i.noteId)).toEqual(['early', 'long', 'still-busy']);
     expect(chart).toEqual(before);
   });
-  it('示例只包含左右和独立 FREE SWAY，长条不冲突', () => {
+  it('示例只包含左右和独立 SPIN，长条不冲突', () => {
     const chart = demoChart('demo.mp4');
     expect(parseChart(chart)).toEqual(chart);
     expect(checkStepPositions(chart)).toEqual([]);

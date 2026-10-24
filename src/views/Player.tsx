@@ -6,11 +6,19 @@ import {
   noteSymbol,
   noteAction,
   isFollowStep,
+  isLegHold,
   specialMoveLabel,
 } from '../model';
 import { MediaController, useRenderTime } from '../media';
 import { chartTimeAt, DEFAULT_NOTE_SPEED, noteX, specialAt } from '../timing';
-import { NoteGlyph, LaneGlyph, PalmPrint, ShoePrint, SquatDownCue } from '../components/Glyph';
+import {
+  NoteGlyph,
+  LaneGlyph,
+  PalmPrint,
+  ShoePrint,
+  SquatDownCue,
+  LegUpCue,
+} from '../components/Glyph';
 import { IMPACT_MS, NoteImpact } from '../components/NoteImpact';
 import { specialVisualsAt } from '../special';
 import { SpecialEffect, SpecialGlyph } from '../components/SpecialEffect';
@@ -261,6 +269,7 @@ export function Player({
                           follow={isFollowStep(note)}
                           lane={note.lane}
                           direction={note.direction}
+                          spinDirection={note.spinDirection}
                           armAction={note.armAction}
                           hand={note.hand}
                           pairedPunch={note.pairedPunch}
@@ -316,12 +325,15 @@ export function Player({
                       <span className="hold-caption">
                         {showGuide &&
                           ((note.lane === 'squat' && note.modifier === 'none') ||
+                            isLegHold(note) ||
                             note.lane === 'punch' ||
                             (note.lane === 'step' &&
                               note.modifier === 'sway' &&
                               (note.direction === 'left' || note.direction === 'right'))) && (
                             <svg className="slide-cue-icon" viewBox="0 0 40 40" aria-hidden="true">
-                              {note.lane === 'squat' ? (
+                              {isLegHold(note) ? (
+                                <LegUpCue />
+                              ) : note.lane === 'squat' ? (
                                 <SquatDownCue />
                               ) : note.lane === 'punch' ? (
                                 <PalmPrint />
@@ -338,10 +350,12 @@ export function Player({
                       >
                         <NoteGlyph
                           variant="tip"
+                          legHold={isLegHold(note)}
                           follow={isFollowStep(note)}
                           joined={!showGuide}
                           lane={note.lane}
                           direction={note.direction}
+                          spinDirection={note.spinDirection}
                           armAction={note.armAction}
                           hand={note.hand}
                           pairedPunch={note.pairedPunch}
@@ -374,10 +388,12 @@ export function Player({
                     >
                       <NoteGlyph
                         variant="tip"
+                        legHold={isLegHold(holding)}
                         follow={isFollowStep(holding)}
                         joined={!showGuide}
                         lane={holding.lane}
                         direction={holding.direction}
+                        spinDirection={holding.spinDirection}
                         armAction={holding.armAction}
                         hand={holding.hand}
                         pairedPunch={holding.pairedPunch}

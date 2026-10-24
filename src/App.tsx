@@ -1921,18 +1921,20 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   手掌表示单手或双手水平前伸。TAP、HOLD、SWAY 共通。 箭头用手颜色：ANY 未指定白色，L
                   左手蓝色，R 右手红色，BOTH 双手紫色；H 循环换手，支持多选。 录谱使用方向键；Shift
                   + ←/→ 录 ↖/↗，Alt + ←/→ 录 ↙/↘，也支持数字小键盘八方向。 J/K 录左右拳套，U/I/O
-                  录左手／右手／双手前伸。长按 HOLD，Ctrl + 长按 SWAY；录谱时 H 修改后续箭头的用手。
+                  录左手／右手／双手前伸。P 录入 CLAP 拍手，固定双手紫色，点按 TAP、长按
+                  HOLD。其他动作长按 HOLD，Ctrl + 长按 SWAY；录谱时 H 修改后续箭头的用手。
                 </p>
               </li>
               <li>
                 <strong>STEP 踏步</strong>
                 <p>
-                  ← / → 录入左右踏步，点按 TAP、长按 HOLD、Ctrl + 长按 SWAY。 ↓ 直接录入 FREE
-                  SWAY，长按决定时长。Shift + 左右跨两格；Alt + ← / → 录入 FOLLOW，Ctrl + Alt +
+                  ← / → 录入左右踏步，点按 TAP、长按 LEG HOLD 抬腿保持、Ctrl + 长按 SWAY。 LEG HOLD
+                  用向上箭头表示抬腿，用颜色区分左右腿。↓ 直接录入 SPIN
+                  原地转圈，长按决定时长。Shift + 左右跨两格；Alt + ← / → 录入 FOLLOW，Ctrl + Alt +
                   长按左右方向键录入 FOLLOW SWAY。类型菜单提供 TAP、FOLLOW、FOLLOW
-                  SWAY、HOLD、SWAY、FREE SWAY；箭头单独选择移动方向。 用脚颜色独立设置：L
-                  左脚蓝色、R 右脚红色、BOTH 双脚紫色，H 循环，支持多选和所有类型。 F
-                  只反转方向，普通左右踏步按 D 切换跨度。
+                  SWAY、HOLD、SWAY、SPIN；箭头单独选择移动方向。 用脚颜色独立设置：L 左脚蓝色、R
+                  右脚红色、BOTH 双脚紫色，H 循环，支持多选和所有类型。 F 只反转方向，普通左右踏步按
+                  D 切换跨度。
                 </p>
               </li>
               <li>

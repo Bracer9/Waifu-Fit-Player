@@ -6,6 +6,7 @@ import {
   type Direction,
   type Lane,
   type StepDistance,
+  type SpinDirection,
 } from '../model';
 // The base silhouettes have the thumb on the viewer's left (a right hand).
 const PALM_PATH =
@@ -69,19 +70,23 @@ export function noteGlyphShape(
   distance: StepDistance = 1,
   action?: ArmAction,
   hand?: ArmHand,
+  legHold = false,
+  spinDirection: SpinDirection = 'clockwise',
 ) {
   const shape =
-    lane === 'punch' && action === 'forward'
-      ? 'palm'
-      : isPunchAction(lane, direction, action)
-        ? 'glove'
-        : lane !== 'step'
-          ? 'arrow'
-          : direction === 'free'
-            ? 'free'
-            : 'step';
+    lane === 'punch' && action === 'clap'
+      ? 'clap'
+      : lane === 'punch' && action === 'forward'
+        ? 'palm'
+        : isPunchAction(lane, direction, action)
+          ? 'glove'
+          : lane !== 'step'
+            ? 'arrow'
+            : direction === 'free'
+              ? 'spin'
+              : 'step';
   const angle =
-    shape === 'glove' || shape === 'palm'
+    shape === 'glove' || shape === 'palm' || shape === 'clap' || legHold
       ? 0
       : {
           up: 0,
@@ -100,14 +105,19 @@ export function noteGlyphShape(
       ? PALM_PATH
       : shape === 'glove'
         ? 'M13 5Q20 1 29 5Q34 7 34 14V22Q34 26 29 29L28 36H13L12 29Q5 28 4 22V18Q4 14 8 14Q11 14 12 18V11Q12 7 13 5Z'
-        : shape === 'free'
-          ? 'M20 15C16 10 13 9 10 9C-3 9 -3 31 10 31C13 31 16 30 20 25C24 30 27 31 30 31C43 31 43 9 30 9C27 9 24 10 20 15ZM15 20C12 16 11 15 9 15C4 15 4 25 9 25C11 25 12 24 15 20ZM25 20C28 16 29 15 31 15C36 15 36 25 31 25C29 25 28 24 25 20Z'
-          : shape === 'step' && distance === 2
+        : shape === 'spin'
+          ? 'M30 6V1L39 10L30 19V13C27.8 9.9 24.1 8 20 8C13.4 8 8 13.4 8 20C8 26.6 13.4 32 20 32C25.7 32 30.5 28 31.7 22.7L37.6 24C35.8 32 28.6 38 20 38C10.1 38 2 29.9 2 20C2 10.1 10.1 2 20 2C23.7 2 27.1 3.1 30 5Z'
+          : shape === 'step' && distance === 2 && !legHold
             ? 'M7 17L20 4L33 17L28 22L20 14L12 22ZM7 29L20 16L33 29L28 34L20 26L12 34Z'
             : lane === 'side_crunch'
               ? 'M20 1L37 19H28V38H12V19H3Z'
               : 'M20 4L34 18H26V35H14V18H6Z';
-  const mirror = shape === 'glove' ? direction === 'left' : shape === 'palm' && hand === 'left';
+  const mirror =
+    shape === 'spin'
+      ? spinDirection === 'counterclockwise'
+      : shape === 'glove'
+        ? direction === 'left'
+        : shape === 'palm' && hand === 'left';
   return { shape, angle, path, mirror };
 }
 
@@ -190,6 +200,28 @@ export function PunchPair({
   );
 }
 
+/** Phosphor hands-clapping (MIT); attribution in assets/icons/PHOSPHOR-LICENSE.txt. */
+export function ClapGlyph({
+  joined = false,
+  ribbon = false,
+}: {
+  joined?: boolean;
+  ribbon?: boolean;
+}) {
+  const path =
+    'M29.511 10.156A2.813 2.813 0 0 0 24.628 12.969L20.838 6.406a2.813 2.813 0 0 0 -4.878 2.813L15.063 7.656A2.813 2.813 0 0 0 10.184 10.469l0.522 0.902A4.063 4.063 0 0 0 6.209 17.344l0.469 0.813A4.063 4.063 0 0 0 3.672 24.219l5.511 9.531a12.522 12.522 0 0 0 23.363 -6.183A11.238 11.238 0 0 0 32.813 15.872Zm0.188 19.931A10.019 10.019 0 0 1 11.352 32.5L5.841 22.969a1.563 1.563 0 0 1 2.709 -1.563L11.719 26.875a1.25 1.25 0 0 0 2.167 -1.25L8.378 16.094A1.563 1.563 0 0 1 11.094 14.531l4.97 8.594a1.25 1.25 0 0 0 2.167 -1.25l-4.063 -7.031a1.563 1.563 0 0 1 2.711 -1.563l5.703 9.844a1.25 1.25 0 0 0 2.167 -1.25l-1.969 -3.398A1.563 1.563 0 0 1 25.538 17.031l3.159 5.469A9.925 9.925 0 0 1 29.698 30.089ZM25.034 3.75V1.25a1.25 1.25 0 0 1 2.5 0V3.75a1.25 1.25 0 0 1 -2.5 0Zm5.191 0.938 1.25 -2.047a1.25 1.25 0 0 1 2.138 1.302l-1.25 2.048a1.25 1.25 0 0 1 -1.069 0.598A1.25 1.25 0 0 1 30.225 4.688Zm7.031 5.259 -2.352 0.758a1.273 1.273 0 0 1 -0.384 0.061 1.25 1.25 0 0 1 -0.384 -2.441l2.353 -0.758a1.25 1.25 0 1 1 0.767 2.38Z';
+  return (
+    <g className="clap-hands">
+      {!joined && !ribbon && <path className="glyph-edge" d={path} style={{ strokeWidth: 3 }} />}
+      <path
+        className={ribbon ? 'ribbon-pair-body' : 'glyph-body'}
+        d={path}
+        style={{ strokeWidth: 1 }}
+      />
+    </g>
+  );
+}
+
 export function ReachPair({
   joined = false,
   ribbon = false,
@@ -225,6 +257,14 @@ export function PalmPrint() {
 export function SquatDownCue() {
   return <path className="squat-down-cue" d="M4 9L20 18L36 9M4 22L20 31L36 22" />;
 }
+/** The same hollow chevrons as squat holds, pointing up for raised legs. */
+export function LegUpCue() {
+  return (
+    <g className="leg-up-cue" transform="rotate(180 20 20)">
+      <SquatDownCue />
+    </g>
+  );
+}
 export function NoteGlyph({
   lane,
   direction,
@@ -237,6 +277,8 @@ export function NoteGlyph({
   hand,
   pairedPunch = false,
   pairedReach = false,
+  legHold = false,
+  spinDirection,
 }: {
   lane: Lane;
   direction: Direction;
@@ -249,8 +291,18 @@ export function NoteGlyph({
   hand?: ArmHand;
   pairedPunch?: boolean;
   pairedReach?: boolean;
+  legHold?: boolean;
+  spinDirection?: SpinDirection;
 }) {
-  const { shape, angle, path, mirror } = noteGlyphShape(lane, direction, distance, armAction, hand);
+  const { shape, angle, path, mirror } = noteGlyphShape(
+    lane,
+    direction,
+    distance,
+    armAction,
+    hand,
+    legHold,
+    spinDirection,
+  );
   return (
     <svg
       className={`note-glyph glyph--${shape} glyph--${variant}${joined ? ' glyph--joined' : ''}${follow ? ' glyph--follow' : ''}`}
@@ -259,21 +311,30 @@ export function NoteGlyph({
           ? '↔'
           : armAction === 'forward'
             ? `FWD ${hand === 'both' ? 'BOTH' : hand === 'right' ? 'R' : 'L'}`
-            : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
+            : legHold
+              ? 'LEG HOLD'
+              : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
       }
       width={size}
       height={size}
       viewBox="0 0 40 40"
       aria-hidden="true"
+      data-spin-direction={shape === 'spin' ? (spinDirection ?? 'clockwise') : undefined}
     >
       <g
         transform={
-          pairedReach || shape === 'free' || shape === 'glove' || shape === 'palm'
+          pairedReach ||
+          shape === 'spin' ||
+          shape === 'glove' ||
+          shape === 'palm' ||
+          shape === 'clap'
             ? undefined
             : `rotate(${angle} 20 20)`
         }
       >
-        {shape === 'palm' && hand === 'both' ? (
+        {shape === 'clap' ? (
+          <ClapGlyph joined={joined} />
+        ) : shape === 'palm' && hand === 'both' ? (
           <PunchPair palms joined={joined} />
         ) : pairedReach ? (
           <ReachPair joined={joined} />

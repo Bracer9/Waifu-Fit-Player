@@ -86,15 +86,21 @@ export function flipNotes(chart: Chart, selected: string[]): Chart {
   return {
     ...chart,
     notes: chart.notes.map((n) =>
-      selected.includes(n.id) && n.armAction === 'forward' && n.hand !== 'both'
-        ? { ...n, hand: n.hand === 'left' ? 'right' : 'left' }
-        : selected.includes(n.id) && n.direction !== 'free' && n.direction !== 'forward'
-          ? {
-              ...n,
-              direction: opposite[n.direction],
-              ...(n.lane === 'step' || n.lane === 'side_crunch' ? { foot: stepFoot(n) } : {}),
-            }
-          : n,
+      selected.includes(n.id) && n.lane === 'step' && n.direction === 'free'
+        ? {
+            ...n,
+            spinDirection:
+              n.spinDirection === 'counterclockwise' ? 'clockwise' : 'counterclockwise',
+          }
+        : selected.includes(n.id) && n.armAction === 'forward' && n.hand !== 'both'
+          ? { ...n, hand: n.hand === 'left' ? 'right' : 'left' }
+          : selected.includes(n.id) && n.direction !== 'free' && n.direction !== 'forward'
+            ? {
+                ...n,
+                direction: opposite[n.direction],
+                ...(n.lane === 'step' || n.lane === 'side_crunch' ? { foot: stepFoot(n) } : {}),
+              }
+            : n,
     ),
   };
 }
@@ -109,6 +115,7 @@ export function setArmHand(chart: Chart, selected: string[], hand?: ArmHand): Ch
         !selected.includes(note.id) ||
         note.lane !== 'punch' ||
         note.armAction === 'forward' ||
+        note.armAction === 'clap' ||
         isPunchAction(note.lane, note.direction, note.armAction)
       )
         return note;
@@ -135,6 +142,18 @@ export function setStepFoot(chart: Chart, selected: string[], foot?: StepFoot): 
 }
 export function changeArmAction(note: Note, value: string): Note {
   if (note.lane !== 'punch') return note;
+  if (value === 'clap')
+    return {
+      id: note.id,
+      lane: 'punch',
+      timeMs: note.timeMs,
+      ...(note.kind === 'hold'
+        ? { kind: 'hold', modifier: 'none', endTimeMs: note.endTimeMs }
+        : { kind: 'tap' }),
+      direction: 'forward',
+      armAction: 'clap',
+      hand: 'both',
+    };
   if (value.startsWith('forward-'))
     return { ...note, armAction: 'forward', direction: 'forward', hand: value.slice(8) as ArmHand };
   const punch = value.startsWith('punch-');
@@ -194,6 +213,9 @@ export function changeNoteForm(
     lane: note.lane,
     direction,
     timeMs: note.timeMs,
+    ...(note.lane === 'step' && direction === 'free' && note.spinDirection
+      ? { spinDirection: note.spinDirection }
+      : {}),
     ...(follow && note.connectPrevious === false ? { connectPrevious: false } : {}),
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
     ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
@@ -207,7 +229,12 @@ export function changeNoteForm(
   return {
     ...base,
     kind: 'hold',
-    modifier: type === 'sway' || type === 'follow-sway' || direction === 'free' ? 'sway' : 'none',
+    modifier:
+      note.armAction === 'clap'
+        ? 'none'
+        : type === 'sway' || type === 'follow-sway' || direction === 'free'
+          ? 'sway'
+          : 'none',
     endTimeMs: note.kind === 'hold' ? note.endTimeMs : endTimeMs,
     ...(follow ? { follow: true } : {}),
   };

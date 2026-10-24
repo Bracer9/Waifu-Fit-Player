@@ -57,6 +57,15 @@ export function ArmActionPicker({
               <NoteGlyph lane="punch" direction={direction} armAction="punch" size={30} />
             </button>
           ))}
+          <button
+            aria-label={`${label} CLAP`}
+            aria-pressed={value === 'clap'}
+            title="P · CLAP 拍手"
+            style={{ '--lane': 'var(--arms-both)' } as React.CSSProperties}
+            onClick={() => onChange('clap')}
+          >
+            <NoteGlyph lane="punch" direction="forward" armAction="clap" hand="both" size={30} />
+          </button>
         </div>
         <div className="arms-gloves arms-palms">
           {(['left', 'right', 'both'] as const).map((palmHand, index) => (

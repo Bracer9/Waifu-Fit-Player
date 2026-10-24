@@ -1,5 +1,147 @@
 import { test, expect, stepChoice, seek, exportChart, emptyEditor, draw } from './helpers/editor';
 
+test('SPIN direction survives drawing, editing, recording and reload and matches both game heads', async ({
+  page,
+}) => {
+  await emptyEditor(page);
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  await page.getByRole('button', { name: '3 踏步', exact: true }).click();
+  await page.getByLabel('绘制类型').selectOption('free-sway');
+  await page.getByLabel('绘制 SPIN 旋转方向').selectOption('counterclockwise');
+  await draw(page, 1000, 'step', 2500);
+  await expect(page.getByLabel('选中 SPIN 旋转方向')).toHaveValue('counterclockwise');
+  await expect(page.getByTestId('editor-note').first().locator('.glyph-body')).toHaveAttribute(
+    'transform',
+    'translate(40 0) scale(-1 1)',
+  );
+  await page.getByLabel('选中 SPIN 旋转方向').selectOption('clockwise');
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await expect(page.getByLabel('选中 SPIN 旋转方向')).toHaveValue('counterclockwise');
+  await page.getByLabel('绘制 SPIN 旋转方向').selectOption('clockwise');
+  await draw(page, 3500, 'step', 5000);
+  await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
+  await page.getByLabel('绘制 SPIN 旋转方向').selectOption('counterclockwise');
+  await seek(page, 6);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await page.keyboard.press('ArrowDown');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const chart = await exportChart(page);
+  expect(chart.notes.map((n) => n.spinDirection)).toEqual([
+    'counterclockwise',
+    'clockwise',
+    'counterclockwise',
+  ]);
+  await page
+    .getByLabel('导入谱面文件')
+    .setInputFiles({
+      name: 'spin-directions.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(chart)),
+    });
+  expect((await exportChart(page)).notes).toEqual(chart.notes);
+  await page.getByTestId('editor-note').first().click();
+  await page.screenshot({ path: 'artifacts/spin-direction-editor.png' });
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  for (const [index, time, direction, transform] of [
+    [0, 1.1, 'counterclockwise', 'translate(40 0) scale(-1 1)'],
+    [1, 3.6, 'clockwise', 'rotate(0 20 20)'],
+  ] as const) {
+    await seek(page, time);
+    const note = page.locator(`.player-hold[data-note-id="${chart.notes[index].id}"]`);
+    await expect(note.locator('.hold-head .note-glyph')).toHaveAttribute(
+      'data-spin-direction',
+      direction,
+    );
+    await expect(note.locator('.ribbon-head-shape > path')).toHaveAttribute('transform', transform);
+    await page.screenshot({ path: `artifacts/spin-direction-${direction}.png` });
+  }
+});
+
+test('STEP LEG HOLD uses upward arrows for both legs without changing other step symbols or chart data', async ({
+  page,
+}) => {
+  const chart = await emptyEditor(page);
+  chart.notes = [
+    {
+      id: 'leg-left',
+      lane: 'step',
+      direction: 'left',
+      foot: 'left',
+      kind: 'hold',
+      modifier: 'none',
+      timeMs: 1000,
+      endTimeMs: 2500,
+    },
+    {
+      id: 'leg-right',
+      lane: 'step',
+      direction: 'right',
+      foot: 'right',
+      distance: 2,
+      kind: 'hold',
+      modifier: 'none',
+      timeMs: 3500,
+      endTimeMs: 5000,
+    },
+    { id: 'tap-right', lane: 'step', direction: 'right', kind: 'tap', timeMs: 6000 },
+    {
+      id: 'sway-left',
+      lane: 'step',
+      direction: 'left',
+      kind: 'hold',
+      modifier: 'sway',
+      timeMs: 7000,
+      endTimeMs: 8000,
+    },
+  ];
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'leg-hold.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
+  const editorHolds = page.locator(
+    '.timeline-event[data-lane="step"] .note-glyph[data-symbol="LEG HOLD"]',
+  );
+  await expect(editorHolds).toHaveCount(2);
+  await expect(page.locator('.timeline-event[data-lane="step"] .leg-up-cue')).toHaveCount(2);
+  for (const glyph of await editorHolds.all())
+    await expect(glyph.locator('g')).toHaveAttribute('transform', 'rotate(0 20 20)');
+  expect((await exportChart(page)).notes).toEqual(chart.notes);
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  for (const [id, time, color] of [
+    ['leg-left', 1.1, 'rgb(53, 201, 219)'],
+    ['leg-right', 3.6, 'rgb(246, 78, 147)'],
+  ] as const) {
+    await seek(page, time);
+    const note = page.locator(`.player-hold[data-note-id="${id}"]`);
+    await expect(note).toHaveAttribute('data-action', 'LEG HOLD');
+    await expect(note.locator('.hold-head .note-glyph')).toHaveAttribute('data-symbol', 'LEG HOLD');
+    await expect(note.locator('.hold-head .note-glyph > g')).toHaveAttribute(
+      'transform',
+      'rotate(0 20 20)',
+    );
+    await expect(note.locator('.ribbon-head-shape > path')).toHaveAttribute(
+      'transform',
+      'rotate(0 20 20)',
+    );
+    await expect(page.getByTestId('target-step')).toHaveCSS('color', color);
+    await expect(note.locator('.ribbon-slide-cue .leg-up-cue')).toHaveAttribute(
+      'transform',
+      'rotate(180 20 20)',
+    );
+    await expect(note.locator('.leg-up-cue path')).toHaveCSS('fill', 'none');
+    await page.screenshot({ path: `artifacts/${id}-hold-1920.png` });
+  }
+  await seek(page, 5.5);
+  await expect(page.locator('[data-note-id="tap-right"] .note-glyph > g')).toHaveAttribute(
+    'transform',
+    'rotate(90 20 20)',
+  );
+  await expect(
+    page.locator('[data-note-id="sway-left"] .hold-head .note-glyph > g'),
+  ).toHaveAttribute('transform', 'rotate(270 20 20)');
+});
+
 test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失反馈', async ({ page }) => {
   await emptyEditor(page);
   await page.getByRole('button', { name: '3 踏步', exact: true }).click();
@@ -173,9 +315,9 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
     'TAP',
     'FOLLOW',
     'FOLLOW SWAY',
-    'HOLD',
+    'LEG HOLD',
     'SWAY',
-    'FREE SWAY',
+    'SPIN',
   ]);
   await stepChoice(page, 'draw', 'right-hold');
   await page.getByLabel('绘制踏步跨度').selectOption('2');
@@ -239,12 +381,18 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   await seek(page, 4.5);
   const target = page.getByTestId('target-step');
   await expect(target).toHaveAttribute('data-state', 'sway');
-  await expect(target).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(target).toHaveAttribute('data-action', 'SPIN');
   await expect(
     page
       .getByTestId('lane-step')
       .locator('.player-hold[data-direction="free"] .hold-head .note-glyph'),
-  ).toHaveAttribute('data-symbol', 'FREE');
+  ).toHaveAttribute('data-symbol', 'SPIN');
+  await expect(
+    page
+      .getByTestId('lane-step')
+      .locator('.player-hold[data-direction="free"] .hold-head .glyph--spin'),
+  ).toBeVisible();
+  await page.screenshot({ path: 'artifacts/step-spin-1920.png' });
   await expect(target).toHaveCSS('color', 'rgb(246, 78, 147)');
   await seek(page, 6.1);
   await expect(page.getByTestId('lane-step').locator('.release-label')).toHaveText('RELEASE');
@@ -259,9 +407,9 @@ test('FOLLOW SWAY 紧接 FOLLOW，支持绘制、转换、录谱和持续并步�
     'TAP',
     'FOLLOW',
     'FOLLOW SWAY',
-    'HOLD',
+    'LEG HOLD',
     'SWAY',
-    'FREE SWAY',
+    'SPIN',
   ]);
   await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
   await draw(page, 1000, 'step', 3000);
@@ -406,7 +554,7 @@ test('FOLLOW 自由放置、类型互换、Alt 录谱和保存重开，游戏显
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
 });
 
-test('导入旧谱彻底删除 C 三种形式，独立 FREE SWAY 和左右不受影响', async ({ page }) => {
+test('导入旧谱彻底删除 C 三种形式，独立 SPIN 和左右不受影响', async ({ page }) => {
   const chart = await emptyEditor(page);
   const kept = [
     { id: 'l', lane: 'step', direction: 'left', kind: 'tap', timeMs: 1000 },

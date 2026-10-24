@@ -15,6 +15,8 @@ import {
   changeArmAction,
   changeArmGesture,
   changeNoteForm,
+  extendTap,
+  pasteEvents,
   flipNotes,
   historyReducer,
   setArmHand,
@@ -42,6 +44,57 @@ const fixture = () => ({
 });
 
 describe('ARMS direction, hand and gesture remain independent', () => {
+  it('CLAP supports purple two-hand TAP and HOLD with stable conversion and persistence', () => {
+    const clap = changeArmAction(changeNoteForm(reach, 'tap', reach.direction, 3000), 'clap');
+    expect(clap).toEqual({
+      id: reach.id,
+      lane: 'punch',
+      direction: 'forward',
+      timeMs: reach.timeMs,
+      kind: 'tap',
+      armAction: 'clap',
+      hand: 'both',
+    });
+    const chart = { ...fixture(), notes: [clap] };
+    expect(armActionValue(clap)).toBe('clap');
+    expect(noteColor('punch', 'forward', undefined, 'clap')).toBe('var(--arms-both)');
+    expect(noteGlyphShape('punch', 'forward', 1, 'clap', 'both').shape).toBe('clap');
+    expect(parseChart(JSON.parse(serializeChart(chart)))).toEqual(chart);
+    expect(armDisplayNotes([clap])).toEqual([clap]);
+    expect(pasteEvents(chart, [clap], [], 5000, 20000).chart.notes[1]).toMatchObject({
+      armAction: 'clap',
+      kind: 'tap',
+      hand: 'both',
+    });
+    expect(flipNotes(chart, [clap.id])).toEqual(chart);
+    expect(setArmHand(chart, [clap.id], 'left')).toEqual(chart);
+    const held = changeNoteForm(clap, 'hold', 'forward', 4000);
+    expect(held).toEqual({ ...clap, kind: 'hold', modifier: 'none', endTimeMs: 4000 });
+    expect(extendTap(chart, clap.id, 4000, 20000).notes[0]).toEqual(held);
+    expect(changeNoteForm(held, 'tap', 'forward', 5000)).toEqual(clap);
+    expect(parseChart(JSON.parse(serializeChart({ ...chart, notes: [held] }))).notes[0]).toEqual(
+      held,
+    );
+    expect(changeArmAction(clap, 'forward-both')).toMatchObject({
+      armAction: 'forward',
+      hand: 'both',
+      kind: 'tap',
+    });
+    const spread = changeArmGesture(fixture(), reach.id, 'spread');
+    const single = changeArmGesture(spread.chart, spread.ids[0], 'clap');
+    expect(single.ids).toHaveLength(1);
+    expect(single.chart.notes.filter((n) => n.armAction === 'clap')).toEqual([
+      { ...clap, kind: 'hold', modifier: 'none', endTimeMs: 3000 },
+    ]);
+    for (const note of [
+      { ...clap, hand: 'left' },
+      { ...clap, hand: undefined },
+      { ...clap, direction: 'up' },
+      { ...clap, lane: 'step' },
+      { ...clap, kind: 'hold', modifier: 'sway', endTimeMs: 3000 },
+    ])
+      expect(() => parseChart({ ...chart, notes: [note] })).toThrow();
+  });
   it('前伸的左右手与双手可互换 TAP/HOLD/SWAY，保存与复制式属性转换保留动作和时长', () => {
     for (const hand of ['left', 'right', 'both'] as const)
       for (const type of ['tap', 'hold', 'sway'] as const) {

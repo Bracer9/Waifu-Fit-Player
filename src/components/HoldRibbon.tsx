@@ -1,8 +1,10 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
-import { isFollowStep, noteColor } from '../model';
+import { isFollowStep, isLegHold, noteColor } from '../model';
 import {
   GlyphLabel,
+  ClapGlyph,
+  LegUpCue,
   noteGlyphShape,
   PalmPrint,
   PunchPair,
@@ -53,10 +55,18 @@ export function HoldRibbon({
   const drawWidth = Math.max(1, width - visibleStart);
   const height = size * 1.08;
   const connected = headOpacity > 0;
-  // Keep both the free-sway loop and the separate FOLLOW arrow's hollow stem clear.
+  // Keep both the spin loop and the separate FOLLOW arrow's hollow stem clear.
   const follow = isFollowStep(note);
   const headGap = connected ? (note.direction === 'free' || follow ? size * 0.4 : 0) : size * 0.32;
-  const glyph = noteGlyphShape(note.lane, note.direction, note.distance, note.armAction, note.hand);
+  const glyph = noteGlyphShape(
+    note.lane,
+    note.direction,
+    note.distance,
+    note.armAction,
+    note.hand,
+    isLegHold(note),
+    note.spinDirection,
+  );
   const releaseGlyph = releaseNote
     ? noteGlyphShape(
         releaseNote.lane,
@@ -69,9 +79,11 @@ export function HoldRibbon({
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.
   const cueX = fullWidth / 2;
   // The wide squat arrowhead needs more horizontal presence than hand/foot cues.
-  const cueSize = note.lane === 'squat' ? size * 0.9 : (size / 1.25) * 0.82;
+  const legHold = isLegHold(note);
+  const cueSize = note.lane === 'squat' || legHold ? size * 0.9 : (size / 1.25) * 0.82;
   const showCue =
     ((note.lane === 'squat' && !sway) ||
+      legHold ||
       note.lane === 'punch' ||
       (note.lane === 'step' &&
         sway &&
@@ -156,7 +168,9 @@ export function HoldRibbon({
                   opacity={headOpacity}
                   transform={`translate(${width - size / 2} ${(height - size) / 2}) scale(${size / 40})`}
                 >
-                  {note.armAction === 'forward' && note.hand === 'both' ? (
+                  {note.armAction === 'clap' ? (
+                    <ClapGlyph ribbon />
+                  ) : note.armAction === 'forward' && note.hand === 'both' ? (
                     <PunchPair palms ribbon />
                   ) : note.pairedReach ? (
                     <ReachPair ribbon />
@@ -201,7 +215,9 @@ export function HoldRibbon({
                     } as React.CSSProperties
                   }
                 >
-                  {releaseNote.armAction === 'forward' && releaseNote.hand === 'both' ? (
+                  {releaseNote.armAction === 'clap' ? (
+                    <ClapGlyph ribbon />
+                  ) : releaseNote.armAction === 'forward' && releaseNote.hand === 'both' ? (
                     <PunchPair palms ribbon />
                   ) : releaseNote.pairedReach ? (
                     <ReachPair ribbon />
@@ -237,7 +253,9 @@ export function HoldRibbon({
                 className="ribbon-slide-cue"
                 transform={`translate(${cueX - cueSize / 2} ${(height - cueSize) / 2}) scale(${cueSize / 40})`}
               >
-                {note.lane === 'squat' ? (
+                {legHold ? (
+                  <LegUpCue />
+                ) : note.lane === 'squat' ? (
                   <SquatDownCue />
                 ) : note.lane === 'punch' ? (
                   <PalmPrint />

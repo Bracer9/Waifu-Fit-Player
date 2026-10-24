@@ -42,8 +42,8 @@ test('音符与跟练统一英文，兼容旧 SPECIAL 名称并保持大小屏�
   await expect(page.locator('.hold-caption')).toHaveText([
     'HOLD',
     'HOLD',
-    'BALANCE HOLD',
-    'FREE SWAY',
+    'LEG HOLD',
+    'SPIN',
     'SWAY',
     'SWAY',
   ]);
@@ -66,7 +66,7 @@ test('音符与跟练统一英文，兼容旧 SPECIAL 名称并保持大小屏�
     }
   }
   await seek(page, 7.2);
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SPIN');
   await expect(page.getByTestId('special-cue')).toContainText('SPECIAL!');
   await editInStudio(page);
   chart.title = 'LEGACY LABEL CHECK';

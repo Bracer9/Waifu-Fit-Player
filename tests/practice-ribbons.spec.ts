@@ -196,13 +196,13 @@ test('曲线长音符保留媒体相位、方向和轨道色，组合数随跳�
   ).toBeVisible();
   await page.screenshot({ path: 'artifacts/arrow-free-short-approach-1920.png', fullPage: true });
   await seek(10.4);
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SPIN');
   await expect(page.getByTestId('target-step')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await page.screenshot({ path: 'artifacts/arrow-free-short-hold-1920.png', fullPage: true });
   await seek(16.1);
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SPIN');
   await expect(
-    page.locator('.player-hold[data-note-id="step-free"] .holding-cue .glyph--free'),
+    page.locator('.player-hold[data-note-id="step-free"] .holding-cue .glyph--spin'),
   ).toBeVisible();
   await page.screenshot({ path: 'artifacts/arrow-free-sway-1920.png', fullPage: true });
   await seek(2.12);

@@ -11,6 +11,7 @@ import {
   type ArmAction,
   type ArmHand,
   type StepFoot,
+  type SpinDirection,
 } from './model';
 import { MediaController } from './media';
 import { chartTimeAt, nextGrid, snapTime } from './timing';
@@ -36,6 +37,7 @@ type Options = {
   onHand: () => void;
   foot: StepFoot;
   connectPrevious?: boolean;
+  spinDirection?: SpinDirection;
   onFoot: () => void;
 };
 export function useRecording(options: Options) {
@@ -55,6 +57,7 @@ export function useRecording(options: Options) {
     armAction?: ArmAction;
     hand?: ArmHand;
     foot?: StepFoot;
+    spinDirection?: SpinDirection;
   } | null>(null);
   useEffect(() => {
     const cancel = () => {
@@ -132,7 +135,11 @@ export function useRecording(options: Options) {
         const palmHand = ({ KeyU: 'left', KeyI: 'right', KeyO: 'both' } as const)[
           e.code as 'KeyU' | 'KeyI' | 'KeyO'
         ];
-        if (palmHand) {
+        if (e.code === 'KeyP') {
+          dir = 'forward';
+          armAction = 'clap';
+          forwardHand = 'both';
+        } else if (palmHand) {
           dir = 'forward';
           armAction = 'forward';
           forwardHand = palmHand;
@@ -170,10 +177,13 @@ export function useRecording(options: Options) {
         key: e.code || e.key,
         lane: o.lane,
         direction: dir,
+        ...(o.lane === 'step' && dir === 'free'
+          ? { spinDirection: o.spinDirection ?? 'clockwise' }
+          : {}),
         timeMs,
         pressedAt: performance.now(),
         videoOffsetMs: o.chart.videoOffsetMs ?? 0,
-        modifier: e.ctrlKey || dir === 'free' ? 'sway' : 'none',
+        modifier: armAction === 'clap' ? 'none' : e.ctrlKey || dir === 'free' ? 'sway' : 'none',
         ...(follow ? { follow: true } : {}),
         ...(follow && o.connectPrevious === false ? { connectPrevious: false } : {}),
         ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
@@ -237,6 +247,7 @@ export function useRecording(options: Options) {
           timeMs: p.timeMs,
           kind: 'hold',
           modifier: p.modifier,
+          ...(p.spinDirection ? { spinDirection: p.spinDirection } : {}),
           endTimeMs,
           ...(p.follow ? { follow: true } : {}),
           ...(p.connectPrevious === false ? { connectPrevious: false } : {}),

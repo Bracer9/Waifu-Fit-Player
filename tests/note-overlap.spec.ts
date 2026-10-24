@@ -397,7 +397,7 @@ test('真实全屏：音符保持单中心线和大尺寸，连续与重叠长�
   await seek(7.7);
   await page.screenshot({ path: 'artifacts/notes-short-fullscreen-1920.png' });
   await seek(10.2);
-  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'FREE SWAY');
+  await expect(page.getByTestId('target-step')).toHaveAttribute('data-action', 'SPIN');
   await page.screenshot({ path: 'artifacts/notes-free-sway-fullscreen-1920.png' });
   await seek(3.35);
   await page.setViewportSize({ width: 2560, height: 1440 });
