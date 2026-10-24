@@ -1,0 +1,411 @@
+{
+  "status": "repeating-pattern candidates, not guaranteed semantic downbeats",
+  "production": {
+    "worker": "bpm.worker-Dw0t4Oph.js",
+    "workerSha256": "d4e9d39247f8582f931fd58b6acf6271b7b12bd120e7f3999e7e59ceb4ce2909",
+    "results": [
+      {
+        "song": "Happy Halloween",
+        "bpm": 120,
+        "firstBeat": {
+          "timeMs": 105,
+          "confidence": 0.6826025762179405,
+          "pattern": {
+            "timeMs": 105,
+            "confidence": 0.6826025762179405,
+            "patternBeats": 16,
+            "similarity": 0.9154897883940918,
+            "contrast": 0.36520515243588103,
+            "supportingWindows": 3,
+            "edgeSnapMs": 0
+          }
+        },
+        "elapsedMs": 1624
+      },
+      {
+        "song": "HIMEHINAキスキツネDance-Video-SnapYT.App-6bc25733",
+        "bpm": 148.05,
+        "firstBeat": {
+          "timeMs": 0,
+          "confidence": 0.6236523438005928,
+          "pattern": {
+            "timeMs": 0,
+            "confidence": 0.6236523438005928,
+            "patternBeats": 16,
+            "similarity": 0.8608193177093086,
+            "contrast": 0.24730468760118543,
+            "supportingWindows": 2,
+            "edgeSnapMs": 57
+          }
+        },
+        "elapsedMs": 1273
+      },
+      {
+        "song": "LOVELY ♥ CAVITY-7c74302b",
+        "bpm": 150,
+        "firstBeat": {
+          "timeMs": 2410,
+          "confidence": 0.614380077677818,
+          "pattern": {
+            "timeMs": 2410,
+            "confidence": 0.614380077677818,
+            "patternBeats": 32,
+            "similarity": 0.927517776095744,
+            "contrast": 0.22876015535563607,
+            "supportingWindows": 4,
+            "edgeSnapMs": 0
+          }
+        },
+        "elapsedMs": 1511
+      },
+      {
+        "song": "寄明月",
+        "bpm": 140,
+        "error": "不同分析长度得到的起点不一致，无法确认小节第一拍。开头音效或强弱变化可能造成误判；Offset 未修改，请试听后手动设置。",
+        "elapsedMs": 1903
+      },
+      {
+        "song": "愛スクリ～ム",
+        "bpm": 132,
+        "firstBeat": {
+          "timeMs": 990,
+          "confidence": 0.5966697494879282
+        },
+        "elapsedMs": 1508
+      },
+      {
+        "song": "極楽浄土",
+        "bpm": 131,
+        "firstBeat": {
+          "timeMs": 480,
+          "confidence": 1
+        },
+        "elapsedMs": 1970
+      },
+      {
+        "song": "爽快奪回Sunlight_148bpm",
+        "bpm": 148,
+        "firstBeat": {
+          "timeMs": 510,
+          "confidence": 0.528080020572805
+        },
+        "elapsedMs": 2387
+      }
+    ],
+    "changedTargetCharts": [
+      "maps/HIMEHINAキスキツネDance-Video-SnapYT.App-6bc25733/project.json"
+    ]
+  },
+  "before": {
+    "tempo": {
+      "kind": "stable",
+      "result": {
+        "bpm": 148,
+        "confidence": 0.32367810598248714
+      }
+    },
+    "results": [
+      {
+        "bpm": 148,
+        "label": "all",
+        "duration": 8,
+        "result": {
+          "timeMs": 1175,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "all",
+        "duration": 16,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "all",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "all",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band0",
+        "duration": 8,
+        "result": {
+          "timeMs": 1175,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band0",
+        "duration": 16,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band0",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band0",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band1",
+        "duration": 8,
+        "result": {
+          "timeMs": 1135,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band1",
+        "duration": 16,
+        "result": {
+          "timeMs": 1135,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band1",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band1",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band2",
+        "duration": 8,
+        "result": {
+          "timeMs": 1190,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band2",
+        "duration": 16,
+        "result": {
+          "timeMs": 2390,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band2",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148,
+        "label": "band2",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "all",
+        "duration": 8,
+        "result": {
+          "timeMs": 1175,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "all",
+        "duration": 16,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "all",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "all",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band0",
+        "duration": 8,
+        "result": {
+          "timeMs": 1175,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band0",
+        "duration": 16,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band0",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band0",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 0.893503229011238
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band1",
+        "duration": 8,
+        "result": {
+          "timeMs": 1135,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band1",
+        "duration": 16,
+        "result": {
+          "timeMs": 1135,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band1",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band1",
+        "duration": 60,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band2",
+        "duration": 8,
+        "result": {
+          "timeMs": 1190,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band2",
+        "duration": 16,
+        "result": {
+          "timeMs": 2390,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band2",
+        "duration": 30,
+        "result": {
+          "timeMs": 2780,
+          "confidence": 1
+        }
+      },
+      {
+        "bpm": 148.05,
+        "label": "band2",
+        "duration": 60,
+        "result": {
+          "timeMs": 1190,
+          "confidence": 1
+        }
+      }
+    ]
+  },
+  "verification": {
+    "unitTests": 284,
+    "testFiles": 38,
+    "typecheck": true,
+    "browserCases": 5,
+    "productionBuild": true,
+    "originalChartFilesRewritten": false
+  },
+  "limitations": [
+    "Pattern symmetry and pickups may still leave beat/bar ambiguity.",
+    "Kiss candidate is zero after clipping a 57ms negative inferred boundary to the existing nonnegative timeline.",
+    "The target project manifest changed during the read-only probe while the user was active; chart file hashes did not change."
+  ]
+}

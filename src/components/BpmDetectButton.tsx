@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { AudioLines } from 'lucide-react';
+import { AudioLines, Crosshair } from 'lucide-react';
 import type { BpmResponse } from '../bpm';
 
 export function BpmDetectButton({
@@ -9,6 +9,9 @@ export function BpmDetectButton({
   bpm,
   onDetected,
   notify,
+  mode = 'bpm',
+  anchor,
+  beatsPerBar = 4,
 }: {
   source: string;
   start: number;
@@ -16,7 +19,11 @@ export function BpmDetectButton({
   bpm: number;
   onDetected: (bpm: number) => void;
   notify: (message: string) => void;
+  mode?: 'bpm' | 'first-beat';
+  anchor?: number;
+  beatsPerBar?: 3 | 4;
 }) {
+  const name = mode === 'first-beat' ? '第一拍' : 'BPM';
   const [progress, setProgress] = useState<number | null>(null);
   const job = useRef<{ worker: Worker; timer: ReturnType<typeof setTimeout> } | null>(null);
   const callbacks = useRef({ onDetected, notify });
@@ -32,7 +39,7 @@ export function BpmDetectButton({
   useLayoutEffect(() => {
     setProgress(null);
     return cancel;
-  }, [source, start, end, bpm]);
+  }, [source, start, end, bpm, mode, anchor, beatsPerBar]);
   const detect = () => {
     if (!source || job.current) return;
     const finish = (message: string) => {
@@ -43,7 +50,7 @@ export function BpmDetectButton({
     try {
       const worker = new Worker(new URL('../bpm.worker.ts', import.meta.url), { type: 'module' });
       const timer = setTimeout(() => {
-        if (job.current?.worker === worker) finish('BPM 检测超时，请重试或手动填写。');
+        if (job.current?.worker === worker) finish(`${name}检测超时，请重试或手动填写。`);
       }, 60000);
       job.current = { worker, timer };
       setProgress(0);
@@ -51,7 +58,12 @@ export function BpmDetectButton({
         if (job.current?.worker !== worker) return;
         if ('progress' in data) setProgress(data.progress);
         else if ('error' in data) finish(data.error);
-        else {
+        else if ('firstBeat' in data) {
+          finish(
+            `${data.firstBeat.pattern ? '重复乐句推算的' : data.firstBeat.rhythmRepeat ? '重复节奏推算的' : ''}第一拍候选 ${(data.firstBeat.timeMs / 1000).toFixed(3)} 秒（视频时间），已填入；${data.firstBeat.pattern?.edgeSnapMs ? '接近视频边界，已取非负起点；' : ''}请试听确认小节强拍。`,
+          );
+          callbacks.current.onDetected(data.firstBeat.timeMs);
+        } else {
           const detected = data.result.bpm;
           finish(`检测到 ${detected} BPM，已填入当前节拍段。`);
           callbacks.current.onDetected(detected);
@@ -60,24 +72,39 @@ export function BpmDetectButton({
       worker.onerror = (event) => {
         event.preventDefault();
         if (job.current?.worker !== worker) return;
-        finish('BPM 检测无法启动，请重试或手动填写。');
+        finish(`${name}检测无法启动，请重试或手动填写。`);
       };
-      worker.postMessage({ source, start, end });
+      worker.postMessage({
+        source,
+        start,
+        end,
+        ...(mode === 'first-beat' ? { firstBeatBpm: bpm, beatsPerBar } : {}),
+      });
     } catch {
-      finish('BPM 检测无法启动，请重试或手动填写。');
+      finish(`${name}检测无法启动，请重试或手动填写。`);
     }
   };
   return (
     <button
       className="bpm-detect"
       type="button"
-      aria-label="自动检测 BPM"
+      aria-label={`自动检测${mode === 'bpm' ? ' BPM' : '第一拍'}`}
       aria-busy={progress !== null}
-      title={source ? '从当前视频音频检测本段 BPM' : '请先选择视频'}
+      title={
+        source
+          ? mode === 'bpm'
+            ? '从当前视频音频检测本段 BPM'
+            : '按当前 BPM 估算第一拍候选；仅调整网格，不移动音符，可撤销'
+          : '请先选择视频'
+      }
       disabled={!source || progress !== null}
       onClick={detect}
     >
-      <AudioLines size={11} aria-hidden="true" />
+      {mode === 'bpm' ? (
+        <AudioLines size={11} aria-hidden="true" />
+      ) : (
+        <Crosshair size={11} aria-hidden="true" />
+      )}
       {progress === null ? '检测' : `${progress}%`}
     </button>
   );

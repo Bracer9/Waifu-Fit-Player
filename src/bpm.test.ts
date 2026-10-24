@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BpmEnvelope, estimateBpm } from './bpm';
+import { analyzeTempo, BpmEnvelope, estimateBpm } from './bpm';
 
 function drums(bpm: number, { stereo = false, intro = 0 } = {}) {
   const rate = 8000,
@@ -72,5 +72,41 @@ describe('video audio BPM detection', () => {
       if (index >= 0 && index < onsets.length) onsets[index] += 2;
     }
     expect(estimateBpm(onsets)?.bpm).toBeCloseTo(114, 0);
+  });
+});
+
+function changingBeats(first: number, second: number) {
+  const onsets = new Float32Array(200 * 48);
+  for (let part = 0; part < 2; part++) {
+    const bpm = part ? second : first;
+    for (let time = part * 24 + 0.2; time < (part + 1) * 24; time += 60 / bpm) {
+      const index = Math.round(time * 200);
+      for (let j = 0; j < 5 && index + j < onsets.length; j++)
+        onsets[index + j] += [0.2, 0.7, 1, 0.6, 0.2][j];
+    }
+  }
+  return onsets;
+}
+
+describe('tempo consistency within the analyzed interval', () => {
+  it.each([
+    [120, 90],
+    [90, 150],
+    [148, 114],
+    [120, 60],
+  ])('reports sustained %i → %i instead of returning one averaged BPM', (first, second) => {
+    const analysis = analyzeTempo(changingBeats(first, second));
+    expect(analysis.kind).toBe('varying');
+    if (analysis.kind === 'varying') {
+      expect(analysis.bpms).toContain(first);
+      expect(analysis.bpms).toContain(second);
+    }
+  });
+
+  it('keeps a constant tempo and rejects silence', () => {
+    const analysis = analyzeTempo(changingBeats(120, 120));
+    expect(analysis.kind).toBe('stable');
+    if (analysis.kind === 'stable') expect(analysis.result.bpm).toBeCloseTo(120, 0);
+    expect(analyzeTempo(new Float32Array(200 * 48))).toEqual({ kind: 'unclear' });
   });
 });

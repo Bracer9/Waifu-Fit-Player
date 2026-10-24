@@ -87,6 +87,7 @@ import { ArmActionPicker, ArmHandPicker } from '../components/ArmPicker';
 import { armDisplayNotes, armEventIds, type DisplayNote } from '../armDisplay';
 import { changeArmGesture } from '../editing';
 import { BpmDetectButton } from '../components/BpmDetectButton';
+import { firstBeatWindow } from '../first-beat';
 import { PlayRangeFields } from '../components/PlayRangeFields';
 import { chartPlayRange } from '../play-range';
 
@@ -383,6 +384,7 @@ export function Editor({
   const event = selectedNote || selectedSpecial;
   const activeSegment =
     chart.tempoSegments.find((s) => s.id === segmentId) || chart.tempoSegments[0];
+  const firstBeatSearch = firstBeatWindow(chart, activeSegment, duration);
   const snapAt = (t: number) => snapTime(t, chart.tempoSegments, snap, duration);
   const copy = () => {
     clipboard.current = {
@@ -1809,12 +1811,28 @@ export function Editor({
                     </select>
                   </label>
                 </div>
-                <NumberField
-                  label="本段 Offset / ms"
-                  value={activeSegment.anchorMs}
-                  max={duration}
-                  onCommit={(n) => changeSegment({ anchorMs: Math.round(n) })}
-                />
+                <div className="bpm-field">
+                  <NumberField
+                    label="本段 Offset / ms"
+                    value={activeSegment.anchorMs}
+                    max={duration}
+                    onCommit={(n) => changeSegment({ anchorMs: Math.round(n) })}
+                  />
+                  <BpmDetectButton
+                    key={`first-beat-${activeSegment.id}`}
+                    mode="first-beat"
+                    beatsPerBar={activeSegment.meter === '3/4' ? 3 : 4}
+                    source={videoSource}
+                    start={firstBeatSearch.start}
+                    end={firstBeatSearch.end}
+                    bpm={activeSegment.bpm}
+                    anchor={activeSegment.anchorMs}
+                    onDetected={(timeMs) =>
+                      changeSegment({ anchorMs: Math.round(chartTimeAt(chart, timeMs)) })
+                    }
+                    notify={notify}
+                  />
+                </div>
                 <button
                   className="text-action"
                   onClick={() => changeSegment({ anchorMs: Math.round(cursorTime()) })}

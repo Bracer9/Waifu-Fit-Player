@@ -24,6 +24,7 @@ test('从真实 MP4 音轨检测并填入本段 BPM，可撤销且不改变视�
     Object.defineProperty(window, 'showOpenFilePicker', { value: undefined }),
   );
   await page.goto('/');
+  await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
   await page.getByRole('button', { name: /创作模式/ }).click();
   await page.getByRole('button', { name: '节拍段', exact: true }).click();
   const detect = page.getByRole('button', { name: '自动检测 BPM', exact: true });
@@ -94,6 +95,7 @@ test('检测期间切换节拍段会终止后台任务，不会把旧结果填�
     };
   });
   await page.goto('/');
+  await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
   await page.getByRole('button', { name: /创作模式/ }).click();
   await selectVideo(page, '新建', 'bpm-148.mp4');
   const chart = await exported(page);

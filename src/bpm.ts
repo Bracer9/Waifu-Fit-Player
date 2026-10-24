@@ -1,8 +1,18 @@
 /** Audio-only tempo analysis. No playback or chart timing is controlled here. */
+import type { FirstBeatResult } from './first-beat';
 export const ENVELOPE_RATE = 200;
 export type BpmResult = { bpm: number; confidence: number };
-export type BpmRequest = { source: string; start: number; end: number };
-export type BpmResponse = { progress: number } | { result: BpmResult } | { error: string };
+export type TempoAnalysis =
+  { kind: 'stable'; result: BpmResult } | { kind: 'varying'; bpms: number[] } | { kind: 'unclear' };
+export type BpmRequest = {
+  source: string;
+  start: number;
+  end: number;
+  firstBeatBpm?: number;
+  beatsPerBar?: 3 | 4;
+};
+export type BpmResponse =
+  { progress: number } | { result: BpmResult } | { firstBeat: FirstBeatResult } | { error: string };
 
 /** Keep only three short energy envelopes, rather than a whole decoded soundtrack. */
 export class BpmEnvelope {
@@ -57,10 +67,21 @@ export class BpmEnvelope {
     }
     return result;
   }
+
+  /** Relative audio activity for offline arrangement; never used as a calorie measurement. */
+  levels() {
+    return Float32Array.from(this.counts, (count, i) =>
+      Math.sqrt(this.energy.reduce((sum, band) => sum + band[i], 0) / (count || 1)),
+    );
+  }
 }
 
 /** Normalized onset autocorrelation with beat multiples and a weak musical-tempo prior. */
-export function estimateBpm(onsets: Float32Array, rate = ENVELOPE_RATE): BpmResult | null {
+export function estimateBpm(
+  onsets: Float32Array,
+  rate = ENVELOPE_RATE,
+  referenceBpm?: number,
+): BpmResult | null {
   if (onsets.length < rate * 6) return null;
   let mean = 0,
     maximum = 0;
@@ -120,10 +141,9 @@ export function estimateBpm(onsets: Float32Array, rate = ENVELOPE_RATE): BpmResu
       center + (offset * (after - before)) / 2 + (offset ** 2 * (before - 2 * center + after)) / 2,
     );
   };
-  let bestBpm = 0,
-    bestScore = 0,
-    bestCorrelation = 0;
+  let bestScore = 0;
   const scores: number[] = [];
+  const candidates: { bpm: number; score: number; correlation: number }[] = [];
   for (let step = 1100; step <= 4400; step++) {
     const bpm = step / 20;
     const lag = (rate * 60) / bpm;
@@ -134,17 +154,119 @@ export function estimateBpm(onsets: Float32Array, rate = ENVELOPE_RATE): BpmResu
     const score =
       (fundamental + 0.5 * at(lag * 2) + 0.25 * at(lag * 3) - 0.15 * at(lag / 2)) * prior;
     scores.push(score);
-    if (score > bestScore) {
-      bestBpm = bpm;
-      bestScore = score;
-      bestCorrelation = fundamental;
-    }
+    candidates.push({ bpm, score, correlation: fundamental });
+    bestScore = Math.max(bestScore, score);
   }
   scores.sort((a, b) => a - b);
   const prominence = bestScore - scores[Math.floor(scores.length / 2)];
-  if (bestCorrelation < 0.18 || prominence < 0.2) return null;
+  if (prominence < 0.2) return null;
+  candidates.sort((a, b) => b.score - a.score);
+  const distinct: typeof candidates = [];
+  for (const candidate of candidates) {
+    if (candidate.score < bestScore * 0.6) break;
+    if (candidate.correlation < 0.18) continue;
+    if (distinct.every((other) => Math.abs(Math.log(candidate.bpm / other.bpm)) > 0.025))
+      distinct.push(candidate);
+    if (distinct.length === 6) break;
+  }
+  // Repeated multi-beat patterns can beat the true tempo in autocorrelation.
+  // Compare how distinctly each candidate supports ONE phase of a beat grid.
+  const smooth = Float32Array.from(centered, (value) => Math.max(0, value + mean));
+  const sorted = smooth.slice().sort();
+  const cap = sorted[Math.floor(sorted.length * 0.98)];
+  const ranked = distinct
+    .map((candidate) => {
+      const period = (rate * 60) / candidate.bpm;
+      const phases: { phase: number; score: number }[] = [];
+      for (let phase = 0; phase < period; phase += 0.5) {
+        let sum = 0,
+          count = 0;
+        for (let time = phase; time < smooth.length; time += period) {
+          const index = Math.floor(time),
+            fraction = time - index;
+          sum += Math.min(
+            cap,
+            (smooth[index] ?? 0) * (1 - fraction) + (smooth[index + 1] ?? 0) * fraction,
+          );
+          count++;
+        }
+        phases.push({ phase, score: sum / count });
+      }
+      phases.sort((a, b) => b.score - a.score);
+      const best = phases[0];
+      const runner = phases.find(({ phase }) => {
+        const distance = Math.abs(phase - best.phase);
+        return Math.min(distance, period - distance) > period * 0.15;
+      });
+      const clarity = best.score
+        ? Math.max(0, (best.score - (runner?.score ?? 0)) / best.score)
+        : 0;
+      return {
+        ...candidate,
+        rankedScore: candidate.score * (0.8 + 0.2 * Math.min(1, clarity / 0.2)),
+      };
+    })
+    .sort((a, b) => b.rankedScore - a.rankedScore);
+  // A short window can favour an accent multiple. Retain the full-interval
+  // candidate only when it also has comparable local evidence.
+  const best =
+    ranked.find(
+      (candidate) =>
+        referenceBpm !== undefined &&
+        ranked[0].correlation < 0.75 &&
+        Math.abs(Math.log(candidate.bpm / referenceBpm)) < 0.025 &&
+        candidate.rankedScore >= ranked[0].rankedScore * 0.8,
+    ) ?? ranked[0];
+  if (!best) return null;
   return {
-    bpm: Math.round(bestBpm * 100) / 100,
-    confidence: Math.min(1, bestCorrelation),
+    bpm: Math.round(best.bpm * 100) / 100,
+    confidence: Math.min(1, best.correlation),
   };
+}
+
+/** Detect disagreement within the sampled interval, without editing a tempo map. */
+export function analyzeTempo(onsets: Float32Array, rate = ENVELOPE_RATE): TempoAnalysis {
+  const result = estimateBpm(onsets, rate);
+  const windows: BpmResult[] = [];
+  const length = Math.round(rate * 12);
+  for (let start = 0; start + rate * 8 <= onsets.length; start += length) {
+    const local = estimateBpm(
+      onsets.subarray(start, Math.min(start + length, onsets.length)),
+      rate,
+      result?.bpm,
+    );
+    if (local) windows.push(local);
+  }
+  const groups: { bpm: number; members: BpmResult[] }[] = [];
+  for (const result of windows) {
+    // Local accents commonly switch half/double-time readings without the song
+    // changing speed. Do not call that alone a detected tempo change.
+    const group = groups.find((g) => {
+      const octaves = Math.log2(g.bpm / result.bpm);
+      if (Math.abs(octaves) < 0.055) return true;
+      return (
+        Math.abs(octaves - Math.round(octaves)) < 0.055 &&
+        !(result.confidence >= 0.75 && g.members.some((r) => r.confidence >= 0.75))
+      );
+    });
+    if (group)
+      group.members.push({
+        ...result,
+        bpm: result.bpm * 2 ** Math.round(Math.log2(group.bpm / result.bpm)),
+      });
+    else groups.push({ bpm: result.bpm, members: [result] });
+  }
+  // Require repeated evidence, or a strongly periodic complete window, on both
+  // sides. An unclear intro alone must not be reported as a tempo change.
+  const supported = groups.filter(
+    (g) => g.members.length >= 2 || g.members.some((r) => r.confidence >= 0.45),
+  );
+  if (supported.length > 1)
+    return {
+      kind: 'varying',
+      bpms: supported.map((g) =>
+        Math.round(g.members.reduce((sum, r) => sum + r.bpm, 0) / g.members.length),
+      ),
+    };
+  return result ? { kind: 'stable', result } : { kind: 'unclear' };
 }
