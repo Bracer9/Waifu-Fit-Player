@@ -9,7 +9,17 @@ import {
 } from './AlbumCoverEffects';
 import '../album-cover.css';
 
-const MOTION = { driftMs: 6000, returnMs: 420, zoom: 1.02 };
+const MOTION = { driftMs: 6000, focusCycleMs: 3000, returnMs: 420, zoom: 1.02 };
+const DRIFT_EASING = 'cubic-bezier(.25,.48,.35,1)';
+const FOCUS_EASING = 'cubic-bezier(.45,0,.55,1)';
+// Brief sharp rest, then a slow focus drift in each direction without a peak hold.
+const FOCUS_STOPS = [
+  [0, 0],
+  [1 / 12, 0],
+  [0.5, 1],
+  [11 / 12, 0],
+  [1, 0],
+] as const;
 
 /** Motion stays inside the existing picture aperture, never on the card or caption. */
 export function AlbumCover({
@@ -27,12 +37,15 @@ export function AlbumCover({
 }) {
   const scene = useRef<HTMLSpanElement>(null);
   const movement = useRef<Animation | null>(null);
+  const defocus = useRef<HTMLSpanElement>(null);
+  const focusing = useRef<Animation | null>(null);
+  const glinting = useRef<Animation | null>(null);
   const [detail, setDetail] = useState<{ source: string; kind?: AlbumCoverDetail } | null>(null);
   const [moving, setMoving] = useState(false);
   const id = useId().replace(/:/g, '');
   const kind = detail && detail.source === src ? detail.kind : undefined;
   const pending = !!src && detail?.source !== src;
-  const driftEnabled = !['all', 'touhou', 'vocaloid'].includes(albumId);
+  const driftEnabled = !['all', 'touhou', 'vocaloid', 'anime'].includes(albumId);
 
   useEffect(() => {
     if (!src) return;
@@ -53,15 +66,29 @@ export function AlbumCover({
 
   useLayoutEffect(() => {
     const node = scene.current!;
+    const focusNode = defocus.current;
+    const glintNode = node.querySelector<SVGGElement>('.album-earring-glint');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const stop = () => {
       const from = getComputedStyle(node).transform;
+      const focusFrom = focusNode ? getComputedStyle(focusNode).opacity : '0';
       movement.current?.cancel();
       movement.current = null;
+      focusing.current?.cancel();
+      focusing.current = null;
+      glinting.current?.cancel();
+      glinting.current = null;
       node.style.transform = '';
+      if (focusNode) focusNode.style.opacity = '';
       setMoving(false);
       if (from !== 'none' && !reduced.matches && !document.hidden) {
         movement.current = node.animate([{ transform: from }, { transform: 'none' }], {
+          duration: MOTION.returnMs,
+          easing: 'cubic-bezier(.2,.7,.2,1)',
+        });
+      }
+      if (focusNode && Number(focusFrom) > 0 && !reduced.matches && !document.hidden) {
+        focusing.current = focusNode.animate([{ opacity: focusFrom }, { opacity: 0 }], {
           duration: MOTION.returnMs,
           easing: 'cubic-bezier(.2,.7,.2,1)',
         });
@@ -83,22 +110,73 @@ export function AlbumCover({
         const from = getComputedStyle(node).transform;
         movement.current?.cancel();
         node.style.transform = '';
+        focusing.current?.cancel();
+        focusing.current = null;
+        glinting.current?.cancel();
+        glinting.current = null;
+        if (focusNode) focusNode.style.opacity = '';
+        const timing: KeyframeAnimationOptions = {
+          duration: focusNode ? MOTION.focusCycleMs : MOTION.driftMs,
+          easing: focusNode ? 'linear' : DRIFT_EASING,
+          iterations: Infinity,
+          direction: focusNode ? 'normal' : 'alternate',
+        };
+        const near = `scale(${MOTION.zoom}) translate(-4px, 1px)`;
         movement.current = node.animate(
-          [
-            { transform: from === 'none' ? 'scale(1) translate(0, 0)' : from },
-            { transform: `scale(${MOTION.zoom}) translate(-4px, 1px)` },
-          ],
-          {
-            duration: MOTION.driftMs,
-            easing: 'cubic-bezier(.25,.48,.35,1)',
-            iterations: Infinity,
-            direction: 'alternate',
-          },
+          focusNode
+            ? FOCUS_STOPS.map(([offset, depth]) => ({
+                offset,
+                transform: depth ? near : 'none',
+                easing: FOCUS_EASING,
+              }))
+            : [
+                { transform: from === 'none' ? 'scale(1) translate(0, 0)' : from },
+                { transform: near },
+              ],
+          timing,
         );
         movement.current.id = 'album-cover-drift';
+        if (focusNode) {
+          focusing.current = focusNode.animate(
+            FOCUS_STOPS.map(([offset, depth]) => ({
+              offset,
+              opacity: depth * 0.9,
+              easing: FOCUS_EASING,
+            })),
+            timing,
+          );
+          focusing.current.id = 'album-cover-focus';
+          if (glintNode) {
+            // Preserve the full soft flash, shifting it one clear-rest interval
+            // earlier so its peak lands exactly when focus becomes fully sharp.
+            glinting.current = glintNode.animate(
+              [
+                { offset: 0, opacity: 1, transform: 'scale(1.12)' },
+                { offset: 1 / 12, opacity: 0, transform: 'scale(.78)' },
+                { offset: 11 / 12, opacity: 0, transform: 'scale(.78)' },
+                { offset: 1, opacity: 1, transform: 'scale(1.12)' },
+              ],
+              { ...timing, delay: -MOTION.focusCycleMs / 12 },
+            );
+            glinting.current.id = 'album-cover-glint';
+          }
+          const start = document.timeline.currentTime;
+          if (start !== null) {
+            for (const animation of [movement.current, focusing.current, glinting.current]) {
+              if (animation) animation.startTime = start;
+            }
+          }
+        }
       }
-      if (document.hidden) movement.current.pause();
-      else movement.current.play();
+      if (document.hidden) {
+        movement.current.pause();
+        focusing.current?.pause();
+        glinting.current?.pause();
+      } else {
+        movement.current.play();
+        focusing.current?.play();
+        glinting.current?.play();
+      }
     };
     refresh();
     document.addEventListener('visibilitychange', refresh);
@@ -108,10 +186,15 @@ export function AlbumCover({
       reduced.removeEventListener('change', refresh);
       // Hand the sampled pose to the next selection effect before releasing WAAPI.
       node.style.transform = getComputedStyle(node).transform;
+      if (focusNode) focusNode.style.opacity = getComputedStyle(focusNode).opacity;
       movement.current?.cancel();
       movement.current = null;
+      focusing.current?.cancel();
+      focusing.current = null;
+      glinting.current?.cancel();
+      glinting.current = null;
     };
-  }, [selected, src, driftEnabled]);
+  }, [selected, src, driftEnabled, kind]);
 
   return (
     <span
@@ -121,6 +204,11 @@ export function AlbumCover({
     >
       <span className="album-cover-scene" ref={scene}>
         <CoverArt src={src} eager={eager} />
+        {albumId === 'pop' && src && (
+          <span className="album-cover-defocus" ref={defocus} aria-hidden="true">
+            <CoverArt src={src} eager={eager} />
+          </span>
+        )}
         {kind && (
           <svg
             className={`album-cover-detail ${kind}`}

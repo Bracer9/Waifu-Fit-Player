@@ -48,7 +48,45 @@ async function openAuthoredCovers(page: Page) {
   await page.mouse.move(10, 10);
 }
 
-test('selected covers show visible sunset light and vinyl motion without moving the caption', async ({
+test('anime and pop insertion copies keep the clear idle picture and return cleanly', async ({
+  page,
+}) => {
+  await openAuthoredCovers(page);
+  await page.evaluate(() => {
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...args) {
+      const animation = animate.apply(this, args);
+      if (this.classList.contains('album-flight-card') && !this.hasAttribute('data-returning')) {
+        animation.pause();
+        animation.currentTime = 0;
+      }
+      return animation;
+    };
+  });
+  for (const id of ['anime', 'pop']) {
+    const card = page.locator(`.collection-album[data-id="${id}"]`);
+    await card.click();
+    await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
+    await expect(card).toHaveAttribute('aria-current', 'true');
+    await page.keyboard.press('Enter');
+    const flight = page.locator('.album-flight-card');
+    await expect(flight).toBeVisible();
+    await expect(flight.locator('.collection-art')).not.toHaveAttribute('data-cover-motion');
+    await expect(flight.locator('.album-cover-scene')).toHaveCSS('transform', 'none');
+    await expect(flight.locator('.album-cover-detail')).toHaveCSS('opacity', '0');
+    if (id === 'pop')
+      await expect(flight.locator('.album-cover-defocus')).toHaveCSS('display', 'none');
+    await flight
+      .locator('.collection-art')
+      .screenshot({ path: `artifacts/${id}-effect-insertion.png` });
+    await page.keyboard.press('Escape');
+    await expect(flight).toHaveCount(0);
+    await expect(card).toHaveCSS('visibility', 'visible');
+    await expect(card.locator('.collection-art')).toHaveAttribute('data-cover-motion');
+  }
+});
+
+test('anime sunset lens flare stays anchored to the right-hand sun without focus or zoom', async ({
   page,
 }) => {
   await openAuthoredCovers(page);
@@ -71,39 +109,41 @@ test('selected covers show visible sunset light and vinyl motion without moving 
   const titleWidth = await anime
     .locator('.collection-label')
     .evaluate((label: HTMLElement) => label.offsetWidth);
-  await anime.locator('.album-cover-scene').evaluate((scene) => {
-    const drift = scene.getAnimations().find((animation) => animation.id === 'album-cover-drift')!;
-    drift.pause();
-    drift.currentTime = 6000;
-  });
-  await expect
-    .poll(() =>
-      anime
-        .locator('.album-cover-scene')
-        .evaluate((scene) => new DOMMatrix(getComputedStyle(scene).transform).a),
-    )
-    .toBeCloseTo(1.02, 3);
+  await expect(anime.locator('.album-cover-defocus')).toHaveCount(0);
+  await expect(anime.locator('.album-cover-scene')).toHaveCSS('transform', 'none');
+  expect(
+    await anime
+      .locator('.album-cover-scene')
+      .evaluate(
+        (scene) =>
+          scene.getAnimations().filter((animation) => animation.id === 'album-cover-drift').length,
+      ),
+  ).toBe(0);
+  await expect(anime.locator('.album-sun-lens')).toHaveAttribute(
+    'transform',
+    'translate(1347 405)',
+  );
   expect(
     await anime.locator('.collection-label').evaluate((label: HTMLElement) => label.offsetWidth),
   ).toBe(titleWidth);
-  await anime.locator('.album-sunset-glow').evaluate((glow) => {
+  await anime.locator('.album-lens-source').evaluate((glow) => {
     const animation = glow.getAnimations()[0];
     animation.pause();
     animation.currentTime = 0;
   });
-  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('opacity', '0.08');
-  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('fill', 'rgb(255, 183, 107)');
-  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('mix-blend-mode', 'normal');
-  await anime
-    .locator('.album-sunset-aura, .album-sunset-glow, .album-sunset-ray, .album-sunset-water')
-    .evaluateAll((lights) => {
-      for (const light of lights) {
-        const animation = light.getAnimations()[0];
-        animation.pause();
-        animation.currentTime = 1664;
-      }
-    });
-  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('opacity', '0.32');
+  await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '0.588');
+  await expect(anime.locator('.album-sun-lens polygon, .album-sun-lens [stroke]')).toHaveCount(0);
+  await expect(anime.locator('.album-cover-detail')).toHaveCSS('mix-blend-mode', 'screen');
+  await anime.locator('.collection-art').screenshot({ path: 'artifacts/anime-lens-rest.png' });
+  await anime.locator('.album-lens-source, .album-lens-ghost').evaluateAll((lights) => {
+    for (const light of lights) {
+      const animation = light.getAnimations()[0];
+      animation.pause();
+      animation.currentTime = 900;
+    }
+  });
+  await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '0.84');
+  await anime.locator('.collection-art').screenshot({ path: 'artifacts/anime-lens-sunlight.png' });
   await page.screenshot({ path: 'artifacts/album-cover-anime-1080p.png' });
 
   await page.keyboard.press('ArrowDown');
@@ -127,7 +167,7 @@ test('selected covers show visible sunset light and vinyl motion without moving 
     vinyl.locator('.album-vinyl-reflection, .album-vinyl-grooves, .album-vinyl-label-mark'),
   ).toHaveCount(0);
   await expect(anime.locator('.album-cover-detail')).toHaveCSS('opacity', '0');
-  await expect(anime.locator('.album-sunset-glow')).toHaveCSS('animation-play-state', 'paused');
+  await expect(anime.locator('.album-lens-source')).toHaveCSS('animation-play-state', 'paused');
   await expect(vinyl.locator('.album-vinyl-spin').first()).toHaveCSS(
     'animation-play-state',
     'running',
@@ -230,7 +270,85 @@ test('album-specific scenes keep their static layers, animate only the selection
 
   await page.keyboard.press('ArrowUp');
   await expect(pop).toHaveAttribute('aria-current', 'true');
-  await expect(pop.locator('.album-earring-glint')).toHaveCSS('animation-play-state', 'running');
+  await expect(pop.locator('.album-cover-defocus')).toHaveCount(1);
+  await expect(pop.locator('.album-stage-light')).toHaveCount(2);
+  await expect(pop.locator('.album-glowsticks')).toHaveCount(2);
+  await expect
+    .poll(() =>
+      pop
+        .locator('.album-cover-scene')
+        .evaluate(
+          (scene) =>
+            scene
+              .getAnimations({ subtree: true })
+              .filter((animation) =>
+                ['album-cover-drift', 'album-cover-focus', 'album-cover-glint'].includes(
+                  animation.id,
+                ),
+              ).length,
+        ),
+    )
+    .toBe(3);
+  const startTimes = await pop.locator('.album-cover-scene').evaluate((scene) =>
+    scene
+      .getAnimations({ subtree: true })
+      .filter((animation) =>
+        ['album-cover-drift', 'album-cover-focus', 'album-cover-glint'].includes(animation.id),
+      )
+      .map((animation) => animation.startTime),
+  );
+  expect(new Set(startTimes).size).toBe(1);
+  const setFocusTime = async (time: number) =>
+    pop.locator('.album-cover-scene').evaluate((scene, time) => {
+      for (const animation of scene.getAnimations({ subtree: true })) {
+        if (!['album-cover-drift', 'album-cover-focus', 'album-cover-glint'].includes(animation.id))
+          continue;
+        animation.pause();
+        animation.currentTime = time;
+      }
+    }, time);
+  await setFocusTime(0);
+  await expect(pop.locator('.album-cover-defocus')).toHaveCSS('opacity', '0');
+  await expect(pop.locator('.album-cover-scene')).toHaveCSS('transform', 'none');
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '0');
+  const focusDuration = await pop.locator('.album-cover-scene').evaluate(
+    (scene) =>
+      scene
+        .getAnimations()
+        .find((animation) => animation.id === 'album-cover-drift')!
+        .effect!.getTiming().duration,
+  );
+  expect(focusDuration).toBe(3000);
+  await setFocusTime(1500);
+  await expect(pop.locator('.album-cover-defocus')).toHaveCSS('opacity', '0.9');
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '0');
+  expect(
+    await pop
+      .locator('.album-cover-scene')
+      .evaluate((scene) => new DOMMatrix(getComputedStyle(scene).transform).a),
+  ).toBeCloseTo(1.02, 3);
+  await pop.locator('.collection-art').screenshot({ path: 'artifacts/pop-focus-near.png' });
+  for (const time of [750, 2250, 2499]) {
+    await setFocusTime(time);
+    await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '0');
+  }
+  await setFocusTime(2500);
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '0');
+  await setFocusTime(2625);
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '0.5');
+  await setFocusTime(2750);
+  await expect(pop.locator('.album-cover-defocus')).toHaveCSS('opacity', '0');
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '1');
+  await pop.locator('.collection-art').screenshot({ path: 'artifacts/pop-focus-clear.png' });
+  await setFocusTime(2875);
+  await expect(pop.locator('.album-earring-glint')).toHaveCSS('opacity', '0.5');
+  await setFocusTime(3000);
+  await expect(pop.locator('.album-cover-defocus')).toHaveCSS('opacity', '0');
+  expect(
+    await pop
+      .locator('.album-earring-glint')
+      .evaluate((node) => Number(getComputedStyle(node).opacity)),
+  ).toBeCloseTo(0, 6);
   await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
   await expect(vinyl.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
   await expect
@@ -246,13 +364,10 @@ test('album-specific scenes keep their static layers, animate only the selection
   await pop
     .locator('.album-cover-detail')
     .evaluate((node) => (node as SVGElement).style.setProperty('--music-beat', '.7'));
-  await pop.locator('.album-earring-glint').evaluate((node) => {
-    const animation = node.getAnimations()[0];
-    animation.pause();
-    animation.currentTime = 896;
-  });
+  await setFocusTime(2750);
   await page.screenshot({ path: 'artifacts/album-cover-pop-1080p.png' });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(pop.locator('.album-cover-detail')).toHaveCSS('display', 'none');
+  await expect(pop.locator('.album-cover-defocus')).toHaveCSS('display', 'none');
   await expect(moon.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
 });

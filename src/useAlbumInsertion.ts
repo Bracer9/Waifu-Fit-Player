@@ -80,6 +80,30 @@ export function useAlbumInsertion({
     mask.style.clipPath = `inset(0 ${Math.max(0, menuViewport().width - edge)}px 0 0)`;
     const copy = card.cloneNode(true) as HTMLElement;
     copy.classList.add('album-flight-card');
+    // Use the normal idle composition, including its persistent record layers.
+    copy.querySelector('.collection-art')?.removeAttribute('data-cover-motion');
+    // Cloned SVG references must not resolve to the original's now-hidden defs:
+    // doing so drops the corrected record/mask and exposes the old cover below.
+    const prefix = `album-flight-${crypto.randomUUID()}`;
+    const ids = new Map<string, string>();
+    for (const node of copy.querySelectorAll<SVGElement>('svg [id]')) {
+      const next = `${prefix}-${node.id}`;
+      ids.set(node.id, next);
+      node.id = next;
+    }
+    for (const node of copy.querySelectorAll('svg [clip-path], svg [mask], svg [filter]')) {
+      for (const attribute of ['clip-path', 'mask', 'filter']) {
+        const value = node.getAttribute(attribute);
+        if (value) {
+          node.setAttribute(
+            attribute,
+            value.replace(/url\(#([^)]+)\)/g, (reference, id: string) =>
+              ids.has(id) ? `url(#${ids.get(id)})` : reference,
+            ),
+          );
+        }
+      }
+    }
     const duration = quick ? ALBUM_DECK_TIMING.quickInsert : ALBUM_DECK_TIMING.insert;
     copy.style.setProperty('--album-insert-ms', `${duration}ms`);
     copy.setAttribute('aria-hidden', 'true');

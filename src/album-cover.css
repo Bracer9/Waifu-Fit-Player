@@ -171,6 +171,18 @@
 .collection-art[data-cover-pending] .album-cover-scene {
   opacity: 0;
 }
+/* Pop depth-of-field: rasterize one fixed blur, then crossfade in step with
+   the existing zoom. No animated filter radius or additional render loop. */
+.album-cover-defocus {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  filter: blur(3px);
+  opacity: 0;
+}
+.album-flight-card .album-cover-defocus {
+  display: none;
+}
 .album-cover-detail {
   position: absolute;
   inset: 0;
@@ -194,37 +206,67 @@
 .collection-art[data-cover-motion] .album-ambient {
   opacity: 1;
 }
-.album-sunset-aura,
-.album-sunset-glow,
-.album-sunset-ray,
-.album-sunset-water {
-  fill: #ffb76b;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: album-sunset-light 5200ms ease-in-out infinite;
+/* Light adds to the illustration like exposure through a lens. Keep the broad
+   corona, veiling glare and differently sized ghosts soft, without drawn borders. */
+.album-cover-detail.sunset,
+.album-cover-detail.sunset-window {
+  mix-blend-mode: screen;
 }
-.album-sunset-aura {
-  fill: #ff9859;
-  filter: blur(32px);
-  --light-low: 0.04;
-  --light-high: 0.18;
+.album-lens-source,
+.album-lens-ghost {
+  opacity: calc(var(--flare-peak) * 0.7);
+  animation: album-lens-arrival 3.6s ease-in-out infinite paused;
 }
-.album-sunset-glow {
-  filter: blur(24px);
-  --light-low: 0.08;
-  --light-high: 0.32;
+.album-lens-source {
+  --flare-peak: 0.84;
 }
-.album-sunset-ray {
-  fill: #ffc187;
-  filter: blur(7px);
-  --light-low: 0.04;
-  --light-high: 0.25;
+.album-lens-ghost {
+  --flare-peak: 1;
+  animation-name: album-lens-refraction;
 }
-.album-sunset-water {
-  fill: #ffad65;
-  filter: blur(10px);
-  --light-low: 0.05;
-  --light-high: 0.26;
+.album-lens-ghost.far {
+  --flare-peak: 0.84;
+  animation-delay: 90ms;
+}
+.collection-art[data-cover-motion] .album-lens-source,
+.collection-art[data-cover-motion] .album-lens-ghost {
+  animation-play-state: running;
+}
+@keyframes album-lens-arrival {
+  0%,
+  4%,
+  48%,
+  100% {
+    opacity: calc(var(--flare-peak) * 0.7);
+    transform: scale(0.997);
+  }
+  18%,
+  26% {
+    opacity: var(--flare-peak);
+    transform: scale(1.004);
+  }
+  76% {
+    opacity: calc(var(--flare-peak) * 0.85);
+    transform: scale(1);
+  }
+}
+@keyframes album-lens-refraction {
+  0%,
+  6%,
+  48%,
+  100% {
+    opacity: calc(var(--flare-peak) * 0.7);
+    transform: translate(3px, -1px);
+  }
+  18%,
+  26% {
+    opacity: var(--flare-peak);
+    transform: translate(-3px, 1px);
+  }
+  76% {
+    opacity: calc(var(--flare-peak) * 0.85);
+    transform: translate(0, 0);
+  }
 }
 .album-vinyl-spin {
   transform-origin: 1100px 178px;
@@ -286,32 +328,23 @@
   transform-box: fill-box;
   transform-origin: center;
   filter: drop-shadow(0 0 7px #fff8ed);
-  animation: album-earring-flash 2800ms ease-in-out infinite;
+  opacity: 0;
+  transform: scale(0.78);
 }
 .album-earring-halo {
   filter: blur(9px);
   opacity: 0.55;
 }
-.album-cover-detail .album-sunset-aura,
-.album-cover-detail .album-sunset-glow,
-.album-cover-detail .album-sunset-ray,
-.album-cover-detail .album-sunset-water,
 .album-cover-detail .album-vinyl-spin,
 .album-cover-detail .album-ribbon-sway,
 .album-cover-detail .album-moon-halo,
-.album-cover-detail .album-moon-water,
-.album-cover-detail .album-earring-glint {
+.album-cover-detail .album-moon-water {
   animation-play-state: paused;
 }
-.collection-art[data-cover-motion] .album-sunset-aura,
-.collection-art[data-cover-motion] .album-sunset-glow,
-.collection-art[data-cover-motion] .album-sunset-ray,
-.collection-art[data-cover-motion] .album-sunset-water,
 .collection-art[data-cover-motion] [data-playing] .album-vinyl-spin,
 .collection-art[data-cover-motion] .album-ribbon-sway,
 .collection-art[data-cover-motion] .album-moon-halo,
-.collection-art[data-cover-motion] .album-moon-water,
-.collection-art[data-cover-motion] .album-earring-glint {
+.collection-art[data-cover-motion] .album-moon-water {
   animation-play-state: running;
 }
 @keyframes album-sunset-light {
@@ -342,28 +375,10 @@
     transform: rotate(-2.4deg) skewX(-0.6deg);
   }
 }
-@keyframes album-earring-flash {
-  0%,
-  18%,
-  58%,
-  100% {
-    opacity: 0;
-    transform: scale(0.78);
-  }
-  32% {
-    opacity: 0.95;
-    transform: scale(1.12);
-  }
-  40% {
-    opacity: 0.22;
-    transform: scale(0.9);
-  }
-  46% {
-    opacity: 0.75;
-    transform: scale(1);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
+  .album-cover-defocus {
+    display: none;
+  }
   .album-flight-card .collection-art::before {
     animation: none;
   }

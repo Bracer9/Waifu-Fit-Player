@@ -273,6 +273,67 @@ function IdolStage({ id }: { id: string }) {
   );
 }
 
+/** Additive veiling glare and soft lens ghosts, all tied to the photographed sun. */
+function SunsetLens({ id, window }: { id: string; window: boolean }) {
+  const x = window ? 1347 : 1740;
+  const y = window ? 405 : 406;
+  const angle = window ? 20 : 9;
+  return (
+    <>
+      <defs>
+        <radialGradient id={`${id}-sunlight`}>
+          <stop offset="0" stopColor="#fff5d2" stopOpacity=".8" />
+          <stop offset=".25" stopColor="#ffdb9c" stopOpacity=".42" />
+          <stop offset=".6" stopColor="#ffb878" stopOpacity=".16" />
+          <stop offset="1" stopColor="#ffb878" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-lens-veil`}>
+          <stop offset="0" stopColor="#ffe8ba" stopOpacity=".48" />
+          <stop offset=".36" stopColor="#ffc598" stopOpacity=".25" />
+          <stop offset=".7" stopColor="#ffb685" stopOpacity=".09" />
+          <stop offset="1" stopColor="#ffb685" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-lens-corona`}>
+          <stop offset="0" stopColor="#ffbc83" stopOpacity="0" />
+          <stop offset=".56" stopColor="#ffbc83" stopOpacity="0" />
+          <stop offset=".67" stopColor="#ff936e" stopOpacity=".04" />
+          <stop offset=".75" stopColor="#ffc28c" stopOpacity=".28" />
+          <stop offset=".82" stopColor="#fff2c7" stopOpacity=".1" />
+          <stop offset=".94" stopColor="#fff2c7" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-lens-ghost`}>
+          <stop offset="0" stopColor="#cce9b7" stopOpacity=".13" />
+          <stop offset=".48" stopColor="#f4e1a2" stopOpacity=".18" />
+          <stop offset=".74" stopColor="#ffcba3" stopOpacity=".26" />
+          <stop offset=".9" stopColor="#ffd9ac" stopOpacity=".08" />
+          <stop offset="1" stopColor="#ffd9ac" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <g className="album-sun-lens" transform={`translate(${x} ${y})`}>
+        <g className="album-lens-source">
+          <ellipse cx="170" cy="-95" rx="700" ry="440" fill={`url(#${id}-lens-veil)`} />
+          <ellipse rx="255" ry="165" fill={`url(#${id}-sunlight)`} />
+          <ellipse rx="870" ry="9" fill={`url(#${id}-sunlight)`} />
+        </g>
+        <g className="album-lens-ghost near">
+          <ellipse cx="45" cy="-20" rx="665" ry="475" fill={`url(#${id}-lens-corona)`} />
+          <g transform={`rotate(${angle})`}>
+            <circle cx="-190" r="17" fill={`url(#${id}-sunlight)`} />
+            <ellipse cx="-350" rx="65" ry="48" fill={`url(#${id}-lens-ghost)`} />
+            <circle cx="-505" r="23" fill={`url(#${id}-sunlight)`} />
+          </g>
+        </g>
+        <g transform={`rotate(${angle})`}>
+          <g className="album-lens-ghost far">
+            <ellipse cx="-720" rx="115" ry="93" fill={`url(#${id}-lens-ghost)`} />
+            <circle cx="-1050" r="175" fill={`url(#${id}-lens-ghost)`} />
+          </g>
+        </g>
+      </g>
+    </>
+  );
+}
+
 export function AlbumCoverEffects({
   kind,
   src,
@@ -293,14 +354,5 @@ export function AlbumCoverEffects({
   if (kind === 'moon-left' || kind === 'moon-right')
     return <MoonScene src={src} id={id} mirrored={kind === 'moon-left'} />;
   if (kind === 'idol-stage') return <IdolStage id={id} />;
-  return (
-    <g
-      transform={kind === 'sunset-window' ? 'translate(1347 405)' : 'translate(1740 406) scale(.7)'}
-    >
-      <ellipse className="album-sunset-aura" rx="205" ry="100" />
-      <ellipse className="album-sunset-glow" rx="106" ry="70" />
-      <ellipse className="album-sunset-ray" cy="18" rx="220" ry="7" />
-      <ellipse className="album-sunset-water" cy="65" rx="87" ry="17" />
-    </g>
-  );
+  return <SunsetLens id={id} window={kind === 'sunset-window'} />;
 }
