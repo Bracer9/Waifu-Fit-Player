@@ -1,0 +1,2247 @@
+{
+  "version": 1,
+  "windowBars": 8,
+  "repeatSimilarityThreshold": 0.88,
+  "references": [
+    {
+      "title": "Happy Halloween",
+      "phrases": [
+        {
+          "startBar": 1,
+          "startMs": 100,
+          "endMs": 16100,
+          "notes": 24,
+          "energy": 0.15771618956006697
+        },
+        {
+          "startBar": 9,
+          "startMs": 16100,
+          "endMs": 32100,
+          "notes": 28,
+          "energy": 0.3371014904463664
+        },
+        {
+          "startBar": 17,
+          "startMs": 32100,
+          "endMs": 48100,
+          "notes": 32,
+          "energy": 0.32646502479881745
+        },
+        {
+          "startBar": 25,
+          "startMs": 48100,
+          "endMs": 64100,
+          "notes": 24,
+          "energy": 0.36074243904920844
+        },
+        {
+          "startBar": 33,
+          "startMs": 64100,
+          "endMs": 80100,
+          "notes": 13,
+          "energy": 0.24645460024417842
+        },
+        {
+          "startBar": 41,
+          "startMs": 80100,
+          "endMs": 96100,
+          "notes": 19,
+          "energy": 0.37348404653330813
+        },
+        {
+          "startBar": 49,
+          "startMs": 96100,
+          "endMs": 112100,
+          "notes": 12,
+          "energy": 0.3651548621803522
+        },
+        {
+          "startBar": 57,
+          "startMs": 112100,
+          "endMs": 128100,
+          "notes": 14,
+          "energy": 0.23803480610717087
+        },
+        {
+          "startBar": 65,
+          "startMs": 128100,
+          "endMs": 144100,
+          "notes": 32,
+          "energy": 0.34820910249836745
+        },
+        {
+          "startBar": 73,
+          "startMs": 144100,
+          "endMs": 160100,
+          "notes": 23,
+          "energy": 0.1685825249645859
+        },
+        {
+          "startBar": 81,
+          "startMs": 160100,
+          "endMs": 176100,
+          "notes": 20,
+          "energy": 0.16886241285188588
+        },
+        {
+          "startBar": 89,
+          "startMs": 176100,
+          "endMs": 192100,
+          "notes": 8,
+          "energy": 0.18874181859719102
+        },
+        {
+          "startBar": 97,
+          "startMs": 192100,
+          "endMs": 208100,
+          "notes": 20,
+          "energy": 0.3451734451705124
+        },
+        {
+          "startBar": 105,
+          "startMs": 208100,
+          "endMs": 224100,
+          "notes": 12,
+          "energy": 0.36011884166160596
+        },
+        {
+          "startBar": 113,
+          "startMs": 224100,
+          "endMs": 240100,
+          "notes": 17,
+          "energy": 0.2550410952639151
+        }
+      ]
+    },
+    {
+      "title": "LOVELY ♥ CAVITY",
+      "phrases": [
+        {
+          "startBar": 1,
+          "startMs": 2387,
+          "endMs": 15187,
+          "notes": 9,
+          "energy": 0.38307355429205925
+        },
+        {
+          "startBar": 9,
+          "startMs": 15187,
+          "endMs": 27987,
+          "notes": 16,
+          "energy": 0.3774470349715557
+        },
+        {
+          "startBar": 17,
+          "startMs": 27987,
+          "endMs": 40787,
+          "notes": 16,
+          "energy": 0.2516984724354188
+        },
+        {
+          "startBar": 25,
+          "startMs": 40787,
+          "endMs": 53587,
+          "notes": 16,
+          "energy": 0.27355970415701447
+        },
+        {
+          "startBar": 33,
+          "startMs": 53587,
+          "endMs": 66387,
+          "notes": 13,
+          "energy": 0.3801565989619121
+        },
+        {
+          "startBar": 41,
+          "startMs": 66387,
+          "endMs": 79187,
+          "notes": 14,
+          "energy": 0.3759083490440389
+        },
+        {
+          "startBar": 49,
+          "startMs": 79187,
+          "endMs": 91987,
+          "notes": 16,
+          "energy": 0.3798895036277827
+        },
+        {
+          "startBar": 57,
+          "startMs": 91987,
+          "endMs": 104787,
+          "notes": 16,
+          "energy": 0.3741590301244287
+        },
+        {
+          "startBar": 65,
+          "startMs": 104787,
+          "endMs": 117587,
+          "notes": 1,
+          "energy": 0.48648371650488115
+        },
+        {
+          "startBar": 73,
+          "startMs": 117587,
+          "endMs": 130387,
+          "notes": 2,
+          "energy": 0.4522159659099998
+        },
+        {
+          "startBar": 81,
+          "startMs": 130387,
+          "endMs": 143187,
+          "notes": 12,
+          "energy": 0.37526932355831377
+        },
+        {
+          "startBar": 89,
+          "startMs": 143187,
+          "endMs": 155987,
+          "notes": 13,
+          "energy": 0.3810313109701383
+        },
+        {
+          "startBar": 97,
+          "startMs": 155987,
+          "endMs": 168787,
+          "notes": 16,
+          "energy": 0.3815137462603161
+        },
+        {
+          "startBar": 105,
+          "startMs": 168787,
+          "endMs": 181587,
+          "notes": 16,
+          "energy": 0.37574776932015086
+        }
+      ]
+    },
+    {
+      "title": "sugar ★ mellowcle",
+      "phrases": [
+        {
+          "startBar": 1,
+          "startMs": 535,
+          "endMs": 17377,
+          "notes": 8,
+          "energy": 0.33937662645412336
+        },
+        {
+          "startBar": 9,
+          "startMs": 17377,
+          "endMs": 34219,
+          "notes": 10,
+          "energy": 0.42526178837105666
+        },
+        {
+          "startBar": 17,
+          "startMs": 34219,
+          "endMs": 51061,
+          "notes": 20,
+          "energy": 0.4608505963947448
+        },
+        {
+          "startBar": 25,
+          "startMs": 51061,
+          "endMs": 67903,
+          "notes": 10,
+          "energy": 0.39751314012070504
+        },
+        {
+          "startBar": 33,
+          "startMs": 67903,
+          "endMs": 84746,
+          "notes": 10,
+          "energy": 0.4248422148946256
+        },
+        {
+          "startBar": 41,
+          "startMs": 84746,
+          "endMs": 101588,
+          "notes": 20,
+          "energy": 0.46114674589713933
+        },
+        {
+          "startBar": 49,
+          "startMs": 101588,
+          "endMs": 118430,
+          "notes": 4,
+          "energy": 0.451182316135916
+        },
+        {
+          "startBar": 57,
+          "startMs": 118430,
+          "endMs": 135272,
+          "notes": 12,
+          "energy": 0.4882167762017685
+        },
+        {
+          "startBar": 65,
+          "startMs": 135272,
+          "endMs": 152114,
+          "notes": 20,
+          "energy": 0.48457819334012314
+        },
+        {
+          "startBar": 73,
+          "startMs": 152114,
+          "endMs": 168956,
+          "notes": 12,
+          "energy": 0.452816599508392
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        57,
+        105
+      ],
+      "musicSimilarity": 0.953,
+      "movement": "repeat"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        57
+      ],
+      "musicSimilarity": 0.94,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        49,
+        97
+      ],
+      "musicSimilarity": 0.938,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        105
+      ],
+      "musicSimilarity": 0.926,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        41,
+        89
+      ],
+      "musicSimilarity": 0.924,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        41
+      ],
+      "musicSimilarity": 0.892,
+      "movement": "repeat"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        33
+      ],
+      "musicSimilarity": 0.888,
+      "movement": "repeat"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        41,
+        57
+      ],
+      "musicSimilarity": 0.877,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        41
+      ],
+      "musicSimilarity": 0.871,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        57,
+        89
+      ],
+      "musicSimilarity": 0.871,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        89,
+        105
+      ],
+      "musicSimilarity": 0.866,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        41,
+        105
+      ],
+      "musicSimilarity": 0.863,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        89
+      ],
+      "musicSimilarity": 0.86,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        49,
+        57
+      ],
+      "musicSimilarity": 0.856,
+      "movement": "repeat"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        49,
+        105
+      ],
+      "musicSimilarity": 0.841,
+      "movement": "repeat"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        57,
+        97
+      ],
+      "musicSimilarity": 0.841,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        97,
+        105
+      ],
+      "musicSimilarity": 0.833,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        49
+      ],
+      "musicSimilarity": 0.829,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        49
+      ],
+      "musicSimilarity": 0.828,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        97
+      ],
+      "musicSimilarity": 0.822,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        57
+      ],
+      "musicSimilarity": 0.813,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        49
+      ],
+      "musicSimilarity": 0.807,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        25
+      ],
+      "musicSimilarity": 0.806,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        25
+      ],
+      "musicSimilarity": 0.806,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        97
+      ],
+      "musicSimilarity": 0.796,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        89
+      ],
+      "musicSimilarity": 0.796,
+      "movement": "repeat"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        49
+      ],
+      "musicSimilarity": 0.789,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        41
+      ],
+      "musicSimilarity": 0.786,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        105
+      ],
+      "musicSimilarity": 0.78,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        33
+      ],
+      "musicSimilarity": 0.778,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        9
+      ],
+      "musicSimilarity": 0.775,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        105
+      ],
+      "musicSimilarity": 0.773,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        41,
+        97
+      ],
+      "musicSimilarity": 0.77,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        49
+      ],
+      "musicSimilarity": 0.766,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        57
+      ],
+      "musicSimilarity": 0.766,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        89,
+        97
+      ],
+      "musicSimilarity": 0.761,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        17
+      ],
+      "musicSimilarity": 0.76,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        41,
+        49
+      ],
+      "musicSimilarity": 0.759,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        49
+      ],
+      "musicSimilarity": 0.753,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        49,
+        89
+      ],
+      "musicSimilarity": 0.751,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        97
+      ],
+      "musicSimilarity": 0.75,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        33
+      ],
+      "musicSimilarity": 0.744,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        105
+      ],
+      "musicSimilarity": 0.713,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        41
+      ],
+      "musicSimilarity": 0.711,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        65
+      ],
+      "musicSimilarity": 0.704,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        105
+      ],
+      "musicSimilarity": 0.702,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        65
+      ],
+      "musicSimilarity": 0.676,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        89
+      ],
+      "musicSimilarity": 0.672,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        25
+      ],
+      "musicSimilarity": 0.668,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        65
+      ],
+      "musicSimilarity": 0.656,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        105
+      ],
+      "musicSimilarity": 0.652,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        65
+      ],
+      "musicSimilarity": 0.633,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        105
+      ],
+      "musicSimilarity": 0.625,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        105
+      ],
+      "musicSimilarity": 0.621,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        49
+      ],
+      "musicSimilarity": 0.609,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        57
+      ],
+      "musicSimilarity": 0.604,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        57
+      ],
+      "musicSimilarity": 0.586,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        57
+      ],
+      "musicSimilarity": 0.58,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        57
+      ],
+      "musicSimilarity": 0.566,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        41
+      ],
+      "musicSimilarity": 0.557,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        65,
+        105
+      ],
+      "musicSimilarity": 0.557,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        25,
+        49
+      ],
+      "musicSimilarity": 0.552,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        41
+      ],
+      "musicSimilarity": 0.551,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        65,
+        97
+      ],
+      "musicSimilarity": 0.522,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        41
+      ],
+      "musicSimilarity": 0.516,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        97
+      ],
+      "musicSimilarity": 0.498,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        41,
+        65
+      ],
+      "musicSimilarity": 0.498,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        97
+      ],
+      "musicSimilarity": 0.491,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        57
+      ],
+      "musicSimilarity": 0.487,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        65
+      ],
+      "musicSimilarity": 0.482,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        65
+      ],
+      "musicSimilarity": 0.472,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        105
+      ],
+      "musicSimilarity": 0.461,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        89
+      ],
+      "musicSimilarity": 0.454,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        25,
+        65
+      ],
+      "musicSimilarity": 0.449,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        65
+      ],
+      "musicSimilarity": 0.444,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        49
+      ],
+      "musicSimilarity": 0.429,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        97,
+        105
+      ],
+      "musicSimilarity": 0.428,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        97
+      ],
+      "musicSimilarity": 0.427,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        81,
+        113
+      ],
+      "musicSimilarity": 0.424,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        97
+      ],
+      "musicSimilarity": 0.42,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        33,
+        49
+      ],
+      "musicSimilarity": 0.414,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        73
+      ],
+      "musicSimilarity": 0.41,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        97
+      ],
+      "musicSimilarity": 0.406,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        81
+      ],
+      "musicSimilarity": 0.4,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        25
+      ],
+      "musicSimilarity": 0.397,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        49
+      ],
+      "musicSimilarity": 0.393,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        49,
+        65
+      ],
+      "musicSimilarity": 0.389,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        41,
+        49
+      ],
+      "musicSimilarity": 0.385,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        97
+      ],
+      "musicSimilarity": 0.377,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        9
+      ],
+      "musicSimilarity": 0.365,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        65
+      ],
+      "musicSimilarity": 0.365,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        25,
+        41
+      ],
+      "musicSimilarity": 0.36,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        49
+      ],
+      "musicSimilarity": 0.345,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        17
+      ],
+      "musicSimilarity": 0.344,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        33
+      ],
+      "musicSimilarity": 0.343,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        65
+      ],
+      "musicSimilarity": 0.337,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        33,
+        41
+      ],
+      "musicSimilarity": 0.337,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        33
+      ],
+      "musicSimilarity": 0.334,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        73,
+        113
+      ],
+      "musicSimilarity": 0.332,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        65
+      ],
+      "musicSimilarity": 0.331,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        41,
+        57
+      ],
+      "musicSimilarity": 0.327,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        57,
+        73
+      ],
+      "musicSimilarity": 0.316,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        33
+      ],
+      "musicSimilarity": 0.314,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        81
+      ],
+      "musicSimilarity": 0.313,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        25
+      ],
+      "musicSimilarity": 0.312,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        41
+      ],
+      "musicSimilarity": 0.312,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        81
+      ],
+      "musicSimilarity": 0.307,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        57
+      ],
+      "musicSimilarity": 0.295,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        97
+      ],
+      "musicSimilarity": 0.292,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        25
+      ],
+      "musicSimilarity": 0.291,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        81,
+        105
+      ],
+      "musicSimilarity": 0.278,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        33,
+        65
+      ],
+      "musicSimilarity": 0.277,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        81
+      ],
+      "musicSimilarity": 0.274,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        33
+      ],
+      "musicSimilarity": 0.27,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        41
+      ],
+      "musicSimilarity": 0.267,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        17
+      ],
+      "musicSimilarity": 0.265,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        49
+      ],
+      "musicSimilarity": 0.264,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        73
+      ],
+      "musicSimilarity": 0.262,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        25,
+        33
+      ],
+      "musicSimilarity": 0.261,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        41
+      ],
+      "musicSimilarity": 0.26,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        57
+      ],
+      "musicSimilarity": 0.255,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        17
+      ],
+      "musicSimilarity": 0.25,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        33
+      ],
+      "musicSimilarity": 0.245,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        73
+      ],
+      "musicSimilarity": 0.243,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        105,
+        113
+      ],
+      "musicSimilarity": 0.234,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        113
+      ],
+      "musicSimilarity": 0.224,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        49,
+        73
+      ],
+      "musicSimilarity": 0.224,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        97
+      ],
+      "musicSimilarity": 0.215,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        57
+      ],
+      "musicSimilarity": 0.214,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        73
+      ],
+      "musicSimilarity": 0.213,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        105
+      ],
+      "musicSimilarity": 0.206,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        65
+      ],
+      "musicSimilarity": 0.206,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        81
+      ],
+      "musicSimilarity": 0.205,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        89
+      ],
+      "musicSimilarity": 0.203,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        113
+      ],
+      "musicSimilarity": 0.202,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        25,
+        57
+      ],
+      "musicSimilarity": 0.199,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        41,
+        73
+      ],
+      "musicSimilarity": 0.197,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        57,
+        65
+      ],
+      "musicSimilarity": 0.196,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        73,
+        105
+      ],
+      "musicSimilarity": 0.192,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        113
+      ],
+      "musicSimilarity": 0.189,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        81,
+        89
+      ],
+      "musicSimilarity": 0.189,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        105
+      ],
+      "musicSimilarity": 0.188,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        97
+      ],
+      "musicSimilarity": 0.185,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        73
+      ],
+      "musicSimilarity": 0.184,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        57
+      ],
+      "musicSimilarity": 0.178,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        17,
+        73
+      ],
+      "musicSimilarity": 0.176,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        25,
+        73
+      ],
+      "musicSimilarity": 0.175,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        41
+      ],
+      "musicSimilarity": 0.174,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        113
+      ],
+      "musicSimilarity": 0.174,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        33,
+        81
+      ],
+      "musicSimilarity": 0.165,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        81
+      ],
+      "musicSimilarity": 0.162,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        89,
+        97
+      ],
+      "musicSimilarity": 0.161,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        65,
+        89
+      ],
+      "musicSimilarity": 0.157,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        41,
+        81
+      ],
+      "musicSimilarity": 0.147,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        73
+      ],
+      "musicSimilarity": 0.141,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        73
+      ],
+      "musicSimilarity": 0.139,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        49
+      ],
+      "musicSimilarity": 0.134,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        113
+      ],
+      "musicSimilarity": 0.132,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        33
+      ],
+      "musicSimilarity": 0.132,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        81,
+        105
+      ],
+      "musicSimilarity": 0.131,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        73
+      ],
+      "musicSimilarity": 0.122,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        57
+      ],
+      "musicSimilarity": 0.119,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        97
+      ],
+      "musicSimilarity": 0.117,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        65,
+        81
+      ],
+      "musicSimilarity": 0.116,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        81
+      ],
+      "musicSimilarity": 0.116,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        65,
+        113
+      ],
+      "musicSimilarity": 0.115,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        33,
+        73
+      ],
+      "musicSimilarity": 0.114,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        113
+      ],
+      "musicSimilarity": 0.113,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        25
+      ],
+      "musicSimilarity": 0.11,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        81,
+        97
+      ],
+      "musicSimilarity": 0.104,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        25
+      ],
+      "musicSimilarity": 0.102,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        9,
+        17
+      ],
+      "musicSimilarity": 0.096,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        9
+      ],
+      "musicSimilarity": 0.092,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        41
+      ],
+      "musicSimilarity": 0.091,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        49
+      ],
+      "musicSimilarity": 0.089,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        89
+      ],
+      "musicSimilarity": 0.086,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        105
+      ],
+      "musicSimilarity": 0.083,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        49,
+        89
+      ],
+      "musicSimilarity": 0.08,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        57
+      ],
+      "musicSimilarity": 0.077,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        41
+      ],
+      "musicSimilarity": 0.077,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        65,
+        73
+      ],
+      "musicSimilarity": 0.075,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        73,
+        81
+      ],
+      "musicSimilarity": 0.074,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        57,
+        81
+      ],
+      "musicSimilarity": 0.073,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        17
+      ],
+      "musicSimilarity": 0.072,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        65,
+        73
+      ],
+      "musicSimilarity": 0.07,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        49,
+        81
+      ],
+      "musicSimilarity": 0.068,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        49
+      ],
+      "musicSimilarity": 0.065,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        89
+      ],
+      "musicSimilarity": 0.061,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        33
+      ],
+      "musicSimilarity": 0.061,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        105
+      ],
+      "musicSimilarity": 0.056,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        73
+      ],
+      "musicSimilarity": 0.049,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        1,
+        81
+      ],
+      "musicSimilarity": 0.047,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        9,
+        89
+      ],
+      "musicSimilarity": 0.046,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        25,
+        89
+      ],
+      "musicSimilarity": 0.046,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        33
+      ],
+      "musicSimilarity": 0.046,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        41,
+        89
+      ],
+      "musicSimilarity": 0.041,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        1,
+        25
+      ],
+      "musicSimilarity": 0.041,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        17,
+        89
+      ],
+      "musicSimilarity": 0.034,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        49,
+        57
+      ],
+      "musicSimilarity": 0.003,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        25,
+        81
+      ],
+      "musicSimilarity": 0,
+      "movement": "different"
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "bars": [
+        17,
+        81
+      ],
+      "musicSimilarity": -0.003,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        81,
+        97
+      ],
+      "musicSimilarity": -0.018,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        9,
+        57
+      ],
+      "musicSimilarity": -0.052,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        57,
+        89
+      ],
+      "musicSimilarity": -0.066,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        89,
+        105
+      ],
+      "musicSimilarity": -0.066,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        73,
+        97
+      ],
+      "musicSimilarity": -0.081,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        73
+      ],
+      "musicSimilarity": -0.083,
+      "movement": "different"
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "bars": [
+        33,
+        57
+      ],
+      "musicSimilarity": -0.084,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        81
+      ],
+      "musicSimilarity": -0.091,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        97,
+        113
+      ],
+      "musicSimilarity": -0.094,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        81,
+        89
+      ],
+      "musicSimilarity": -0.244,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        73,
+        89
+      ],
+      "musicSimilarity": -0.255,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        81
+      ],
+      "musicSimilarity": -0.275,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        1,
+        113
+      ],
+      "musicSimilarity": -0.351,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        33,
+        113
+      ],
+      "musicSimilarity": -0.355,
+      "movement": "different"
+    },
+    {
+      "song": "Happy Halloween",
+      "bars": [
+        89,
+        113
+      ],
+      "musicSimilarity": -0.375,
+      "movement": "different"
+    }
+  ],
+  "summary": {
+    "pairs": 216,
+    "repeatedOrMirroredMovement": 6,
+    "strongMusicMatches": 7,
+    "strongMatchesWithRepeatedOrMirroredMovement": 3
+  }
+}

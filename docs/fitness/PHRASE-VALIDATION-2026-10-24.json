@@ -1,0 +1,491 @@
+{
+  "status": "experimental; training-track reconstruction is not generalization; mode overlap is not a coaching score",
+  "results": [
+    {
+      "song": "Happy Halloween",
+      "variants": {
+        "training": {
+          "notes": 289,
+          "modePresenceF1": 0.8627450980392157,
+          "handBalance": {
+            "punch": {
+              "left": 60,
+              "right": 60
+            },
+            "side_crunch": {
+              "left": 6,
+              "right": 6
+            }
+          },
+          "longs": [
+            {
+              "id": "dd411135-17a9-4a04-abc1-889e35993baf",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 68100,
+              "kind": "hold",
+              "endTimeMs": 83100,
+              "modifier": "none"
+            },
+            {
+              "id": "9fa6b44e-8ce0-4de5-9e69-d6525aeb5ab5",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 116100,
+              "kind": "hold",
+              "endTimeMs": 123600,
+              "modifier": "none"
+            },
+            {
+              "id": "e0877776-1a10-40ff-b92a-e3018e8e463b",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 156100,
+              "kind": "hold",
+              "endTimeMs": 171100,
+              "modifier": "none"
+            },
+            {
+              "id": "80aa873a-70f1-4a8a-ba1a-71776c8046e9",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 172100,
+              "kind": "hold",
+              "endTimeMs": 184100,
+              "modifier": "sway"
+            }
+          ],
+          "elapsedMs": 1018,
+          "trainingSongs": [
+            "Happy Halloween",
+            "LOVELY ♥ CAVITY",
+            "sugar ★ mellowcle",
+            "愛スクリ～ム"
+          ]
+        },
+        "heldout": {
+          "notes": 372,
+          "modePresenceF1": 0.25190839694656486,
+          "handBalance": {
+            "punch": {
+              "left": 127,
+              "right": 127
+            },
+            "side_crunch": {
+              "left": 5,
+              "right": 5
+            }
+          },
+          "longs": [],
+          "elapsedMs": 857,
+          "trainingSongs": [
+            "LOVELY ♥ CAVITY",
+            "sugar ★ mellowcle",
+            "愛スクリ～ム"
+          ]
+        }
+      }
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "variants": {
+        "training": {
+          "notes": 198,
+          "modePresenceF1": 0.7114093959731543,
+          "handBalance": {
+            "punch": {
+              "left": 50,
+              "right": 50
+            },
+            "side_crunch": {
+              "left": 2,
+              "right": 2
+            }
+          },
+          "longs": [
+            {
+              "id": "91d59a94-379b-4df3-ba5a-58441004c5ab",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 3210,
+              "kind": "hold",
+              "endTimeMs": 12810,
+              "modifier": "sway"
+            },
+            {
+              "id": "cd0e4c33-2b8c-4f82-8fdd-e90aaa375f67",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 54410,
+              "kind": "hold",
+              "endTimeMs": 67210,
+              "modifier": "sway"
+            },
+            {
+              "id": "67977343-c4db-42cd-b3e0-497e930f98c5",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 67210,
+              "kind": "hold",
+              "endTimeMs": 79610,
+              "modifier": "sway"
+            },
+            {
+              "id": "9768d14f-0441-4406-bbb6-26f9b03e4297",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 104010,
+              "kind": "hold",
+              "endTimeMs": 116810,
+              "modifier": "none"
+            },
+            {
+              "id": "6e25a445-bf0a-470f-bfe0-4c5467322b56",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 116810,
+              "kind": "hold",
+              "endTimeMs": 129210,
+              "modifier": "sway"
+            },
+            {
+              "id": "b3f66686-e708-4da6-9aa0-6f29b605ddb8",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 144010,
+              "kind": "hold",
+              "endTimeMs": 156810,
+              "modifier": "sway"
+            }
+          ],
+          "elapsedMs": 715,
+          "trainingSongs": [
+            "Happy Halloween",
+            "LOVELY ♥ CAVITY",
+            "sugar ★ mellowcle",
+            "愛スクリ～ム"
+          ]
+        },
+        "heldout": {
+          "notes": 244,
+          "modePresenceF1": 0.1323529411764706,
+          "handBalance": {
+            "punch": {
+              "left": 77,
+              "right": 77
+            },
+            "side_crunch": {
+              "left": 1,
+              "right": 1
+            }
+          },
+          "longs": [
+            {
+              "id": "92b81d82-c107-4580-b7eb-4c357365f94b",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 59210,
+              "kind": "hold",
+              "endTimeMs": 65210,
+              "modifier": "none"
+            },
+            {
+              "id": "ca85c21f-e5ff-4cd0-8c3e-b5db8b3b747b",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 123210,
+              "kind": "hold",
+              "endTimeMs": 129210,
+              "modifier": "none"
+            },
+            {
+              "id": "9d92ad4e-b033-4f26-956e-4e37e190627a",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 136010,
+              "kind": "hold",
+              "endTimeMs": 142010,
+              "modifier": "none"
+            },
+            {
+              "id": "e69530f5-2278-4a88-a2f0-e669a39c1192",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 148810,
+              "kind": "hold",
+              "endTimeMs": 154810,
+              "modifier": "none"
+            }
+          ],
+          "elapsedMs": 655,
+          "trainingSongs": [
+            "Happy Halloween",
+            "sugar ★ mellowcle",
+            "愛スクリ～ム"
+          ]
+        }
+      }
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "variants": {
+        "training": {
+          "notes": 136,
+          "modePresenceF1": 0.8741721854304636,
+          "handBalance": {
+            "punch": {
+              "left": 41,
+              "right": 41
+            },
+            "side_crunch": {
+              "left": 4,
+              "right": 4
+            }
+          },
+          "longs": [
+            {
+              "id": "85595350-c44e-4456-9f4d-dfa7a8e80b94",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 25798,
+              "kind": "hold",
+              "endTimeMs": 33693,
+              "modifier": "none"
+            },
+            {
+              "id": "06e065f3-cd42-49ab-83b7-78dd6557e819",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 51061,
+              "kind": "hold",
+              "endTimeMs": 58956,
+              "modifier": "sway"
+            },
+            {
+              "id": "90d9cc95-dc9c-4672-90ce-bcccb5fa605e",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 76324,
+              "kind": "hold",
+              "endTimeMs": 84219,
+              "modifier": "none"
+            },
+            {
+              "id": "82b28a78-bbe3-4827-9920-df65e5a1e2af",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 101588,
+              "kind": "hold",
+              "endTimeMs": 109482,
+              "modifier": "sway"
+            },
+            {
+              "id": "10b66730-67b3-4e26-b704-48ccc932f6cb",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 110009,
+              "kind": "hold",
+              "endTimeMs": 117903,
+              "modifier": "none"
+            },
+            {
+              "id": "de1c65ed-dd54-43dd-8cde-1d2e459062a9",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 118430,
+              "kind": "hold",
+              "endTimeMs": 126324,
+              "modifier": "none"
+            },
+            {
+              "id": "de5536bf-1c29-441f-97a3-49f2ba845036",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 158430,
+              "kind": "hold",
+              "endTimeMs": 166324,
+              "modifier": "none"
+            }
+          ],
+          "elapsedMs": 502,
+          "trainingSongs": [
+            "Happy Halloween",
+            "LOVELY ♥ CAVITY",
+            "sugar ★ mellowcle",
+            "愛スクリ～ム"
+          ]
+        },
+        "heldout": {
+          "notes": 196,
+          "modePresenceF1": 0.11764705882352941,
+          "handBalance": {
+            "punch": {
+              "left": 37,
+              "right": 37
+            },
+            "side_crunch": {
+              "left": 4,
+              "right": 4
+            }
+          },
+          "longs": [],
+          "elapsedMs": 519,
+          "trainingSongs": [
+            "Happy Halloween",
+            "LOVELY ♥ CAVITY",
+            "愛スクリ～ム"
+          ]
+        }
+      }
+    },
+    {
+      "song": "愛スクリ～ム",
+      "variants": {
+        "training": {
+          "notes": 422,
+          "modePresenceF1": 0.891566265060241,
+          "handBalance": {
+            "punch": {
+              "left": 87,
+              "right": 87
+            },
+            "side_crunch": {
+              "left": 6,
+              "right": 6
+            }
+          },
+          "longs": [
+            {
+              "id": "d7a63088-8aa5-4d76-9ea0-c8312ebd56b7",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 44626,
+              "kind": "hold",
+              "endTimeMs": 57354,
+              "modifier": "none"
+            },
+            {
+              "id": "055aa8b2-351b-4a55-9a3f-42cc83e6300a",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 180990,
+              "kind": "hold",
+              "endTimeMs": 193717,
+              "modifier": "sway"
+            }
+          ],
+          "elapsedMs": 1002,
+          "trainingSongs": [
+            "Happy Halloween",
+            "LOVELY ♥ CAVITY",
+            "sugar ★ mellowcle",
+            "愛スクリ～ム"
+          ]
+        },
+        "heldout": {
+          "notes": 304,
+          "modePresenceF1": 0.16993464052287582,
+          "handBalance": {
+            "punch": {
+              "left": 109,
+              "right": 109
+            },
+            "side_crunch": {
+              "left": 4,
+              "right": 4
+            }
+          },
+          "longs": [
+            {
+              "id": "ce5dac8c-6923-4302-9bdf-85e86a20fc5c",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 22808,
+              "kind": "hold",
+              "endTimeMs": 29626,
+              "modifier": "none"
+            },
+            {
+              "id": "52f7d471-26fa-4248-96fc-51d1ac5349d1",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 95535,
+              "kind": "hold",
+              "endTimeMs": 102354,
+              "modifier": "none"
+            },
+            {
+              "id": "526cb5c5-9f9f-40aa-b369-96ce72de8c63",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 151899,
+              "kind": "hold",
+              "endTimeMs": 158717,
+              "modifier": "none"
+            },
+            {
+              "id": "4b192350-5f28-40ad-b532-01db60f01909",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 159172,
+              "kind": "hold",
+              "endTimeMs": 165990,
+              "modifier": "none"
+            },
+            {
+              "id": "09e0654d-6b93-46dc-94f9-5d845ae5a914",
+              "lane": "calf_raise",
+              "direction": "up",
+              "timeMs": 166445,
+              "kind": "hold",
+              "endTimeMs": 173263,
+              "modifier": "none"
+            },
+            {
+              "id": "76eead86-3449-4bf5-8298-327b0088aee8",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 173717,
+              "kind": "hold",
+              "endTimeMs": 180535,
+              "modifier": "none"
+            },
+            {
+              "id": "50bb03c0-7df8-428b-b3c0-11d8ea0785fb",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 228263,
+              "kind": "hold",
+              "endTimeMs": 235081,
+              "modifier": "sway"
+            },
+            {
+              "id": "d36563d1-af7c-4d89-be87-4ec942fa1631",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 239172,
+              "kind": "hold",
+              "endTimeMs": 245990,
+              "modifier": "none"
+            },
+            {
+              "id": "74612707-e76e-48de-9e70-c58323922084",
+              "lane": "squat",
+              "direction": "down",
+              "timeMs": 246445,
+              "kind": "hold",
+              "endTimeMs": 253263,
+              "modifier": "none"
+            }
+          ],
+          "elapsedMs": 1079,
+          "trainingSongs": [
+            "Happy Halloween",
+            "LOVELY ♥ CAVITY",
+            "sugar ★ mellowcle"
+          ]
+        }
+      }
+    }
+  ]
+}

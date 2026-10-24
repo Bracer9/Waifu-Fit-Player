@@ -1,0 +1,382 @@
+{
+  "model": "LinkSeg 7-class ONNX",
+  "modelSha256": "c1dac2e094d260678d0097b85da6f5189abfe87af4b9c6f7adebaf99f4896125",
+  "portCommit": "694d27356082712dc82a3e06dbf9c7d543c9e399",
+  "license": "CC-BY-4.0 model; MIT port",
+  "status": "unverified model predictions, not human structure labels; no B-melody/prechorus or vocal entry detector",
+  "results": [
+    {
+      "song": "Happy Halloween",
+      "source": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "sourceSha256": "09e49f0eb05c05c1e4370fb738a33f3aadb844ec910f2ec9d6433d34cfcc4d5c",
+      "bpm": 120,
+      "anchorMs": 100,
+      "beatSource": "human grid for structure-model isolation; not an automatic tempo evaluation",
+      "sections": [
+        {
+          "startMs": 0,
+          "endMs": 3849,
+          "label": "intro"
+        },
+        {
+          "startMs": 3849,
+          "endMs": 11848,
+          "label": "intro"
+        },
+        {
+          "startMs": 11848,
+          "endMs": 27847,
+          "label": "verse"
+        },
+        {
+          "startMs": 27847,
+          "endMs": 43845,
+          "label": "verse"
+        },
+        {
+          "startMs": 43845,
+          "endMs": 67843,
+          "label": "verse"
+        },
+        {
+          "startMs": 67843,
+          "endMs": 83841,
+          "label": "verse"
+        },
+        {
+          "startMs": 83841,
+          "endMs": 99840,
+          "label": "chorus"
+        },
+        {
+          "startMs": 99840,
+          "endMs": 115844,
+          "label": "chorus"
+        },
+        {
+          "startMs": 115844,
+          "endMs": 131849,
+          "label": "inst"
+        },
+        {
+          "startMs": 131849,
+          "endMs": 147847,
+          "label": "inst"
+        },
+        {
+          "startMs": 147847,
+          "endMs": 163846,
+          "label": "inst"
+        },
+        {
+          "startMs": 163846,
+          "endMs": 183339,
+          "label": "inst"
+        },
+        {
+          "startMs": 183339,
+          "endMs": 199848,
+          "label": "chorus"
+        },
+        {
+          "startMs": 199848,
+          "endMs": 215847,
+          "label": "chorus"
+        },
+        {
+          "startMs": 215847,
+          "endMs": 240344,
+          "label": "chorus"
+        },
+        {
+          "startMs": 240344,
+          "endMs": 250340,
+          "label": "chorus"
+        },
+        {
+          "startMs": 250340,
+          "endMs": 251797,
+          "label": "chorus"
+        }
+      ],
+      "elapsedMs": 11754,
+      "inferenceMs": 8365
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "source": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "sourceSha256": "d0181a4a3485efcb100ba54d3c96e1e79a01a2614f68f2367fc7b3bb935ec0c1",
+      "bpm": 150,
+      "anchorMs": 2387,
+      "beatSource": "human grid for structure-model isolation; not an automatic tempo evaluation",
+      "sections": [
+        {
+          "startMs": 0,
+          "endMs": 2583,
+          "label": "silence"
+        },
+        {
+          "startMs": 2583,
+          "endMs": 14983,
+          "label": "chorus"
+        },
+        {
+          "startMs": 14983,
+          "endMs": 28183,
+          "label": "chorus"
+        },
+        {
+          "startMs": 28183,
+          "endMs": 40583,
+          "label": "verse"
+        },
+        {
+          "startMs": 40583,
+          "endMs": 53383,
+          "label": "verse"
+        },
+        {
+          "startMs": 53383,
+          "endMs": 66183,
+          "label": "verse"
+        },
+        {
+          "startMs": 66183,
+          "endMs": 78983,
+          "label": "verse"
+        },
+        {
+          "startMs": 78983,
+          "endMs": 91783,
+          "label": "chorus"
+        },
+        {
+          "startMs": 91783,
+          "endMs": 104583,
+          "label": "chorus"
+        },
+        {
+          "startMs": 104583,
+          "endMs": 117383,
+          "label": "bridge"
+        },
+        {
+          "startMs": 117383,
+          "endMs": 130183,
+          "label": "verse"
+        },
+        {
+          "startMs": 130183,
+          "endMs": 142983,
+          "label": "verse"
+        },
+        {
+          "startMs": 142983,
+          "endMs": 155783,
+          "label": "verse"
+        },
+        {
+          "startMs": 155783,
+          "endMs": 168583,
+          "label": "chorus"
+        },
+        {
+          "startMs": 168583,
+          "endMs": 181383,
+          "label": "chorus"
+        },
+        {
+          "startMs": 181383,
+          "endMs": 186897,
+          "label": "silence"
+        }
+      ],
+      "elapsedMs": 9953,
+      "inferenceMs": 6953
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "source": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "sourceSha256": "397a70c6d2ab9fb626116fd3406248af235eb1a6a90ec6858fab879826c19746",
+      "bpm": 114,
+      "anchorMs": 535,
+      "beatSource": "human grid for structure-model isolation; not an automatic tempo evaluation",
+      "sections": [
+        {
+          "startMs": 0,
+          "endMs": 795,
+          "label": "silence"
+        },
+        {
+          "startMs": 795,
+          "endMs": 8690,
+          "label": "intro"
+        },
+        {
+          "startMs": 8690,
+          "endMs": 25530,
+          "label": "verse"
+        },
+        {
+          "startMs": 25530,
+          "endMs": 50794,
+          "label": "chorus"
+        },
+        {
+          "startMs": 50794,
+          "endMs": 59217,
+          "label": "chorus"
+        },
+        {
+          "startMs": 59217,
+          "endMs": 82901,
+          "label": "verse"
+        },
+        {
+          "startMs": 82901,
+          "endMs": 97112,
+          "label": "chorus"
+        },
+        {
+          "startMs": 97112,
+          "endMs": 110266,
+          "label": "chorus"
+        },
+        {
+          "startMs": 110266,
+          "endMs": 125005,
+          "label": "bridge"
+        },
+        {
+          "startMs": 125005,
+          "endMs": 143424,
+          "label": "chorus"
+        },
+        {
+          "startMs": 143424,
+          "endMs": 160264,
+          "label": "chorus"
+        },
+        {
+          "startMs": 160264,
+          "endMs": 169210,
+          "label": "outro"
+        },
+        {
+          "startMs": 169210,
+          "endMs": 172594,
+          "label": "silence"
+        }
+      ],
+      "elapsedMs": 6723,
+      "inferenceMs": 4344
+    },
+    {
+      "song": "愛スクリ～ム",
+      "source": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+      "sourceSha256": "4575fbd5155fb43eb44e90af2cb671e07b90b9bbf8fde7222c41df013221b4bd",
+      "bpm": 132,
+      "anchorMs": 990,
+      "beatSource": "human grid for structure-model isolation; not an automatic tempo evaluation",
+      "sections": [
+        {
+          "startMs": 0,
+          "endMs": 1213,
+          "label": "silence"
+        },
+        {
+          "startMs": 1213,
+          "endMs": 15302,
+          "label": "intro"
+        },
+        {
+          "startMs": 15302,
+          "endMs": 29843,
+          "label": "verse"
+        },
+        {
+          "startMs": 29843,
+          "endMs": 44391,
+          "label": "verse"
+        },
+        {
+          "startMs": 44391,
+          "endMs": 58938,
+          "label": "verse"
+        },
+        {
+          "startMs": 58938,
+          "endMs": 73485,
+          "label": "chorus"
+        },
+        {
+          "startMs": 73485,
+          "endMs": 88033,
+          "label": "chorus"
+        },
+        {
+          "startMs": 88033,
+          "endMs": 102580,
+          "label": "verse"
+        },
+        {
+          "startMs": 102580,
+          "endMs": 122572,
+          "label": "verse"
+        },
+        {
+          "startMs": 122572,
+          "endMs": 137120,
+          "label": "chorus"
+        },
+        {
+          "startMs": 137120,
+          "endMs": 151667,
+          "label": "chorus"
+        },
+        {
+          "startMs": 151667,
+          "endMs": 166214,
+          "label": "bridge"
+        },
+        {
+          "startMs": 166214,
+          "endMs": 180762,
+          "label": "bridge"
+        },
+        {
+          "startMs": 180762,
+          "endMs": 195303,
+          "label": "verse"
+        },
+        {
+          "startMs": 195303,
+          "endMs": 209845,
+          "label": "verse"
+        },
+        {
+          "startMs": 209845,
+          "endMs": 224392,
+          "label": "chorus"
+        },
+        {
+          "startMs": 224392,
+          "endMs": 238939,
+          "label": "chorus"
+        },
+        {
+          "startMs": 238939,
+          "endMs": 254845,
+          "label": "outro"
+        },
+        {
+          "startMs": 254845,
+          "endMs": 259460,
+          "label": "silence"
+        }
+      ],
+      "elapsedMs": 12867,
+      "inferenceMs": 8999
+    }
+  ]
+}

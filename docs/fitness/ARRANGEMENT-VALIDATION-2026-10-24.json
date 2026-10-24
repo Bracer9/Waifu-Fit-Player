@@ -1,0 +1,1039 @@
+{
+  "status": "Offline v4 candidate saved; musical/coaching quality not established by objective checks or reference overlap",
+  "conversion": {
+    "checkpointSha256": "5c81d0ca8e98d7b1c7cdab5ee84d0e2461d81bd214f5e129f719e3c4f5eac273",
+    "modelSha256": "18c60940e7a8b616f0fe903c0b1ed595d9a0205208e9ee6b8cb618819c602e9c",
+    "bytes": 1574246,
+    "strictParameterLoad": true,
+    "melFilterbankMatches": true,
+    "checks": [
+      {
+        "frames": 12,
+        "denseVsWrapperMaxError": 0.00009822845458984375
+      },
+      {
+        "frames": 31,
+        "denseVsWrapperMaxError": 0.0000286102294921875
+      },
+      {
+        "frames": 64,
+        "denseVsWrapperMaxError": 0.000031948089599609375
+      }
+    ],
+    "labels": [
+      "silence",
+      "verse",
+      "chorus",
+      "intro",
+      "outro",
+      "inst",
+      "bridge",
+      "pre-chorus",
+      "post-chorus"
+    ],
+    "torch": "2.9.0+cpu"
+  },
+  "onnxValidation": {
+    "frames": 31,
+    "errors": {
+      "bound": 0.00000864267349243164,
+      "label": 0.00007069110870361328,
+      "embedding": 0.00006258487701416016
+    }
+  },
+  "structure": {
+    "status": "unverified nine-class model predictions; not human truth or a vocal-entry detector",
+    "results": [
+      {
+        "song": "Happy Halloween",
+        "source": "maps/Happy Halloween/wfp-fitness-draft.json",
+        "sourceSha256": "09e49f0eb05c05c1e4370fb738a33f3aadb844ec910f2ec9d6433d34cfcc4d5c",
+        "bpm": 120,
+        "anchorMs": 100,
+        "beatSource": "authored grid (isolate structure analysis)",
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 11848,
+            "label": "intro"
+          },
+          {
+            "startMs": 11848,
+            "endMs": 27847,
+            "label": "verse"
+          },
+          {
+            "startMs": 27847,
+            "endMs": 43845,
+            "label": "verse"
+          },
+          {
+            "startMs": 43845,
+            "endMs": 51844,
+            "label": "verse"
+          },
+          {
+            "startMs": 51844,
+            "endMs": 67843,
+            "label": "verse"
+          },
+          {
+            "startMs": 67843,
+            "endMs": 83841,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 83841,
+            "endMs": 99840,
+            "label": "chorus"
+          },
+          {
+            "startMs": 99840,
+            "endMs": 107839,
+            "label": "chorus"
+          },
+          {
+            "startMs": 107839,
+            "endMs": 115844,
+            "label": "chorus"
+          },
+          {
+            "startMs": 115844,
+            "endMs": 131849,
+            "label": "inst"
+          },
+          {
+            "startMs": 131849,
+            "endMs": 147847,
+            "label": "inst"
+          },
+          {
+            "startMs": 147847,
+            "endMs": 163846,
+            "label": "inst"
+          },
+          {
+            "startMs": 163846,
+            "endMs": 171845,
+            "label": "inst"
+          },
+          {
+            "startMs": 171845,
+            "endMs": 183844,
+            "label": "inst"
+          },
+          {
+            "startMs": 183844,
+            "endMs": 199848,
+            "label": "chorus"
+          },
+          {
+            "startMs": 199848,
+            "endMs": 215847,
+            "label": "chorus"
+          },
+          {
+            "startMs": 215847,
+            "endMs": 240843,
+            "label": "chorus"
+          },
+          {
+            "startMs": 240843,
+            "endMs": 251797,
+            "label": "chorus"
+          }
+        ],
+        "elapsedMs": 14100
+      },
+      {
+        "song": "LOVELY ♥ CAVITY",
+        "source": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+        "sourceSha256": "d0181a4a3485efcb100ba54d3c96e1e79a01a2614f68f2367fc7b3bb935ec0c1",
+        "bpm": 150,
+        "anchorMs": 2387,
+        "beatSource": "authored grid (isolate structure analysis)",
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 2583,
+            "label": "silence"
+          },
+          {
+            "startMs": 2583,
+            "endMs": 14983,
+            "label": "chorus"
+          },
+          {
+            "startMs": 14983,
+            "endMs": 28183,
+            "label": "chorus"
+          },
+          {
+            "startMs": 28183,
+            "endMs": 40983,
+            "label": "verse"
+          },
+          {
+            "startMs": 40983,
+            "endMs": 53383,
+            "label": "verse"
+          },
+          {
+            "startMs": 53383,
+            "endMs": 66183,
+            "label": "verse"
+          },
+          {
+            "startMs": 66183,
+            "endMs": 78983,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 78983,
+            "endMs": 91783,
+            "label": "chorus"
+          },
+          {
+            "startMs": 91783,
+            "endMs": 104583,
+            "label": "chorus"
+          },
+          {
+            "startMs": 104583,
+            "endMs": 117783,
+            "label": "post-chorus"
+          },
+          {
+            "startMs": 117783,
+            "endMs": 130583,
+            "label": "bridge"
+          },
+          {
+            "startMs": 130583,
+            "endMs": 142983,
+            "label": "bridge"
+          },
+          {
+            "startMs": 142983,
+            "endMs": 158981,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 158981,
+            "endMs": 168983,
+            "label": "chorus"
+          },
+          {
+            "startMs": 168983,
+            "endMs": 181783,
+            "label": "chorus"
+          },
+          {
+            "startMs": 181783,
+            "endMs": 186897,
+            "label": "silence"
+          }
+        ],
+        "elapsedMs": 11689
+      },
+      {
+        "song": "sugar ★ mellowcle",
+        "source": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+        "sourceSha256": "397a70c6d2ab9fb626116fd3406248af235eb1a6a90ec6858fab879826c19746",
+        "bpm": 114,
+        "anchorMs": 535,
+        "beatSource": "authored grid (isolate structure analysis)",
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 8690,
+            "label": "intro"
+          },
+          {
+            "startMs": 8690,
+            "endMs": 25530,
+            "label": "verse"
+          },
+          {
+            "startMs": 25530,
+            "endMs": 50794,
+            "label": "chorus"
+          },
+          {
+            "startMs": 50794,
+            "endMs": 67634,
+            "label": "verse"
+          },
+          {
+            "startMs": 67634,
+            "endMs": 101320,
+            "label": "chorus"
+          },
+          {
+            "startMs": 101320,
+            "endMs": 109743,
+            "label": "chorus"
+          },
+          {
+            "startMs": 109743,
+            "endMs": 126584,
+            "label": "bridge"
+          },
+          {
+            "startMs": 126584,
+            "endMs": 143424,
+            "label": "chorus"
+          },
+          {
+            "startMs": 143424,
+            "endMs": 160264,
+            "label": "chorus"
+          },
+          {
+            "startMs": 160264,
+            "endMs": 169210,
+            "label": "outro"
+          },
+          {
+            "startMs": 169210,
+            "endMs": 172594,
+            "label": "silence"
+          }
+        ],
+        "elapsedMs": 7924
+      },
+      {
+        "song": "愛スクリ～ム",
+        "source": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+        "sourceSha256": "4575fbd5155fb43eb44e90af2cb671e07b90b9bbf8fde7222c41df013221b4bd",
+        "bpm": 132,
+        "anchorMs": 990,
+        "beatSource": "authored grid (isolate structure analysis)",
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 1213,
+            "label": "silence"
+          },
+          {
+            "startMs": 1213,
+            "endMs": 15302,
+            "label": "intro"
+          },
+          {
+            "startMs": 15302,
+            "endMs": 44391,
+            "label": "verse"
+          },
+          {
+            "startMs": 44391,
+            "endMs": 58938,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 58938,
+            "endMs": 73485,
+            "label": "chorus"
+          },
+          {
+            "startMs": 73485,
+            "endMs": 91667,
+            "label": "chorus"
+          },
+          {
+            "startMs": 91667,
+            "endMs": 106667,
+            "label": "verse"
+          },
+          {
+            "startMs": 106667,
+            "endMs": 122572,
+            "label": "verse"
+          },
+          {
+            "startMs": 122572,
+            "endMs": 137120,
+            "label": "chorus"
+          },
+          {
+            "startMs": 137120,
+            "endMs": 151667,
+            "label": "chorus"
+          },
+          {
+            "startMs": 151667,
+            "endMs": 166214,
+            "label": "bridge"
+          },
+          {
+            "startMs": 166214,
+            "endMs": 180762,
+            "label": "bridge"
+          },
+          {
+            "startMs": 180762,
+            "endMs": 195303,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 195303,
+            "endMs": 209845,
+            "label": "chorus"
+          },
+          {
+            "startMs": 209845,
+            "endMs": 224392,
+            "label": "chorus"
+          },
+          {
+            "startMs": 224392,
+            "endMs": 238939,
+            "label": "chorus"
+          },
+          {
+            "startMs": 238939,
+            "endMs": 253939,
+            "label": "outro"
+          },
+          {
+            "startMs": 253939,
+            "endMs": 259460,
+            "label": "silence"
+          }
+        ],
+        "elapsedMs": 15672
+      },
+      {
+        "song": "極楽浄土",
+        "source": "maps/極楽浄土/project.json",
+        "bpm": 131,
+        "anchorMs": 480,
+        "beatSource": "automatic audio tempo/start; no target chart notes/grid used",
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 702,
+            "label": "silence"
+          },
+          {
+            "startMs": 702,
+            "endMs": 16736,
+            "label": "intro"
+          },
+          {
+            "startMs": 16736,
+            "endMs": 31388,
+            "label": "inst"
+          },
+          {
+            "startMs": 31388,
+            "endMs": 46045,
+            "label": "verse"
+          },
+          {
+            "startMs": 46045,
+            "endMs": 60703,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 60703,
+            "endMs": 75360,
+            "label": "chorus"
+          },
+          {
+            "startMs": 75360,
+            "endMs": 90018,
+            "label": "inst"
+          },
+          {
+            "startMs": 90018,
+            "endMs": 104670,
+            "label": "verse"
+          },
+          {
+            "startMs": 104670,
+            "endMs": 119327,
+            "label": "pre-chorus"
+          },
+          {
+            "startMs": 119327,
+            "endMs": 133985,
+            "label": "chorus"
+          },
+          {
+            "startMs": 133985,
+            "endMs": 150471,
+            "label": "inst"
+          },
+          {
+            "startMs": 150471,
+            "endMs": 178869,
+            "label": "bridge"
+          },
+          {
+            "startMs": 178869,
+            "endMs": 197190,
+            "label": "chorus"
+          },
+          {
+            "startMs": 197190,
+            "endMs": 216886,
+            "label": "outro"
+          },
+          {
+            "startMs": 216886,
+            "endMs": 231544,
+            "label": "silence"
+          },
+          {
+            "startMs": 231544,
+            "endMs": 246201,
+            "label": "outro"
+          },
+          {
+            "startMs": 246201,
+            "endMs": 264638,
+            "label": "silence"
+          }
+        ],
+        "elapsedMs": 22399
+      }
+    ]
+  },
+  "notation": {
+    "status": "objective notation checks only; musical/coaching quality awaits actual review",
+    "title": "極楽浄土",
+    "targetInTraining": false,
+    "referenceHashes": [
+      {
+        "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+        "sha256": "09e49f0eb05c05c1e4370fb738a33f3aadb844ec910f2ec9d6433d34cfcc4d5c"
+      },
+      {
+        "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+        "sha256": "d0181a4a3485efcb100ba54d3c96e1e79a01a2614f68f2367fc7b3bb935ec0c1"
+      },
+      {
+        "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+        "sha256": "397a70c6d2ab9fb626116fd3406248af235eb1a6a90ec6858fab879826c19746"
+      },
+      {
+        "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+        "sha256": "4575fbd5155fb43eb44e90af2cb671e07b90b9bbf8fde7222c41df013221b4bd"
+      }
+    ],
+    "coverage": {
+      "squat:hold": {
+        "bars": 51,
+        "songs": [
+          "Happy Halloween",
+          "LOVELY ♥ CAVITY",
+          "sugar ★ mellowcle",
+          "愛スクリ～ム"
+        ]
+      },
+      "squat:sway": {
+        "bars": 32,
+        "songs": [
+          "LOVELY ♥ CAVITY",
+          "sugar ★ mellowcle",
+          "愛スクリ～ム"
+        ]
+      },
+      "calf_raise:sway": {
+        "bars": 30,
+        "songs": [
+          "Happy Halloween",
+          "LOVELY ♥ CAVITY"
+        ]
+      }
+    },
+    "noteCount": 294,
+    "laneCounts": {
+      "squat": 44,
+      "punch": 160,
+      "calf_raise": 86,
+      "side_crunch": 4
+    },
+    "handBalance": {
+      "punch": {
+        "left": 80,
+        "right": 80
+      },
+      "side_crunch": {
+        "left": 2,
+        "right": 2
+      }
+    },
+    "maxGridErrorMs": 0.9465648855015708,
+    "overlappingChannels": 0,
+    "rests": [
+      {
+        "startMs": 59106,
+        "endMs": 60938,
+        "beats": 4
+      },
+      {
+        "startMs": 117731,
+        "endMs": 119563,
+        "beats": 4
+      },
+      {
+        "startMs": 178190,
+        "endMs": 179106,
+        "beats": 2
+      },
+      {
+        "startMs": 213916,
+        "endMs": 214190,
+        "beats": 0.6
+      }
+    ],
+    "sideBeats": 7.9997333333333325,
+    "sideBudget": 36,
+    "echoes": [
+      {
+        "startMs": 75595,
+        "previousMs": 16969,
+        "similarity": 0.9107051595826784,
+        "sameGroup": true
+      },
+      {
+        "startMs": 82923,
+        "previousMs": 24297,
+        "similarity": 0.9253982074511056,
+        "sameGroup": true
+      },
+      {
+        "startMs": 104907,
+        "previousMs": 46282,
+        "similarity": 0.9580764001580366,
+        "sameGroup": true
+      },
+      {
+        "startMs": 106739,
+        "previousMs": 48114,
+        "similarity": 0.9588486446189071,
+        "sameGroup": true
+      },
+      {
+        "startMs": 114067,
+        "previousMs": 55442,
+        "similarity": 0.9538058031178691,
+        "sameGroup": true
+      },
+      {
+        "startMs": 117731,
+        "previousMs": 59106,
+        "similarity": 0.9589657395147787,
+        "sameGroup": true
+      },
+      {
+        "startMs": 119564,
+        "previousMs": 60938,
+        "similarity": 0.9606424884342517,
+        "sameGroup": false
+      },
+      {
+        "startMs": 126892,
+        "previousMs": 68266,
+        "similarity": 0.9392822234699058,
+        "sameGroup": false
+      },
+      {
+        "startMs": 179106,
+        "previousMs": 119564,
+        "similarity": 0.9037954264753829,
+        "sameGroup": false
+      },
+      {
+        "startMs": 182770,
+        "previousMs": 123228,
+        "similarity": 0.9065654378436842,
+        "sameGroup": false
+      }
+    ],
+    "holds": [
+      {
+        "lane": "squat",
+        "modifier": "sway",
+        "startMs": 48114,
+        "endMs": 54984
+      },
+      {
+        "lane": "squat",
+        "modifier": "sway",
+        "startMs": 106739,
+        "endMs": 113609
+      },
+      {
+        "lane": "calf_raise",
+        "modifier": "none",
+        "startMs": 150709,
+        "endMs": 157579
+      },
+      {
+        "lane": "calf_raise",
+        "modifier": "none",
+        "startMs": 158037,
+        "endMs": 164907
+      },
+      {
+        "lane": "squat",
+        "modifier": "none",
+        "startMs": 170862,
+        "endMs": 177732
+      }
+    ],
+    "mapsChanges": [
+      "maps/極楽浄土/.wfp-backup/project.json",
+      "maps/極楽浄土/project.json",
+      "maps/極楽浄土/wfp-fitness-draft-b6045cff-0826-4aab-87c1-840f8105fef2.json"
+    ],
+    "existingHumanChartsUnchanged": true
+  },
+  "referenceComparison": {
+    "status": "training reconstructions diagnose vocabulary/phase behavior; differences are not quality scores or unseen-song evaluation",
+    "results": [
+      {
+        "song": "Happy Halloween",
+        "targetInTraining": true,
+        "referenceNotes": 298,
+        "generatedNotes": 296,
+        "referenceLongs": [
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 68100,
+            "endMs": 83100
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 116100,
+            "endMs": 123600
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 156100,
+            "endMs": 171100
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 172100,
+            "endMs": 184100
+          }
+        ],
+        "generatedLongs": [
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 68100,
+            "endMs": 83100
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 116100,
+            "endMs": 123600
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 156100,
+            "endMs": 163600
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 164100,
+            "endMs": 171600
+          }
+        ],
+        "referenceLongModes": [
+          "squat:none",
+          "calf_raise:sway"
+        ],
+        "generatedLongModes": [
+          "squat:none"
+        ]
+      },
+      {
+        "song": "LOVELY ♥ CAVITY",
+        "targetInTraining": true,
+        "referenceNotes": 176,
+        "generatedNotes": 205,
+        "referenceLongs": [
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 2387,
+            "endMs": 15187
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 53587,
+            "endMs": 66387
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 66387,
+            "endMs": 78787
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 104787,
+            "endMs": 117587
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 117587,
+            "endMs": 129987
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 143187,
+            "endMs": 155987
+          }
+        ],
+        "generatedLongs": [
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 2387,
+            "endMs": 15187
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 53587,
+            "endMs": 66387
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 66387,
+            "endMs": 78787
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 104787,
+            "endMs": 110787
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 111187,
+            "endMs": 117187
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 117987,
+            "endMs": 130387
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "sway",
+            "startMs": 143187,
+            "endMs": 155987
+          }
+        ],
+        "referenceLongModes": [
+          "calf_raise:sway",
+          "squat:sway",
+          "squat:none"
+        ],
+        "generatedLongModes": [
+          "calf_raise:sway",
+          "squat:sway",
+          "squat:none"
+        ]
+      },
+      {
+        "song": "sugar ★ mellowcle",
+        "targetInTraining": true,
+        "referenceNotes": 126,
+        "generatedNotes": 130,
+        "referenceLongs": [
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 25798,
+            "endMs": 33693
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 51061,
+            "endMs": 58956
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 76324,
+            "endMs": 84219
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 101588,
+            "endMs": 109483
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "none",
+            "startMs": 110009,
+            "endMs": 117903
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 118430,
+            "endMs": 126325
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 160535,
+            "endMs": 168430
+          }
+        ],
+        "generatedLongs": [
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 25798,
+            "endMs": 33693
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 51061,
+            "endMs": 58956
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 76324,
+            "endMs": 84219
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 101588,
+            "endMs": 109483
+          },
+          {
+            "lane": "calf_raise",
+            "modifier": "none",
+            "startMs": 110009,
+            "endMs": 117904
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 118430,
+            "endMs": 126325
+          },
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 160535,
+            "endMs": 168430
+          }
+        ],
+        "referenceLongModes": [
+          "squat:none",
+          "squat:sway",
+          "calf_raise:none"
+        ],
+        "generatedLongModes": [
+          "squat:none",
+          "squat:sway",
+          "calf_raise:none"
+        ]
+      },
+      {
+        "song": "愛スクリ～ム",
+        "targetInTraining": true,
+        "referenceNotes": 419,
+        "generatedNotes": 416,
+        "referenceLongs": [
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 44626,
+            "endMs": 57354
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 180990,
+            "endMs": 193717
+          }
+        ],
+        "generatedLongs": [
+          {
+            "lane": "squat",
+            "modifier": "none",
+            "startMs": 48262,
+            "endMs": 55081
+          },
+          {
+            "lane": "squat",
+            "modifier": "sway",
+            "startMs": 180990,
+            "endMs": 193717
+          }
+        ],
+        "referenceLongModes": [
+          "squat:none",
+          "squat:sway"
+        ],
+        "generatedLongModes": [
+          "squat:none",
+          "squat:sway"
+        ]
+      }
+    ]
+  },
+  "installation": {
+    "name": "AI重学 v4（新曲待审）",
+    "id": "b6045cff-0826-4aab-87c1-840f8105fef2",
+    "file": "D:\\ai\\Waifu-Fit-Player\\maps\\極楽浄土\\wfp-fitness-draft-b6045cff-0826-4aab-87c1-840f8105fef2.json",
+    "notes": 294,
+    "sha256": "a6ab8bb826c43de4b9c7f6968e7ec4eed996f4cd89eddf76947d7b23bd00a90e",
+    "backup": "D:\\ai\\Waifu-Fit-Player\\artifacts\\fitness-v4-2026-10-24\\before-install",
+    "existingChartsUnchanged": true,
+    "activeUserDraftUnchanged": true,
+    "revision": "8d4d739ca90aa73a83bc86726ea920d9f88d9afaace29bccd6d9510afaa0065d"
+  },
+  "browserReview": {
+    "name": "AI重学 v4（新曲待审）",
+    "id": "b6045cff-0826-4aab-87c1-840f8105fef2",
+    "notes": 294,
+    "candidateSha256": "242cf9f1b21873cf12fa3fa6ab4bf30d02dc71d194640578e8a0e236fe4fac56",
+    "playable": true,
+    "playingTime": 0.908256,
+    "errors": [],
+    "isolatedMaps": "D:\\ai\\Waifu-Fit-Player\\artifacts\\fitness-v4-2026-10-24\\review-maps",
+    "serverPort": 4186
+  },
+  "checks": {
+    "typecheck": true,
+    "tests": 275,
+    "testFiles": 37,
+    "productionBuild": true,
+    "gameRuntimeChanged": false,
+    "temporaryServerClosed": true
+  }
+}

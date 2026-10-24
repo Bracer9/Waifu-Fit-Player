@@ -1,0 +1,1250 @@
+{
+  "date": "2026-10-23",
+  "method": "Same browser AudioSampleSink multichannel path; baseline frozen before this task; automatic BPM/anchor inputs reset, no reference timings supplied.",
+  "protection": {
+    "checked": 85,
+    "changed": [],
+    "added": []
+  },
+  "rows": [
+    {
+      "title": "Happy Halloween",
+      "source": "maps\\Happy Halloween\\wfp-fitness-draft.json",
+      "referenceKind": "human-authored",
+      "reference": {
+        "notes": 298,
+        "firstMs": 4100,
+        "sideNotes": 38,
+        "bpm": 120,
+        "anchorMs": 100
+      },
+      "baseline": {
+        "notes": 308,
+        "firstMs": 4105,
+        "sideNotes": 44,
+        "bpm": 120,
+        "anchorMs": 105
+      },
+      "current": {
+        "notes": 328,
+        "firstMs": 4105,
+        "sideNotes": 12,
+        "bpm": 120,
+        "anchorMs": 105
+      },
+      "elapsedMs": 6882,
+      "sideCrunch": {
+        "usedBeats": 32,
+        "budgetBeats": 36,
+        "maxBoutBeats": 8,
+        "cooldownBeats": 96,
+        "bouts": [
+          {
+            "startMs": 58105,
+            "endMs": 62105,
+            "beats": 8
+          },
+          {
+            "startMs": 114105,
+            "endMs": 118105,
+            "beats": 8
+          },
+          {
+            "startMs": 170105,
+            "endMs": 174105,
+            "beats": 8
+          },
+          {
+            "startMs": 230105,
+            "endMs": 234105,
+            "beats": 8
+          }
+        ],
+        "share": 0.0696
+      },
+      "checks": {
+        "actualFirstActionAtSectionStart": true,
+        "contiguousSections": true,
+        "closedSquatAndCalfCycles": true
+      },
+      "boundaries": [
+        {
+          "beat": 8,
+          "strength": 1,
+          "reason": "opening",
+          "startMs": 4105
+        },
+        {
+          "beat": 20,
+          "strength": 0.784,
+          "reason": "change",
+          "startMs": 10105
+        },
+        {
+          "beat": 52,
+          "strength": 0.154,
+          "reason": "phrase",
+          "startMs": 26105
+        },
+        {
+          "beat": 84,
+          "strength": 0.171,
+          "reason": "phrase",
+          "startMs": 42105
+        },
+        {
+          "beat": 116,
+          "strength": 0.24,
+          "reason": "phrase",
+          "startMs": 58105
+        },
+        {
+          "beat": 132,
+          "strength": 0.76,
+          "reason": "change",
+          "startMs": 66105
+        },
+        {
+          "beat": 164,
+          "strength": 0.405,
+          "reason": "phrase",
+          "startMs": 82105
+        },
+        {
+          "beat": 196,
+          "strength": 0.127,
+          "reason": "phrase",
+          "startMs": 98105
+        },
+        {
+          "beat": 228,
+          "strength": 0.449,
+          "reason": "phrase",
+          "startMs": 114105
+        },
+        {
+          "beat": 260,
+          "strength": 0.329,
+          "reason": "phrase",
+          "startMs": 130105
+        },
+        {
+          "beat": 292,
+          "strength": 0.529,
+          "reason": "phrase",
+          "startMs": 146105
+        },
+        {
+          "beat": 324,
+          "strength": 0.399,
+          "reason": "phrase",
+          "startMs": 162105
+        },
+        {
+          "beat": 340,
+          "strength": 0.791,
+          "reason": "change",
+          "startMs": 170105
+        },
+        {
+          "beat": 364,
+          "strength": 0.842,
+          "reason": "change",
+          "startMs": 182105
+        },
+        {
+          "beat": 396,
+          "strength": 0.382,
+          "reason": "phrase",
+          "startMs": 198105
+        },
+        {
+          "beat": 428,
+          "strength": 0.236,
+          "reason": "phrase",
+          "startMs": 214105
+        },
+        {
+          "beat": 460,
+          "strength": 0.211,
+          "reason": "phrase",
+          "startMs": 230105
+        },
+        {
+          "beat": 468,
+          "strength": 0,
+          "reason": "end",
+          "startMs": 234105
+        }
+      ],
+      "sections": [
+        {
+          "startMs": 4105,
+          "endMs": 10105,
+          "label": "手臂 / 1小节"
+        },
+        {
+          "startMs": 10105,
+          "endMs": 26105,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 26105,
+          "endMs": 42105,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 42105,
+          "endMs": 58105,
+          "label": "蹲起＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 58105,
+          "endMs": 62105,
+          "label": "侧收腹 / 1小节"
+        },
+        {
+          "startMs": 62105,
+          "endMs": 66105,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 66105,
+          "endMs": 82105,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 82105,
+          "endMs": 98105,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 98105,
+          "endMs": 114105,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 114105,
+          "endMs": 118105,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 118105,
+          "endMs": 130105,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 130105,
+          "endMs": 146105,
+          "label": "手臂＋踮脚 / 1小节"
+        },
+        {
+          "startMs": 146105,
+          "endMs": 162105,
+          "label": "蹲起＋踮脚 / 4小节"
+        },
+        {
+          "startMs": 162105,
+          "endMs": 170105,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 170105,
+          "endMs": 174105,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 174105,
+          "endMs": 182105,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 182105,
+          "endMs": 198105,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 198105,
+          "endMs": 214105,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 214105,
+          "endMs": 230105,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 230105,
+          "endMs": 234105,
+          "label": "侧收腹 / 1小节"
+        }
+      ]
+    },
+    {
+      "title": "LOVELY ♥ CAVITY-7c74302b",
+      "source": "maps\\LOVELY ♥ CAVITY-7c74302b\\wfp-fitness-draft.json",
+      "referenceKind": "human-authored",
+      "reference": {
+        "notes": 176,
+        "firstMs": 2387,
+        "sideNotes": 40,
+        "bpm": 150,
+        "anchorMs": 2387
+      },
+      "baseline": {
+        "notes": 320,
+        "firstMs": 6410,
+        "sideNotes": 44,
+        "bpm": 150,
+        "anchorMs": 1610
+      },
+      "current": {
+        "notes": 330,
+        "firstMs": 1610,
+        "sideNotes": 6,
+        "bpm": 150,
+        "anchorMs": 1610
+      },
+      "elapsedMs": 3168,
+      "sideCrunch": {
+        "usedBeats": 24,
+        "budgetBeats": 36,
+        "maxBoutBeats": 8,
+        "cooldownBeats": 96,
+        "bouts": [
+          {
+            "startMs": 27210,
+            "endMs": 30410,
+            "beats": 8
+          },
+          {
+            "startMs": 78410,
+            "endMs": 81610,
+            "beats": 8
+          },
+          {
+            "startMs": 131210,
+            "endMs": 134410,
+            "beats": 8
+          }
+        ],
+        "share": 0.0531
+      },
+      "checks": {
+        "actualFirstActionAtSectionStart": true,
+        "contiguousSections": true,
+        "closedSquatAndCalfCycles": true
+      },
+      "boundaries": [
+        {
+          "beat": 0,
+          "strength": 1,
+          "reason": "opening",
+          "startMs": 1610
+        },
+        {
+          "beat": 32,
+          "strength": 0.314,
+          "reason": "phrase",
+          "startMs": 14410
+        },
+        {
+          "beat": 64,
+          "strength": 0.591,
+          "reason": "phrase",
+          "startMs": 27210
+        },
+        {
+          "beat": 96,
+          "strength": 0.143,
+          "reason": "phrase",
+          "startMs": 40010
+        },
+        {
+          "beat": 128,
+          "strength": 0.436,
+          "reason": "phrase",
+          "startMs": 52810
+        },
+        {
+          "beat": 160,
+          "strength": 0.261,
+          "reason": "phrase",
+          "startMs": 65610
+        },
+        {
+          "beat": 192,
+          "strength": 0.41,
+          "reason": "phrase",
+          "startMs": 78410
+        },
+        {
+          "beat": 224,
+          "strength": 0.314,
+          "reason": "phrase",
+          "startMs": 91210
+        },
+        {
+          "beat": 260,
+          "strength": 0.844,
+          "reason": "change",
+          "startMs": 105610
+        },
+        {
+          "beat": 292,
+          "strength": 0.609,
+          "reason": "phrase",
+          "startMs": 118410
+        },
+        {
+          "beat": 324,
+          "strength": 0.74,
+          "reason": "phrase",
+          "startMs": 131210
+        },
+        {
+          "beat": 356,
+          "strength": 0.429,
+          "reason": "phrase",
+          "startMs": 144010
+        },
+        {
+          "beat": 388,
+          "strength": 0.404,
+          "reason": "phrase",
+          "startMs": 156810
+        },
+        {
+          "beat": 420,
+          "strength": 0.315,
+          "reason": "phrase",
+          "startMs": 169610
+        },
+        {
+          "beat": 452,
+          "strength": 0,
+          "reason": "end",
+          "startMs": 182410
+        }
+      ],
+      "sections": [
+        {
+          "startMs": 1610,
+          "endMs": 14410,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 14410,
+          "endMs": 27210,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 27210,
+          "endMs": 30410,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 30410,
+          "endMs": 40010,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 40010,
+          "endMs": 52810,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 52810,
+          "endMs": 65610,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 65610,
+          "endMs": 78410,
+          "label": "蹲起＋踮脚 / 2小节",
+          "musicMatch": {
+            "section": 2,
+            "similarity": 0.901,
+            "reused": false
+          }
+        },
+        {
+          "startMs": 78410,
+          "endMs": 81610,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 81610,
+          "endMs": 91210,
+          "label": "手臂＋踮脚 / 1小节"
+        },
+        {
+          "startMs": 91210,
+          "endMs": 105610,
+          "label": "手臂 / 1小节"
+        },
+        {
+          "startMs": 105610,
+          "endMs": 118410,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 118410,
+          "endMs": 131210,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 131210,
+          "endMs": 134410,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 134410,
+          "endMs": 144010,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 144010,
+          "endMs": 156810,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 156810,
+          "endMs": 169610,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 169610,
+          "endMs": 182410,
+          "label": "蹲起＋踮脚 / 4小节"
+        }
+      ]
+    },
+    {
+      "title": "sugar ★ mellowcle-7eb2c6ba",
+      "source": "maps\\sugar ★ mellowcle-7eb2c6ba\\wfp-fitness-draft.json",
+      "referenceKind": "human-authored",
+      "reference": {
+        "notes": 126,
+        "firstMs": 8956,
+        "sideNotes": 24,
+        "bpm": 114,
+        "anchorMs": 535
+      },
+      "baseline": {
+        "notes": 228,
+        "firstMs": 4746,
+        "sideNotes": 38,
+        "bpm": 114,
+        "anchorMs": 535
+      },
+      "current": {
+        "notes": 232,
+        "firstMs": 6851,
+        "sideNotes": 6,
+        "bpm": 114,
+        "anchorMs": 535
+      },
+      "elapsedMs": 1909,
+      "sideCrunch": {
+        "usedBeats": 16,
+        "budgetBeats": 24,
+        "maxBoutBeats": 8,
+        "cooldownBeats": 96,
+        "bouts": [
+          {
+            "startMs": 40535,
+            "endMs": 44746,
+            "beats": 8.001
+          },
+          {
+            "startMs": 110009,
+            "endMs": 114219,
+            "beats": 7.999
+          }
+        ],
+        "share": 0.0526
+      },
+      "checks": {
+        "actualFirstActionAtSectionStart": true,
+        "contiguousSections": true,
+        "closedSquatAndCalfCycles": true
+      },
+      "boundaries": [
+        {
+          "beat": 12,
+          "strength": 1,
+          "reason": "opening",
+          "startMs": 6851
+        },
+        {
+          "beat": 44,
+          "strength": 0.402,
+          "reason": "phrase",
+          "startMs": 23693
+        },
+        {
+          "beat": 76,
+          "strength": 0.201,
+          "reason": "phrase",
+          "startMs": 40535
+        },
+        {
+          "beat": 108,
+          "strength": 0.406,
+          "reason": "phrase",
+          "startMs": 57377
+        },
+        {
+          "beat": 140,
+          "strength": 0.431,
+          "reason": "phrase",
+          "startMs": 74219
+        },
+        {
+          "beat": 172,
+          "strength": 0.166,
+          "reason": "phrase",
+          "startMs": 91061
+        },
+        {
+          "beat": 208,
+          "strength": 0.611,
+          "reason": "change",
+          "startMs": 110009
+        },
+        {
+          "beat": 220,
+          "strength": 0.734,
+          "reason": "change",
+          "startMs": 116324
+        },
+        {
+          "beat": 252,
+          "strength": 0.166,
+          "reason": "phrase",
+          "startMs": 133167
+        },
+        {
+          "beat": 284,
+          "strength": 0.196,
+          "reason": "phrase",
+          "startMs": 150009
+        },
+        {
+          "beat": 316,
+          "strength": 0,
+          "reason": "end",
+          "startMs": 166851
+        }
+      ],
+      "sections": [
+        {
+          "startMs": 6851,
+          "endMs": 23693,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 23693,
+          "endMs": 40535,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 40535,
+          "endMs": 44746,
+          "label": "侧收腹 / 1小节"
+        },
+        {
+          "startMs": 44746,
+          "endMs": 57377,
+          "label": "蹲起＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 57377,
+          "endMs": 74219,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 74219,
+          "endMs": 91061,
+          "label": "蹲起＋手臂 / 2小节",
+          "musicMatch": {
+            "section": 2,
+            "similarity": 0.943,
+            "reused": true
+          }
+        },
+        {
+          "startMs": 91061,
+          "endMs": 110009,
+          "label": "手臂＋踮脚 / 1小节"
+        },
+        {
+          "startMs": 110009,
+          "endMs": 114219,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 114219,
+          "endMs": 116324,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 116324,
+          "endMs": 133167,
+          "label": "蹲起 / 4小节"
+        },
+        {
+          "startMs": 133167,
+          "endMs": 150009,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 150009,
+          "endMs": 166851,
+          "label": "手臂 / 1小节"
+        }
+      ]
+    },
+    {
+      "title": "愛スクリ～ム",
+      "source": "maps\\愛スクリ～ム\\wfp-fitness-draft.json",
+      "referenceKind": "previously-generated",
+      "reference": {
+        "notes": 370,
+        "firstMs": 4626,
+        "sideNotes": 64,
+        "bpm": 132,
+        "anchorMs": 990
+      },
+      "baseline": {
+        "notes": 370,
+        "firstMs": 4626,
+        "sideNotes": 64,
+        "bpm": 132,
+        "anchorMs": 990
+      },
+      "current": {
+        "notes": 408,
+        "firstMs": 990,
+        "sideNotes": 10,
+        "bpm": 132,
+        "anchorMs": 990
+      },
+      "elapsedMs": 3830,
+      "sideCrunch": {
+        "usedBeats": 32,
+        "budgetBeats": 44,
+        "maxBoutBeats": 8,
+        "cooldownBeats": 96,
+        "bouts": [
+          {
+            "startMs": 30081,
+            "endMs": 33717,
+            "beats": 7.999
+          },
+          {
+            "startMs": 88263,
+            "endMs": 91899,
+            "beats": 7.999
+          },
+          {
+            "startMs": 146445,
+            "endMs": 150081,
+            "beats": 7.999
+          },
+          {
+            "startMs": 204626,
+            "endMs": 208263,
+            "beats": 8.001
+          }
+        ],
+        "share": 0.0576
+      },
+      "checks": {
+        "actualFirstActionAtSectionStart": true,
+        "contiguousSections": true,
+        "closedSquatAndCalfCycles": true
+      },
+      "boundaries": [
+        {
+          "beat": 0,
+          "strength": 1,
+          "reason": "opening",
+          "startMs": 990
+        },
+        {
+          "beat": 32,
+          "strength": 0.539,
+          "reason": "phrase",
+          "startMs": 15535
+        },
+        {
+          "beat": 64,
+          "strength": 0.406,
+          "reason": "phrase",
+          "startMs": 30081
+        },
+        {
+          "beat": 96,
+          "strength": 0.637,
+          "reason": "phrase",
+          "startMs": 44626
+        },
+        {
+          "beat": 128,
+          "strength": 0.514,
+          "reason": "phrase",
+          "startMs": 59172
+        },
+        {
+          "beat": 160,
+          "strength": 0.527,
+          "reason": "phrase",
+          "startMs": 73717
+        },
+        {
+          "beat": 192,
+          "strength": 0.858,
+          "reason": "phrase",
+          "startMs": 88263
+        },
+        {
+          "beat": 224,
+          "strength": 0.457,
+          "reason": "phrase",
+          "startMs": 102808
+        },
+        {
+          "beat": 256,
+          "strength": 0.429,
+          "reason": "phrase",
+          "startMs": 117354
+        },
+        {
+          "beat": 288,
+          "strength": 0.375,
+          "reason": "phrase",
+          "startMs": 131899
+        },
+        {
+          "beat": 320,
+          "strength": 0.447,
+          "reason": "phrase",
+          "startMs": 146445
+        },
+        {
+          "beat": 352,
+          "strength": 0.144,
+          "reason": "phrase",
+          "startMs": 160990
+        },
+        {
+          "beat": 384,
+          "strength": 0.434,
+          "reason": "phrase",
+          "startMs": 175535
+        },
+        {
+          "beat": 416,
+          "strength": 0.65,
+          "reason": "phrase",
+          "startMs": 190081
+        },
+        {
+          "beat": 448,
+          "strength": 0.342,
+          "reason": "phrase",
+          "startMs": 204626
+        },
+        {
+          "beat": 480,
+          "strength": 0.432,
+          "reason": "phrase",
+          "startMs": 219172
+        },
+        {
+          "beat": 512,
+          "strength": 0.431,
+          "reason": "phrase",
+          "startMs": 233717
+        },
+        {
+          "beat": 524,
+          "strength": 0.789,
+          "reason": "change",
+          "startMs": 239172
+        },
+        {
+          "beat": 556,
+          "strength": 0,
+          "reason": "end",
+          "startMs": 253717
+        }
+      ],
+      "sections": [
+        {
+          "startMs": 990,
+          "endMs": 15535,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 15535,
+          "endMs": 30081,
+          "label": "蹲起＋踮脚 / 4小节"
+        },
+        {
+          "startMs": 30081,
+          "endMs": 33717,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 33717,
+          "endMs": 44626,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 44626,
+          "endMs": 59172,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 59172,
+          "endMs": 73717,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 73717,
+          "endMs": 88263,
+          "label": "手臂＋踮脚 / 1小节"
+        },
+        {
+          "startMs": 88263,
+          "endMs": 91899,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 91899,
+          "endMs": 102808,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 102808,
+          "endMs": 117354,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 117354,
+          "endMs": 131899,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 131899,
+          "endMs": 146445,
+          "label": "手臂 / 1小节"
+        },
+        {
+          "startMs": 146445,
+          "endMs": 150081,
+          "label": "侧收腹 / 1小节"
+        },
+        {
+          "startMs": 150081,
+          "endMs": 160990,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 160990,
+          "endMs": 175535,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 175535,
+          "endMs": 190081,
+          "label": "蹲起＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 190081,
+          "endMs": 204626,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 204626,
+          "endMs": 208263,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 208263,
+          "endMs": 219172,
+          "label": "手臂 / 1小节"
+        },
+        {
+          "startMs": 219172,
+          "endMs": 233717,
+          "label": "蹲起 / 4小节"
+        },
+        {
+          "startMs": 233717,
+          "endMs": 239172,
+          "label": "手臂＋踮脚 / 1小节"
+        },
+        {
+          "startMs": 239172,
+          "endMs": 253717,
+          "label": "蹲起＋手臂 / 2小节"
+        }
+      ]
+    },
+    {
+      "title": "極楽浄土",
+      "source": "maps\\極楽浄土\\wfp-fitness-draft.json",
+      "referenceKind": "previously-generated",
+      "reference": {
+        "notes": 302,
+        "firstMs": 4144,
+        "sideNotes": 48,
+        "bpm": 131,
+        "anchorMs": 480
+      },
+      "baseline": {
+        "notes": 302,
+        "firstMs": 4144,
+        "sideNotes": 48,
+        "bpm": 131,
+        "anchorMs": 480
+      },
+      "current": {
+        "notes": 344,
+        "firstMs": 480,
+        "sideNotes": 8,
+        "bpm": 131,
+        "anchorMs": 480
+      },
+      "elapsedMs": 6715,
+      "sideCrunch": {
+        "usedBeats": 32,
+        "budgetBeats": 36,
+        "maxBoutBeats": 8,
+        "cooldownBeats": 96,
+        "bouts": [
+          {
+            "startMs": 31625,
+            "endMs": 35289,
+            "beats": 8
+          },
+          {
+            "startMs": 88419,
+            "endMs": 92083,
+            "beats": 8
+          },
+          {
+            "startMs": 148877,
+            "endMs": 152541,
+            "beats": 8
+          },
+          {
+            "startMs": 207503,
+            "endMs": 211167,
+            "beats": 8
+          }
+        ],
+        "share": 0.0696
+      },
+      "checks": {
+        "actualFirstActionAtSectionStart": true,
+        "contiguousSections": true,
+        "closedSquatAndCalfCycles": true
+      },
+      "boundaries": [
+        {
+          "beat": 0,
+          "strength": 1,
+          "reason": "opening",
+          "startMs": 480
+        },
+        {
+          "beat": 36,
+          "strength": 0.88,
+          "reason": "change",
+          "startMs": 16969
+        },
+        {
+          "beat": 68,
+          "strength": 0.373,
+          "reason": "phrase",
+          "startMs": 31625
+        },
+        {
+          "beat": 100,
+          "strength": 0.494,
+          "reason": "phrase",
+          "startMs": 46282
+        },
+        {
+          "beat": 132,
+          "strength": 0.627,
+          "reason": "phrase",
+          "startMs": 60938
+        },
+        {
+          "beat": 164,
+          "strength": 0.518,
+          "reason": "phrase",
+          "startMs": 75595
+        },
+        {
+          "beat": 192,
+          "strength": 0.775,
+          "reason": "change",
+          "startMs": 88419
+        },
+        {
+          "beat": 216,
+          "strength": 0.748,
+          "reason": "change",
+          "startMs": 99411
+        },
+        {
+          "beat": 252,
+          "strength": 0.606,
+          "reason": "change",
+          "startMs": 115900
+        },
+        {
+          "beat": 292,
+          "strength": 0.797,
+          "reason": "change",
+          "startMs": 134220
+        },
+        {
+          "beat": 324,
+          "strength": 0.363,
+          "reason": "phrase",
+          "startMs": 148877
+        },
+        {
+          "beat": 356,
+          "strength": 0.457,
+          "reason": "phrase",
+          "startMs": 163533
+        },
+        {
+          "beat": 388,
+          "strength": 0.597,
+          "reason": "phrase",
+          "startMs": 178190
+        },
+        {
+          "beat": 420,
+          "strength": 0.432,
+          "reason": "phrase",
+          "startMs": 192846
+        },
+        {
+          "beat": 452,
+          "strength": 0.277,
+          "reason": "phrase",
+          "startMs": 207503
+        },
+        {
+          "beat": 460,
+          "strength": 0,
+          "reason": "end",
+          "startMs": 211167
+        }
+      ],
+      "sections": [
+        {
+          "startMs": 480,
+          "endMs": 16969,
+          "label": "手臂 / 1小节"
+        },
+        {
+          "startMs": 16969,
+          "endMs": 31625,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 31625,
+          "endMs": 35289,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 35289,
+          "endMs": 46282,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 46282,
+          "endMs": 60938,
+          "label": "踮脚 / 1小节"
+        },
+        {
+          "startMs": 60938,
+          "endMs": 75595,
+          "label": "手臂＋踮脚 / 1小节"
+        },
+        {
+          "startMs": 75595,
+          "endMs": 88419,
+          "label": "手臂 / 1小节"
+        },
+        {
+          "startMs": 88419,
+          "endMs": 92083,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 92083,
+          "endMs": 99411,
+          "label": "蹲起＋踮脚 / 4小节"
+        },
+        {
+          "startMs": 99411,
+          "endMs": 115900,
+          "label": "蹲起 / 1小节"
+        },
+        {
+          "startMs": 115900,
+          "endMs": 134220,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 134220,
+          "endMs": 148877,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 148877,
+          "endMs": 152541,
+          "label": "手臂＋侧收腹 / 2小节"
+        },
+        {
+          "startMs": 152541,
+          "endMs": 163533,
+          "label": "蹲起＋手臂 / 2小节"
+        },
+        {
+          "startMs": 163533,
+          "endMs": 178190,
+          "label": "手臂 / 2小节"
+        },
+        {
+          "startMs": 178190,
+          "endMs": 192846,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 192846,
+          "endMs": 207503,
+          "label": "手臂＋踮脚 / 2小节"
+        },
+        {
+          "startMs": 207503,
+          "endMs": 211167,
+          "label": "手臂＋侧收腹 / 2小节"
+        }
+      ]
+    }
+  ]
+}

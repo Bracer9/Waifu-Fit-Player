@@ -1,0 +1,2188 @@
+{
+  "version": 1,
+  "method": "leave-one-song-out; source windows overlap; descriptive, not independent clip accuracy",
+  "humanSources": [
+    {
+      "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "sha256": "09e49f0eb05c05c1e4370fb738a33f3aadb844ec910f2ec9d6433d34cfcc4d5c"
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "sha256": "d0181a4a3485efcb100ba54d3c96e1e79a01a2614f68f2367fc7b3bb935ec0c1"
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "sha256": "397a70c6d2ab9fb626116fd3406248af235eb1a6a90ec6858fab879826c19746"
+    },
+    {
+      "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+      "sha256": "4575fbd5155fb43eb44e90af2cb671e07b90b9bbf8fde7222c41df013221b4bd"
+    }
+  ],
+  "examples": 286,
+  "folds": [
+    {
+      "song": "Happy Halloween",
+      "trainSongs": [
+        "LOVELY ♥ CAVITY",
+        "sugar ★ mellowcle",
+        "愛スクリ～ム"
+      ],
+      "samples": 65,
+      "correct": 4,
+      "accuracy": 0.06153846153846154,
+      "perFamily": {
+        "calf_raise:tap+punch:tap": {
+          "samples": 13,
+          "correct": 1
+        },
+        "squat:tap": {
+          "samples": 24,
+          "correct": 0
+        },
+        "punch:tap": {
+          "samples": 10,
+          "correct": 3
+        },
+        "squat:hold": {
+          "samples": 1,
+          "correct": 0
+        },
+        "squat:hold+squat:tap": {
+          "samples": 3,
+          "correct": 0
+        },
+        "punch:tap+squat:tap": {
+          "samples": 2,
+          "correct": 0
+        },
+        "side_crunch:tap+squat:tap": {
+          "samples": 8,
+          "correct": 0
+        },
+        "calf_raise:sway": {
+          "samples": 1,
+          "correct": 0
+        },
+        "punch:tap+squat:hold": {
+          "samples": 2,
+          "correct": 0
+        },
+        "calf_raise:sway+side_crunch:tap": {
+          "samples": 1,
+          "correct": 0
+        }
+      },
+      "predictions": [
+        {
+          "startMs": 12100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.43570189199947934,
+          "correct": false
+        },
+        {
+          "startMs": 14100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.28563445338429494,
+          "correct": false
+        },
+        {
+          "startMs": 16100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3056029563677432,
+          "correct": false
+        },
+        {
+          "startMs": 44100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.28766276795727347,
+          "correct": false
+        },
+        {
+          "startMs": 46100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.2804518455919385,
+          "correct": false
+        },
+        {
+          "startMs": 48100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.30295333309025224,
+          "correct": false
+        },
+        {
+          "startMs": 88100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.3677345665043097,
+          "correct": false
+        },
+        {
+          "startMs": 132100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.43653114162334844,
+          "correct": false
+        },
+        {
+          "startMs": 134100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.33496069566793996,
+          "correct": false
+        },
+        {
+          "startMs": 136100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.3159007744129008,
+          "correct": false
+        },
+        {
+          "startMs": 204100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.2570310588826995,
+          "correct": true
+        },
+        {
+          "startMs": 90100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.45978701424644797,
+          "correct": false
+        },
+        {
+          "startMs": 206100,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.38880388171589036,
+          "correct": false
+        },
+        {
+          "startMs": 28100,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.2856746716155057,
+          "correct": false
+        },
+        {
+          "startMs": 30100,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2731593596668786,
+          "correct": false
+        },
+        {
+          "startMs": 32100,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2531956093084552,
+          "correct": false
+        },
+        {
+          "startMs": 60100,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2734508113663134,
+          "correct": false
+        },
+        {
+          "startMs": 62100,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.3370715728139887,
+          "correct": false
+        },
+        {
+          "startMs": 64100,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.34303321696055444,
+          "correct": false
+        },
+        {
+          "startMs": 124100,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.3474367768289038,
+          "correct": false
+        },
+        {
+          "startMs": 126100,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.2265029473595728,
+          "correct": false
+        },
+        {
+          "startMs": 128100,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.30944158447877895,
+          "correct": false
+        },
+        {
+          "startMs": 192100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.3641186387099943,
+          "correct": false
+        },
+        {
+          "startMs": 194100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.3890326086220521,
+          "correct": false
+        },
+        {
+          "startMs": 196100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4622152697411406,
+          "correct": false
+        },
+        {
+          "startMs": 96100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.42267649205828783,
+          "correct": false
+        },
+        {
+          "startMs": 112100,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.35659718184319167,
+          "correct": false
+        },
+        {
+          "startMs": 212100,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2831055608481415,
+          "correct": false
+        },
+        {
+          "startMs": 228100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.3139018037170642,
+          "correct": false
+        },
+        {
+          "startMs": 94100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4357107484612573,
+          "correct": false
+        },
+        {
+          "startMs": 110100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.42895462130064443,
+          "correct": false
+        },
+        {
+          "startMs": 210100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.40788188468081926,
+          "correct": false
+        },
+        {
+          "startMs": 226100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.41569834249633164,
+          "correct": false
+        },
+        {
+          "startMs": 92100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4444629464465413,
+          "correct": false
+        },
+        {
+          "startMs": 108100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4303627838802753,
+          "correct": false
+        },
+        {
+          "startMs": 208100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.28899099167630105,
+          "correct": false
+        },
+        {
+          "startMs": 224100,
+          "family": "squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.423606554765785,
+          "correct": false
+        },
+        {
+          "startMs": 24100,
+          "family": "punch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2674555033018078,
+          "correct": true
+        },
+        {
+          "startMs": 36100,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.40728293973964164,
+          "correct": false
+        },
+        {
+          "startMs": 38100,
+          "family": "punch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2938710718131172,
+          "correct": true
+        },
+        {
+          "startMs": 40100,
+          "family": "punch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2698733923848604,
+          "correct": true
+        },
+        {
+          "startMs": 4100,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.7074132837398075,
+          "correct": false
+        },
+        {
+          "startMs": 6100,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.8236142905359567,
+          "correct": false
+        },
+        {
+          "startMs": 8100,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.6477872017359089,
+          "correct": false
+        },
+        {
+          "startMs": 148100,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.3226738449309442,
+          "correct": false
+        },
+        {
+          "startMs": 150100,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.32344436190995024,
+          "correct": false
+        },
+        {
+          "startMs": 152100,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.2618792940209469,
+          "correct": false
+        },
+        {
+          "startMs": 116100,
+          "family": "squat:hold",
+          "guess": "calf_raise:tap",
+          "confidence": 0.32982085077923656,
+          "correct": false
+        },
+        {
+          "startMs": 116100,
+          "family": "squat:hold+squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.46867971088126376,
+          "correct": false
+        },
+        {
+          "startMs": 114100,
+          "family": "squat:hold+squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.34019341634105377,
+          "correct": false
+        },
+        {
+          "startMs": 112100,
+          "family": "squat:hold+squat:tap",
+          "guess": "squat:sway",
+          "confidence": 0.3442656860273928,
+          "correct": false
+        },
+        {
+          "startMs": 34100,
+          "family": "punch:tap+squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.263648223305367,
+          "correct": false
+        },
+        {
+          "startMs": 26100,
+          "family": "punch:tap+squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2636818013558446,
+          "correct": false
+        },
+        {
+          "startMs": 106100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.44780255542752834,
+          "correct": false
+        },
+        {
+          "startMs": 222100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.40803707060703875,
+          "correct": false
+        },
+        {
+          "startMs": 98100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4215233722884353,
+          "correct": false
+        },
+        {
+          "startMs": 214100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.2855327711574324,
+          "correct": false
+        },
+        {
+          "startMs": 96100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5071818208409039,
+          "correct": false
+        },
+        {
+          "startMs": 212100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.48317016512779554,
+          "correct": false
+        },
+        {
+          "startMs": 102100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5114575282982735,
+          "correct": false
+        },
+        {
+          "startMs": 218100,
+          "family": "side_crunch:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.4859663221274535,
+          "correct": false
+        },
+        {
+          "startMs": 172100,
+          "family": "calf_raise:sway",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.32463269792598404,
+          "correct": false
+        },
+        {
+          "startMs": 68100,
+          "family": "punch:tap+squat:hold",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.527314006034428,
+          "correct": false
+        },
+        {
+          "startMs": 156100,
+          "family": "punch:tap+squat:hold",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.34627083074673154,
+          "correct": false
+        },
+        {
+          "startMs": 172100,
+          "family": "calf_raise:sway+side_crunch:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.48736091152774974,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "song": "LOVELY ♥ CAVITY",
+      "trainSongs": [
+        "Happy Halloween",
+        "sugar ★ mellowcle",
+        "愛スクリ～ム"
+      ],
+      "samples": 51,
+      "correct": 2,
+      "accuracy": 0.0392156862745098,
+      "perFamily": {
+        "squat:tap": {
+          "samples": 7,
+          "correct": 1
+        },
+        "calf_raise:tap": {
+          "samples": 12,
+          "correct": 0
+        },
+        "punch:tap": {
+          "samples": 8,
+          "correct": 0
+        },
+        "side_crunch:tap": {
+          "samples": 13,
+          "correct": 0
+        },
+        "calf_raise:tap+squat:tap": {
+          "samples": 2,
+          "correct": 1
+        },
+        "punch:tap+side_crunch:tap": {
+          "samples": 3,
+          "correct": 0
+        },
+        "squat:sway": {
+          "samples": 1,
+          "correct": 0
+        },
+        "calf_raise:sway+punch:hold": {
+          "samples": 3,
+          "correct": 0
+        },
+        "squat:hold": {
+          "samples": 1,
+          "correct": 0
+        },
+        "punch:hold+squat:sway": {
+          "samples": 1,
+          "correct": 0
+        }
+      },
+      "predictions": [
+        {
+          "startMs": 27987,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.26041509521704875,
+          "correct": false
+        },
+        {
+          "startMs": 29587,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.291976889014041,
+          "correct": false
+        },
+        {
+          "startMs": 31187,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.19155018354072212,
+          "correct": false
+        },
+        {
+          "startMs": 32787,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.32044117460356675,
+          "correct": false
+        },
+        {
+          "startMs": 34387,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.3103947546863746,
+          "correct": false
+        },
+        {
+          "startMs": 35987,
+          "family": "squat:tap",
+          "guess": "squat:tap",
+          "confidence": 0.34138307036745746,
+          "correct": true
+        },
+        {
+          "startMs": 37587,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.2641072134790811,
+          "correct": false
+        },
+        {
+          "startMs": 40787,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3303325829995166,
+          "correct": false
+        },
+        {
+          "startMs": 42387,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4327050379406369,
+          "correct": false
+        },
+        {
+          "startMs": 43987,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3293431948052428,
+          "correct": false
+        },
+        {
+          "startMs": 45587,
+          "family": "calf_raise:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.34184699793304946,
+          "correct": false
+        },
+        {
+          "startMs": 47187,
+          "family": "calf_raise:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.31971309735590925,
+          "correct": false
+        },
+        {
+          "startMs": 48787,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3386977795096525,
+          "correct": false
+        },
+        {
+          "startMs": 50387,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.34569056300542284,
+          "correct": false
+        },
+        {
+          "startMs": 136787,
+          "family": "calf_raise:tap",
+          "guess": "squat:hold",
+          "confidence": 0.378573118341961,
+          "correct": false
+        },
+        {
+          "startMs": 138387,
+          "family": "calf_raise:tap",
+          "guess": "squat:hold",
+          "confidence": 0.49782571961693034,
+          "correct": false
+        },
+        {
+          "startMs": 139987,
+          "family": "calf_raise:tap",
+          "guess": "squat:hold",
+          "confidence": 0.38058670440238934,
+          "correct": false
+        },
+        {
+          "startMs": 133587,
+          "family": "calf_raise:tap",
+          "guess": "squat:hold",
+          "confidence": 0.21791322322587076,
+          "correct": false
+        },
+        {
+          "startMs": 130387,
+          "family": "calf_raise:tap",
+          "guess": "squat:hold",
+          "confidence": 0.2491203967290729,
+          "correct": false
+        },
+        {
+          "startMs": 21587,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.45384310722217025,
+          "correct": false
+        },
+        {
+          "startMs": 82387,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4274813327607361,
+          "correct": false
+        },
+        {
+          "startMs": 95187,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.43672004249641766,
+          "correct": false
+        },
+        {
+          "startMs": 165587,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.30550909675420374,
+          "correct": false
+        },
+        {
+          "startMs": 171987,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4258532880792113,
+          "correct": false
+        },
+        {
+          "startMs": 80787,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.44452227195421357,
+          "correct": false
+        },
+        {
+          "startMs": 93587,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4343777098236321,
+          "correct": false
+        },
+        {
+          "startMs": 170387,
+          "family": "punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4360676257617361,
+          "correct": false
+        },
+        {
+          "startMs": 15187,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.30435021562992365,
+          "correct": false
+        },
+        {
+          "startMs": 85587,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4460298833957625,
+          "correct": false
+        },
+        {
+          "startMs": 98387,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4449424834416268,
+          "correct": false
+        },
+        {
+          "startMs": 162387,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4505132752512312,
+          "correct": false
+        },
+        {
+          "startMs": 175187,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4505933600423633,
+          "correct": false
+        },
+        {
+          "startMs": 18387,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4258180117988013,
+          "correct": false
+        },
+        {
+          "startMs": 88787,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.304873008700483,
+          "correct": false
+        },
+        {
+          "startMs": 101587,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4105763925310294,
+          "correct": false
+        },
+        {
+          "startMs": 155987,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.44245971446867854,
+          "correct": false
+        },
+        {
+          "startMs": 16787,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.29024456480053373,
+          "correct": false
+        },
+        {
+          "startMs": 87187,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.43402628846798363,
+          "correct": false
+        },
+        {
+          "startMs": 99987,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4307457893919171,
+          "correct": false
+        },
+        {
+          "startMs": 176787,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4369861140265227,
+          "correct": false
+        },
+        {
+          "startMs": 39187,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.26442609828653946,
+          "correct": true
+        },
+        {
+          "startMs": 37587,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.1850978888797591,
+          "correct": false
+        },
+        {
+          "startMs": 83987,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.43760733643992383,
+          "correct": false
+        },
+        {
+          "startMs": 96787,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.44345064054445493,
+          "correct": false
+        },
+        {
+          "startMs": 173587,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.43894820018876324,
+          "correct": false
+        },
+        {
+          "startMs": 117587,
+          "family": "squat:sway",
+          "guess": "side_crunch:tap",
+          "confidence": 0.23357411262016176,
+          "correct": false
+        },
+        {
+          "startMs": 53587,
+          "family": "calf_raise:sway+punch:hold",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.21571953756134468,
+          "correct": false
+        },
+        {
+          "startMs": 143187,
+          "family": "calf_raise:sway+punch:hold",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.22907061126937994,
+          "correct": false
+        },
+        {
+          "startMs": 2387,
+          "family": "calf_raise:sway+punch:hold",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.29275651382247286,
+          "correct": false
+        },
+        {
+          "startMs": 104787,
+          "family": "squat:hold",
+          "guess": "squat:tap",
+          "confidence": 0.20764917820699447,
+          "correct": false
+        },
+        {
+          "startMs": 66387,
+          "family": "punch:hold+squat:sway",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.22650884884801392,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "song": "sugar ★ mellowcle",
+      "trainSongs": [
+        "Happy Halloween",
+        "LOVELY ♥ CAVITY",
+        "愛スクリ～ム"
+      ],
+      "samples": 59,
+      "correct": 0,
+      "accuracy": 0,
+      "perFamily": {
+        "calf_raise:tap+punch:tap": {
+          "samples": 4,
+          "correct": 0
+        },
+        "squat:tap": {
+          "samples": 2,
+          "correct": 0
+        },
+        "calf_raise:tap": {
+          "samples": 2,
+          "correct": 0
+        },
+        "punch:tap": {
+          "samples": 8,
+          "correct": 0
+        },
+        "calf_raise:tap+squat:tap": {
+          "samples": 8,
+          "correct": 0
+        },
+        "squat:hold": {
+          "samples": 4,
+          "correct": 0
+        },
+        "punch:tap+side_crunch:tap": {
+          "samples": 12,
+          "correct": 0
+        },
+        "punch:tap+squat:tap": {
+          "samples": 4,
+          "correct": 0
+        },
+        "side_crunch:tap+squat:hold": {
+          "samples": 3,
+          "correct": 0
+        },
+        "squat:sway": {
+          "samples": 2,
+          "correct": 0
+        },
+        "punch:tap+squat:sway": {
+          "samples": 2,
+          "correct": 0
+        },
+        "calf_raise:tap+squat:hold": {
+          "samples": 2,
+          "correct": 0
+        },
+        "calf_raise:tap+squat:hold+squat:tap": {
+          "samples": 2,
+          "correct": 0
+        },
+        "calf_raise:hold": {
+          "samples": 1,
+          "correct": 0
+        },
+        "punch:tap+squat:hold": {
+          "samples": 1,
+          "correct": 0
+        },
+        "calf_raise:hold+squat:sway": {
+          "samples": 1,
+          "correct": 0
+        },
+        "calf_raise:hold+squat:hold": {
+          "samples": 1,
+          "correct": 0
+        }
+      },
+      "predictions": [
+        {
+          "startMs": 44746,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.47424843803840105,
+          "correct": false
+        },
+        {
+          "startMs": 95272,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4440450170424352,
+          "correct": false
+        },
+        {
+          "startMs": 137377,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4839928477612544,
+          "correct": false
+        },
+        {
+          "startMs": 154219,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.42861818662952605,
+          "correct": false
+        },
+        {
+          "startMs": 17377,
+          "family": "squat:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2318471950052268,
+          "correct": false
+        },
+        {
+          "startMs": 67903,
+          "family": "squat:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.28938152944005097,
+          "correct": false
+        },
+        {
+          "startMs": 21588,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.24191917331312485,
+          "correct": false
+        },
+        {
+          "startMs": 72114,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.23774581780974868,
+          "correct": false
+        },
+        {
+          "startMs": 38430,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.38405125016637515,
+          "correct": false
+        },
+        {
+          "startMs": 46851,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5075790747158353,
+          "correct": false
+        },
+        {
+          "startMs": 88956,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.43939930467480826,
+          "correct": false
+        },
+        {
+          "startMs": 97377,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5176043688244931,
+          "correct": false
+        },
+        {
+          "startMs": 131061,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4362885762852264,
+          "correct": false
+        },
+        {
+          "startMs": 139482,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.513199210233611,
+          "correct": false
+        },
+        {
+          "startMs": 147903,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.35580380941449447,
+          "correct": false
+        },
+        {
+          "startMs": 156324,
+          "family": "punch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4572108386448707,
+          "correct": false
+        },
+        {
+          "startMs": 19482,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.311119066893706,
+          "correct": false
+        },
+        {
+          "startMs": 42640,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5084374875985027,
+          "correct": false
+        },
+        {
+          "startMs": 70009,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.2819603728457088,
+          "correct": false
+        },
+        {
+          "startMs": 93167,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5118919616555898,
+          "correct": false
+        },
+        {
+          "startMs": 135272,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4765342609699638,
+          "correct": false
+        },
+        {
+          "startMs": 152114,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4102082161139085,
+          "correct": false
+        },
+        {
+          "startMs": 17377,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.24310509232103045,
+          "correct": false
+        },
+        {
+          "startMs": 67903,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:tap",
+          "confidence": 0.25109941771370486,
+          "correct": false
+        },
+        {
+          "startMs": 25798,
+          "family": "squat:hold",
+          "guess": "calf_raise:tap",
+          "confidence": 0.35844895093333873,
+          "correct": false
+        },
+        {
+          "startMs": 76324,
+          "family": "squat:hold",
+          "guess": "calf_raise:tap",
+          "confidence": 0.446921307569366,
+          "correct": false
+        },
+        {
+          "startMs": 118430,
+          "family": "squat:hold",
+          "guess": "punch:tap",
+          "confidence": 0.32223916149861354,
+          "correct": false
+        },
+        {
+          "startMs": 160535,
+          "family": "squat:hold",
+          "guess": "squat:tap",
+          "confidence": 0.5326225495731497,
+          "correct": false
+        },
+        {
+          "startMs": 8956,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "punch:tap",
+          "confidence": 0.2238914355971401,
+          "correct": false
+        },
+        {
+          "startMs": 13167,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.24941195459314325,
+          "correct": false
+        },
+        {
+          "startMs": 59482,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4760667524113398,
+          "correct": false
+        },
+        {
+          "startMs": 63693,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.5048119806833329,
+          "correct": false
+        },
+        {
+          "startMs": 36324,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.45397100566765547,
+          "correct": false
+        },
+        {
+          "startMs": 86851,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5075187271729504,
+          "correct": false
+        },
+        {
+          "startMs": 128956,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5096678644296636,
+          "correct": false
+        },
+        {
+          "startMs": 145798,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.38739511718756475,
+          "correct": false
+        },
+        {
+          "startMs": 34219,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.41937006404305815,
+          "correct": false
+        },
+        {
+          "startMs": 84746,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.47102926779255233,
+          "correct": false
+        },
+        {
+          "startMs": 126851,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4278096023475522,
+          "correct": false
+        },
+        {
+          "startMs": 143693,
+          "family": "punch:tap+side_crunch:tap",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.3575150783703471,
+          "correct": false
+        },
+        {
+          "startMs": 40535,
+          "family": "punch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.37819208112805885,
+          "correct": false
+        },
+        {
+          "startMs": 91061,
+          "family": "punch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4038469850519363,
+          "correct": false
+        },
+        {
+          "startMs": 133167,
+          "family": "punch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.4572968093572533,
+          "correct": false
+        },
+        {
+          "startMs": 150009,
+          "family": "punch:tap+squat:tap",
+          "guess": "side_crunch:tap",
+          "confidence": 0.40574966070490043,
+          "correct": false
+        },
+        {
+          "startMs": 25798,
+          "family": "side_crunch:tap+squat:hold",
+          "guess": "side_crunch:tap",
+          "confidence": 0.39930909746137344,
+          "correct": false
+        },
+        {
+          "startMs": 76324,
+          "family": "side_crunch:tap+squat:hold",
+          "guess": "side_crunch:tap",
+          "confidence": 0.24459133214397447,
+          "correct": false
+        },
+        {
+          "startMs": 118430,
+          "family": "side_crunch:tap+squat:hold",
+          "guess": "side_crunch:tap",
+          "confidence": 0.3999871005296569,
+          "correct": false
+        },
+        {
+          "startMs": 51061,
+          "family": "squat:sway",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.41961613722707486,
+          "correct": false
+        },
+        {
+          "startMs": 101588,
+          "family": "squat:sway",
+          "guess": "side_crunch:tap",
+          "confidence": 0.5722935068129555,
+          "correct": false
+        },
+        {
+          "startMs": 46851,
+          "family": "punch:tap+squat:sway",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.422322944086322,
+          "correct": false
+        },
+        {
+          "startMs": 97377,
+          "family": "punch:tap+squat:sway",
+          "guess": "side_crunch:tap",
+          "confidence": 0.531409653004733,
+          "correct": false
+        },
+        {
+          "startMs": 21588,
+          "family": "calf_raise:tap+squat:hold",
+          "guess": "side_crunch:tap+squat:tap",
+          "confidence": 0.23849540031136937,
+          "correct": false
+        },
+        {
+          "startMs": 72114,
+          "family": "calf_raise:tap+squat:hold",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.23135804111645888,
+          "correct": false
+        },
+        {
+          "startMs": 17377,
+          "family": "calf_raise:tap+squat:hold+squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.2376532073498617,
+          "correct": false
+        },
+        {
+          "startMs": 67903,
+          "family": "calf_raise:tap+squat:hold+squat:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.2573360875750541,
+          "correct": false
+        },
+        {
+          "startMs": 110009,
+          "family": "calf_raise:hold",
+          "guess": "punch:tap",
+          "confidence": 0.32245385034177726,
+          "correct": false
+        },
+        {
+          "startMs": 156324,
+          "family": "punch:tap+squat:hold",
+          "guess": "squat:tap",
+          "confidence": 0.33508595952830544,
+          "correct": false
+        },
+        {
+          "startMs": 101588,
+          "family": "calf_raise:hold+squat:sway",
+          "guess": "side_crunch:tap",
+          "confidence": 0.48388058651500776,
+          "correct": false
+        },
+        {
+          "startMs": 110009,
+          "family": "calf_raise:hold+squat:hold",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.27769162880823617,
+          "correct": false
+        }
+      ]
+    },
+    {
+      "song": "愛スクリ～ム",
+      "trainSongs": [
+        "Happy Halloween",
+        "LOVELY ♥ CAVITY",
+        "sugar ★ mellowcle"
+      ],
+      "samples": 98,
+      "correct": 0,
+      "accuracy": 0,
+      "perFamily": {
+        "calf_raise:tap+punch:tap": {
+          "samples": 30,
+          "correct": 0
+        },
+        "squat:tap": {
+          "samples": 7,
+          "correct": 0
+        },
+        "calf_raise:tap": {
+          "samples": 15,
+          "correct": 0
+        },
+        "punch:tap": {
+          "samples": 9,
+          "correct": 0
+        },
+        "side_crunch:tap": {
+          "samples": 18,
+          "correct": 0
+        },
+        "calf_raise:tap+squat:tap": {
+          "samples": 8,
+          "correct": 0
+        },
+        "punch:tap+squat:tap": {
+          "samples": 7,
+          "correct": 0
+        },
+        "squat:sway": {
+          "samples": 1,
+          "correct": 0
+        },
+        "punch:tap+squat:hold": {
+          "samples": 1,
+          "correct": 0
+        },
+        "calf_raise:tap+squat:sway": {
+          "samples": 1,
+          "correct": 0
+        },
+        "squat:hold": {
+          "samples": 1,
+          "correct": 0
+        }
+      },
+      "predictions": [
+        {
+          "startMs": 73717,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3251027013172087,
+          "correct": false
+        },
+        {
+          "startMs": 75535,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3334956682317598,
+          "correct": false
+        },
+        {
+          "startMs": 77354,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.32777043519179844,
+          "correct": false
+        },
+        {
+          "startMs": 79172,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4950806321735832,
+          "correct": false
+        },
+        {
+          "startMs": 80990,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.32140751519909755,
+          "correct": false
+        },
+        {
+          "startMs": 82808,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.31910332812854053,
+          "correct": false
+        },
+        {
+          "startMs": 84626,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.34394989774518786,
+          "correct": false
+        },
+        {
+          "startMs": 137354,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.35409481768911183,
+          "correct": false
+        },
+        {
+          "startMs": 139172,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3496741105096987,
+          "correct": false
+        },
+        {
+          "startMs": 140990,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.32576933193314583,
+          "correct": false
+        },
+        {
+          "startMs": 142808,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.49454448767707054,
+          "correct": false
+        },
+        {
+          "startMs": 144626,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3378352415303265,
+          "correct": false
+        },
+        {
+          "startMs": 146445,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3255886836255839,
+          "correct": false
+        },
+        {
+          "startMs": 148263,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.33870682274369346,
+          "correct": false
+        },
+        {
+          "startMs": 210081,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3337016813269818,
+          "correct": false
+        },
+        {
+          "startMs": 211899,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3184031683352614,
+          "correct": false
+        },
+        {
+          "startMs": 213717,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.31211868164351764,
+          "correct": false
+        },
+        {
+          "startMs": 215535,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.34949569221851295,
+          "correct": false
+        },
+        {
+          "startMs": 217354,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.33558758842440656,
+          "correct": false
+        },
+        {
+          "startMs": 219172,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3193331363063051,
+          "correct": false
+        },
+        {
+          "startMs": 220990,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3457352341969146,
+          "correct": false
+        },
+        {
+          "startMs": 222808,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3561704150515487,
+          "correct": false
+        },
+        {
+          "startMs": 224626,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3391919008250734,
+          "correct": false
+        },
+        {
+          "startMs": 226445,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3366759731389486,
+          "correct": false
+        },
+        {
+          "startMs": 228263,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3542894276164161,
+          "correct": false
+        },
+        {
+          "startMs": 230081,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.35883963696013893,
+          "correct": false
+        },
+        {
+          "startMs": 231899,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.35794040449887315,
+          "correct": false
+        },
+        {
+          "startMs": 233717,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3123472566100089,
+          "correct": false
+        },
+        {
+          "startMs": 235535,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3249325894633499,
+          "correct": false
+        },
+        {
+          "startMs": 86445,
+          "family": "calf_raise:tap+punch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.4832535525801107,
+          "correct": false
+        },
+        {
+          "startMs": 15535,
+          "family": "squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3592504668838462,
+          "correct": false
+        },
+        {
+          "startMs": 22808,
+          "family": "squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.1869983915861919,
+          "correct": false
+        },
+        {
+          "startMs": 30081,
+          "family": "squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3224517178184964,
+          "correct": false
+        },
+        {
+          "startMs": 37354,
+          "family": "squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3585975263373378,
+          "correct": false
+        },
+        {
+          "startMs": 113717,
+          "family": "squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.2784266744915983,
+          "correct": false
+        },
+        {
+          "startMs": 166445,
+          "family": "squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.2785892939338602,
+          "correct": false
+        },
+        {
+          "startMs": 173717,
+          "family": "squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.3019423581726694,
+          "correct": false
+        },
+        {
+          "startMs": 990,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.8995714009611537,
+          "correct": false
+        },
+        {
+          "startMs": 2808,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.8776423608075785,
+          "correct": false
+        },
+        {
+          "startMs": 4626,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.8278743341884219,
+          "correct": false
+        },
+        {
+          "startMs": 6445,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.8281822762346934,
+          "correct": false
+        },
+        {
+          "startMs": 8263,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.6599934761512785,
+          "correct": false
+        },
+        {
+          "startMs": 10081,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.4665251865369538,
+          "correct": false
+        },
+        {
+          "startMs": 11899,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.5825823949595529,
+          "correct": false
+        },
+        {
+          "startMs": 170081,
+          "family": "calf_raise:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.3403482934366846,
+          "correct": false
+        },
+        {
+          "startMs": 177354,
+          "family": "calf_raise:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.26605119476202355,
+          "correct": false
+        },
+        {
+          "startMs": 239172,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.37937936692857843,
+          "correct": false
+        },
+        {
+          "startMs": 240990,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.32680760320345287,
+          "correct": false
+        },
+        {
+          "startMs": 242808,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap",
+          "confidence": 0.34892508389308624,
+          "correct": false
+        },
+        {
+          "startMs": 244626,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3565953892004079,
+          "correct": false
+        },
+        {
+          "startMs": 246445,
+          "family": "calf_raise:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.24357075337590592,
+          "correct": false
+        },
+        {
+          "startMs": 248263,
+          "family": "calf_raise:tap",
+          "guess": "squat:tap",
+          "confidence": 0.30738250002430145,
+          "correct": false
+        },
+        {
+          "startMs": 33717,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.22572713291173405,
+          "correct": false
+        },
+        {
+          "startMs": 40990,
+          "family": "punch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.24881004680551028,
+          "correct": false
+        },
+        {
+          "startMs": 151899,
+          "family": "punch:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.2943229247548826,
+          "correct": false
+        },
+        {
+          "startMs": 153717,
+          "family": "punch:tap",
+          "guess": "squat:hold",
+          "confidence": 0.2697157633778553,
+          "correct": false
+        },
+        {
+          "startMs": 155535,
+          "family": "punch:tap",
+          "guess": "squat:hold",
+          "confidence": 0.2917744422508698,
+          "correct": false
+        },
+        {
+          "startMs": 157354,
+          "family": "punch:tap",
+          "guess": "squat:hold",
+          "confidence": 0.3236791451826409,
+          "correct": false
+        },
+        {
+          "startMs": 159172,
+          "family": "punch:tap",
+          "guess": "squat:hold",
+          "confidence": 0.2882561011898926,
+          "correct": false
+        },
+        {
+          "startMs": 160990,
+          "family": "punch:tap",
+          "guess": "squat:hold",
+          "confidence": 0.2744671452876595,
+          "correct": false
+        },
+        {
+          "startMs": 162808,
+          "family": "punch:tap",
+          "guess": "squat:hold",
+          "confidence": 0.3123799611598433,
+          "correct": false
+        },
+        {
+          "startMs": 59172,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.31756229512618783,
+          "correct": false
+        },
+        {
+          "startMs": 66445,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.24729373867590576,
+          "correct": false
+        },
+        {
+          "startMs": 122808,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3150704614263318,
+          "correct": false
+        },
+        {
+          "startMs": 130081,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.27792621703996906,
+          "correct": false
+        },
+        {
+          "startMs": 195535,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.3266101866724057,
+          "correct": false
+        },
+        {
+          "startMs": 202808,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.30879884897675636,
+          "correct": false
+        },
+        {
+          "startMs": 62808,
+          "family": "side_crunch:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.28213533392766943,
+          "correct": false
+        },
+        {
+          "startMs": 70081,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.3055056495506221,
+          "correct": false
+        },
+        {
+          "startMs": 126445,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.29289926583696846,
+          "correct": false
+        },
+        {
+          "startMs": 133717,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.2890307051683532,
+          "correct": false
+        },
+        {
+          "startMs": 199172,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.33778253888402626,
+          "correct": false
+        },
+        {
+          "startMs": 206445,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.26849314473643576,
+          "correct": false
+        },
+        {
+          "startMs": 60990,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.44111214119090514,
+          "correct": false
+        },
+        {
+          "startMs": 68263,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.4846216111536381,
+          "correct": false
+        },
+        {
+          "startMs": 124626,
+          "family": "side_crunch:tap",
+          "guess": "squat:tap",
+          "confidence": 0.32173349624942843,
+          "correct": false
+        },
+        {
+          "startMs": 131899,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.3379205425099442,
+          "correct": false
+        },
+        {
+          "startMs": 197354,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.3377392691368834,
+          "correct": false
+        },
+        {
+          "startMs": 204626,
+          "family": "side_crunch:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.30003860595959225,
+          "correct": false
+        },
+        {
+          "startMs": 168263,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.32368268178485704,
+          "correct": false
+        },
+        {
+          "startMs": 175535,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.2886756087820463,
+          "correct": false
+        },
+        {
+          "startMs": 166445,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.26416934125829317,
+          "correct": false
+        },
+        {
+          "startMs": 173717,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.25308690845641113,
+          "correct": false
+        },
+        {
+          "startMs": 13717,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.37256743836519385,
+          "correct": false
+        },
+        {
+          "startMs": 171899,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.3270113773996559,
+          "correct": false
+        },
+        {
+          "startMs": 11899,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3436404005283265,
+          "correct": false
+        },
+        {
+          "startMs": 170081,
+          "family": "calf_raise:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.26866559965395026,
+          "correct": false
+        },
+        {
+          "startMs": 31899,
+          "family": "punch:tap+squat:tap",
+          "guess": "calf_raise:tap+punch:tap",
+          "confidence": 0.4374944308616387,
+          "correct": false
+        },
+        {
+          "startMs": 39172,
+          "family": "punch:tap+squat:tap",
+          "guess": "squat:tap",
+          "confidence": 0.2401718204238493,
+          "correct": false
+        },
+        {
+          "startMs": 35535,
+          "family": "punch:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3518862428360681,
+          "correct": false
+        },
+        {
+          "startMs": 164626,
+          "family": "punch:tap+squat:tap",
+          "guess": "calf_raise:hold",
+          "confidence": 0.3551048895603595,
+          "correct": false
+        },
+        {
+          "startMs": 97354,
+          "family": "punch:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.2599414448853341,
+          "correct": false
+        },
+        {
+          "startMs": 104626,
+          "family": "punch:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3815395137358257,
+          "correct": false
+        },
+        {
+          "startMs": 111899,
+          "family": "punch:tap+squat:tap",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.3395925403818711,
+          "correct": false
+        },
+        {
+          "startMs": 180990,
+          "family": "squat:sway",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.26098893193085226,
+          "correct": false
+        },
+        {
+          "startMs": 42808,
+          "family": "punch:tap+squat:hold",
+          "guess": "calf_raise:tap+squat:tap",
+          "confidence": 0.2505845627877655,
+          "correct": false
+        },
+        {
+          "startMs": 179172,
+          "family": "calf_raise:tap+squat:sway",
+          "guess": "squat:tap",
+          "confidence": 0.2128540769937945,
+          "correct": false
+        },
+        {
+          "startMs": 44626,
+          "family": "squat:hold",
+          "guess": "punch:tap+side_crunch:tap",
+          "confidence": 0.36262719669584964,
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

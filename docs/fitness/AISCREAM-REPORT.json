@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "bpm": 132,
+  "anchorMs": 990,
+  "audioStartMs": 990,
+  "endMs": 255665,
+  "noteCount": 370,
+  "laneCounts": {
+    "squat": 78,
+    "punch": 150,
+    "calf_raise": 78,
+    "side_crunch": 64
+  },
+  "sections": [
+    {
+      "startMs": 4626,
+      "endMs": 19172,
+      "brickId": "fit-037f05161d",
+      "label": "手臂＋侧收腹 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0.06
+    },
+    {
+      "startMs": 19172,
+      "endMs": 33717,
+      "brickId": "fit-c076e4a911",
+      "label": "蹲起＋踮脚 / 4小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.24
+    },
+    {
+      "startMs": 33717,
+      "endMs": 48263,
+      "brickId": "fit-b1fb7892c6",
+      "label": "蹲起＋手臂 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0.35
+    },
+    {
+      "startMs": 48263,
+      "endMs": 62808,
+      "brickId": "fit-1d5348ba62",
+      "label": "踮脚 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0.47
+    },
+    {
+      "startMs": 62808,
+      "endMs": 66445,
+      "brickId": "fit-7b3e5e6af4",
+      "label": "侧收腹 / 2小节",
+      "repeats": 1,
+      "mirrored": false,
+      "energy": 0.65
+    },
+    {
+      "startMs": 66445,
+      "endMs": 73717,
+      "brickId": "fit-9da9281beb",
+      "label": "手臂 / 2小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.65
+    },
+    {
+      "startMs": 73717,
+      "endMs": 88263,
+      "brickId": "fit-24576d4b6f",
+      "label": "手臂＋侧收腹 / 2小节",
+      "repeats": 4,
+      "mirrored": true,
+      "energy": 0.82
+    },
+    {
+      "startMs": 88263,
+      "endMs": 102808,
+      "brickId": "fit-1d7f20db61",
+      "label": "蹲起 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0.06
+    },
+    {
+      "startMs": 102808,
+      "endMs": 117354,
+      "brickId": "fit-bfb7f0b89e",
+      "label": "手臂＋侧收腹 / 2小节",
+      "repeats": 4,
+      "mirrored": true,
+      "energy": 0.24
+    },
+    {
+      "startMs": 117354,
+      "endMs": 128263,
+      "brickId": "fit-a3c31a11ec",
+      "label": "蹲起＋踮脚 / 2小节",
+      "repeats": 3,
+      "mirrored": false,
+      "energy": 0.41
+    },
+    {
+      "startMs": 130081,
+      "endMs": 137354,
+      "brickId": "fit-9da9281beb",
+      "label": "手臂 / 2小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.65,
+      "musicMatch": {
+        "section": 6,
+        "similarity": 0.907,
+        "reused": true
+      }
+    },
+    {
+      "startMs": 137354,
+      "endMs": 151899,
+      "brickId": "fit-f5937ab63e",
+      "label": "踮脚 / 4小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.94
+    },
+    {
+      "startMs": 151899,
+      "endMs": 166445,
+      "brickId": "fit-723c1ef7c7",
+      "label": "手臂＋侧收腹 / 4小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.82
+    },
+    {
+      "startMs": 166445,
+      "endMs": 180990,
+      "brickId": "fit-3ff7b2d1af",
+      "label": "蹲起 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0.82
+    },
+    {
+      "startMs": 180990,
+      "endMs": 195535,
+      "brickId": "fit-46739c11df",
+      "label": "蹲起＋侧收腹 / 4小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.35
+    },
+    {
+      "startMs": 195535,
+      "endMs": 202808,
+      "brickId": "fit-1aa578f558",
+      "label": "手臂＋踮脚 / 2小节",
+      "repeats": 2,
+      "mirrored": true,
+      "energy": 0.65
+    },
+    {
+      "startMs": 202808,
+      "endMs": 210081,
+      "brickId": "fit-9da9281beb",
+      "label": "手臂 / 2小节",
+      "repeats": 2,
+      "mirrored": false,
+      "energy": 0.65,
+      "musicMatch": {
+        "section": 6,
+        "similarity": 0.887,
+        "reused": true
+      }
+    },
+    {
+      "startMs": 210081,
+      "endMs": 224626,
+      "brickId": "fit-e42676cc5a",
+      "label": "手臂＋踮脚 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0.94
+    },
+    {
+      "startMs": 224626,
+      "endMs": 239172,
+      "brickId": "fit-24576d4b6f",
+      "label": "手臂＋侧收腹 / 2小节",
+      "repeats": 4,
+      "mirrored": true,
+      "energy": 1
+    },
+    {
+      "startMs": 239172,
+      "endMs": 253717,
+      "brickId": "fit-32a06f72b9",
+      "label": "侧收腹 / 2小节",
+      "repeats": 4,
+      "mirrored": false,
+      "energy": 0
+    }
+  ],
+  "musicRepeats": [
+    {
+      "startMs": 66445,
+      "beats": 16,
+      "similarity": 1
+    },
+    {
+      "startMs": 130081,
+      "beats": 16,
+      "similarity": 0.907,
+      "previousMs": 66445
+    },
+    {
+      "startMs": 202808,
+      "beats": 16,
+      "similarity": 0.887,
+      "previousMs": 66445
+    }
+  ],
+  "warnings": [
+    "起点是自动拍点候选，音乐小节第一强拍仍需试听核对。",
+    "这是基于三首参考谱的规则生成草稿，尚未经过教练逐段验收。"
+  ],
+  "warehouseVersion": 1,
+  "referenceTitles": ["Happy Halloween", "LOVELY ♥ CAVITY", "sugar ★ mellowcle"]
+}

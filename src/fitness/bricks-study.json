@@ -1,0 +1,6996 @@
+{
+  "version": 3,
+  "references": [
+    {
+      "title": "Happy Halloween",
+      "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "sha256": "09e49f0eb05c05c1e4370fb738a33f3aadb844ec910f2ec9d6433d34cfcc4d5c",
+      "sourceName": "原人工参考",
+      "bpm": 120,
+      "anchorMs": 100,
+      "notes": 298,
+      "laneCounts": {
+        "squat": 70,
+        "punch": 121,
+        "calf_raise": 69,
+        "side_crunch": 38
+      },
+      "laneWorkBeats": {
+        "squat": 209,
+        "punch": 242,
+        "calf_raise": 160,
+        "side_crunch": 76
+      },
+      "maxQuantizationErrorBeats": 0,
+      "draftMatchesReleasedNotes": true
+    },
+    {
+      "title": "LOVELY ♥ CAVITY",
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "sha256": "d0181a4a3485efcb100ba54d3c96e1e79a01a2614f68f2367fc7b3bb935ec0c1",
+      "sourceName": "原人工参考",
+      "bpm": 150,
+      "anchorMs": 2387,
+      "notes": 176,
+      "laneCounts": {
+        "squat": 21,
+        "punch": 84,
+        "calf_raise": 31,
+        "side_crunch": 40
+      },
+      "laneWorkBeats": {
+        "squat": 130,
+        "punch": 256,
+        "calf_raise": 152,
+        "side_crunch": 80
+      },
+      "maxQuantizationErrorBeats": 0,
+      "draftMatchesReleasedNotes": true
+    },
+    {
+      "title": "sugar ★ mellowcle",
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "sha256": "397a70c6d2ab9fb626116fd3406248af235eb1a6a90ec6858fab879826c19746",
+      "sourceName": "原人工参考",
+      "bpm": 114,
+      "anchorMs": 535,
+      "notes": 126,
+      "laneCounts": {
+        "squat": 28,
+        "punch": 56,
+        "calf_raise": 18,
+        "side_crunch": 24
+      },
+      "laneWorkBeats": {
+        "squat": 134,
+        "punch": 112,
+        "calf_raise": 49,
+        "side_crunch": 48
+      },
+      "maxQuantizationErrorBeats": 0.002200000000016189,
+      "draftMatchesReleasedNotes": true
+    },
+    {
+      "title": "愛スクリ～ム",
+      "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+      "sha256": "4575fbd5155fb43eb44e90af2cb671e07b90b9bbf8fde7222c41df013221b4bd",
+      "sourceName": "人工版本",
+      "bpm": 132,
+      "anchorMs": 990,
+      "notes": 419,
+      "laneCounts": {
+        "squat": 44,
+        "punch": 159,
+        "calf_raise": 168,
+        "side_crunch": 48
+      },
+      "laneWorkBeats": {
+        "squat": 140,
+        "punch": 318,
+        "calf_raise": 336,
+        "side_crunch": 96
+      },
+      "maxQuantizationErrorBeats": 0.0027999999999934744,
+      "draftMatchesReleasedNotes": false
+    }
+  ],
+  "longCoverage": [
+    {
+      "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "startMs": 68100,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 30,
+      "brickIds": [
+        "fit-846d750cfb"
+      ]
+    },
+    {
+      "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "startMs": 116100,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-ff9322866f",
+        "fit-00a509f33b"
+      ]
+    },
+    {
+      "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "startMs": 156100,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 30,
+      "brickIds": [
+        "fit-ee463e3180"
+      ]
+    },
+    {
+      "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+      "startMs": 172100,
+      "lane": "calf_raise",
+      "modifier": "sway",
+      "durationBeats": 24,
+      "brickIds": [
+        "fit-679f94974a",
+        "fit-6da84e9fd0"
+      ]
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "startMs": 2387,
+      "lane": "calf_raise",
+      "modifier": "sway",
+      "durationBeats": 32,
+      "brickIds": [
+        "fit-fbb5ffe626"
+      ]
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "startMs": 53587,
+      "lane": "calf_raise",
+      "modifier": "sway",
+      "durationBeats": 32,
+      "brickIds": [
+        "fit-0a681b0ab7"
+      ]
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "startMs": 66387,
+      "lane": "squat",
+      "modifier": "sway",
+      "durationBeats": 31,
+      "brickIds": [
+        "fit-62242e2fcd"
+      ]
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "startMs": 104787,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 32,
+      "brickIds": [
+        "fit-384a762992"
+      ]
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "startMs": 117587,
+      "lane": "squat",
+      "modifier": "sway",
+      "durationBeats": 31,
+      "brickIds": [
+        "fit-80870dc737"
+      ]
+    },
+    {
+      "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+      "startMs": 143187,
+      "lane": "calf_raise",
+      "modifier": "sway",
+      "durationBeats": 32,
+      "brickIds": [
+        "fit-0a681b0ab7"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 25798,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-ff9322866f",
+        "fit-7576283d6c"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 51061,
+      "lane": "squat",
+      "modifier": "sway",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-e1a04b11e3"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 76324,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-ff9322866f",
+        "fit-7576283d6c"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 101588,
+      "lane": "squat",
+      "modifier": "sway",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-e1a04b11e3",
+        "fit-307c92e98f"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 110009,
+      "lane": "calf_raise",
+      "modifier": "none",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-29661d4e23",
+        "fit-a39e66f886"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 118430,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-ff9322866f",
+        "fit-7576283d6c"
+      ]
+    },
+    {
+      "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+      "startMs": 160535,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 15,
+      "brickIds": [
+        "fit-ff9322866f"
+      ]
+    },
+    {
+      "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+      "startMs": 44626,
+      "lane": "squat",
+      "modifier": "none",
+      "durationBeats": 28,
+      "brickIds": [
+        "fit-fc1fe92b97"
+      ]
+    },
+    {
+      "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+      "startMs": 180990,
+      "lane": "squat",
+      "modifier": "sway",
+      "durationBeats": 28,
+      "brickIds": [
+        "fit-a1a4380fd1"
+      ]
+    }
+  ],
+  "bricks": [
+    {
+      "id": "fit-e42676cc5a",
+      "beats": 8,
+      "lanes": [
+        "punch",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 5,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 7,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 7,
+          "endBar": 8,
+          "startMs": 12100,
+          "endMs": 16100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 8,
+          "endBar": 9,
+          "startMs": 14100,
+          "endMs": 18100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 9,
+          "endBar": 10,
+          "startMs": 16100,
+          "endMs": 20100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 23,
+          "endBar": 24,
+          "startMs": 44100,
+          "endMs": 48100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 24,
+          "endBar": 25,
+          "startMs": 46100,
+          "endMs": 50100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 25,
+          "endBar": 26,
+          "startMs": 48100,
+          "endMs": 52100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 45,
+          "endBar": 46,
+          "startMs": 88100,
+          "endMs": 92100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 67,
+          "endBar": 68,
+          "startMs": 132100,
+          "endMs": 136100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 68,
+          "endBar": 69,
+          "startMs": 134100,
+          "endMs": 138100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 69,
+          "endBar": 70,
+          "startMs": 136100,
+          "endMs": 140100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 103,
+          "endBar": 104,
+          "startMs": 204100,
+          "endMs": 208100
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 41,
+          "endBar": 42,
+          "startMs": 73717,
+          "endMs": 77354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 42,
+          "endBar": 43,
+          "startMs": 75535,
+          "endMs": 79172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 43,
+          "endBar": 44,
+          "startMs": 77354,
+          "endMs": 80990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 44,
+          "endBar": 45,
+          "startMs": 79172,
+          "endMs": 82808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 45,
+          "endBar": 46,
+          "startMs": 80990,
+          "endMs": 84626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 46,
+          "endBar": 47,
+          "startMs": 82808,
+          "endMs": 86445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 47,
+          "endBar": 48,
+          "startMs": 84626,
+          "endMs": 88263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 76,
+          "endBar": 77,
+          "startMs": 137354,
+          "endMs": 140990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 77,
+          "endBar": 78,
+          "startMs": 139172,
+          "endMs": 142808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 78,
+          "endBar": 79,
+          "startMs": 140990,
+          "endMs": 144626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 79,
+          "endBar": 80,
+          "startMs": 142808,
+          "endMs": 146445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 80,
+          "endBar": 81,
+          "startMs": 144626,
+          "endMs": 148263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 81,
+          "endBar": 82,
+          "startMs": 146445,
+          "endMs": 150081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 82,
+          "endBar": 83,
+          "startMs": 148263,
+          "endMs": 151899
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 116,
+          "endBar": 117,
+          "startMs": 210081,
+          "endMs": 213717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 117,
+          "endBar": 118,
+          "startMs": 211899,
+          "endMs": 215535
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 118,
+          "endBar": 119,
+          "startMs": 213717,
+          "endMs": 217354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 119,
+          "endBar": 120,
+          "startMs": 215535,
+          "endMs": 219172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 120,
+          "endBar": 121,
+          "startMs": 217354,
+          "endMs": 220990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 121,
+          "endBar": 122,
+          "startMs": 219172,
+          "endMs": 222808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 122,
+          "endBar": 123,
+          "startMs": 220990,
+          "endMs": 224626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 123,
+          "endBar": 124,
+          "startMs": 222808,
+          "endMs": 226445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 124,
+          "endBar": 125,
+          "startMs": 224626,
+          "endMs": 228263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 125,
+          "endBar": 126,
+          "startMs": 226445,
+          "endMs": 230081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 126,
+          "endBar": 127,
+          "startMs": 228263,
+          "endMs": 231899
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 127,
+          "endBar": 128,
+          "startMs": 230081,
+          "endMs": 233717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 128,
+          "endBar": 129,
+          "startMs": 231899,
+          "endMs": 235535
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 129,
+          "endBar": 130,
+          "startMs": 233717,
+          "endMs": 237354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 130,
+          "endBar": 131,
+          "startMs": 235535,
+          "endMs": 239172
+        }
+      ],
+      "family": "calf_raise:tap+punch:tap",
+      "label": "手臂＋踮脚 / 2小节",
+      "activity": 0.5999999999999999,
+      "sourceBpm": [
+        120,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.6166631130063969,
+        "observations": 40
+      }
+    },
+    {
+      "id": "fit-1aa578f558",
+      "beats": 8,
+      "lanes": [
+        "punch",
+        "calf_raise"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 22,
+          "endBar": 23,
+          "startMs": 44746,
+          "endMs": 48956
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 46,
+          "endBar": 47,
+          "startMs": 95272,
+          "endMs": 99482
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 66,
+          "endBar": 67,
+          "startMs": 137377,
+          "endMs": 141588
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 74,
+          "endBar": 75,
+          "startMs": 154219,
+          "endMs": 158430
+        }
+      ],
+      "family": "calf_raise:tap+punch:tap",
+      "label": "手臂＋踮脚 / 2小节",
+      "activity": 0.275,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.673728813559322,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-7e5cf1bf5e",
+      "beats": 8,
+      "lanes": [
+        "punch",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 3,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 46,
+          "endBar": 47,
+          "startMs": 90100,
+          "endMs": 94100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 104,
+          "endBar": 105,
+          "startMs": 206100,
+          "endMs": 210100
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 48,
+          "endBar": 49,
+          "startMs": 86445,
+          "endMs": 90081
+        }
+      ],
+      "family": "calf_raise:tap+punch:tap",
+      "label": "手臂＋踮脚 / 2小节",
+      "activity": 0.3,
+      "sourceBpm": [
+        120,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.6943852167732766,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-c72095370e",
+      "beats": 16,
+      "lanes": [
+        "punch",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 5,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 7,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 45,
+          "endBar": 48,
+          "startMs": 88100,
+          "endMs": 96100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 103,
+          "endBar": 106,
+          "startMs": 204100,
+          "endMs": 212100
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 47,
+          "endBar": 50,
+          "startMs": 84626,
+          "endMs": 91899
+        }
+      ],
+      "family": "calf_raise:tap+punch:tap",
+      "label": "手臂＋踮脚 / 4小节",
+      "activity": 0.29999999999999993,
+      "sourceBpm": [
+        120,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.5966832504145937,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-1d7f20db61",
+      "beats": 8,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 15,
+          "endBar": 16,
+          "startMs": 28100,
+          "endMs": 32100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 16,
+          "endBar": 17,
+          "startMs": 30100,
+          "endMs": 34100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 17,
+          "endBar": 18,
+          "startMs": 32100,
+          "endMs": 36100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 31,
+          "endBar": 32,
+          "startMs": 60100,
+          "endMs": 64100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 32,
+          "endBar": 33,
+          "startMs": 62100,
+          "endMs": 66100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 33,
+          "endBar": 34,
+          "startMs": 64100,
+          "endMs": 68100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 63,
+          "endBar": 64,
+          "startMs": 124100,
+          "endMs": 128100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 64,
+          "endBar": 65,
+          "startMs": 126100,
+          "endMs": 130100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 65,
+          "endBar": 66,
+          "startMs": 128100,
+          "endMs": 132100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 97,
+          "endBar": 98,
+          "startMs": 192100,
+          "endMs": 196100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 98,
+          "endBar": 99,
+          "startMs": 194100,
+          "endMs": 198100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 99,
+          "endBar": 100,
+          "startMs": 196100,
+          "endMs": 200100
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 17,
+          "endBar": 18,
+          "startMs": 27987,
+          "endMs": 31187
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 18,
+          "endBar": 19,
+          "startMs": 29587,
+          "endMs": 32787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 19,
+          "endBar": 20,
+          "startMs": 31187,
+          "endMs": 34387
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 20,
+          "endBar": 21,
+          "startMs": 32787,
+          "endMs": 35987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 21,
+          "endBar": 22,
+          "startMs": 34387,
+          "endMs": 37587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 22,
+          "endBar": 23,
+          "startMs": 35987,
+          "endMs": 39187
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 23,
+          "endBar": 24,
+          "startMs": 37587,
+          "endMs": 40787
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 9,
+          "endBar": 10,
+          "startMs": 17377,
+          "endMs": 21588
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 33,
+          "endBar": 34,
+          "startMs": 67903,
+          "endMs": 72114
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 9,
+          "endBar": 10,
+          "startMs": 15535,
+          "endMs": 19172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 13,
+          "endBar": 14,
+          "startMs": 22808,
+          "endMs": 26445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 17,
+          "endBar": 18,
+          "startMs": 30081,
+          "endMs": 33717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 21,
+          "endBar": 22,
+          "startMs": 37354,
+          "endMs": 40990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 63,
+          "endBar": 64,
+          "startMs": 113717,
+          "endMs": 117354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 92,
+          "endBar": 93,
+          "startMs": 166445,
+          "endMs": 170081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 96,
+          "endBar": 97,
+          "startMs": 173717,
+          "endMs": 177354
+        }
+      ],
+      "family": "squat:tap",
+      "label": "蹲起 / 2小节",
+      "activity": 0.7,
+      "sourceBpm": [
+        120,
+        150,
+        114,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.28017910979676003,
+        "observations": 28
+      }
+    },
+    {
+      "id": "fit-3ff7b2d1af",
+      "beats": 8,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 5,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 7,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 49,
+          "endBar": 50,
+          "startMs": 96100,
+          "endMs": 100100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 57,
+          "endBar": 58,
+          "startMs": 112100,
+          "endMs": 116100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 107,
+          "endBar": 108,
+          "startMs": 212100,
+          "endMs": 216100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 115,
+          "endBar": 116,
+          "startMs": 228100,
+          "endMs": 232100
+        }
+      ],
+      "family": "squat:tap",
+      "label": "蹲起 / 2小节",
+      "activity": 1,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.7985074626865671,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-4ad580f6df",
+      "beats": 8,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 5,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 7,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 48,
+          "endBar": 49,
+          "startMs": 94100,
+          "endMs": 98100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 56,
+          "endBar": 57,
+          "startMs": 110100,
+          "endMs": 114100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 106,
+          "endBar": 107,
+          "startMs": 210100,
+          "endMs": 214100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 114,
+          "endBar": 115,
+          "startMs": 226100,
+          "endMs": 230100
+        }
+      ],
+      "family": "squat:tap",
+      "label": "蹲起 / 2小节",
+      "activity": 0.7,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.753731343283582,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-f6558f5f53",
+      "beats": 16,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 9,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 11,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 13,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 14,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 47,
+          "endBar": 50,
+          "startMs": 92100,
+          "endMs": 100100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 55,
+          "endBar": 58,
+          "startMs": 108100,
+          "endMs": 116100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 105,
+          "endBar": 108,
+          "startMs": 208100,
+          "endMs": 216100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 113,
+          "endBar": 116,
+          "startMs": 224100,
+          "endMs": 232100
+        }
+      ],
+      "family": "squat:tap",
+      "label": "蹲起 / 4小节",
+      "activity": 0.7000000000000001,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.7574626865671642,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-1d5348ba62",
+      "beats": 8,
+      "lanes": [
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 25,
+          "endBar": 26,
+          "startMs": 40787,
+          "endMs": 43987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 26,
+          "endBar": 27,
+          "startMs": 42387,
+          "endMs": 45587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 27,
+          "endBar": 28,
+          "startMs": 43987,
+          "endMs": 47187
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 28,
+          "endBar": 29,
+          "startMs": 45587,
+          "endMs": 48787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 29,
+          "endBar": 30,
+          "startMs": 47187,
+          "endMs": 50387
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 30,
+          "endBar": 31,
+          "startMs": 48787,
+          "endMs": 51987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 31,
+          "endBar": 32,
+          "startMs": 50387,
+          "endMs": 53587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 85,
+          "endBar": 86,
+          "startMs": 136787,
+          "endMs": 139987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 86,
+          "endBar": 87,
+          "startMs": 138387,
+          "endMs": 141587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 87,
+          "endBar": 88,
+          "startMs": 139987,
+          "endMs": 143187
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 11,
+          "endBar": 12,
+          "startMs": 21588,
+          "endMs": 25798
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 35,
+          "endBar": 36,
+          "startMs": 72114,
+          "endMs": 76324
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 1,
+          "endBar": 2,
+          "startMs": 990,
+          "endMs": 4626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 2,
+          "endBar": 3,
+          "startMs": 2808,
+          "endMs": 6445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 3,
+          "endBar": 4,
+          "startMs": 4626,
+          "endMs": 8263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 4,
+          "endBar": 5,
+          "startMs": 6445,
+          "endMs": 10081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 5,
+          "endBar": 6,
+          "startMs": 8263,
+          "endMs": 11899
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 6,
+          "endBar": 7,
+          "startMs": 10081,
+          "endMs": 13717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 7,
+          "endBar": 8,
+          "startMs": 11899,
+          "endMs": 15535
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 94,
+          "endBar": 95,
+          "startMs": 170081,
+          "endMs": 173717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 98,
+          "endBar": 99,
+          "startMs": 177354,
+          "endMs": 180990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 132,
+          "endBar": 133,
+          "startMs": 239172,
+          "endMs": 242808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 133,
+          "endBar": 134,
+          "startMs": 240990,
+          "endMs": 244626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 134,
+          "endBar": 135,
+          "startMs": 242808,
+          "endMs": 246445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 135,
+          "endBar": 136,
+          "startMs": 244626,
+          "endMs": 248263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 136,
+          "endBar": 137,
+          "startMs": 246445,
+          "endMs": 250081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 137,
+          "endBar": 138,
+          "startMs": 248263,
+          "endMs": 251899
+        }
+      ],
+      "family": "calf_raise:tap",
+      "label": "踮脚 / 2小节",
+      "activity": 0.175,
+      "sourceBpm": [
+        150,
+        114,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.24968925194913888,
+        "observations": 27
+      }
+    },
+    {
+      "id": "fit-f5937ab63e",
+      "beats": 16,
+      "lanes": [
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 14,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 83,
+          "endBar": 86,
+          "startMs": 133587,
+          "endMs": 139987
+        }
+      ],
+      "family": "calf_raise:tap",
+      "label": "踮脚 / 4小节",
+      "activity": 0.13125,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.6727272727272727,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-155d52c65e",
+      "beats": 24,
+      "lanes": [
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 14,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 16,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 18,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 20,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 22,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 83,
+          "endBar": 88,
+          "startMs": 133587,
+          "endMs": 143187
+        }
+      ],
+      "family": "calf_raise:tap",
+      "label": "踮脚 / 6小节",
+      "activity": 0.14583333333333334,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.6909090909090909,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-cb31b80b80",
+      "beats": 24,
+      "lanes": [
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 16,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 18,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 20,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 22,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 81,
+          "endBar": 86,
+          "startMs": 130387,
+          "endMs": 139987
+        }
+      ],
+      "family": "calf_raise:tap",
+      "label": "踮脚 / 6小节",
+      "activity": 0.11666666666666668,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.5636363636363636,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-9da9281beb",
+      "beats": 8,
+      "lanes": [
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 3,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 7,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 13,
+          "endBar": 14,
+          "startMs": 24100,
+          "endMs": 28100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 19,
+          "endBar": 20,
+          "startMs": 36100,
+          "endMs": 40100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 20,
+          "endBar": 21,
+          "startMs": 38100,
+          "endMs": 42100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 21,
+          "endBar": 22,
+          "startMs": 40100,
+          "endMs": 44100
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 13,
+          "endBar": 14,
+          "startMs": 21587,
+          "endMs": 24787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 51,
+          "endBar": 52,
+          "startMs": 82387,
+          "endMs": 85587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 59,
+          "endBar": 60,
+          "startMs": 95187,
+          "endMs": 98387
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 103,
+          "endBar": 104,
+          "startMs": 165587,
+          "endMs": 168787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 107,
+          "endBar": 108,
+          "startMs": 171987,
+          "endMs": 175187
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 19,
+          "endBar": 20,
+          "startMs": 33717,
+          "endMs": 37354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 23,
+          "endBar": 24,
+          "startMs": 40990,
+          "endMs": 44626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 84,
+          "endBar": 85,
+          "startMs": 151899,
+          "endMs": 155535
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 85,
+          "endBar": 86,
+          "startMs": 153717,
+          "endMs": 157354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 86,
+          "endBar": 87,
+          "startMs": 155535,
+          "endMs": 159172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 87,
+          "endBar": 88,
+          "startMs": 157354,
+          "endMs": 160990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 88,
+          "endBar": 89,
+          "startMs": 159172,
+          "endMs": 162808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 89,
+          "endBar": 90,
+          "startMs": 160990,
+          "endMs": 164626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 90,
+          "endBar": 91,
+          "startMs": 162808,
+          "endMs": 166445
+        }
+      ],
+      "family": "punch:tap",
+      "label": "手臂 / 2小节",
+      "activity": 0.5,
+      "sourceBpm": [
+        120,
+        150,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.5492013238281895,
+        "observations": 18
+      }
+    },
+    {
+      "id": "fit-bf61e133ff",
+      "beats": 8,
+      "lanes": [
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 19,
+          "endBar": 20,
+          "startMs": 38430,
+          "endMs": 42640
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 23,
+          "endBar": 24,
+          "startMs": 46851,
+          "endMs": 51061
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 43,
+          "endBar": 44,
+          "startMs": 88956,
+          "endMs": 93167
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 47,
+          "endBar": 48,
+          "startMs": 97377,
+          "endMs": 101588
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 63,
+          "endBar": 64,
+          "startMs": 131061,
+          "endMs": 135272
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 67,
+          "endBar": 68,
+          "startMs": 139482,
+          "endMs": 143693
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 71,
+          "endBar": 72,
+          "startMs": 147903,
+          "endMs": 152114
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 75,
+          "endBar": 76,
+          "startMs": 156324,
+          "endMs": 160535
+        }
+      ],
+      "family": "punch:tap",
+      "label": "手臂 / 2小节",
+      "activity": 0.375,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.7754237288135594,
+        "observations": 8
+      }
+    },
+    {
+      "id": "fit-b07de7385c",
+      "beats": 8,
+      "lanes": [
+        "punch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 3,
+          "endBar": 4,
+          "startMs": 4100,
+          "endMs": 8100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 4,
+          "endBar": 5,
+          "startMs": 6100,
+          "endMs": 10100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 5,
+          "endBar": 6,
+          "startMs": 8100,
+          "endMs": 12100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 75,
+          "endBar": 76,
+          "startMs": 148100,
+          "endMs": 152100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 76,
+          "endBar": 77,
+          "startMs": 150100,
+          "endMs": 154100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 77,
+          "endBar": 78,
+          "startMs": 152100,
+          "endMs": 156100
+        }
+      ],
+      "family": "punch:tap",
+      "label": "手臂 / 2小节",
+      "activity": 0.375,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.07213930348258706,
+        "observations": 6
+      }
+    },
+    {
+      "id": "fit-1e8e645ec1",
+      "beats": 8,
+      "lanes": [
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 7,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 50,
+          "endBar": 51,
+          "startMs": 80787,
+          "endMs": 83987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 58,
+          "endBar": 59,
+          "startMs": 93587,
+          "endMs": 96787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 106,
+          "endBar": 107,
+          "startMs": 170387,
+          "endMs": 173587
+        }
+      ],
+      "family": "punch:tap",
+      "label": "手臂 / 2小节",
+      "activity": 0.25,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.4121212121212121,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-6fe52179d2",
+      "beats": 8,
+      "lanes": [
+        "side_crunch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 0,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 4,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "foot": "left"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 9,
+          "endBar": 10,
+          "startMs": 15187,
+          "endMs": 18387
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 53,
+          "endBar": 54,
+          "startMs": 85587,
+          "endMs": 88787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 61,
+          "endBar": 62,
+          "startMs": 98387,
+          "endMs": 101587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 101,
+          "endBar": 102,
+          "startMs": 162387,
+          "endMs": 165587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 109,
+          "endBar": 110,
+          "startMs": 175187,
+          "endMs": 178387
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 33,
+          "endBar": 34,
+          "startMs": 59172,
+          "endMs": 62808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 37,
+          "endBar": 38,
+          "startMs": 66445,
+          "endMs": 70081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 68,
+          "endBar": 69,
+          "startMs": 122808,
+          "endMs": 126445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 72,
+          "endBar": 73,
+          "startMs": 130081,
+          "endMs": 133717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 108,
+          "endBar": 109,
+          "startMs": 195535,
+          "endMs": 199172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 112,
+          "endBar": 113,
+          "startMs": 202808,
+          "endMs": 206445
+        }
+      ],
+      "family": "side_crunch:tap",
+      "label": "侧收腹 / 2小节",
+      "activity": 0.75,
+      "sourceBpm": [
+        150,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.5949626131444314,
+        "observations": 11
+      }
+    },
+    {
+      "id": "fit-8014a249eb",
+      "beats": 8,
+      "lanes": [
+        "side_crunch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "foot": "right"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 11,
+          "endBar": 12,
+          "startMs": 18387,
+          "endMs": 21587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 55,
+          "endBar": 56,
+          "startMs": 88787,
+          "endMs": 91987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 63,
+          "endBar": 64,
+          "startMs": 101587,
+          "endMs": 104787
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 97,
+          "endBar": 98,
+          "startMs": 155987,
+          "endMs": 159187
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 35,
+          "endBar": 36,
+          "startMs": 62808,
+          "endMs": 66445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 39,
+          "endBar": 40,
+          "startMs": 70081,
+          "endMs": 73717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 70,
+          "endBar": 71,
+          "startMs": 126445,
+          "endMs": 130081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 74,
+          "endBar": 75,
+          "startMs": 133717,
+          "endMs": 137354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 110,
+          "endBar": 111,
+          "startMs": 199172,
+          "endMs": 202808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 114,
+          "endBar": 115,
+          "startMs": 206445,
+          "endMs": 210081
+        }
+      ],
+      "family": "side_crunch:tap",
+      "label": "侧收腹 / 2小节",
+      "activity": 0.75,
+      "sourceBpm": [
+        150,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.7807792207792208,
+        "observations": 10
+      }
+    },
+    {
+      "id": "fit-9a783ef100",
+      "beats": 8,
+      "lanes": [
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 0,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "foot": "right"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 10,
+          "endBar": 11,
+          "startMs": 16787,
+          "endMs": 19987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 54,
+          "endBar": 55,
+          "startMs": 87187,
+          "endMs": 90387
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 62,
+          "endBar": 63,
+          "startMs": 99987,
+          "endMs": 103187
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 110,
+          "endBar": 111,
+          "startMs": 176787,
+          "endMs": 179987
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 34,
+          "endBar": 35,
+          "startMs": 60990,
+          "endMs": 64626
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 38,
+          "endBar": 39,
+          "startMs": 68263,
+          "endMs": 71899
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 69,
+          "endBar": 70,
+          "startMs": 124626,
+          "endMs": 128263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 73,
+          "endBar": 74,
+          "startMs": 131899,
+          "endMs": 135535
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 109,
+          "endBar": 110,
+          "startMs": 197354,
+          "endMs": 200990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 113,
+          "endBar": 114,
+          "startMs": 204626,
+          "endMs": 208263
+        }
+      ],
+      "family": "side_crunch:tap",
+      "label": "侧收腹 / 2小节",
+      "activity": 0.75,
+      "sourceBpm": [
+        150,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.7206926406926408,
+        "observations": 10
+      }
+    },
+    {
+      "id": "fit-33d21afc66",
+      "beats": 16,
+      "lanes": [
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 0,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 4,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 8,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 10,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 12,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 14,
+          "kind": "tap",
+          "foot": "right"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 9,
+          "endBar": 12,
+          "startMs": 15187,
+          "endMs": 21587
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 53,
+          "endBar": 56,
+          "startMs": 85587,
+          "endMs": 91987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 61,
+          "endBar": 64,
+          "startMs": 98387,
+          "endMs": 104787
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 33,
+          "endBar": 36,
+          "startMs": 59172,
+          "endMs": 66445
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 37,
+          "endBar": 40,
+          "startMs": 66445,
+          "endMs": 73717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 68,
+          "endBar": 71,
+          "startMs": 122808,
+          "endMs": 130081
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 72,
+          "endBar": 75,
+          "startMs": 130081,
+          "endMs": 137354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 108,
+          "endBar": 111,
+          "startMs": 195535,
+          "endMs": 202808
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 112,
+          "endBar": 115,
+          "startMs": 202808,
+          "endMs": 210081
+        }
+      ],
+      "family": "side_crunch:tap",
+      "label": "侧收腹 / 4小节",
+      "activity": 0.75,
+      "sourceBpm": [
+        150,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.7139009139009138,
+        "observations": 9
+      }
+    },
+    {
+      "id": "fit-a3c31a11ec",
+      "beats": 8,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 24,
+          "endBar": 25,
+          "startMs": 39187,
+          "endMs": 42387
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 10,
+          "endBar": 11,
+          "startMs": 19482,
+          "endMs": 23693
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 21,
+          "endBar": 22,
+          "startMs": 42640,
+          "endMs": 46851
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 34,
+          "endBar": 35,
+          "startMs": 70009,
+          "endMs": 74219
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 45,
+          "endBar": 46,
+          "startMs": 93167,
+          "endMs": 97377
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 65,
+          "endBar": 66,
+          "startMs": 135272,
+          "endMs": 139482
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 73,
+          "endBar": 74,
+          "startMs": 152114,
+          "endMs": 156324
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 93,
+          "endBar": 94,
+          "startMs": 168263,
+          "endMs": 171899
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 97,
+          "endBar": 98,
+          "startMs": 175535,
+          "endMs": 179172
+        }
+      ],
+      "family": "calf_raise:tap+squat:tap",
+      "label": "蹲起＋踮脚 / 2小节",
+      "activity": 0.4375,
+      "sourceBpm": [
+        150,
+        114,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.5617841041569855,
+        "observations": 9
+      }
+    },
+    {
+      "id": "fit-c076e4a911",
+      "beats": 16,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 14,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 23,
+          "endBar": 26,
+          "startMs": 37587,
+          "endMs": 43987
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 9,
+          "endBar": 12,
+          "startMs": 17377,
+          "endMs": 25798
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 33,
+          "endBar": 36,
+          "startMs": 67903,
+          "endMs": 76324
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 92,
+          "endBar": 95,
+          "startMs": 166445,
+          "endMs": 173717
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 96,
+          "endBar": 99,
+          "startMs": 173717,
+          "endMs": 180990
+        }
+      ],
+      "family": "calf_raise:tap+squat:tap",
+      "label": "蹲起＋踮脚 / 4小节",
+      "activity": 0.4374999999999999,
+      "sourceBpm": [
+        150,
+        114,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.3221689045417859,
+        "observations": 5
+      }
+    },
+    {
+      "id": "fit-4bdfb02141",
+      "beats": 8,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 8,
+          "endBar": 9,
+          "startMs": 13717,
+          "endMs": 17354
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 95,
+          "endBar": 96,
+          "startMs": 171899,
+          "endMs": 175535
+        }
+      ],
+      "family": "calf_raise:tap+squat:tap",
+      "label": "蹲起＋踮脚 / 2小节",
+      "activity": 0.43749999999999994,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.24285714285714288,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-c8b18b5b71",
+      "beats": 16,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 14,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 7,
+          "endBar": 10,
+          "startMs": 11899,
+          "endMs": 19172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 94,
+          "endBar": 97,
+          "startMs": 170081,
+          "endMs": 177354
+        }
+      ],
+      "family": "calf_raise:tap+squat:tap",
+      "label": "蹲起＋踮脚 / 4小节",
+      "activity": 0.4375,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.2523809523809524,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-ff9322866f",
+      "beats": 16,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 59,
+          "endBar": 62,
+          "startMs": 116100,
+          "endMs": 124100
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 13,
+          "endBar": 16,
+          "startMs": 25798,
+          "endMs": 34219
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 37,
+          "endBar": 40,
+          "startMs": 76324,
+          "endMs": 84746
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 57,
+          "endBar": 60,
+          "startMs": 118430,
+          "endMs": 126851
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 77,
+          "endBar": 80,
+          "startMs": 160535,
+          "endMs": 168956
+        }
+      ],
+      "family": "squat:hold+squat:tap",
+      "label": "蹲起 / 4小节",
+      "activity": 1,
+      "sourceBpm": [
+        120,
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.40354161396407784,
+        "observations": 5
+      }
+    },
+    {
+      "id": "fit-00a509f33b",
+      "beats": 24,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 16,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 18,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 20,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 22,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 59,
+          "endBar": 64,
+          "startMs": 116100,
+          "endMs": 128100
+        }
+      ],
+      "family": "squat:hold+squat:tap",
+      "label": "蹲起 / 6小节",
+      "activity": 0.9916666666666663,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.16417910447761194,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-1e5c49ee9d",
+      "beats": 24,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 19,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 20,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 22,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 58,
+          "endBar": 63,
+          "startMs": 114100,
+          "endMs": 126100
+        }
+      ],
+      "family": "squat:hold+squat:tap",
+      "label": "蹲起 / 6小节",
+      "activity": 1,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.1791044776119403,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-efd292b032",
+      "beats": 24,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 5,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 7,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 8,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 23,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 57,
+          "endBar": 62,
+          "startMs": 112100,
+          "endMs": 124100
+        }
+      ],
+      "family": "squat:hold+squat:tap",
+      "label": "蹲起 / 6小节",
+      "activity": 1,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.19402985074626866,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-037f05161d",
+      "beats": 8,
+      "lanes": [
+        "punch",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 5,
+          "endBar": 6,
+          "startMs": 8956,
+          "endMs": 13167
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 7,
+          "endBar": 8,
+          "startMs": 13167,
+          "endMs": 17377
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 29,
+          "endBar": 30,
+          "startMs": 59482,
+          "endMs": 63693
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 31,
+          "endBar": 32,
+          "startMs": 63693,
+          "endMs": 67903
+        }
+      ],
+      "family": "punch:tap+side_crunch:tap",
+      "label": "手臂＋侧收腹 / 2小节",
+      "activity": 0.5,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.059322033898305086,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-bfb7f0b89e",
+      "beats": 8,
+      "lanes": [
+        "punch",
+        "side_crunch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 18,
+          "endBar": 19,
+          "startMs": 36324,
+          "endMs": 40535
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 42,
+          "endBar": 43,
+          "startMs": 86851,
+          "endMs": 91061
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 62,
+          "endBar": 63,
+          "startMs": 128956,
+          "endMs": 133167
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 70,
+          "endBar": 71,
+          "startMs": 145798,
+          "endMs": 150009
+        }
+      ],
+      "family": "punch:tap+side_crunch:tap",
+      "label": "手臂＋侧收腹 / 2小节",
+      "activity": 0.5625,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.597457627118644,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-723c1ef7c7",
+      "beats": 16,
+      "lanes": [
+        "punch",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 8,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 9,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 10,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 12,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 13,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 14,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 17,
+          "endBar": 20,
+          "startMs": 34219,
+          "endMs": 42640
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 41,
+          "endBar": 44,
+          "startMs": 84746,
+          "endMs": 93167
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 61,
+          "endBar": 64,
+          "startMs": 126851,
+          "endMs": 135272
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 69,
+          "endBar": 72,
+          "startMs": 143693,
+          "endMs": 152114
+        }
+      ],
+      "family": "punch:tap+side_crunch:tap",
+      "label": "手臂＋侧收腹 / 4小节",
+      "activity": 0.5625,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.6186440677966101,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-24576d4b6f",
+      "beats": 8,
+      "lanes": [
+        "punch",
+        "side_crunch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 3,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 4,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "foot": "left"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 52,
+          "endBar": 53,
+          "startMs": 83987,
+          "endMs": 87187
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 60,
+          "endBar": 61,
+          "startMs": 96787,
+          "endMs": 99987
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 108,
+          "endBar": 109,
+          "startMs": 173587,
+          "endMs": 176787
+        }
+      ],
+      "family": "punch:tap+side_crunch:tap",
+      "label": "手臂＋侧收腹 / 2小节",
+      "activity": 0.625,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.9454545454545453,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-c34cebf26e",
+      "beats": 8,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 20,
+          "endBar": 21,
+          "startMs": 40535,
+          "endMs": 44746
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 44,
+          "endBar": 45,
+          "startMs": 91061,
+          "endMs": 95272
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 64,
+          "endBar": 65,
+          "startMs": 133167,
+          "endMs": 137377
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 72,
+          "endBar": 73,
+          "startMs": 150009,
+          "endMs": 154219
+        }
+      ],
+      "family": "punch:tap+squat:tap",
+      "label": "蹲起＋手臂 / 2小节",
+      "activity": 0.5375,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.7330508474576272,
+        "observations": 4
+      }
+    },
+    {
+      "id": "fit-a078cbaf8a",
+      "beats": 8,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 7,
+          "kind": "tap",
+          "armAction": "punch"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 18,
+          "endBar": 19,
+          "startMs": 34100,
+          "endMs": 38100
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 18,
+          "endBar": 19,
+          "startMs": 31899,
+          "endMs": 35535
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 22,
+          "endBar": 23,
+          "startMs": 39172,
+          "endMs": 42808
+        }
+      ],
+      "family": "punch:tap+squat:tap",
+      "label": "蹲起＋手臂 / 2小节",
+      "activity": 0.6,
+      "sourceBpm": [
+        120,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.2564321250888415,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-b1fb7892c6",
+      "beats": 8,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 3,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 14,
+          "endBar": 15,
+          "startMs": 26100,
+          "endMs": 30100
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 20,
+          "endBar": 21,
+          "startMs": 35535,
+          "endMs": 39172
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 91,
+          "endBar": 92,
+          "startMs": 164626,
+          "endMs": 168263
+        }
+      ],
+      "family": "punch:tap+squat:tap",
+      "label": "蹲起＋手臂 / 2小节",
+      "activity": 0.6,
+      "sourceBpm": [
+        120,
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.4167732764747691,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-f731023a58",
+      "beats": 8,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 54,
+          "endBar": 55,
+          "startMs": 97354,
+          "endMs": 100990
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 58,
+          "endBar": 59,
+          "startMs": 104626,
+          "endMs": 108263
+        },
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 62,
+          "endBar": 63,
+          "startMs": 111899,
+          "endMs": 115535
+        }
+      ],
+      "family": "punch:tap+squat:tap",
+      "label": "蹲起＋手臂 / 2小节",
+      "activity": 0.5375,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.22857142857142856,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-7576283d6c",
+      "beats": 24,
+      "lanes": [
+        "squat",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 16,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 18,
+          "kind": "tap",
+          "foot": "left"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 20,
+          "kind": "tap",
+          "foot": "right"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 22,
+          "kind": "tap",
+          "foot": "left"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 13,
+          "endBar": 18,
+          "startMs": 25798,
+          "endMs": 38430
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 37,
+          "endBar": 42,
+          "startMs": 76324,
+          "endMs": 88956
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 57,
+          "endBar": 62,
+          "startMs": 118430,
+          "endMs": 131061
+        }
+      ],
+      "family": "side_crunch:tap+squat:hold+squat:tap",
+      "label": "蹲起＋侧收腹 / 6小节",
+      "activity": 1,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.5536723163841808,
+        "observations": 3
+      }
+    },
+    {
+      "id": "fit-1ecbbd0ba5",
+      "beats": 16,
+      "lanes": [
+        "squat",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 13,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 14,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 54,
+          "endBar": 57,
+          "startMs": 106100,
+          "endMs": 114100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 112,
+          "endBar": 115,
+          "startMs": 222100,
+          "endMs": 230100
+        }
+      ],
+      "family": "side_crunch:tap+squat:tap",
+      "label": "蹲起＋侧收腹 / 4小节",
+      "activity": 0.5375000000000001,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.7761194029850746,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-46739c11df",
+      "beats": 16,
+      "lanes": [
+        "squat",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 14,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 50,
+          "endBar": 53,
+          "startMs": 98100,
+          "endMs": 106100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 108,
+          "endBar": 111,
+          "startMs": 214100,
+          "endMs": 222100
+        }
+      ],
+      "family": "side_crunch:tap+squat:tap",
+      "label": "蹲起＋侧收腹 / 4小节",
+      "activity": 0.5375,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.5746268656716418,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-0960f52713",
+      "beats": 24,
+      "lanes": [
+        "squat",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 1,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 3,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 5,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 7,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 16,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 18,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 20,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 22,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 49,
+          "endBar": 54,
+          "startMs": 96100,
+          "endMs": 108100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 107,
+          "endBar": 112,
+          "startMs": 212100,
+          "endMs": 224100
+        }
+      ],
+      "family": "side_crunch:tap+squat:tap",
+      "label": "蹲起＋侧收腹 / 6小节",
+      "activity": 0.7166666666666668,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.6716417910447761,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-74b30b4202",
+      "beats": 24,
+      "lanes": [
+        "squat",
+        "side_crunch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 20,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 21,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 22,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 23,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 52,
+          "endBar": 57,
+          "startMs": 102100,
+          "endMs": 114100
+        },
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 110,
+          "endBar": 115,
+          "startMs": 218100,
+          "endMs": 230100
+        }
+      ],
+      "family": "side_crunch:tap+squat:tap",
+      "label": "蹲起＋侧收腹 / 6小节",
+      "activity": 0.4833333333333334,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.708955223880597,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-e1a04b11e3",
+      "beats": 16,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "sway"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 25,
+          "endBar": 28,
+          "startMs": 51061,
+          "endMs": 59482
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 49,
+          "endBar": 52,
+          "startMs": 101588,
+          "endMs": 110009
+        }
+      ],
+      "family": "squat:sway+squat:tap",
+      "label": "蹲起 / 4小节",
+      "activity": 0.9406249999999999,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.4576271186440678,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-80870dc737",
+      "beats": 32,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 31,
+          "modifier": "sway"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 31,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 73,
+          "endBar": 80,
+          "startMs": 117587,
+          "endMs": 130387
+        }
+      ],
+      "family": "squat:sway+squat:tap",
+      "label": "蹲起 / 8小节",
+      "activity": 0.9253125,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.9818181818181818,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-a1a4380fd1",
+      "beats": 32,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 28,
+          "modifier": "sway"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 28,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 100,
+          "endBar": 107,
+          "startMs": 180990,
+          "endMs": 195535
+        }
+      ],
+      "family": "squat:sway+squat:tap",
+      "label": "蹲起 / 8小节",
+      "activity": 0.8399999999999999,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.22857142857142856,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-5f12d04a0c",
+      "beats": 24,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 8,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "sway"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 23,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 23,
+          "endBar": 28,
+          "startMs": 46851,
+          "endMs": 59482
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 47,
+          "endBar": 52,
+          "startMs": 97377,
+          "endMs": 110009
+        }
+      ],
+      "family": "punch:tap+squat:sway+squat:tap",
+      "label": "蹲起＋手臂 / 6小节",
+      "activity": 0.7520833333333332,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.5338983050847457,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-ae1b38af59",
+      "beats": 24,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 8,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 23,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 11,
+          "endBar": 16,
+          "startMs": 21588,
+          "endMs": 34219
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 35,
+          "endBar": 40,
+          "startMs": 72114,
+          "endMs": 84746
+        }
+      ],
+      "family": "calf_raise:tap+squat:hold+squat:tap",
+      "label": "蹲起＋踮脚 / 6小节",
+      "activity": 0.8166666666666664,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.2966101694915254,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-fc4fc8ab83",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 6,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 8,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 10,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 12,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 14,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 16,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 31,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 9,
+          "endBar": 16,
+          "startMs": 17377,
+          "endMs": 34219
+        },
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 33,
+          "endBar": 40,
+          "startMs": 67903,
+          "endMs": 84746
+        }
+      ],
+      "family": "calf_raise:tap+squat:hold+squat:tap",
+      "label": "蹲起＋踮脚 / 8小节",
+      "activity": 0.7874999999999999,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.2288135593220339,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-0a681b0ab7",
+      "beats": 32,
+      "lanes": [
+        "punch",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": true,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 0,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "hold",
+          "duration": 32,
+          "modifier": "sway"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 4,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 8,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 8,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 12,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 16,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 16,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 20,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 24,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 24,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 28,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 33,
+          "endBar": 40,
+          "startMs": 53587,
+          "endMs": 66387
+        },
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 89,
+          "endBar": 96,
+          "startMs": 143187,
+          "endMs": 155987
+        }
+      ],
+      "family": "calf_raise:sway+punch:hold",
+      "label": "手臂＋踮脚 / 8小节",
+      "activity": 0.8275000000000002,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.7272727272727273,
+        "observations": 2
+      }
+    },
+    {
+      "id": "fit-fbb5ffe626",
+      "beats": 32,
+      "lanes": [
+        "punch",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": true,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "hold",
+          "duration": 32,
+          "modifier": "sway"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 4,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 12,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 12,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 20,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 20,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 28,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 28,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 1,
+          "endBar": 8,
+          "startMs": 2387,
+          "endMs": 15187
+        }
+      ],
+      "family": "calf_raise:sway+punch:hold",
+      "label": "手臂＋踮脚 / 8小节",
+      "activity": 0.6275000000000001,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.8,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-29661d4e23",
+      "beats": 16,
+      "lanes": [
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 15,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 53,
+          "endBar": 56,
+          "startMs": 110009,
+          "endMs": 118430
+        }
+      ],
+      "family": "calf_raise:hold+calf_raise:tap",
+      "label": "踮脚 / 4小节",
+      "activity": 0.28437499999999993,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.3559322033898305,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-679f94974a",
+      "beats": 24,
+      "lanes": [
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": true,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "hold",
+          "duration": 24,
+          "modifier": "sway"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 87,
+          "endBar": 92,
+          "startMs": 172100,
+          "endMs": 184100
+        }
+      ],
+      "family": "calf_raise:sway",
+      "label": "踮脚 / 6小节",
+      "activity": 0.2275,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.014925373134328358,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-b8184cde2a",
+      "beats": 24,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 6,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 8,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 23,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 75,
+          "endBar": 80,
+          "startMs": 156324,
+          "endMs": 168956
+        }
+      ],
+      "family": "punch:tap+squat:hold+squat:tap",
+      "label": "蹲起＋手臂 / 6小节",
+      "activity": 0.8833333333333332,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.2711864406779661,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-846d750cfb",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 30,
+          "modifier": "none"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 16,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 17,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 18,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 19,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 20,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 21,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 22,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 23,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 24,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 25,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 26,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 27,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 28,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 29,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 30,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 35,
+          "endBar": 42,
+          "startMs": 68100,
+          "endMs": 84100
+        }
+      ],
+      "family": "punch:tap+squat:hold+squat:tap",
+      "label": "蹲起＋手臂 / 8小节",
+      "activity": 1,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.26865671641791045,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-918911a9d6",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 2,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 3,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "hold",
+          "duration": 28,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 32,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 24,
+          "endBar": 31,
+          "startMs": 42808,
+          "endMs": 57354
+        }
+      ],
+      "family": "punch:tap+squat:hold+squat:tap",
+      "label": "蹲起＋手臂 / 8小节",
+      "activity": 1,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.24761904761904763,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-ee463e3180",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 30,
+          "modifier": "none"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 1,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 4.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 8,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 8.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 9,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 12,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 12.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 13,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 16,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 16.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 17,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 20,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 20.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 21,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 24,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 24.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 25,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 28,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 28.5,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 29,
+          "kind": "tap",
+          "armAction": "punch"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 30,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 79,
+          "endBar": 86,
+          "startMs": 156100,
+          "endMs": 172100
+        }
+      ],
+      "family": "punch:tap+squat:hold+squat:tap",
+      "label": "蹲起＋手臂 / 8小节",
+      "activity": 1,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.14925373134328357,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-256ad80999",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 2,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 4,
+          "kind": "hold",
+          "duration": 28,
+          "modifier": "sway"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 32,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 99,
+          "endBar": 106,
+          "startMs": 179172,
+          "endMs": 193717
+        }
+      ],
+      "family": "calf_raise:tap+squat:sway+squat:tap",
+      "label": "蹲起＋踮脚 / 8小节",
+      "activity": 0.8618749999999998,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.29523809523809524,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-307c92e98f",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "sway"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 15,
+          "kind": "tap"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 16,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 31,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 49,
+          "endBar": 56,
+          "startMs": 101588,
+          "endMs": 118430
+        }
+      ],
+      "family": "calf_raise:hold+calf_raise:tap+squat:sway+squat:tap",
+      "label": "蹲起＋踮脚 / 8小节",
+      "activity": 0.6125,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.4406779661016949,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-384a762992",
+      "beats": 32,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": true,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 32,
+          "modifier": "none"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 65,
+          "endBar": 72,
+          "startMs": 104787,
+          "endMs": 117587
+        }
+      ],
+      "family": "squat:hold",
+      "label": "蹲起 / 8小节",
+      "activity": 1,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 1,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-62242e2fcd",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "punch"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 31,
+          "modifier": "sway"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 0,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 0,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 4,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 8,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 8,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 12,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 16,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 16,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 20,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "punch",
+          "direction": "left",
+          "at": 24,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "left"
+        },
+        {
+          "lane": "punch",
+          "direction": "right",
+          "at": 24,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "right"
+        },
+        {
+          "lane": "punch",
+          "direction": "up",
+          "at": 28,
+          "kind": "hold",
+          "duration": 4,
+          "modifier": "none",
+          "armAction": "reach",
+          "hand": "both"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 31,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "LOVELY ♥ CAVITY",
+          "file": "maps/LOVELY ♥ CAVITY-7c74302b/wfp-fitness-draft.json",
+          "startBar": 41,
+          "endBar": 48,
+          "startMs": 66387,
+          "endMs": 79187
+        }
+      ],
+      "family": "punch:hold+squat:sway+squat:tap",
+      "label": "蹲起＋手臂 / 8小节",
+      "activity": 1,
+      "sourceBpm": [
+        150
+      ],
+      "musicProfile": {
+        "energyRank": 0.6545454545454545,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-6da84e9fd0",
+      "beats": 32,
+      "lanes": [
+        "calf_raise",
+        "side_crunch"
+      ],
+      "mirrorRequired": true,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": true,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "hold",
+          "duration": 24,
+          "modifier": "sway"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 24,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "left",
+          "at": 26,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 28,
+          "kind": "tap"
+        },
+        {
+          "lane": "side_crunch",
+          "direction": "right",
+          "at": 30,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Happy Halloween",
+          "file": "maps/Happy Halloween/wfp-fitness-draft.json",
+          "startBar": 87,
+          "endBar": 94,
+          "startMs": 172100,
+          "endMs": 188100
+        }
+      ],
+      "family": "calf_raise:sway+side_crunch:tap",
+      "label": "踮脚＋侧收腹 / 8小节",
+      "activity": 0.358125,
+      "sourceBpm": [
+        120
+      ],
+      "musicProfile": {
+        "energyRank": 0.1044776119402985,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-a39e66f886",
+      "beats": 32,
+      "lanes": [
+        "squat",
+        "calf_raise"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "calf_raise",
+          "direction": "up",
+          "at": 0,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "calf_raise",
+          "direction": "down",
+          "at": 15,
+          "kind": "tap"
+        },
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 16,
+          "kind": "hold",
+          "duration": 15,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 31,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "sugar ★ mellowcle",
+          "file": "maps/sugar ★ mellowcle-7eb2c6ba/wfp-fitness-draft.json",
+          "startBar": 53,
+          "endBar": 60,
+          "startMs": 110009,
+          "endMs": 126851
+        }
+      ],
+      "family": "calf_raise:hold+calf_raise:tap+squat:hold+squat:tap",
+      "label": "蹲起＋踮脚 / 8小节",
+      "activity": 0.7109374999999998,
+      "sourceBpm": [
+        114
+      ],
+      "musicProfile": {
+        "energyRank": 0.847457627118644,
+        "observations": 1
+      }
+    },
+    {
+      "id": "fit-fc1fe92b97",
+      "beats": 32,
+      "lanes": [
+        "squat"
+      ],
+      "mirrorRequired": false,
+      "entryPose": "standing",
+      "exitPose": "standing",
+      "durationBoundedRelease": false,
+      "notes": [
+        {
+          "lane": "squat",
+          "direction": "down",
+          "at": 0,
+          "kind": "hold",
+          "duration": 28,
+          "modifier": "none"
+        },
+        {
+          "lane": "squat",
+          "direction": "up",
+          "at": 28,
+          "kind": "tap"
+        }
+      ],
+      "sources": [
+        {
+          "title": "愛スクリ～ム",
+          "file": "maps/愛スクリ～ム/wfp-fitness-draft-bf995900-4033-4f54-adaa-66af911027c9.json",
+          "startBar": 25,
+          "endBar": 32,
+          "startMs": 44626,
+          "endMs": 59172
+        }
+      ],
+      "family": "squat:hold+squat:tap",
+      "label": "蹲起 / 8小节",
+      "activity": 1,
+      "sourceBpm": [
+        132
+      ],
+      "musicProfile": {
+        "energyRank": 0.20952380952380953,
+        "observations": 1
+      }
+    }
+  ]
+}
