@@ -1,6 +1,28 @@
 import { expect, test, type Page } from '@playwright/test';
 import { LIQUID_TRANSITION } from '../src/liquid-transition';
 
+async function expectCornerHandoff(page: Page, back: boolean) {
+  for (const color of ['pink', 'cyan']) {
+    const original = page.locator(
+      color === 'pink' ? '.album-housing-surface > polygon' : '.fit-log-corner-surface > polygon',
+    );
+    const [actual, returned] = await original.evaluate(
+      (node, selector) => {
+        const rect = (element: Element) => {
+          const { x, y, width, height } = element.getBoundingClientRect();
+          return { x, y, width, height };
+        };
+        return [rect(node), rect(document.querySelector(selector)!)];
+      },
+      (color === 'cyan') === back
+        ? '.liquid-corner-primary'
+        : '.liquid-menu-curtain > svg > g > polygon:not(.liquid-corner-primary)',
+    );
+    for (const edge of ['x', 'y', 'width', 'height'] as const)
+      expect(Math.abs(actual[edge] - returned[edge]), `${color} ${edge}`).toBeLessThan(1.5);
+  }
+}
+
 async function at(page: Page, phase: string, time: number) {
   await page.evaluate(
     ({ phase, time }) => {
@@ -28,6 +50,10 @@ test('opening starts fully cyan, reveals home without flooding again, and restor
     };
   });
   await page.goto('/');
+  await page.addStyleTag({
+    content:
+      '.menu-app > .ambient-shape { --music-beat: 0.4 !important; transition: none !important }',
+  });
   const intro = page.locator('.liquid-menu-curtain[data-intro]');
   await expect(intro).toHaveAttribute('data-phase', 'hold');
   await expect(intro).toHaveAttribute('data-liquid', 'cyan');
@@ -60,6 +86,8 @@ test('opening starts fully cyan, reveals home without flooding again, and restor
   ).toBe(false);
   await at(page, 'reveal', LIQUID_TRANSITION.revealMs * 0.45);
   await page.screenshot({ path: 'artifacts/liquid-opening-reveal-1080p.png' });
+  await at(page, 'reveal', LIQUID_TRANSITION.revealMs - 1);
+  await expectCornerHandoff(page, true);
   await page.evaluate(() =>
     document
       .getAnimations()
@@ -257,14 +285,11 @@ test('pink floods into albums, cyan floods home; only the fully covered frame sw
       Promise.all(node.getAnimations().map((a) => a.finished.catch(() => {}))),
     );
     await at(page, 'reveal', LIQUID_TRANSITION.revealMs - 1);
-    // Last frame is the real live geometry, so restoring the DOM corners cannot jump.
-    const actual = await liveCorner.evaluate((node) => {
-      const { x, y, width, height } = node.getBoundingClientRect();
-      return { x, y, width, height };
+    // Compare actual SVG paint, not the housing's larger invisible layout box.
+    await expectCornerHandoff(page, back);
+    await page.screenshot({
+      path: `artifacts/liquid-${back ? 'return' : 'entry'}-handoff-before.png`,
     });
-    const final = (await primary.boundingBox())!;
-    for (const edge of ['x', 'y', 'width', 'height'] as const)
-      expect(Math.abs(actual[edge] - final[edge])).toBeLessThan(1.5);
     await page.evaluate(() =>
       document
         .getAnimations()
@@ -272,6 +297,9 @@ test('pink floods into albums, cyan floods home; only the fully covered frame sw
         .finish(),
     );
     await expect(curtain).toHaveCount(0);
+    await page.screenshot({
+      path: `artifacts/liquid-${back ? 'return' : 'entry'}-handoff-after.png`,
+    });
     expect(
       await page.locator('.ambient-shape').evaluateAll((nodes) =>
         nodes.every((n) => {
@@ -281,6 +309,56 @@ test('pink floods into albums, cyan floods home; only the fully covered frame sw
       ),
     ).toBe(true);
     await expect(page.locator('.menu-settings')).toHaveCSS('opacity', '1');
+  }
+});
+
+test('fitted intro and both navigation directions hand back the painted corner sizes', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1470, height: 956 });
+  await page.addInitScript(() => {
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...args) {
+      const animation = animate.apply(this, args);
+      if (this.classList.contains('liquid-menu-curtain')) animation.pause();
+      return animation;
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveAttribute(
+    'data-type-ready',
+    'true',
+  );
+  await page.addStyleTag({
+    content:
+      '.menu-app > .ambient-shape { --music-beat: 0.4 !important; transition: none !important }',
+  });
+  await page.evaluate(() =>
+    document
+      .getAnimations()
+      .find((a) => a.id === 'menu-liquid-hold')!
+      .finish(),
+  );
+  for (const [index, back] of [true, false, true].entries()) {
+    if (index) {
+      await page.locator(back ? '.menu-back' : '.play-mode').click();
+      await page.evaluate(() =>
+        document
+          .getAnimations()
+          .find((a) => a.id === 'menu-liquid-cover')!
+          .finish(),
+      );
+    }
+    await expect(page.locator('.liquid-menu-curtain')).toHaveAttribute('data-phase', 'reveal');
+    await at(page, 'reveal', LIQUID_TRANSITION.revealMs - 1);
+    await expectCornerHandoff(page, back);
+    await page.evaluate(() =>
+      document
+        .getAnimations()
+        .find((a) => a.id === 'menu-liquid-reveal')!
+        .finish(),
+    );
+    await expect(page.locator('.liquid-menu-curtain')).toHaveCount(0);
   }
 });
 

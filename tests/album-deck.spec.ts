@@ -137,6 +137,16 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
   await expect.poll(async () => (await shelf.boundingBox())!.x).toBeLessThan(before.x - 150);
   await expect(page.getByRole('button', { name: '暂停专辑试听' })).toBeEnabled();
   await expect(deck.locator('h2')).toHaveText('Happy Halloween');
+  // Album focus must keep both horizontal directions in preview navigation while open.
+  const selectedAlbum = page.locator('.collection-album[aria-current="true"]');
+  await selectedAlbum.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(deck.locator('h2')).toHaveText('Sunlight');
+  await expect(selectedAlbum).toBeFocused();
+  await expect(page.locator('.fit-log')).not.toHaveAttribute('data-open');
+  await page.keyboard.press('ArrowRight');
+  await expect(deck.locator('h2')).toHaveText('Happy Halloween');
+  await expect(selectedAlbum).toBeFocused();
   expect(
     await page.evaluate(
       () =>
@@ -166,6 +176,12 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
   await expect
     .poll(async () => Math.abs((await shelf.boundingBox())!.x - before.x))
     .toBeLessThan(1);
+  // Ejecting restores the ordinary left-to-Fit-Log navigation.
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('.fit-log-trigger')).toBeFocused();
+  await expect(page.locator('.fit-log')).toHaveAttribute('data-open');
+  await page.keyboard.press('ArrowRight');
+  await expect(selectedAlbum).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(page.locator('.collection-album[aria-current="true"]')).toHaveAttribute(
     'data-id',
@@ -192,6 +208,26 @@ test('album deck unfolds the existing corner, plays real previews, ejects and in
   await expect(page.locator('.ambient-shape.pink')).toHaveCSS('rotate', '0deg');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(page.locator('.album-flight')).toHaveCount(0);
+  // Down opens the left summary from any song; Right returns to the same selection.
+  await page.keyboard.press('ArrowRight');
+  const song = page.locator('.record-card[aria-current="true"]');
+  const selectedSong = await song.getAttribute('data-id');
+  await expect
+    .poll(async () => {
+      const card = (await song.boundingBox())!;
+      const carousel = (await page.locator('.song-carousel').boundingBox())!;
+      return Math.abs(card.x + card.width / 2 - carousel.x - carousel.width / 2);
+    })
+    .toBeLessThan(3);
+  const scrollLeft = await page.locator('.song-carousel').evaluate((node) => node.scrollLeft);
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('.fit-log-trigger')).toBeFocused();
+  await expect(page.locator('.fit-log')).toHaveAttribute('data-open');
+  await page.keyboard.press('ArrowRight');
+  await expect(song.locator('.record-select')).toBeFocused();
+  await expect(song).toHaveAttribute('data-id', selectedSong!);
+  await expect(page.locator('.fit-log')).not.toHaveAttribute('data-open');
+  expect(await page.locator('.song-carousel').evaluate((node) => node.scrollLeft)).toBe(scrollLeft);
   const inserted = await page.evaluate(() =>
     (
       window as unknown as {

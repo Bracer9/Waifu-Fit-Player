@@ -63,10 +63,15 @@ export function useMenuWheel(
       event.preventDefault();
       if (!frame) {
         const max = Math.max(0, node[extent] - node[size]);
-        centers = Array.from(node.children, (child) => {
-          const card = child as HTMLElement;
-          return Math.max(0, Math.min(max, card[cardOffset] + card[cardSize] / 2 - node[size] / 2));
-        });
+        centers = Array.from(node.children)
+          .filter((child) => child.matches('.collection-album, .record-card'))
+          .map((child) => {
+            const card = child as HTMLElement;
+            return Math.max(
+              0,
+              Math.min(max, card[cardOffset] + card[cardSize] / 2 - node[size] / 2),
+            );
+          });
         if (!centers.length) return;
         target = node[offset];
         position = target;

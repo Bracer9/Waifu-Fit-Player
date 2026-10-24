@@ -7,6 +7,7 @@ import { StartBriefing } from '../components/StartBriefing';
 import { MenuControls } from '../components/MenuControls';
 import { AlbumBackdrop } from '../components/AlbumBackdrop';
 import { AlbumCover } from '../components/AlbumCover';
+import { WeeklyNotes } from '../components/WeeklyNotes';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
 import { playableChart, playDuration, videoPlayRange } from '../play-range';
@@ -28,12 +29,14 @@ function updateScrollFocus(node: HTMLElement, horizontal: boolean) {
     ? node.scrollLeft + node.clientWidth / 2
     : node.scrollTop + node.clientHeight / 2;
   // Read geometry before updating styles; transforms never change the layout slots.
-  const cards = Array.from(node.children, (child) => {
-    const card = child as HTMLElement;
-    const size = horizontal ? card.offsetWidth : card.offsetHeight;
-    const position = (horizontal ? card.offsetLeft : card.offsetTop) + size / 2;
-    return { card, size, distance: Math.abs(position - center) };
-  });
+  const cards = Array.from(node.children)
+    .filter((child) => child.matches('.collection-album, .record-card'))
+    .map((child) => {
+      const card = child as HTMLElement;
+      const size = horizontal ? card.offsetWidth : card.offsetHeight;
+      const position = (horizontal ? card.offsetLeft : card.offsetTop) + size / 2;
+      return { card, size, distance: Math.abs(position - center) };
+    });
   let closest: HTMLElement | undefined,
     distance = Infinity;
   for (const item of cards) {
@@ -215,7 +218,7 @@ export function LibraryMenu(props: Props) {
       if (
         !(event.target instanceof Element) ||
         event.target.closest(
-          '.collection-album, .album-deck, .menu-settings, .corner-settings, .menu-back, .menu-control-back',
+          '.collection-album, .album-deck, .menu-settings, .corner-settings, .fit-log, .weekly-notes, .menu-back, .menu-control-back',
         )
       )
         return;
@@ -248,7 +251,7 @@ export function LibraryMenu(props: Props) {
     const centerSelection = () => {
       centering.current = null;
       if (page === 'albums') {
-        const card = node.firstElementChild as HTMLElement | null;
+        const card = node.querySelector<HTMLElement>('.collection-album');
         if (card)
           node.style.setProperty(
             '--album-padding',
@@ -307,14 +310,16 @@ export function LibraryMenu(props: Props) {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const current = getCurrent();
+      const current =
+        target.closest<HTMLElement>('.collection-album, .record-card, .menu-settings') ??
+        getCurrent();
       const gear = document.querySelector<HTMLButtonElement>('.menu-settings');
       if (
         e.defaultPrevented ||
         inserting ||
         document.querySelector('.menu-curtain') ||
         (document.querySelector('[role="dialog"]') && current !== gear) ||
-        target.closest('.corner-settings') ||
+        target.closest('.corner-settings, .fit-log, .weekly-notes') ||
         (/INPUT|SELECT|TEXTAREA/.test(target.tagName) &&
           !(
             open &&
@@ -324,6 +329,22 @@ export function LibraryMenu(props: Props) {
         target.isContentEditable
       )
         return;
+      const focusFitLog = () => {
+        const button = document.querySelector<HTMLButtonElement>('.fit-log-trigger:not(:disabled)');
+        if (!button) return;
+        props.onSound('settings');
+        button.focus({ preventScroll: true });
+      };
+      if (
+        !open &&
+        page === 'albums' &&
+        e.key === 'ArrowLeft' &&
+        current?.matches('.collection-album')
+      ) {
+        e.preventDefault();
+        focusFitLog();
+        return;
+      }
       if (open && (e.key === 'Escape' || e.key === 'Backspace')) {
         e.preventDefault();
         if (!e.repeat) closePlayer();
@@ -388,12 +409,20 @@ export function LibraryMenu(props: Props) {
       if (e.key === 'Escape' || e.key === 'Backspace') {
         e.preventDefault();
         if (!e.repeat) props.onBack();
+      } else if (page === 'songs' && e.key === 'ArrowDown') {
+        e.preventDefault();
+        current?.querySelector<HTMLElement>('.record-select')?.focus({ preventScroll: true });
+        focusFitLog();
       } else if (e.key === (page === 'albums' ? 'ArrowDown' : 'ArrowRight')) {
         e.preventDefault();
         move(1);
       } else if (e.key === (page === 'albums' ? 'ArrowUp' : 'ArrowLeft')) {
         e.preventDefault();
-        if (page === 'albums' && index === 0) focusGear();
+        if (page === 'albums' && index === 0) {
+          document
+            .querySelector<HTMLElement>('.weekly-day[aria-current="date"]')
+            ?.focus({ preventScroll: true });
+        } else if (page === 'songs' && index === 0) focusFitLog();
         else move(-1);
       } else if (e.key === (page === 'albums' ? 'ArrowRight' : 'ArrowUp')) {
         e.preventDefault();
@@ -498,6 +527,7 @@ export function LibraryMenu(props: Props) {
             inert={inserting}
             {...handlers}
           >
+            <WeeklyNotes onSound={props.onSound} />
             {albums.map((a, index) => (
               <button
                 key={a.id}

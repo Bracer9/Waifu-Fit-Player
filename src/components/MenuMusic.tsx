@@ -24,6 +24,7 @@ export function MusicPulse({ music, waveform = true }: { music: MenuMusic; wavef
     // .menu-app/body invalidates the entire menu, hidden workbench and briefing.
     const beatSelector = [
       '.ambient-shape.cyan',
+      '.fit-log',
       ':scope:not([data-album-player="open"]) > .ambient-shape.pink',
       '.title-brand h1 b',
       '.menu-settings',

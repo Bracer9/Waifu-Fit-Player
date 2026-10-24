@@ -85,6 +85,7 @@ import { AfterShowSnap } from './components/AfterShowSnap';
 import { afterShowTrackNumber } from './after-show-snap';
 import { afterShowLightingStyle, beginAfterShowAudio, nextAfterShowTrack } from './after-show';
 import { DraftSaveMenu } from './components/DraftSaveMenu';
+import { FitLog } from './components/FitLog';
 import { useFitLogRecording } from './useFitLog';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
@@ -1242,8 +1243,36 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       <div className="ambient-shape pink">
         <AlbumHousing open={mode === 'albums' && albumPlayerOpen} />
       </div>
-      <div className="ambient-shape cyan" />
+      <div className="ambient-shape cyan">
+        {menuPage && (
+          <>
+            <svg
+              className="fit-log-corner-surface"
+              viewBox="0 0 1000 1000"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polygon points="0,0 1000,0 1000,1000 0,1000" />
+            </svg>
+            <div className="fit-log-corner-details" aria-hidden="true" />
+          </>
+        )}
+      </div>
       <div className="ambient-dots" />
+      {menuPage && (
+        <FitLog
+          mode={mode}
+          blocked={
+            !!menuTransition ||
+            !!albumTuning ||
+            !!binding ||
+            help ||
+            !!pending ||
+            startPending ||
+            preparation.pending
+          }
+        />
+      )}
       {menuPage && (
         <button
           className="icon-button menu-settings"

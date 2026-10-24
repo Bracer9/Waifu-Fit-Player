@@ -169,6 +169,7 @@ export function MenuSettings({
       if (!root.current?.contains(target) && !trigger.current?.contains(target)) close.current();
     };
     const keyboard = (event: KeyboardEvent) => {
+      if (event.target instanceof Element && event.target.closest('.fit-log')) return;
       if (event.key === 'Escape' || event.key === 'Backspace') {
         event.preventDefault();
         event.stopPropagation();

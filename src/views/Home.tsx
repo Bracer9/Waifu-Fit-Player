@@ -32,12 +32,13 @@ export function Home({
       const target = event.target as HTMLElement;
       const current = getCurrent();
       const gear = document.querySelector<HTMLButtonElement>('.menu-settings');
+      const fitLog = document.querySelector<HTMLButtonElement>('.fit-log-trigger:not(:disabled)');
       const headphone = document.querySelector<HTMLButtonElement>('.headphone-button');
       if (
         event.defaultPrevented ||
         document.querySelector('.menu-curtain') ||
         (document.querySelector('[role="dialog"]') && current !== gear) ||
-        target.closest('.corner-settings, .music-panel') ||
+        target.closest('.corner-settings, .music-panel, .fit-log') ||
         /INPUT|SELECT|TEXTAREA/.test(target.tagName) ||
         target.isContentEditable
       )
@@ -65,7 +66,10 @@ export function Home({
         if (event.key === 'ArrowRight')
           next = current === headphone ? gear : buttons[Math.min(buttons.length - 1, index + 1)];
         if (event.key === 'ArrowLeft')
-          next = current === headphone ? modes[lastMode.current] : buttons[Math.max(0, index - 1)];
+          next =
+            current === headphone || current === modes[0]
+              ? fitLog
+              : buttons[Math.max(0, index - 1)];
         if (event.key === 'ArrowDown') next = current === gear ? modes[1] : headphone;
         if (event.key === 'ArrowUp') next = current === headphone ? modes[lastMode.current] : gear;
         activate(next);

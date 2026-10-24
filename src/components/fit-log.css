@@ -1,0 +1,251 @@
+/* Expand the original blue corner, retaining its existing music transform. */
+.menu-app > .ambient-shape.cyan:has(> .fit-log-corner-surface) {
+  background: none;
+}
+.fit-log-corner-surface,
+.fit-log-corner-details {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Leave room for the white icon at the mirrored Settings inset. */
+  transform: translateX(calc(var(--menu-vw, 1vw) * 2.65));
+  transition: transform var(--menu-corner-expand) var(--menu-corner-ease);
+  pointer-events: none;
+}
+.fit-log-corner-surface {
+  overflow: visible;
+  fill: var(--cyan);
+}
+.menu-app:has(> .fit-log[data-open])
+  > .ambient-shape.cyan
+  :is(.fit-log-corner-surface, .fit-log-corner-details) {
+  /* Local coordinates of the existing -33deg corner; the open edge is -12deg. */
+  transform: translate(
+      calc(var(--menu-vw, 1vw) * 4.361 + var(--menu-vh, 1vh) * 3.104),
+      calc(var(--menu-vw, 1vw) * 2.832 - var(--menu-vh, 1vh) * 4.78)
+    )
+    rotate(21deg) scaleY(1.38);
+}
+.fit-log-corner-details::before,
+.fit-log-corner-details::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: inset(100% 0 0);
+  transition:
+    opacity 200ms,
+    clip-path 420ms var(--menu-corner-ease);
+}
+.fit-log-corner-details::before {
+  inset: 34px 20px 32px auto;
+  width: 70px;
+  background: radial-gradient(circle, #fff9 1px, transparent 1.2px) 0 0 / 7px 7px;
+  mask-image: linear-gradient(to bottom, #000, transparent 25%, transparent 33%, #000 46%);
+}
+.fit-log-corner-details::after {
+  inset: 14px;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+}
+.menu-app:has(> .fit-log[data-open]) .fit-log-corner-details::before,
+.menu-app:has(> .fit-log[data-open]) .fit-log-corner-details::after {
+  opacity: 1;
+  clip-path: inset(0);
+  transition-delay: 70ms;
+}
+.fit-log {
+  --fit-vh: var(--menu-vh, 1vh);
+  --fit-unit: calc(var(--fit-vh) * 0.0925926);
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 320px;
+  height: calc(var(--fit-vh) * 100);
+  z-index: 12;
+  pointer-events: none;
+  color: #fff9f4;
+  font-family: 'Barlow Condensed', 'Microsoft YaHei', sans-serif;
+}
+.fit-log[data-blocked] {
+  visibility: hidden;
+}
+.fit-log .fit-log-trigger {
+  position: absolute;
+  left: calc(var(--menu-chrome-inset) - 8px);
+  bottom: var(--menu-corner-inset-block);
+  width: var(--menu-corner-button-size);
+  height: var(--menu-corner-button-size);
+  padding: 8px;
+  border: 0;
+  color: #fff9f4;
+  background: transparent;
+  pointer-events: auto;
+}
+.fit-log-trigger > svg {
+  width: var(--menu-corner-icon-size);
+  height: var(--menu-corner-icon-size);
+  scale: 1;
+  transition:
+    transform 180ms ease-out,
+    scale 60ms linear;
+}
+.fit-log .fit-log-trigger:is(:hover, :focus-visible) {
+  background: transparent;
+  outline: none;
+}
+.fit-log-trigger:is([data-highlighted], [aria-expanded='true']) > svg {
+  transform: rotate(18deg);
+  scale: calc(1.015 + var(--music-beat, 0) * 0.085);
+}
+.fit-log-trigger:is([data-highlighted], [aria-expanded='true']) .settings-gear-halo {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+.fit-log-trigger:active > svg {
+  transform: rotate(8deg);
+  scale: 0.94;
+}
+.fit-log-signature {
+  position: absolute;
+  top: calc(var(--fit-vh) * 21);
+  left: calc(var(--fit-unit) * 25);
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  font-size: calc(var(--fit-unit) * 13);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.fit-log-panel {
+  position: absolute;
+  left: calc(var(--fit-unit) * 32);
+  top: calc(var(--fit-vh) * 36);
+  width: calc(var(--fit-unit) * 234);
+  pointer-events: none;
+}
+.fit-log-panel h2 {
+  margin: 0 0 calc(var(--fit-unit) * 22);
+  font-size: calc(var(--fit-unit) * 64);
+  font-weight: 800;
+  transform: skewX(-7deg);
+  transform-origin: left center;
+  line-height: 0.85;
+  letter-spacing: -0.025em;
+}
+.fit-log-panel dl {
+  margin: 0;
+}
+.fit-log-metric {
+  width: calc(var(--fit-unit) * 160);
+  padding-top: calc(var(--fit-unit) * 14);
+  margin-bottom: calc(var(--fit-unit) * 12);
+  border-top: 2px dotted #fff9f480;
+}
+.fit-log-metric dt {
+  font-size: calc(var(--fit-unit) * 16);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+.fit-log-metric dd {
+  margin: calc(var(--fit-unit) * 6) 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.fit-log-value {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--fit-unit) * 12);
+  width: max-content;
+}
+.fit-log-value strong {
+  font-size: calc(var(--fit-unit) * 68);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: baseline;
+  transform: skewX(-7deg);
+  transform-origin: left center;
+  letter-spacing: -0.025em;
+  line-height: 0.9;
+  white-space: nowrap;
+}
+.fit-log-value svg {
+  width: calc(var(--fit-unit) * 40);
+  height: calc(var(--fit-unit) * 40);
+  color: var(--pink);
+  stroke-width: 2.4;
+}
+.fit-log-value .lucide-flame {
+  fill: var(--pink);
+  stroke-width: 1.5;
+}
+.fit-log-metric dd > span {
+  display: block;
+  margin-top: calc(var(--fit-unit) * 3);
+  font-size: calc(var(--fit-unit) * 16);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+.fit-log-value[data-hours] strong {
+  font-size: calc(var(--fit-unit) * 58);
+}
+.fit-log-value[data-long-time] strong {
+  font-size: calc(var(--fit-unit) * 50);
+}
+.fit-log-value[data-long-time] svg {
+  width: calc(var(--fit-unit) * 36);
+  height: calc(var(--fit-unit) * 36);
+}
+.fit-log-time small {
+  font-size: 0.44em;
+  letter-spacing: 0;
+  margin: 0 calc(var(--fit-unit) * 6) 0 calc(var(--fit-unit) * 2);
+}
+.fit-log-time .fit-log-value {
+  min-height: calc(var(--fit-unit) * 61.2);
+  gap: calc(var(--fit-unit) * 10);
+}
+.fit-log-status,
+.fit-log-error {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.fit-log-error {
+  color: var(--ink);
+}
+.fit-log-signature,
+.fit-log-panel {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-18px, 24px) scale(0.88);
+  transform-origin: 80px calc(var(--fit-vh) * 60);
+  clip-path: inset(100% 100% 0 0);
+  transition:
+    transform 420ms var(--menu-corner-ease),
+    clip-path 420ms var(--menu-corner-ease),
+    opacity 240ms,
+    visibility 420ms;
+}
+.fit-log[data-open] :is(.fit-log-signature, .fit-log-panel) {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0) scale(1);
+  clip-path: inset(-10px);
+  transition-duration: 420ms, 420ms, 240ms, 0s;
+}
+.fit-log[data-open] .fit-log-panel {
+  pointer-events: auto;
+}
+.fit-log-signature {
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fit-log *,
+  .fit-log-corner-surface,
+  .fit-log-corner-details,
+  .fit-log-corner-details::before,
+  .fit-log-corner-details::after {
+    transition: none !important;
+  }
+}

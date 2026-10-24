@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useRef, type HTMLAttributes } from 'react';
 
-const cards = '.mode-record, .collection-album, .record-card, .menu-settings, .headphone-button';
+const cards =
+  '.mode-record, .collection-album, .record-card, .menu-settings, .headphone-button, .fit-log-trigger';
 
 export function useMenuHighlight() {
   const current = useRef<HTMLElement | null>(null);
@@ -33,6 +34,9 @@ export function useMenuHighlight() {
         : null) ??
       (target.closest('.corner-settings')
         ? root.querySelector<HTMLElement>('.menu-settings')
+        : null) ??
+      (target.closest('.fit-log-panel')
+        ? root.querySelector<HTMLElement>('.fit-log-trigger')
         : null);
     return card && root.contains(card) ? card : null;
   };

@@ -11,6 +11,10 @@ import liquid from './assets/menu-sfx/liquid.wav';
 import insert from './assets/menu-sfx/insert.wav';
 import celebrate from './assets/menu-sfx/celebrate.wav';
 import shutter from './assets/menu-sfx/shutter.wav';
+import paper from './assets/menu-sfx/paper.wav';
+import keyDown from './assets/menu-sfx/key-down.wav';
+import keyLock from './assets/menu-sfx/key-lock.wav';
+import keyUp from './assets/menu-sfx/key-up.wav';
 
 const sources = {
   mode,
@@ -25,6 +29,10 @@ const sources = {
   insert,
   celebrate,
   shutter,
+  paper,
+  'key-down': keyDown,
+  'key-lock': keyLock,
+  'key-up': keyUp,
 };
 type MenuSound = keyof typeof sources;
 export type MenuSoundPlayer = (name: MenuSound) => void | (() => void);
@@ -47,13 +55,15 @@ export function useMenuSounds(volume: number) {
     liquid: HTMLAudioElement | null;
     celebration: HTMLAudioElement | null;
     shutter: HTMLAudioElement | null;
+    paper: HTMLAudioElement | null;
   }>({
     ui: null,
     liquid: null,
     celebration: null,
     shutter: null,
+    paper: null,
   });
-  const playback = useRef({ ui: 0, liquid: 0, celebration: 0, shutter: 0 });
+  const playback = useRef({ ui: 0, liquid: 0, celebration: 0, shutter: 0, paper: 0 });
   useEffect(
     () => () => {
       Object.values(sounds).forEach((audio) => {
@@ -74,13 +84,15 @@ export function useMenuSounds(volume: number) {
             ? 'celebration'
             : name === 'shutter'
               ? 'shutter'
-              : 'ui';
+              : name === 'paper' || name.startsWith('key-')
+                ? 'paper'
+                : 'ui';
       current.current[channel]?.pause();
       const token = ++playback.current[channel];
       if (volume === 0) return;
       const audio = sounds[name];
       current.current[channel] = audio;
-      audio.volume = volume;
+      audio.volume = volume * (name === 'paper' ? 0.24 : name.startsWith('key-') ? 0.55 : 1);
       audio.currentTime = 0;
       void audio.play().catch(() => {
         /* A missing UI sound must not block navigation. */
