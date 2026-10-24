@@ -92,6 +92,8 @@ import { MenuTransition } from './components/MenuTransition';
 import { LiquidMenuTransition } from './components/LiquidMenuTransition';
 import { useMenuViewport } from './useMenuViewport';
 import { EditorPreviewResize } from './components/EditorPreviewResize';
+import { FitnessGenerateButton } from './components/FitnessGenerateButton';
+import type { FitnessResult } from './fitness/generate';
 import { menuPortalRoot } from './menu-viewport';
 import { exportSongPack } from './export-song-pack';
 import { storeMapVideo } from './maps-workspace';
@@ -1165,6 +1167,45 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     }
     setPublishing(true);
   };
+  const applyGeneratedFitness = async (result: FitnessResult) => {
+    if (!chart.songId || result.chart.songId !== chart.songId)
+      throw new Error('作品已切换，未保存旧结果。');
+    const existing = library.songs.find((s) => s.id === chart.songId)?.drafts.fitness;
+    const currentFitness = chartType === 'fitness' ? chart : existing?.chart;
+    if (
+      currentFitness?.notes.length &&
+      !window.confirm(
+        `已生成 ${result.report.noteCount} 个动作。替换本曲现有的 ${currentFitness.notes.length} 个 FITNESS 草稿动作？Dance 和发布版本保持不变。`,
+      )
+    )
+      return false;
+    await persistDraft();
+    const expected = JSON.stringify(currentFitness);
+    const meta = {
+      albumId: existing?.albumId ?? draftMeta.albumId,
+      cover: existing?.cover ?? draftMeta.cover,
+    };
+    await updateSong(chart.songId, (old) => {
+      if (!old) throw new Error('作品已移除。');
+      if (JSON.stringify(old.drafts.fitness?.chart) !== expected)
+        throw new Error('FITNESS 草稿已变化，未覆盖。');
+      return {
+        ...old,
+        ...updateWorkingDraft(
+          old,
+          'fitness',
+          { chart: result.chart, ...meta, updatedAt: Date.now() },
+          null,
+        ),
+      };
+    });
+    setDraftMeta(meta);
+    setActiveDraftId(null);
+    reset(result.chart, true);
+    setProjectRevision((revision) => revision + 1);
+    notify(`已生成并保存 FITNESS 草稿：${result.report.noteCount} 个动作，可直接试玩。`);
+    return true;
+  };
   const publish = async () => {
     try {
       await persistDraft();
@@ -1482,6 +1523,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
               >
                 <Download size={17} />
               </button>
+              <FitnessGenerateButton
+                chart={chart}
+                source={source}
+                disabled={saving || !status.ready || status.preparing || !!busy || !chart.songId}
+                onStart={() => media.pause()}
+                onApply={applyGeneratedFitness}
+              />
               <button
                 className="button primary small"
                 disabled={!source || !status.ready || status.preparing || !chart.songId}

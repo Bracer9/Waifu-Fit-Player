@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -90,6 +92,10 @@ import { BpmDetectButton } from '../components/BpmDetectButton';
 import { firstBeatWindow } from '../first-beat';
 import { PlayRangeFields } from '../components/PlayRangeFields';
 import { chartPlayRange } from '../play-range';
+
+import type { PatternRequest } from '../fitness/patterns';
+const FitnessPatternPanel = lazy(() => import('../components/FitnessPatternPanel'));
+const FITNESS_PATTERN_MIME = 'application/x-wfp-fitness-pattern';
 
 export type EditorHandle = { locateEvent: (id: string) => void };
 
@@ -264,7 +270,37 @@ export function Editor({
     [viewport, setViewport] = useState(900);
   const [follow, setFollow] = useState(true),
     [followLocked, setFollowLocked] = useState(true),
-    [tab, setTab] = useState<'note' | 'tempo' | 'song'>('note');
+    [tab, setTab] = useState<'note' | 'tempo' | 'song' | 'patterns'>('note');
+  const [patternDrag, setPatternDrag] = useState<(PatternRequest & { beats: number }) | null>(null);
+  const [patternDrop, setPatternDrop] = useState<number | null>(null);
+  const insertingPattern = useRef(false);
+  const latestChart = useRef(chart);
+  latestChart.current = chart;
+  useEffect(() => {
+    if (chart.chartType !== 'fitness' && tab === 'patterns') setTab('note');
+  }, [chart.chartType, tab]);
+  const insertPattern = async (request: PatternRequest, target = cursorTime()) => {
+    if (insertingPattern.current) return;
+    insertingPattern.current = true;
+    const original = chart;
+    try {
+      const { insertFitnessPattern } = await import('../fitness/patterns');
+      if (latestChart.current !== original) return;
+      const result = insertFitnessPattern(original, request, target);
+      media.pause();
+      onChange(result.chart);
+      setSelected(result.ids);
+      setTab('patterns');
+      media.seek(videoTimeAt(result.chart, result.endMs));
+      notify(`已插入 ${result.repeats} 组完整积木，可撤销。`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '积木插入失败。');
+    } finally {
+      insertingPattern.current = false;
+      setPatternDrag(null);
+      setPatternDrop(null);
+    }
+  };
   const [segmentId, setSegmentId] = useState(chart.tempoSegments[0].id);
   const [draft, setDraft] = useState<Chart | null>(null),
     [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -1343,12 +1379,77 @@ export function Editor({
             <div
               className={`timeline-surface tool-${tool}`}
               style={{ width, height: RULER + LANES.length * ROW + SPECIAL }}
+              onDragOver={(e) => {
+                if (
+                  chart.chartType !== 'fitness' ||
+                  !patternDrag ||
+                  !e.dataTransfer.types.includes(FITNESS_PATTERN_MIME)
+                )
+                  return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                const raw = Math.max(
+                  0,
+                  (e.clientX - e.currentTarget.getBoundingClientRect().left - LABEL) / px,
+                );
+                const segment = segmentAt(chart.tempoSegments, raw) ?? chart.tempoSegments[0];
+                const barMs = (60000 / segment.bpm) * (segment.meter === '3/4' ? 3 : 4);
+                setPatternDrop(
+                  Math.max(
+                    segment.anchorMs,
+                    Math.round(
+                      segment.anchorMs + Math.round((raw - segment.anchorMs) / barMs) * barMs,
+                    ),
+                  ),
+                );
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setPatternDrop(null);
+              }}
+              onDrop={(e) => {
+                if (
+                  chart.chartType !== 'fitness' ||
+                  !e.dataTransfer.types.includes(FITNESS_PATTERN_MIME)
+                )
+                  return;
+                e.preventDefault();
+                const target = Math.max(
+                  0,
+                  (e.clientX - e.currentTarget.getBoundingClientRect().left - LABEL) / px,
+                );
+                try {
+                  const request = JSON.parse(
+                    e.dataTransfer.getData(FITNESS_PATTERN_MIME),
+                  ) as PatternRequest;
+                  void insertPattern(request, target);
+                } catch {
+                  notify('无法读取积木，请重新拖动。');
+                  setPatternDrag(null);
+                  setPatternDrop(null);
+                }
+              }}
               onPointerDown={pointerDown}
               onPointerMove={pointerMove}
               onPointerUp={pointerUp}
               onPointerCancel={cancelDrag}
             >
               <div className="timeline-ruler" />
+              {patternDrop !== null && patternDrag && (
+                <div
+                  className="fitness-drop-preview"
+                  style={{
+                    left: LABEL + patternDrop * px,
+                    width:
+                      ((patternDrag.beats * 60000) /
+                        (segmentAt(chart.tempoSegments, patternDrop) ?? chart.tempoSegments[0])
+                          .bpm) *
+                      px,
+                  }}
+                >
+                  <span>积木 · {formatTime(patternDrop)}</span>
+                </div>
+              )}
+
               {LANES.map((l, i) => (
                 <div
                   className="timeline-row"
@@ -1470,14 +1571,37 @@ export function Editor({
         </div>
         <aside className="inspector">
           <div className="inspector-tabs">
-            {(['note', 'tempo', 'song'] as const).map((t) => (
+            {(
+              [
+                'note',
+                'tempo',
+                'song',
+                ...(chart.chartType === 'fitness' ? ['patterns' as const] : []),
+              ] as const
+            ).map((t) => (
               <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
-                {t === 'note' ? '选中事件' : t === 'tempo' ? '节拍段' : '曲目'}
+                {t === 'note'
+                  ? '选中事件'
+                  : t === 'tempo'
+                    ? '节拍段'
+                    : t === 'patterns'
+                      ? '积木'
+                      : '曲目'}
               </button>
             ))}
           </div>
           <div className="inspector-content">
-            {tab === 'note' ? (
+            {tab === 'patterns' && chart.chartType === 'fitness' ? (
+              <Suspense fallback={<p className="inspector-tip">加载积木…</p>}>
+                <FitnessPatternPanel
+                  onInsert={(request) => void insertPattern(request)}
+                  onDrag={(value) => {
+                    setPatternDrag(value);
+                    setPatternDrop(null);
+                  }}
+                />
+              </Suspense>
+            ) : tab === 'note' ? (
               event ? (
                 <>
                   <div className="inspector-title">

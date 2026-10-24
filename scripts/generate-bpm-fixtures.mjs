@@ -7,10 +7,11 @@ import { execFileSync } from 'node:child_process';
 
 const temporary = mkdtempSync(join(tmpdir(), 'waifu-bpm-'));
 const output = new URL('../tests/fixtures/', import.meta.url);
+const fitness = process.argv.includes('--fitness');
 mkdirSync(output, { recursive: true });
 try {
   const rate = 48000,
-    seconds = 20;
+    seconds = fitness ? 96 : 20;
   const wav = Buffer.alloc(44 + rate * seconds * 2);
   wav.write('RIFF');
   wav.writeUInt32LE(wav.length - 8, 4);
@@ -42,7 +43,7 @@ try {
   const color = ['-f', 'lavfi', '-i', 'color=c=0x302c3b:s=160x90:r=5'];
   const encode = (args, name) =>
     execFileSync(
-      'ffmpeg',
+      process.env.WFP_FFMPEG ?? 'ffmpeg',
       [
         '-hide_banner',
         '-loglevel',
@@ -61,9 +62,9 @@ try {
     );
   encode(
     [...color, '-i', audio, '-t', String(seconds), '-c:a', 'aac', '-b:a', '48k'],
-    'bpm-148.mp4',
+    fitness ? 'fitness-148.mp4' : 'bpm-148.mp4',
   );
-  encode([...color, '-t', String(seconds), '-an'], 'no-audio.mp4');
+  if (!fitness) encode([...color, '-t', String(seconds), '-an'], 'no-audio.mp4');
 } finally {
   const target = resolve(temporary);
   if (dirname(target) !== resolve(tmpdir()) || !basename(target).startsWith('waifu-bpm-'))

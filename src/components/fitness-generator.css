@@ -1,0 +1,44 @@
+.fitness-generation {
+  width: min(720px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.fitness-generation progress {
+  width: 100%;
+  accent-color: var(--pink);
+}
+.fitness-generation [role='alert'] {
+  color: #d92d6e;
+}
+.fitness-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.fitness-summary dt {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.fitness-summary dd {
+  margin: 4px 0;
+  font-size: 25px;
+  font-weight: 800;
+}
+.fitness-generation details {
+  margin: 16px 0;
+}
+.fitness-generation summary {
+  cursor: pointer;
+}
+.fitness-generation li {
+  margin: 8px 0;
+}
+.fitness-caveat {
+  font-size: 12px;
+  opacity: 0.75;
+}
+@media (max-width: 600px) {
+  .fitness-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
