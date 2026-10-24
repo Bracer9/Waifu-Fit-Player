@@ -3,6 +3,7 @@ import { DEFAULT_ALBUMS, readLibrary, type Album, type Song } from './library';
 import { readMapLibrary } from './map-library';
 import { mergeMapSongs } from './song-pack';
 import { migrateMapSong, saveMapAlbum, saveMapSong } from './maps-workspace';
+import { mapLocation, registerMapWrite } from './map-library';
 
 export function useLibrary(notify: (text: string) => void) {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -114,11 +115,39 @@ export function useLibrary(notify: (text: string) => void) {
         : [...items, album],
     );
   }, []);
+  const refresh = useCallback(async () => {
+    const task = queue.current
+      .catch(() => {})
+      .then(async () => {
+        await load();
+        const disk = await readMapLibrary(true);
+        const changed = disk.songs
+          .filter((s) => {
+            const old = mapLocation(s.id)?.revision,
+              next = disk.locations?.[s.id]?.revision;
+            return old !== undefined && old !== next;
+          })
+          .map((s) => s.id);
+        const legacy = current.current.filter((s) => !mapLocation(s.id)?.workspace);
+        const next = mergeMapSongs(legacy, disk.songs);
+        for (const song of disk.songs) {
+          const location = disk.locations?.[song.id];
+          if (location) registerMapWrite({ song, location, videos: disk.videos });
+        }
+        current.current = next;
+        setSongs(next);
+        if (disk.warnings.length) notify(disk.warnings[0]);
+        return changed;
+      });
+    queue.current = task;
+    return task;
+  }, [load, notify]);
   return {
     songs,
     albums,
     ready,
     load,
+    refresh,
     updateSong,
     saveAlbum,
     snapshot: () => current.current.filter((song) => !song.hidden),

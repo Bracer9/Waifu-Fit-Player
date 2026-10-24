@@ -77,6 +77,14 @@ export async function saveMapSong(song: Song, migration = false): Promise<Song> 
     migration,
   });
   registerMapWrite(saved);
+  if (
+    song.namedDrafts?.some(
+      (d) => !saved.song.namedDrafts?.some((s) => s.id === d.id && s.name === d.name),
+    )
+  )
+    throw new Error(
+      '本地保存服务需要更新，请重新运行 start-demo 后保存命名草稿。当前编辑内容已保留在 maps。',
+    );
   return saved.song;
 }
 

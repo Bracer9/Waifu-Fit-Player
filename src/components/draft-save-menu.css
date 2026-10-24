@@ -1,0 +1,46 @@
+.draft-save-control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.draft-save-control > .button:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.draft-save-control > .draft-save-toggle {
+  padding: 0 6px;
+  border-left: 1px solid #ffffff38;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.draft-save-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 180px;
+  padding: 5px;
+  background: #faf4eb;
+  color: #242329;
+  border: 1px solid #242329;
+  box-shadow: 3px 3px 0 var(--pink);
+}
+.draft-save-options > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 12px;
+}
+.draft-save-options > button span {
+  opacity: 0.6;
+  font-size: 10px;
+}
+.draft-save-options > button:hover,
+.draft-save-options > button:focus-visible {
+  background: #f6489630;
+  outline: 1px solid var(--pink);
+}

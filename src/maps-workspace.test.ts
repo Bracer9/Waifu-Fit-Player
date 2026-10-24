@@ -14,7 +14,7 @@ import path from 'node:path';
 import { MapsWorkspace } from '../scripts/maps-workspace';
 import { scanMaps } from '../scripts/maps-library';
 import { blankChart } from './model';
-import type { Song } from './library';
+import { saveNamedDraft, updateWorkingDraft, selectNamedDraft, type Song } from './library';
 
 let root: string;
 let workspace: MapsWorkspace;
@@ -57,6 +57,88 @@ const song = (): Song => ({
 });
 
 describe('maps is the project store', () => {
+  it('saves CLAP through the filesystem validator and reopens it from maps', async () => {
+    await attach();
+    const s = song();
+    s.drafts.dance!.chart.notes = [
+      {
+        id: 'clap',
+        lane: 'punch',
+        direction: 'forward',
+        armAction: 'clap',
+        hand: 'both',
+        kind: 'tap',
+        timeMs: 1234,
+      },
+      {
+        id: 'clap-hold',
+        lane: 'punch',
+        direction: 'forward',
+        armAction: 'clap',
+        hand: 'both',
+        kind: 'hold',
+        modifier: 'none',
+        timeMs: 2000,
+        endTimeMs: 3000,
+      },
+    ];
+    await workspace.saveSong(s);
+    expect(
+      (await new MapsWorkspace(root).readProject('愛包')).song.drafts.dance!.chart.notes,
+    ).toEqual(s.drafts.dance!.chart.notes);
+  });
+  it('stores multiple named JSON drafts beside the video and reloads every version without browser storage', async () => {
+    await attach();
+    let s = saveNamedDraft(song(), 'dance', '初版 / A');
+    const a = s.namedDrafts![0].id;
+    s.drafts.dance!.chart.notes = [
+      { id: 'new', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1234 },
+    ];
+    s = saveNamedDraft(s, 'dance', '修订版');
+    let saved = await workspace.saveSong(s);
+    const loaded = await new MapsWorkspace(root).readProject('愛包');
+    expect(loaded.song.namedDrafts!.map((d) => d.name)).toEqual(['初版 / A', '修订版']);
+    expect(loaded.song.namedDrafts!.find((d) => d.id === a)!.chart.notes).toEqual([]);
+    expect((await scanMaps(root)).songs[0]).toEqual(saved.song);
+    const file = path.join(root, '愛包', `wfp-dance-draft-${a}.json`);
+    expect(JSON.parse(await readFile(file, 'utf8')).notes).toEqual([]);
+    const chosen = selectNamedDraft(saved.song, 'dance', a),
+      edited = structuredClone(chosen.drafts.dance!);
+    edited.chart.notes = [
+      { id: 'edited', lane: 'punch', direction: 'left', kind: 'tap', timeMs: 2345 },
+    ];
+    const update = saveNamedDraft(
+      updateWorkingDraft(chosen, 'dance', edited, a),
+      'dance',
+      '初版 / A',
+    );
+    saved = await workspace.saveSong(update, saved.location.revision);
+    expect(saved.song.namedDrafts).toHaveLength(2);
+    expect(
+      JSON.parse(
+        await readFile(path.join(root, '愛包', '.wfp-backup', `wfp-dance-draft-${a}.json`), 'utf8'),
+      ).notes,
+    ).toEqual([]);
+    const previous = structuredClone(saved.song);
+    // External edits to a named file participate in the same revision guard.
+    await writeFile(
+      file,
+      JSON.stringify({ ...saved.song.namedDrafts![0].chart, title: 'External' }),
+    );
+    await expect(workspace.saveSong(previous, saved.location.revision)).rejects.toThrow(/未覆盖/);
+  });
+  it('retains named files when an older client saves and rejects invalid named input before replacing working notes', async () => {
+    await attach();
+    const first = await workspace.saveSong(saveNamedDraft(song(), 'dance', '原稿'));
+    const legacy = { id: first.song.id, drafts: first.song.drafts, released: first.song.released };
+    const second = await workspace.saveSong(legacy, first.location.revision);
+    expect(second.song.namedDrafts).toEqual(first.song.namedDrafts);
+    const invalid = structuredClone(second.song);
+    invalid.drafts.dance!.chart.title = 'Must not write';
+    invalid.namedDrafts![0].id = '../escape';
+    await expect(workspace.saveSong(invalid, second.location.revision)).rejects.toThrow();
+    expect((await workspace.readProject('愛包')).song.drafts.dance!.chart.title).toBe('愛包');
+  });
   it('saves an empty draft beside its existing MP4 and opens in a new server without browser data', async () => {
     const original = await readFile(path.join(root, '愛包', 'renamed.mp4'));
     const adopted = await attach();

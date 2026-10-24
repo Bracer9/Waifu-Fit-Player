@@ -1814,6 +1814,21 @@
   align-items: center;
   padding: 5px 0 5px 63px;
   font-size: 12px;
+  flex-wrap: wrap;
+}
+.managed-draft-select {
+  flex: 1;
+  min-width: 140px;
+  max-width: 250px;
+  padding: 7px 9px;
+  background: var(--paper, #faf4eb);
+  color: var(--ink, #252329);
+  border: 1px solid #b6a9a4;
+  font: inherit;
+}
+.save-draft-dialog .field input {
+  padding: 12px;
+  font-size: 16px;
 }
 .managed-edition .chart-type-tag {
   width: 63px;

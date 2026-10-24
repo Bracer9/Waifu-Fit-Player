@@ -18,7 +18,6 @@ import {
   HelpCircle,
   Moon,
   Plus,
-  Save,
   Settings,
   LibraryBig,
   Send,
@@ -40,6 +39,10 @@ import { DEFAULT_NOTE_SPEED } from './timing';
 import { useLibrary } from './useLibrary';
 import {
   latestEdition,
+  updateWorkingDraft,
+  saveNamedDraft,
+  overwriteActiveDraft,
+  selectNamedDraft,
   editionsIn,
   publishSong,
   unpublishSong,
@@ -56,6 +59,7 @@ import {
   PublicationFields,
   PublishDialog,
   SongManager,
+  SaveDraftDialog,
 } from './components/LibraryControls';
 import { MusicPulse } from './components/MenuMusic';
 import { MenuSettings, SettingsGearHalo } from './components/MenuSettings';
@@ -80,6 +84,7 @@ import { AfterShowCelebration } from './components/AfterShowCelebration';
 import { AfterShowSnap } from './components/AfterShowSnap';
 import { afterShowTrackNumber } from './after-show-snap';
 import { afterShowLightingStyle, beginAfterShowAudio, nextAfterShowTrack } from './after-show';
+import { DraftSaveMenu } from './components/DraftSaveMenu';
 import { ModalBackdrop } from './components/ModalBackdrop';
 import { GameStartCountdown } from './components/GameStartCountdown';
 import { GameEntrance } from './components/GameEntrance';
@@ -103,7 +108,13 @@ import {
   type VideoFileHandle,
 } from './local-media';
 
-type OpenContext = { play?: boolean; edition?: Edition; legacy?: boolean };
+type OpenContext = {
+  play?: boolean;
+  edition?: Edition;
+  legacy?: boolean;
+  draftId?: string | null;
+  working?: boolean;
+};
 const LAST_DRAFT_KEY = 'waifu-last-draft';
 const DRAFT_KEY = 'waifu-fit-player-draft-v1';
 const WORKBENCH_THEME_KEY = 'waifu-fit-player-workbench-theme';
@@ -306,6 +317,10 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   const library = useLibrary(notify);
   const { updateSong } = library;
   const [draftMeta, setDraftMeta] = useState({ albumId: '', cover: '' });
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [saveDraftOpen, setSaveDraftOpen] = useState(false);
+  const staleDraft = useRef(false);
+  const savedDraftMeta = useRef(JSON.stringify({ albumId: '', cover: '' }));
   const [playOrigin, setPlayOrigin] = useState<'editor' | 'library'>('editor');
   const [albumId, setAlbumId] = useState('all');
   const [albumPlayerOpen, setAlbumPlayerOpen] = useState(false);
@@ -428,29 +443,43 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     setSettings(false);
   };
   const chartType = chart.chartType ?? 'dance';
-  const persistDraft = useCallback(async () => {
-    if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
-    const edition: Edition = { chart: structuredClone(chart), ...draftMeta, updatedAt: Date.now() };
-    const result = await updateSong(chart.songId, (previous) =>
-      deletedSongs.current.has(chart.songId!)
-        ? previous
-        : {
-            id: chart.songId!,
-            drafts: { ...previous?.drafts, [chart.chartType ?? 'dance']: edition },
-            released: previous?.released ?? {},
-          },
-    );
-    setSaved(JSON.stringify(chart));
-    try {
-      localStorage.setItem(
-        LAST_DRAFT_KEY,
-        JSON.stringify({ id: chart.songId, chartType: chart.chartType ?? 'dance' }),
-      );
-    } catch {
-      /* The draft itself is in maps. */
-    }
-    return result;
-  }, [chart, draftMeta, source, updateSong]);
+  const activeDraftName = library.songs
+    .find((s) => s.id === chart.songId)
+    ?.namedDrafts?.find((d) => d.id === activeDraftId)?.name;
+  const persistDraft = useCallback(
+    async (overwriteNamed = false) => {
+      if (!source || !chart.songId || deletedSongs.current.has(chart.songId)) return;
+      if (staleDraft.current) throw new Error('磁盘谱面已更新，请从本地作品重新打开后再编辑。');
+      const edition: Edition = {
+        chart: structuredClone(chart),
+        ...draftMeta,
+        updatedAt: Date.now(),
+      };
+      const result = await updateSong(chart.songId, (previous) => {
+        if (deletedSongs.current.has(chart.songId!)) return previous;
+        const type = chart.chartType ?? 'dance';
+        const next = updateWorkingDraft(
+          previous ?? { id: chart.songId!, drafts: {}, released: {} },
+          type,
+          edition,
+          activeDraftId,
+        );
+        return overwriteNamed ? overwriteActiveDraft(next, type) : next;
+      });
+      setSaved(JSON.stringify(chart));
+      savedDraftMeta.current = JSON.stringify(draftMeta);
+      try {
+        localStorage.setItem(
+          LAST_DRAFT_KEY,
+          JSON.stringify({ id: chart.songId, chartType: chart.chartType ?? 'dance' }),
+        );
+      } catch {
+        /* The draft itself is in maps. */
+      }
+      return result;
+    },
+    [chart, draftMeta, source, updateSong, activeDraftId],
+  );
   useEffect(() => {
     if (mode === 'player') setNotice('');
   }, [mode]);
@@ -485,6 +514,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
   useEffect(() => {
     if (mode !== 'editor' || !source || !chart.songId) return;
     const timer = setTimeout(() => {
+      if (working.current || staleDraft.current) return;
       void persistDraft().catch((error) => notify(`草稿未能保存：${error.message}`));
     }, 650);
     return () => clearTimeout(timer);
@@ -572,14 +602,18 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     const meta = { albumId: edition?.albumId ?? '', cover: edition?.cover ?? '' };
     try {
       if (!context?.play)
-        await updateSong(paired.songId!, (previous) => ({
-          id: paired.songId!,
-          drafts: {
-            ...previous?.drafts,
-            [paired.chartType ?? 'dance']: { chart: paired, ...meta, updatedAt: Date.now() },
-          },
-          released: previous?.released ?? {},
-        }));
+        await updateSong(paired.songId!, (previous) => {
+          const song = previous ?? { id: paired.songId!, drafts: {}, released: {} };
+          const selected = context?.working
+            ? song
+            : selectNamedDraft(song, paired.chartType ?? 'dance', context?.draftId);
+          return updateWorkingDraft(
+            selected,
+            paired.chartType ?? 'dance',
+            { chart: paired, ...meta, updatedAt: Date.now() },
+            context?.draftId,
+          );
+        });
       else if (
         next.videoHint.assetId !== paired.videoHint.assetId ||
         next.videoHint.fileName !== paired.videoHint.fileName ||
@@ -599,6 +633,9 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     }
     deletedSongs.current.delete(paired.songId!);
     setDraftMeta(meta);
+    savedDraftMeta.current = JSON.stringify(meta);
+    staleDraft.current = false;
+    setActiveDraftId(context?.draftId ?? null);
     setFinishing(false);
     setAfterShow(false);
     setPlayOrigin(context?.play ? 'library' : 'editor');
@@ -638,6 +675,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         if (!context?.play)
           notify(isSaved ? '作品已打开，关联视频已自动载入。' : '草稿与关联视频已恢复。');
       } catch (error) {
+        if (error instanceof Error && /磁盘谱面/.test(error.message)) {
+          await library.refresh();
+          staleDraft.current = true;
+          setBinding(null);
+          setManageSongs(true);
+          notify('磁盘谱面已更新，请在本地作品中重新打开。视频关联仍然有效。');
+          return;
+        }
         setBinding({
           kind: 'open',
           context,
@@ -720,7 +765,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
     if (!source || !status.ready || working.current) return false;
     setSaving(true);
     try {
-      await persistDraft();
+      await persistDraft(!exportCopy);
       if (exportCopy) {
         const url = URL.createObjectURL(
           new Blob([serializeChart(chart, status.durationMs || undefined)], {
@@ -805,6 +850,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         preparation.pending ||
         (mode === 'player' && startPending) ||
         manageSongs ||
+        saveDraftOpen ||
         manageAlbums ||
         publishing
       )
@@ -866,6 +912,20 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       });
     else action();
   };
+  const openSongManager = () => {
+    media.pause();
+    void runTask('正在读取本地作品…', async () => {
+      if (
+        mode === 'editor' &&
+        source &&
+        (dirty || savedDraftMeta.current !== JSON.stringify(draftMeta))
+      )
+        await persistDraft();
+      const changed = await library.refresh();
+      if (source && changed.includes(chart.songId ?? '')) staleDraft.current = true;
+      setManageSongs(true);
+    });
+  };
   const enterEditor = () => {
     media.pause();
     if (source && playOrigin === 'editor') {
@@ -889,8 +949,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       const edition =
         song?.drafts[last?.chartType ?? 'dance'] ??
         songs.flatMap((s) => Object.values(s.drafts)).sort((a, b) => b.updatedAt - a.updatedAt)[0];
-      if (edition) await openProject(edition.chart, true, { edition });
-      else {
+      if (edition) {
+        const owner = songs.find((s) => s.drafts[edition.chart.chartType ?? 'dance'] === edition);
+        await openProject(edition.chart, true, {
+          edition,
+          draftId: owner?.activeDrafts?.[edition.chart.chartType ?? 'dance'],
+          working: true,
+        });
+      } else {
         const legacy = localStorage.getItem(DRAFT_KEY);
         if (legacy) await openProject(parseChart(JSON.parse(legacy)), true, { legacy: true });
         else {
@@ -927,8 +993,12 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       setMenuTransition({ next: 'player', direction: 'forward', phase: 'cover' });
     });
   };
-  const editSong = (song: Song, d: ChartType, published: boolean) => {
-    const edition = published ? song.released[d] : song.drafts[d];
+  const editSong = (song: Song, d: ChartType, published: boolean, draftId?: string) => {
+    const edition = published
+      ? song.released[d]
+      : draftId
+        ? song.namedDrafts?.find((n) => n.id === draftId && n.chartType === d)
+        : song.drafts[d];
     if (!edition) return;
     if (
       published &&
@@ -943,8 +1013,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       return;
     setManageSongs(false);
     void runTask('正在打开谱面…', async () => {
-      if (mode === 'editor') await persistDraft();
-      if (mode === 'player' && chart.songId === song.id && chartType === d) {
+      if (
+        mode === 'editor' &&
+        !staleDraft.current &&
+        (dirty || savedDraftMeta.current !== JSON.stringify(draftMeta))
+      )
+        await persistDraft();
+      if (mode === 'player' && chart.songId === song.id && chartType === d && !draftId) {
         // The playing edition and its media are already loaded. Keep the paused
         // position while entering its draft, after the existing overwrite guard.
         media.pause();
@@ -953,7 +1028,20 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         setReadyPhase(null);
         setPlayOrigin('editor');
         setMode('editor');
-      } else await openProject(edition.chart, true, { edition });
+      } else {
+        const fresh = library.snapshot().find((s) => s.id === song.id) ?? song;
+        const chosen = published
+          ? fresh.released[d]
+          : draftId
+            ? fresh.namedDrafts?.find((n) => n.id === draftId && n.chartType === d)
+            : fresh.drafts[d];
+        if (!chosen) throw new Error('未找到选中的草稿。');
+        await openProject(chosen.chart, true, {
+          edition: chosen,
+          draftId: published ? null : draftId || fresh.activeDrafts?.[d],
+          working: !published && !draftId,
+        });
+      }
     });
   };
   const editCurrentGame = () => {
@@ -1049,6 +1137,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
         return;
       try {
         await persistDraft();
+        setActiveDraftId(null);
         edit({ ...chart, chartType: values.chartType });
       } catch (error) {
         notify(`草稿未能保存：${(error as Error).message}`);
@@ -1358,7 +1447,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                 className="button small ghost"
                 onClick={() => {
                   media.pause();
-                  setManageSongs(true);
+                  openSongManager();
                 }}
               >
                 <LibraryBig size={15} />
@@ -1376,14 +1465,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                 <Film size={15} />
                 {source ? '更换视频' : '选择视频'}
               </button>
-              <button
-                className="button small dark"
-                onClick={() => void save()}
+              <DraftSaveMenu
                 disabled={saving || !status.ready}
-              >
-                <Save size={15} />
-                保存草稿
-              </button>
+                onSave={() => void save()}
+                onSaveAs={() => {
+                  media.pause();
+                  setSaveDraftOpen(true);
+                }}
+              />
               <button
                 className="icon-button export-button"
                 title="导出 JSON 副本（Ctrl+Shift+S）"
@@ -1630,7 +1719,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                   onSongs={() => {
                     playMenuSound('settings');
                     media.pause();
-                    setManageSongs(true);
+                    openSongManager();
                   }}
                   notify={notify}
                 />
@@ -1797,10 +1886,13 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
                 className="button primary"
                 disabled={saving}
                 onClick={async () => {
-                  if (await save()) {
+                  try {
+                    await persistDraft(true);
                     const action = pending;
                     setPending(null);
                     action();
+                  } catch (error) {
+                    notify(`保存失败：${(error as Error).message}`);
                   }
                 }}
               >
@@ -1826,6 +1918,29 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           onNoteSpeed={changeNoteSpeed}
           gameplayFrameRate={gameplayFrameRate}
           onGameplayFrameRate={changeGameplayFrameRate}
+        />
+      )}
+      {saveDraftOpen && (
+        <SaveDraftDialog
+          defaultName={activeDraftName ? `${activeDraftName} 副本`.slice(0, 60) : ''}
+          names={(library.songs.find((s) => s.id === chart.songId)?.namedDrafts ?? [])
+            .filter((d) => d.chartType === chartType)
+            .map((d) => d.name)}
+          onClose={() => setSaveDraftOpen(false)}
+          onSave={async (name) => {
+            setSaving(true);
+            try {
+              await persistDraft();
+              const stored = await updateSong(chart.songId!, (previous) => {
+                if (!previous) throw new Error('作品已不存在。');
+                return saveNamedDraft(previous, chartType, name);
+              });
+              setActiveDraftId(stored?.activeDrafts?.[chartType] ?? null);
+              notify(`草稿「${name.trim()}」已保存到 maps。`);
+            } finally {
+              setSaving(false);
+            }
+          }}
         />
       )}
       {manageSongs && (

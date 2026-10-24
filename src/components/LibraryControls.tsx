@@ -3,6 +3,7 @@ import { ImagePlus, Plus, X } from 'lucide-react';
 import {
   CHART_TYPES,
   latestEdition,
+  selectedDraftId,
   type Album,
   type ChartType,
   type Edition,
@@ -244,11 +245,12 @@ export function SongManager({
 }: {
   songs: Song[];
   onClose: () => void;
-  onOpen: (song: Song, chartType: ChartType, published: boolean) => void;
+  onOpen: (song: Song, chartType: ChartType, published: boolean, draftId?: string) => void;
   onWithdraw: (song: Song, chartType: ChartType) => void;
   onDelete: (song: Song) => void;
   onExport: (song: Song) => void;
 }) {
+  const [selected, setSelected] = useState<Record<string, string>>({});
   return (
     <ModalBackdrop onClose={onClose}>
       <section
@@ -284,7 +286,35 @@ export function SongManager({
                   song.drafts[d] || song.released[d] ? (
                     <div className="managed-edition" key={d}>
                       <b className={`chart-type-tag ${d}`}>{d.toUpperCase()}</b>
-                      <button disabled={!song.drafts[d]} onClick={() => onOpen(song, d, false)}>
+                      <select
+                        aria-label={`${latestEdition(song).chart.title} ${d.toUpperCase()} 草稿`}
+                        className="managed-draft-select"
+                        value={selected[`${song.id}:${d}`] ?? selectedDraftId(song, d)}
+                        onChange={(e) =>
+                          setSelected((old) => ({ ...old, [`${song.id}:${d}`]: e.target.value }))
+                        }
+                      >
+                        <option value="">当前草稿（自动保存）</option>
+                        {(song.namedDrafts ?? [])
+                          .filter((n) => n.chartType === d)
+                          .sort((a, b) => b.updatedAt - a.updatedAt)
+                          .map((n) => (
+                            <option key={n.id} value={n.id}>
+                              {n.name}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        disabled={!song.drafts[d]}
+                        onClick={() =>
+                          onOpen(
+                            song,
+                            d,
+                            false,
+                            selected[`${song.id}:${d}`] ?? selectedDraftId(song, d),
+                          )
+                        }
+                      >
                         继续草稿
                       </button>
                       {song.released[d] ? (
@@ -307,6 +337,78 @@ export function SongManager({
           <p className="library-empty-small">还没有本地作品。在编辑器里新建或打开谱面即可。</p>
         )}
       </section>
+    </ModalBackdrop>
+  );
+}
+
+export function SaveDraftDialog({
+  defaultName,
+  names,
+  onSave,
+  onClose,
+}: {
+  defaultName: string;
+  names: string[];
+  onSave: (name: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(defaultName),
+    [working, setWorking] = useState(false),
+    [error, setError] = useState('');
+  return (
+    <ModalBackdrop
+      onClose={() => {
+        if (!working) onClose();
+      }}
+    >
+      <form
+        className="modal save-draft-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="save-draft-title"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (working) return;
+          setWorking(true);
+          setError('');
+          try {
+            await onSave(name);
+            onClose();
+          } catch (error) {
+            setError(error instanceof Error ? error.message : '保存失败。');
+          } finally {
+            setWorking(false);
+          }
+        }}
+      >
+        <div className="eyebrow">LOCAL DRAFT / MAPS</div>
+        <h2 id="save-draft-title">另存为草稿</h2>
+        <label className="field">
+          <span>草稿名称</span>
+          <input
+            aria-label="草稿名称"
+            value={name}
+            maxLength={60}
+            disabled={working}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="例如：初版、调整换段、教练修订"
+          />
+        </label>
+        <p>
+          {names.includes(name.trim())
+            ? '将更新同名草稿。换一个名称可另外保存一份。'
+            : '将新增一份命名草稿，已有命名草稿保留。'}
+        </p>
+        {error && <p role="alert">{error}</p>}
+        <div className="modal-actions">
+          <button type="button" className="button light" disabled={working} onClick={onClose}>
+            取消
+          </button>
+          <button type="submit" className="button primary" disabled={working || !name.trim()}>
+            {working ? '正在保存…' : '保存'}
+          </button>
+        </div>
+      </form>
     </ModalBackdrop>
   );
 }

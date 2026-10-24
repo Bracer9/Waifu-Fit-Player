@@ -16,7 +16,7 @@ import type { IncomingMessage } from 'node:http';
 import path from 'node:path';
 import { CHART_TYPES } from '../src/chart-types';
 import { parseChart } from '../src/model';
-import type { Album, Edition, Song } from '../src/library';
+import { draftName, type Album, type Edition, type Song } from '../src/library';
 import { packPath, type PackVideo, type MapLocation } from '../src/song-pack';
 
 const FORMAT = 'waifu-fit-player-project';
@@ -37,7 +37,10 @@ type Project = {
   media: Media[];
   drafts: Partial<Record<(typeof CHART_TYPES)[number], Entry>>;
   released: Partial<Record<(typeof CHART_TYPES)[number], Entry>>;
+  namedDrafts?: (Entry & { id: string; name: string; chartType: (typeof CHART_TYPES)[number] })[];
+  activeDrafts?: Song['activeDrafts'];
 };
+const managedChart = /^wfp-(fitness|dance)-(draft(?:-[a-f0-9-]{36})?|released)\.json$/;
 const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 const url = (relative: string) =>
   '/__wfp/map-file/' + relative.split('/').map(encodeURIComponent).join('/');
@@ -169,10 +172,7 @@ export class MapsWorkspace {
       throw new Error('保存恢复记录无效，已保留原文件。');
     validId(journal.project.id);
     for (const entry of journal.charts) {
-      if (
-        !/^wfp-(fitness|dance)-(draft|released)\.json$/.test(entry.file) ||
-        typeof entry.data !== 'string'
-      )
+      if (!managedChart.test(entry.file) || typeof entry.data !== 'string')
         throw new Error('保存恢复路径无效。');
       const chart = parseChart(JSON.parse(entry.data));
       if (chart.songId !== journal.project.id) throw new Error('保存恢复歌曲 ID 不匹配。');
@@ -221,55 +221,91 @@ export class MapsWorkspace {
       drafts: {},
       released: {},
     };
+    const readEdition = async (
+      entry: Entry,
+      type: (typeof CHART_TYPES)[number],
+    ): Promise<Edition> => {
+      const bytes = await readFile(await this.resource(folder, entry.file));
+      buffers.push(bytes);
+      const chart = parseChart({
+        ...JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, '')),
+        songId: project.id,
+        chartType: type,
+      });
+      const media = project.media.find(
+        (m) =>
+          m.id === chart.videoHint.assetId || m.aliases.includes(chart.videoHint.assetId ?? ''),
+      );
+      if (media) {
+        // Keep the chart visible/editable when its video is missing. Relocation is explicit.
+        try {
+          const file = await this.mediaFile(folder, media);
+          if (!videos.some((v) => v.id === media.id))
+            videos.push({
+              id: media.id,
+              aliases: media.aliases,
+              fileName: path.basename(file),
+              url: url(path.relative(root, file).split(path.sep).join('/')),
+            });
+          chart.videoHint = {
+            ...chart.videoHint,
+            assetId: media.id,
+            fileName: path.basename(file),
+          };
+        } catch {
+          /* The existing chart and association remain recoverable. */
+        }
+      }
+      return {
+        chart,
+        albumId: entry.albumId,
+        updatedAt: entry.updatedAt,
+        cover: entry.cover
+          ? url(
+              path
+                .relative(root, await this.resource(folder, entry.cover))
+                .split(path.sep)
+                .join('/'),
+            )
+          : '',
+      };
+    };
     for (const collection of ['drafts', 'released'] as const)
       for (const type of CHART_TYPES) {
         const entry = project[collection][type];
-        if (!entry) continue;
-        const bytes = await readFile(await this.resource(folder, entry.file));
-        buffers.push(bytes);
-        const chart = parseChart({
-          ...JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, '')),
-          songId: project.id,
-          chartType: type,
-        });
-        const media = project.media.find(
-          (m) =>
-            m.id === chart.videoHint.assetId || m.aliases.includes(chart.videoHint.assetId ?? ''),
-        );
-        if (media) {
-          // Keep the chart visible/editable when its video is missing. Relocation is explicit.
-          try {
-            const file = await this.mediaFile(folder, media);
-            if (!videos.some((v) => v.id === media.id))
-              videos.push({
-                id: media.id,
-                aliases: media.aliases,
-                fileName: path.basename(file),
-                url: url(path.relative(root, file).split(path.sep).join('/')),
-              });
-            chart.videoHint = {
-              ...chart.videoHint,
-              assetId: media.id,
-              fileName: path.basename(file),
-            };
-          } catch {
-            /* The existing chart and association remain recoverable. */
-          }
-        }
-        song[collection][type] = {
-          chart,
-          albumId: entry.albumId,
-          updatedAt: entry.updatedAt,
-          cover: entry.cover
-            ? url(
-                path
-                  .relative(root, await this.resource(folder, entry.cover))
-                  .split(path.sep)
-                  .join('/'),
-              )
-            : '',
-        };
+        if (entry) song[collection][type] = await readEdition(entry, type);
       }
+    if (project.namedDrafts !== undefined) {
+      if (!Array.isArray(project.namedDrafts)) throw new Error('命名草稿清单无效。');
+      song.namedDrafts = [];
+      const ids = new Set<string>();
+      for (const entry of project.namedDrafts) {
+        validId(entry.id);
+        draftName(entry.name);
+        if (
+          !CHART_TYPES.includes(entry.chartType) ||
+          ids.has(entry.id) ||
+          entry.file !== `wfp-${entry.chartType}-draft-${entry.id}.json`
+        )
+          throw new Error('命名草稿清单无效。');
+        ids.add(entry.id);
+        song.namedDrafts.push({
+          ...(await readEdition(entry, entry.chartType)),
+          id: entry.id,
+          name: entry.name,
+          chartType: entry.chartType,
+        });
+      }
+    }
+    if (project.activeDrafts) {
+      song.activeDrafts = {};
+      for (const type of CHART_TYPES) {
+        const id = project.activeDrafts[type];
+        if (id && !song.namedDrafts?.some((d) => d.id === id && d.chartType === type))
+          throw new Error('活动草稿记录无效。');
+        if (id) song.activeDrafts[type] = id;
+      }
+    }
     const revision = digest(Buffer.concat(buffers));
     const location: MapLocation = {
       folder: relative,
@@ -443,47 +479,98 @@ export class MapsWorkspace {
     };
     if (!song.hidden) delete next.hidden;
     const pending: { file: string; data: string }[] = [];
+    const queueEdition = async (
+      edition: Edition,
+      type: (typeof CHART_TYPES)[number],
+      file: string,
+      owned: boolean,
+    ) => {
+      const chart = parseChart({ ...edition.chart, songId: song.id, chartType: type });
+      const media = project.media.find(
+        (m) =>
+          m.id === chart.videoHint.assetId || m.aliases.includes(chart.videoHint.assetId ?? ''),
+      );
+      if (!media) throw new Error('视频尚未存入此曲目目录，未保存。请重新定位视频。');
+      const actual = await this.mediaFile(folder, media);
+      media.file = path.relative(folder, actual).split(path.sep).join('/');
+      chart.videoHint = {
+        ...chart.videoHint,
+        assetId: media.id,
+        fileName: path.basename(actual),
+      };
+      // Only our managed chart files are replaced; imported author's JSON stays intact.
+      if (!managedChart.test(file)) throw new Error('托管谱面文件名无效。');
+      const cover = await this.cover(folder, edition.cover, `wfp-${type}-draft-cover`);
+      const entry: Entry = {
+        file,
+        cover,
+        albumId: edition.albumId,
+        updatedAt: edition.updatedAt,
+      };
+      const target = path.join(folder, file);
+      if (
+        !owned &&
+        (await stat(target).then(
+          () => true,
+          () => false,
+        ))
+      )
+        throw new Error(`文件 ${file} 已存在但不属于此作品，未覆盖。`);
+      pending.push({ file: target, data: JSON.stringify(chart, null, 2) + '\n' });
+      return entry;
+    };
     for (const collection of ['drafts', 'released'] as const)
       for (const type of CHART_TYPES) {
         const edition = song[collection][type];
         if (!edition) continue;
-        const chart = parseChart({ ...edition.chart, songId: song.id, chartType: type });
-        const media = project.media.find(
-          (m) =>
-            m.id === chart.videoHint.assetId || m.aliases.includes(chart.videoHint.assetId ?? ''),
-        );
-        if (!media) throw new Error('视频尚未存入此曲目目录，未保存。请重新定位视频。');
-        const actual = await this.mediaFile(folder, media);
-        media.file = path.relative(folder, actual).split(path.sep).join('/');
-        chart.videoHint = {
-          ...chart.videoHint,
-          assetId: media.id,
-          fileName: path.basename(actual),
-        };
         const file =
           project[collection][type]?.file ??
           `wfp-${type}-${collection === 'drafts' ? 'draft' : 'released'}.json`;
-        // Only our managed chart files are replaced; imported author's JSON stays intact.
-        if (!/^wfp-(fitness|dance)-(draft|released)\.json$/.test(file))
-          throw new Error('托管谱面文件名无效。');
-        const cover = await this.cover(folder, edition.cover, `wfp-${type}-${collection}-cover`);
-        next[collection][type] = {
+        next[collection][type] = await queueEdition(
+          edition,
+          type,
           file,
-          cover,
-          albumId: edition.albumId,
-          updatedAt: edition.updatedAt,
-        };
-        const target = path.join(folder, file);
-        if (
-          !project[collection][type] &&
-          (await stat(target).then(
-            () => true,
-            () => false,
-          ))
-        )
-          throw new Error(`文件 ${file} 已存在但不属于此作品，未覆盖。`);
-        pending.push({ file: target, data: JSON.stringify(chart, null, 2) + '\n' });
+          !!project[collection][type],
+        );
       }
+    // Missing fields from an older client cannot erase named drafts.
+    const named = new Map((current?.song.namedDrafts ?? []).map((d) => [d.id, d]));
+    for (const draft of song.namedDrafts ?? []) {
+      validId(draft.id);
+      draftName(draft.name);
+      if (!CHART_TYPES.includes(draft.chartType)) throw new Error('草稿类型无效。');
+      const old = named.get(draft.id);
+      if (old && old.chartType !== draft.chartType) throw new Error('不能改变已有草稿的类型。');
+      named.set(draft.id, draft);
+    }
+    if (named.size || project.namedDrafts || song.namedDrafts) {
+      next.namedDrafts = [];
+      const names = new Set<string>();
+      for (const draft of named.values()) {
+        const name = draftName(draft.name),
+          key = JSON.stringify([draft.chartType, name]);
+        if (names.has(key)) throw new Error('同类型存在重名草稿。');
+        names.add(key);
+        const file = `wfp-${draft.chartType}-draft-${draft.id}.json`;
+        const entry = await queueEdition(
+          draft,
+          draft.chartType,
+          file,
+          !!project.namedDrafts?.some((d) => d.id === draft.id),
+        );
+        next.namedDrafts.push({ ...entry, id: draft.id, name, chartType: draft.chartType });
+      }
+    }
+    const active = song.activeDrafts ?? {};
+    if (song.activeDrafts || project.activeDrafts) {
+      next.activeDrafts = {};
+      for (const type of CHART_TYPES) {
+        const id = active[type];
+        if (id && !next.namedDrafts?.some((d) => d.id === id && d.chartType === type))
+          throw new Error('活动草稿不存在。');
+        if (id) next.activeDrafts[type] = id;
+      }
+    }
     await atomic(
       path.join(folder, '.wfp-save.json'),
       JSON.stringify({

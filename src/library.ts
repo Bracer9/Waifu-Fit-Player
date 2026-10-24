@@ -9,13 +9,111 @@ export type Edition = {
   cover: string;
   updatedAt: number;
 };
+export type NamedDraft = Edition & { id: string; name: string; chartType: ChartType };
 export type Song = {
   id: string;
   /** Persisted removal from the library; the original files remain on disk. */
   hidden?: true;
   drafts: Partial<Record<ChartType, Edition>>;
   released: Partial<Record<ChartType, Edition>>;
+  namedDrafts?: NamedDraft[];
+  activeDrafts?: Partial<Record<ChartType, string>>;
 };
+
+export function draftName(value: string): string {
+  const name = value.trim();
+  if (!name || name.length > 60 || /[\x00-\x1f]/.test(name))
+    throw new Error('草稿名称请填写 1～60 个字符。');
+  return name;
+}
+export function selectedDraftId(song: Song, type: ChartType): string {
+  const id = song.activeDrafts?.[type],
+    named = song.namedDrafts?.find((d) => d.id === id),
+    working = song.drafts[type];
+  return named &&
+    working &&
+    JSON.stringify([named.chart, named.cover, named.albumId]) ===
+      JSON.stringify([working.chart, working.cover, working.albumId])
+    ? named.id
+    : '';
+}
+
+/** The working slot stays compatible with publishing; named drafts are separate disk files. */
+export function updateWorkingDraft(
+  song: Song,
+  type: ChartType,
+  edition: Edition,
+  activeId?: string | null,
+): Song {
+  const activeDrafts = { ...song.activeDrafts };
+  const target = activeId
+    ? song.namedDrafts?.find((d) => d.id === activeId && d.chartType === type)
+    : undefined;
+  if (activeId && !target) throw new Error('当前命名草稿已不存在，请重新打开。');
+  if (target) activeDrafts[type] = target.id;
+  else delete activeDrafts[type];
+  return {
+    ...song,
+    drafts: { ...song.drafts, [type]: edition },
+    activeDrafts,
+    // Autosave the working copy; a named version changes only on explicit save.
+  };
+}
+
+export function saveNamedDraft(song: Song, type: ChartType, value: string): Song {
+  const name = draftName(value),
+    edition = song.drafts[type];
+  if (!edition) throw new Error('请先打开草稿。');
+  const existing = song.namedDrafts?.find((d) => d.chartType === type && d.name === name);
+  const named: NamedDraft = {
+    ...structuredClone(edition),
+    id: existing?.id ?? crypto.randomUUID(),
+    name,
+    chartType: type,
+  };
+  return {
+    ...song,
+    namedDrafts: [...(song.namedDrafts ?? []).filter((d) => d.id !== named.id), named],
+    activeDrafts: { ...song.activeDrafts, [type]: named.id },
+  };
+}
+
+/** Ordinary Save updates the current version by ID, without asking for a name. */
+export function overwriteActiveDraft(song: Song, type: ChartType): Song {
+  const id = song.activeDrafts?.[type];
+  if (!id) return song;
+  const current = song.drafts[type],
+    target = song.namedDrafts?.find((d) => d.id === id && d.chartType === type);
+  if (!current || !target) throw new Error('当前草稿已不存在，请重新打开。');
+  return {
+    ...song,
+    namedDrafts: song.namedDrafts!.map((d) =>
+      d.id === id ? { ...d, ...structuredClone(current) } : d,
+    ),
+  };
+}
+
+export function selectNamedDraft(song: Song, type: ChartType, id?: string | null): Song {
+  if (!id) return song;
+  const selected = song.namedDrafts?.find((d) => d.id === id && d.chartType === type);
+  if (!selected) throw new Error('未找到选中的草稿，请重新读取本地作品。');
+  let next = song;
+  // A detached, unnamed working copy must not disappear when loading a named one.
+  const current = song.drafts[type];
+  const content = (e: Edition) => JSON.stringify([e.chart, e.albumId, e.cover]);
+  if (
+    current &&
+    !song.namedDrafts?.some((d) => d.chartType === type && content(d) === content(current))
+  ) {
+    let name = '未命名草稿',
+      index = 2;
+    while (next.namedDrafts?.some((d) => d.chartType === type && d.name === name))
+      name = `未命名草稿 ${index++}`;
+    next = saveNamedDraft(next, type, name);
+  }
+  const { id: _id, name: _name, chartType: _type, ...edition } = selected;
+  return updateWorkingDraft(next, type, structuredClone(edition), id);
+}
 
 /** Slot names are authoritative, including old copied drafts whose chart tag differed. */
 export function migrateSong(song: {
@@ -89,7 +187,11 @@ export function editionsIn(song: Song, albumId: string): ChartType[] {
 export function videoIds(song: Song): string[] {
   return [
     ...new Set(
-      [...Object.values(song.drafts), ...Object.values(song.released)].flatMap((edition) =>
+      [
+        ...Object.values(song.drafts),
+        ...Object.values(song.released),
+        ...(song.namedDrafts ?? []),
+      ].flatMap((edition) =>
         edition.chart.videoHint.assetId ? [edition.chart.videoHint.assetId] : [],
       ),
     ),
