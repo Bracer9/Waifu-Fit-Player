@@ -139,13 +139,18 @@ export function migrateSong(song: {
   }
   return next;
 }
-export type Album = { id: string; name: string; cover: string };
+export type Album = {
+  id: string;
+  name: string;
+  cover: string;
+  /** Absent keeps original artwork recognition; only anime uses this override. */
+  coverEffect?: 'anime-lens' | 'none';
+};
 export const DEFAULT_ALBUMS: Album[] = [
   { id: 'all', name: '全部曲目', cover: '' },
   { id: 'anime', name: '动漫', cover: '' },
   { id: 'pop', name: '流行', cover: '' },
   { id: 'vocaloid', name: '虚拟歌姬', cover: '' },
-  { id: 'touhou', name: '东方', cover: '' },
 ];
 
 export function publishSong(song: Song, chartType: ChartType): Song {

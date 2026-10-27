@@ -75,13 +75,13 @@ test('home initially selects play and restores that selection after returning fr
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await only(page, page.locator('.collection-album[data-id="all"]'));
   await page.keyboard.press('ArrowDown');
-  await only(page, page.locator('.collection-album[data-id="touhou"]'));
+  await only(page, page.locator('.collection-album[data-id="anime"]'));
   await page.keyboard.press('Backspace');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await only(page, page.locator('.play-mode'));
   await page.keyboard.press('Enter');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
-  await only(page, page.locator('.collection-album[data-id="touhou"]'));
+  await only(page, page.locator('.collection-album[data-id="anime"]'));
   await page.keyboard.press('Backspace');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await only(page, page.locator('.play-mode'));
@@ -213,7 +213,7 @@ test('专辑顶端和单曲按上通往齿轮，单曲左右只选曲，鼠标�
   await importDemo(page, chart);
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);

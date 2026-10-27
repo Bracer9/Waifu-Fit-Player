@@ -1,14 +1,46 @@
-import { readSongs } from './helpers/library';
+import { readSongs, putAlbums } from './helpers/library';
 import { expect, test, type Page } from '@playwright/test';
 import { blankChart } from '../src/model';
 import { insertAlbum, importDemo, holdStart } from './helpers/project';
 import { createCalorieIndex } from '../src/calories';
 
 const songs = readSongs;
+
+test('retired album stays absent after loading saved metadata and the four remaining albums navigate normally', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await putAlbums(page, [{ id: 'touhou', name: 'Retired album', cover: '' }]);
+  await page.reload();
+  await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await expect(page.locator('.collection-album')).toHaveCount(4);
+  await expect(page.locator('.collection-album[data-id="touhou"]')).toHaveCount(0);
+  for (const [index, id] of ['all', 'anime', 'pop', 'vocaloid'].entries()) {
+    if (index) await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.collection-album[aria-current="true"]')).toHaveAttribute(
+      'data-id',
+      id,
+    );
+  }
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('.collection-album[aria-current="true"]')).toHaveAttribute(
+    'data-id',
+    'vocaloid',
+  );
+  await page.screenshot({ path: 'artifacts/albums-four-categories.png' });
+  await importDemo(page);
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  await expect(page.getByLabel('所属专辑').locator('option[value="touhou"]')).toHaveCount(0);
+  await page.getByRole('button', { name: '管理专辑与封面', exact: true }).click();
+  const tabs = page.locator('.album-edit-tabs');
+  await expect(tabs.getByRole('button')).toHaveCount(5); // Four categories plus New album.
+  await expect(tabs).not.toContainText('Retired album');
+});
 async function publish(page: Page) {
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   if (!(await page.getByLabel('所属专辑').inputValue()))
-    await page.getByLabel('所属专辑').selectOption('touhou');
+    await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: /确认(发布|更新发布)/ }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -243,7 +275,7 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
   );
   await page.reload();
   await page.getByRole('button', { name: /音游模式/ }).click();
-  await page.locator('.collection-album').filter({ hasText: '东方' }).click();
+  await page.locator('.collection-album').filter({ hasText: '动漫' }).click();
   await insertAlbum(page);
   await expect(page.locator('.record-card')).toHaveCount(5);
   await expect(page.getByRole('button', { name: '上一首', exact: true })).toHaveCount(0);
@@ -275,8 +307,8 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
   });
   expect(gapButtons).toBe(true);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await expect(page.locator('.collection-album[aria-current="true"]')).toContainText('东方');
-  await expect(page.locator('.collection-album[data-id="touhou"]')).toHaveAttribute(
+  await expect(page.locator('.collection-album[aria-current="true"]')).toContainText('动漫');
+  await expect(page.locator('.collection-album[data-id="anime"]')).toHaveAttribute(
     'data-highlighted',
   );
   await page.locator('.collection-album[aria-current="true"]').click();

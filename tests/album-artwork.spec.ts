@@ -12,7 +12,7 @@ test('centred albums show the next caption with its bottom beside the footer con
 }) => {
   await albums(page);
   await page.mouse.move(10, 10);
-  for (const id of ['all', 'anime', 'pop', 'vocaloid']) {
+  for (const id of ['all', 'anime', 'pop']) {
     const current = page.locator(`.collection-album[data-id="${id}"]`);
     await expect(current).toHaveAttribute('aria-current', 'true');
     await expect
@@ -59,7 +59,6 @@ test('centred albums show the next caption with its bottom beside the footer con
     ).toBe(true);
     await page.keyboard.press('ArrowDown');
   }
-  await page.keyboard.press('ArrowUp');
   await expect(page.locator('.collection-album[data-id="vocaloid"]')).toHaveAttribute(
     'aria-current',
     'true',
@@ -72,7 +71,7 @@ test('album originals occupy a full 7:2 picture area; only neighbouring cards ha
 }) => {
   await albums(page);
   const cards = page.locator('.collection-album');
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(4);
   const blur = (index: number) =>
     cards
       .nth(index)
@@ -82,7 +81,7 @@ test('album originals occupy a full 7:2 picture area; only neighbouring cards ha
       });
   await expect.poll(() => blur(0)).toBeLessThan(0.05);
   await expect.poll(() => blur(1)).toBeGreaterThan(0.5);
-  for (const id of ['all', 'anime', 'pop', 'vocaloid', 'touhou']) {
+  for (const id of ['all', 'anime', 'pop', 'vocaloid']) {
     const filename = id === 'anime' ? 'animie' : id === 'vocaloid' ? 'Vocaloid' : id;
     const original = readFileSync(`src/assets/albums-illustrations/${filename}_album.png`);
     const dimensions = [original.readUInt32BE(16), original.readUInt32BE(20)];

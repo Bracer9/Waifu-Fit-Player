@@ -141,7 +141,7 @@ async function publish(page: Page, title: string, coverFile: string) {
   });
   await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByLabel('选择曲绘图片').setInputFiles(coverFile);
   const cover = await page.locator('.draft-cover img').getAttribute('src');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();

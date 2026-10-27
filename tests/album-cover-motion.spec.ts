@@ -1,5 +1,83 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { putAlbums } from './helpers/library';
+import { importDemo } from './helpers/project';
+
+test('replacement anime artwork retains the lens flare after a disk save and reload', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original = `data:image/png;base64,${readFileSync('src/assets/albums-illustrations/anime_album2.png').toString('base64')}`;
+  const replacement = await page.evaluate(async (src) => {
+    const image = new Image();
+    image.src = src;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    canvas.getContext('2d')!.drawImage(image, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.9);
+  }, original);
+  // Re-encoding breaks the original fingerprint, as Photoshop exports do.
+  await page.route('**/replacement-anime.jpg', (route) =>
+    route.fulfill({
+      contentType: 'image/jpeg',
+      body: Buffer.from(replacement.split(',')[1], 'base64'),
+    }),
+  );
+  for (let visit = 0; visit < 2; visit++) {
+    const cover = visit === 0 ? replacement : '/replacement-anime.jpg';
+    await putAlbums(page, [{ id: 'anime', name: '动漫', cover, coverEffect: 'anime-lens' }]);
+    await page.reload();
+    await page.getByRole('button', { name: /音游模式/ }).click();
+    await expect(page.locator('.menu-curtain')).toHaveCount(0);
+    await page.mouse.move(10, 10);
+    await page.keyboard.press('ArrowDown');
+    const anime = page.locator('.collection-album[data-id="anime"]');
+    await expect(anime).toHaveAttribute('aria-current', 'true');
+    await expect(anime.locator('.album-cover-detail.sunset-window')).toHaveCSS('opacity', '1');
+    await expect(anime.locator('.album-sun-lens')).toHaveAttribute(
+      'transform',
+      'translate(1347 405)',
+    );
+    await expect(anime.locator('.album-cover-scene')).toHaveCSS('transform', 'none');
+    await expect(anime.locator('.album-lens-source')).toHaveCSS('animation-play-state', 'running');
+    const image = anime.locator('.album-cover-scene > img');
+    await expect
+      .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+      .toBe(2048);
+    const src = await image.getAttribute('src');
+    expect(src === cover).toBe(true);
+    await anime
+      .locator('.collection-art')
+      .screenshot({ path: `artifacts/anime-replacement-${visit}.png` });
+    await page.keyboard.press('ArrowDown');
+    await expect(anime.locator('.album-lens-source')).toHaveCSS('animation-play-state', 'paused');
+  }
+  await importDemo(page);
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  await page.getByRole('button', { name: '管理专辑与封面', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '专辑与封面', exact: true });
+  await dialog.getByRole('button', { name: '动漫', exact: true }).click();
+  const option = dialog.getByRole('checkbox', { name: /沿用光斑特效/ });
+  await expect(option).toBeChecked();
+  await dialog.getByRole('button', { name: '流行', exact: true }).click();
+  await expect(option).toHaveCount(0);
+  await dialog.getByRole('button', { name: '动漫', exact: true }).click();
+  await option.uncheck();
+  await dialog.getByRole('button', { name: '保存专辑', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: '保存专辑', exact: true })).toBeEnabled();
+  await page.screenshot({ path: 'artifacts/anime-cover-effect-option.png' });
+  await dialog.getByRole('button', { name: '关闭专辑设置', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: /音游模式/ }).click();
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  await expect(page.locator('.collection-album[data-id="anime"] .album-cover-detail')).toHaveCount(
+    0,
+  );
+  const stored = await (await page.request.get('/__wfp/maps')).json();
+  expect(stored.albums.find((a: { id: string }) => a.id === 'anime').coverEffect).toBe('none');
+});
 
 async function openAuthoredCovers(page: Page) {
   await page.addInitScript(() => {
@@ -16,7 +94,6 @@ async function openAuthoredCovers(page: Page) {
   await page.goto('/');
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   const covers = [
-    { id: 'touhou', name: '东方', file: 'touhou_album - 4.png' },
     { id: 'anime', name: '动漫', file: 'anime_album2.png' },
     { id: 'vocaloid', name: '虚拟歌姬', file: 'vocaloid_album2.png' },
   ].map(({ file, ...album }) => ({
@@ -205,7 +282,6 @@ test('album-specific scenes keep their static layers, animate only the selection
 }) => {
   await openAuthoredCovers(page);
   const all = page.locator('.collection-album[data-id="all"]');
-  const moon = page.locator('.collection-album[data-id="touhou"]');
   const vinyl = page.locator('.collection-album[data-id="vocaloid"]');
   const pop = page.locator('.collection-album[data-id="pop"]');
   await expect(vinyl.locator('.album-cover-detail')).toHaveAttribute('data-persistent', 'true');
@@ -236,37 +312,10 @@ test('album-specific scenes keep their static layers, animate only the selection
   });
   await page.screenshot({ path: 'artifacts/album-cover-all-1080p.png' });
 
-  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
-  await expect(moon).toHaveAttribute('aria-current', 'true');
-  await expect(moon.locator('.album-ribbon-sway')).toHaveCSS('animation-play-state', 'running');
-  await expect(all.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
-  await expect
-    .poll(() =>
-      moon.evaluate((card: HTMLElement) => {
-        const shelf = card.parentElement!;
-        return Math.abs(
-          card.offsetTop + card.offsetHeight / 2 - shelf.scrollTop - shelf.clientHeight / 2,
-        );
-      }),
-    )
-    .toBeLessThan(5);
-  await moon.locator('.album-ribbon-sway').evaluate((node) => {
-    const animation = node.getAnimations()[0];
-    animation.pause();
-    animation.currentTime = 2112;
-  });
-  await moon.locator('.album-moon-halo').evaluate((node) => {
-    const animation = node.getAnimations()[0];
-    animation.pause();
-    animation.currentTime = 2048;
-  });
-  await page.screenshot({ path: 'artifacts/album-cover-touhou-1080p.png' });
-
-  await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown');
   await expect(vinyl).toHaveAttribute('aria-current', 'true');
   await expect(vinyl.locator('.album-vinyl-disc')).toHaveAttribute('href', idleFace!);
   await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
-  await expect(moon.locator('.album-ribbon-sway')).toHaveCSS('animation-play-state', 'paused');
 
   await page.keyboard.press('ArrowUp');
   await expect(pop).toHaveAttribute('aria-current', 'true');
@@ -369,5 +418,4 @@ test('album-specific scenes keep their static layers, animate only the selection
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(pop.locator('.album-cover-detail')).toHaveCSS('display', 'none');
   await expect(pop.locator('.album-cover-defocus')).toHaveCSS('display', 'none');
-  await expect(moon.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
 });

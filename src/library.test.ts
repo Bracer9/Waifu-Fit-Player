@@ -23,7 +23,7 @@ function fixture(): Song {
   chart.notes = [{ id: 'note', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
   return {
     id: '11223344-1234-1234-1234-aabbccddeeff',
-    drafts: { dance: { chart, cover: 'cover', albumId: 'touhou', updatedAt: 1 } },
+    drafts: { dance: { chart, cover: 'cover', albumId: 'anime', updatedAt: 1 } },
     released: {},
   };
 }
@@ -122,14 +122,14 @@ describe('local drafts and released chart types', () => {
     expect(published.released.fitness!.chart.videoOffsetMs).toBe(300);
     expect(published.released.fitness!.chart.intensity).toBe('high');
     expect(editionsIn(published, 'all')).toEqual(['fitness', 'dance']);
-    expect(editionsIn(published, 'anime')).toEqual([]);
+    expect(editionsIn(published, 'pop')).toEqual([]);
   });
   it('withdraws one chartType while keeping its draft and the other release', () => {
     const song = publishSong(fixture(), 'dance');
     song.drafts.fitness = structuredClone(song.drafts.dance);
     const both = publishSong(song, 'fitness');
     const withdrawn = unpublishSong(both, 'dance');
-    expect(editionsIn(withdrawn, 'touhou')).toEqual(['fitness']);
+    expect(editionsIn(withdrawn, 'anime')).toEqual(['fitness']);
     expect(withdrawn.drafts.dance).toEqual(song.drafts.dance);
     expect(editionsIn(unpublishSong(withdrawn, 'fitness'), 'all')).toEqual([]);
     expect(videoIds(withdrawn)).toEqual(['aabbccdd-1234-1234-1234-aabbccddeeff']);

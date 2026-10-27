@@ -43,6 +43,7 @@ export function useLibrary(notify: (text: string) => void) {
           setSongs(mergeMapSongs(recovered, packs.songs));
           const albums: Album[] = [];
           for (const album of legacyAlbums) {
+            if (album.id === 'touhou') continue;
             try {
               albums.push(await saveMapAlbum(album, true));
             } catch {
@@ -52,7 +53,7 @@ export function useLibrary(notify: (text: string) => void) {
           const groups = [
             ...albums,
             ...packs.albums.filter((a) => !albums.some((b) => b.id === a.id)),
-          ];
+          ].filter((album) => album.id !== 'touhou'); // Retired built-in album, including old saved copies.
           setAlbums([
             ...DEFAULT_ALBUMS.map((a) => {
               const saved = groups.find((b) => b.id === a.id);

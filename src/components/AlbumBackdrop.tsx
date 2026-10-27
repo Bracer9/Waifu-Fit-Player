@@ -3,7 +3,6 @@ import type { Album } from '../library';
 
 const CATEGORY_NAMES: Record<string, string> = {
   all: 'ALL TRACKS',
-  touhou: 'TOUHOU',
   anime: 'ANIME',
   vocaloid: 'VOCALOID',
   pop: 'POP',

@@ -86,7 +86,7 @@ async function prepare(page: Page, crossing = false) {
   const start = page.getByRole('textbox', { name: '游玩开始', exact: true });
   await start.fill('00:03');
   await start.press('Enter');
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   return chart;
 }
 

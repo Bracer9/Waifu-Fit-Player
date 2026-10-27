@@ -4,7 +4,12 @@ import { playableChart, playRangeCrossings } from './play-range';
 import type { Album, Song } from './library';
 
 export const PACK_FORMAT = 'waifu-fit-player-song';
-export type PackAlbum = { id: string; name: string; cover?: string };
+export type PackAlbum = {
+  id: string;
+  name: string;
+  cover?: string;
+  coverEffect?: Album['coverEffect'];
+};
 export type PackChart = { file: string; video?: string; cover?: string; album?: PackAlbum };
 export type SongPack = {
   format: typeof PACK_FORMAT;
@@ -54,10 +59,19 @@ function album(value: unknown): PackAlbum {
     !value.name.trim()
   )
     throw new Error('曲包缺少专辑信息。');
+  if (
+    value.coverEffect !== undefined &&
+    value.coverEffect !== 'anime-lens' &&
+    value.coverEffect !== 'none'
+  )
+    throw new Error('曲包专辑封面特效设置无效。');
   return {
     id: value.id,
     name: value.name,
     ...(value.cover ? { cover: packPath(value.cover) } : {}),
+    ...(value.coverEffect !== undefined
+      ? { coverEffect: value.coverEffect as Album['coverEffect'] }
+      : {}),
   };
 }
 

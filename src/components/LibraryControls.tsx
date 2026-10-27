@@ -143,7 +143,11 @@ export function AlbumManager({
     if (!selected.name.trim()) return;
     setSaving(true);
     try {
-      await onSave({ ...selected, name: selected.name.trim() });
+      await onSave({
+        ...selected,
+        name: selected.name.trim(),
+        ...(selected.id === 'anime' ? { coverEffect: selected.coverEffect ?? 'anime-lens' } : {}),
+      });
       notify('专辑已保存。');
     } catch (error) {
       notify(`保存失败：${(error as Error).message}`);
@@ -196,6 +200,23 @@ export function AlbumManager({
             }
           />
         </div>
+        {selected.id === 'anime' && (
+          <label className="album-effect-option">
+            <input
+              type="checkbox"
+              checked={selected.coverEffect !== 'none'}
+              onChange={(event) =>
+                setSelected({
+                  ...selected,
+                  coverEffect: event.target.checked ? 'anime-lens' : 'none',
+                })
+              }
+            />
+            <span>
+              沿用光斑特效<small>保留当前夕阳镜头光斑，适合构图相近的新封面。</small>
+            </span>
+          </label>
+        )}
         <div className="modal-actions">
           <label className="button light small">
             选择封面

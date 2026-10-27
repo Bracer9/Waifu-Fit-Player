@@ -129,7 +129,7 @@ test('settings keyboard navigation adjusts shared audio and note speed on home, 
   chart.notes = [{ id: 'n', lane: 'squat', direction: 'down', timeMs: 1000, kind: 'tap' }];
   await importDemo(page, chart);
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await expect(page.getByRole('button', { name: '确认发布', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();

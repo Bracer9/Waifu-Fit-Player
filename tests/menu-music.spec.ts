@@ -238,7 +238,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   expect((await sound(page)).context).toBe('suspended');
   await expect(page.getByRole('slider', { name: 'Volume', exact: true })).toHaveValue('0.25');
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);

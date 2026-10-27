@@ -2,33 +2,19 @@ import sunset from './assets/albums-illustrations/animie_album.png';
 import sunsetWindow from './assets/albums-illustrations/anime_album2.png';
 import vinyl from './assets/albums-illustrations/vocaloid_album2.png';
 import all from './assets/albums-illustrations/all_album.png';
-import moonLeft from './assets/albums-illustrations/touhou_album.png';
-import moonRight from './assets/albums-illustrations/touhou_album - 4.png';
 import pop from './assets/albums-illustrations/pop_album.png';
+import type { Album } from './library';
 
-export type AlbumCoverDetail =
-  'sunset' | 'sunset-window' | 'vinyl' | 'all-record' | 'moon-left' | 'moon-right' | 'idol-stage';
+export type AlbumCoverDetail = 'sunset' | 'sunset-window' | 'vinyl' | 'all-record' | 'idol-stage';
 
-// Only these exact illustrations have authored local masks. A studio upload keeps
-// its original bytes, so recognize it too without guessing from an album's name.
+// Authored masks remain tied to exact illustrations. Anime can explicitly retain
+// its additive lens flare on replacement artwork, without replacing image pixels.
 const details = [
   {
     album: 'all',
     source: all,
     kind: 'all-record',
     hash: '65eda88ebf02c920248c5b5c09de5bc1e75f4d67f129485e3e6eb37778b1e4d0',
-  },
-  {
-    album: 'touhou',
-    source: moonLeft,
-    kind: 'moon-left',
-    hash: 'd3a133451c404710867baca619c594b59f26e709c3c761947075dd39376c024b',
-  },
-  {
-    album: 'touhou',
-    source: moonRight,
-    kind: 'moon-right',
-    hash: '070379ad724b59c66e0be013002c84f09bc7f422c4434bebd1e34e3d8761d99b',
   },
   {
     album: 'pop',
@@ -60,11 +46,15 @@ const fingerprints = new Map<string, Promise<string>>();
 export async function albumCoverDetail(
   album: string,
   source: string,
+  effect?: Album['coverEffect'],
 ): Promise<AlbumCoverDetail | undefined> {
+  if (album === 'anime' && effect === 'none') return;
   const candidates = details.filter((detail) => detail.album === album);
   const direct = candidates.find((detail) => detail.source === source);
   if (direct) return direct.kind;
-  if (!candidates.length || !source.startsWith('data:image/')) return;
+  const fallback =
+    album === 'anime' && effect === 'anime-lens' && source ? 'sunset-window' : undefined;
+  if (!candidates.length || !source.startsWith('data:image/')) return fallback;
   let fingerprint = fingerprints.get(source);
   if (!fingerprint) {
     fingerprint = fetch(source)
@@ -78,5 +68,5 @@ export async function albumCoverDetail(
     if (fingerprints.size > 8) fingerprints.delete(fingerprints.keys().next().value!);
   }
   const hash = await fingerprint;
-  return candidates.find((detail) => detail.hash === hash)?.kind;
+  return candidates.find((detail) => detail.hash === hash)?.kind ?? fallback;
 }

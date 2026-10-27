@@ -539,6 +539,7 @@ export function LibraryMenu(props: Props) {
                 <AlbumCover
                   src={covers[a.id]}
                   albumId={a.id}
+                  coverEffect={a.coverEffect}
                   selected={a.id === album.id}
                   playing={props.musicPlaying}
                   eager={index < 2}

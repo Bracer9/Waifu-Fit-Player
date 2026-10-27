@@ -49,7 +49,7 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
   });
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);

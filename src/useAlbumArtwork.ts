@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Album } from './library';
 import { coverFromFile } from './cover';
 import all from './assets/albums-illustrations/all_album.png';
-import touhou from './assets/albums-illustrations/touhou_album.png';
 import anime from './assets/albums-illustrations/animie_album.png';
 import vocaloid from './assets/albums-illustrations/Vocaloid_album.png';
 import pop from './assets/albums-illustrations/pop_album.png';
 
-export const ALBUM_ARTWORK: Record<string, string> = { all, touhou, anime, vocaloid, pop };
+export const ALBUM_ARTWORK: Record<string, string> = { all, anime, vocaloid, pop };
 const legacyCopies = new Map<string, Promise<string>>();
 // Verified historical 512px crops. Canvas/WebP output can differ between browser
 // rendering paths, so re-encoding today is not a reliable identity check alone.

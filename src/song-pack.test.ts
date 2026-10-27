@@ -116,6 +116,14 @@ describe('renamed local videos', () => {
 });
 
 describe('portable song folders', () => {
+  it('keeps the optional cover effect in exported album metadata and rejects invalid settings', () => {
+    const pack = manifest();
+    pack.album.coverEffect = 'none';
+    expect(parseSongPack(JSON.parse(JSON.stringify(pack))).album.coverEffect).toBe('none');
+    expect(() =>
+      parseSongPack({ ...pack, album: { ...pack.album, coverEffect: 'other' } }),
+    ).toThrow('特效');
+  });
   it('loads both editions and their metadata without rewriting notes or timing; relocation keeps IDs', async () => {
     const root = path.join(temporary, 'maps'),
       folder = path.join(root, '曲包');

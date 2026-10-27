@@ -8,6 +8,7 @@ import {
   prepareAlbumEffect,
 } from './AlbumCoverEffects';
 import '../album-cover.css';
+import type { Album } from '../library';
 
 const MOTION = { driftMs: 6000, focusCycleMs: 3000, returnMs: 420, zoom: 1.02 };
 const DRIFT_EASING = 'cubic-bezier(.25,.48,.35,1)';
@@ -25,12 +26,14 @@ const FOCUS_STOPS = [
 export function AlbumCover({
   src,
   albumId,
+  coverEffect,
   selected,
   playing,
   eager,
 }: {
   src?: string;
   albumId: string;
+  coverEffect?: Album['coverEffect'];
   selected: boolean;
   playing: boolean;
   eager: boolean;
@@ -40,29 +43,34 @@ export function AlbumCover({
   const defocus = useRef<HTMLSpanElement>(null);
   const focusing = useRef<Animation | null>(null);
   const glinting = useRef<Animation | null>(null);
-  const [detail, setDetail] = useState<{ source: string; kind?: AlbumCoverDetail } | null>(null);
+  const [detail, setDetail] = useState<{
+    source: string;
+    effect?: Album['coverEffect'];
+    kind?: AlbumCoverDetail;
+  } | null>(null);
   const [moving, setMoving] = useState(false);
   const id = useId().replace(/:/g, '');
-  const kind = detail && detail.source === src ? detail.kind : undefined;
+  const kind =
+    detail && detail.source === src && detail.effect === coverEffect ? detail.kind : undefined;
   const pending = !!src && detail?.source !== src;
-  const driftEnabled = !['all', 'touhou', 'vocaloid', 'anime'].includes(albumId);
+  const driftEnabled = !['all', 'vocaloid', 'anime'].includes(albumId);
 
   useEffect(() => {
     if (!src) return;
     let alive = true;
-    void albumCoverDetail(albumId, src)
+    void albumCoverDetail(albumId, src, coverEffect)
       .then(async (kind) => {
         if (kind) await prepareAlbumEffect(kind);
-        if (alive) setDetail({ source: src, kind });
+        if (alive) setDetail({ source: src, effect: coverEffect, kind });
       })
       .catch(() => {
         // Retain the original if a derived layer cannot load.
-        if (alive) setDetail({ source: src });
+        if (alive) setDetail({ source: src, effect: coverEffect });
       });
     return () => {
       alive = false;
     };
-  }, [albumId, src]);
+  }, [albumId, src, coverEffect]);
 
   useLayoutEffect(() => {
     const node = scene.current!;

@@ -1826,6 +1826,25 @@
 .album-cover-preview .cover-art {
   object-fit: contain;
 }
+.album-effect-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+.album-effect-option input {
+  accent-color: var(--pink);
+  margin-top: 3px;
+}
+.album-effect-option small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+}
 .song-manager {
   width: min(850px, calc(var(--menu-vw, 1vw) * 90));
 }

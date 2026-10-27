@@ -142,7 +142,7 @@ describe('saved play ranges', () => {
     const chart = fixture();
     const song: Song = {
       id: '11223344-1234-1234-1234-aabbccddeeff',
-      drafts: { dance: { chart, albumId: 'touhou', cover: '', updatedAt: 1 } },
+      drafts: { dance: { chart, albumId: 'anime', cover: '', updatedAt: 1 } },
       released: {},
     };
     const published = publishSong(song, 'dance');

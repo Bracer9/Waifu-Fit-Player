@@ -627,6 +627,8 @@ export class MapsWorkspace {
       typeof album.cover !== 'string'
     )
       throw new Error('专辑信息无效。');
+    if (album.coverEffect !== undefined && !['anime-lens', 'none'].includes(album.coverEffect))
+      throw new Error('专辑封面特效设置无效。');
     const albums = await this.albums();
     const existing = albums.find((a) => a.id === album.id);
     if (migration && existing) return existing;

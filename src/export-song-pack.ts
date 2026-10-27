@@ -74,6 +74,7 @@ export async function exportSongPack(
       id: group.id,
       name: group.name,
       cover: await picture(group.cover, `${type}-album`),
+      ...(group.coverEffect !== undefined ? { coverEffect: group.coverEffect } : {}),
     };
     const cover = await picture(edition.cover, `${type}-cover`);
     const { assetId: _localId, ...hint } = chart.videoHint;

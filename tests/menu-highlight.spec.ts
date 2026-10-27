@@ -39,7 +39,7 @@ test('卡片流光仅跟随最后一次鼠标或键盘操作', async ({ page }) 
     notes: [{ id: 'n', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1000 }],
   });
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);

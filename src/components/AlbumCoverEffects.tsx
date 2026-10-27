@@ -2,21 +2,13 @@ import type { AlbumCoverDetail } from '../album-cover-detail';
 import vinylDisc from '../assets/album-effects/vocaloid-disc.png';
 import vinylForeground from '../assets/album-effects/vocaloid-foreground-mask.png';
 import allDisc from '../assets/album-effects/all-disc.png';
-import ribbonPlate from '../assets/album-effects/touhou-clean.png';
-import ribbon from '../assets/album-effects/touhou-ribbon.png';
 
 const prepared = new Map<AlbumCoverDetail, Promise<void>>();
 export function prepareAlbumEffect(kind: AlbumCoverDetail) {
   let task = prepared.get(kind);
   if (!task) {
     const sources =
-      kind === 'vinyl'
-        ? [vinylDisc, vinylForeground]
-        : kind === 'all-record'
-          ? [allDisc]
-          : kind.startsWith('moon-')
-            ? [ribbonPlate, ribbon]
-            : [];
+      kind === 'vinyl' ? [vinylDisc, vinylForeground] : kind === 'all-record' ? [allDisc] : [];
     task = Promise.all(
       sources.map(async (source) => {
         const image = new Image();
@@ -35,7 +27,7 @@ export function prepareAlbumEffect(kind: AlbumCoverDetail) {
 }
 
 export const persistentAlbumEffect = (kind: AlbumCoverDetail) =>
-  kind === 'vinyl' || kind === 'all-record' || kind.startsWith('moon-');
+  kind === 'vinyl' || kind === 'all-record';
 export const albumEffectViewBox = (kind: AlbumCoverDetail) =>
   kind === 'vinyl'
     ? '0 0 2200 715'
@@ -136,103 +128,6 @@ function CollectionWaveform() {
           rx="5.5"
         />
       ))}
-    </g>
-  );
-}
-
-function MoonScene({ src, id, mirrored }: { src?: string; id: string; mirrored: boolean }) {
-  return (
-    <g transform={mirrored ? 'translate(2345 0) scale(-1 1)' : undefined}>
-      <defs>
-        <clipPath id={`${id}-night`}>
-          <rect x="0" y="88" width="2345" height="505" />
-        </clipPath>
-        <mask
-          id={`${id}-tail-zone`}
-          maskUnits="userSpaceOnUse"
-          x="0"
-          y="0"
-          width="2345"
-          height="670"
-        >
-          <path
-            d="M0 146C200 212 365 250 505 243M505 263C514 403 375 545 224 596"
-            fill="none"
-            stroke="white"
-            strokeWidth="90"
-          />
-        </mask>
-        <filter
-          id={`${id}-pink-alpha`}
-          x="-3%"
-          y="-3%"
-          width="106%"
-          height="106%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 4 -4 0 0 -.7" />
-          <feMorphology operator="dilate" radius="4" />
-        </filter>
-        <mask
-          id={`${id}-old-tail`}
-          maskUnits="userSpaceOnUse"
-          x="0"
-          y="0"
-          width="2345"
-          height="670"
-          style={{ maskType: 'alpha' }}
-        >
-          <g mask={`url(#${id}-tail-zone)`}>
-            <image
-              href={src}
-              transform={mirrored ? 'translate(2345 0) scale(-1 1)' : undefined}
-              width="2345"
-              height="670"
-              filter={`url(#${id}-pink-alpha)`}
-            />
-          </g>
-        </mask>
-        <clipPath id={`${id}-tail-top`}>
-          <rect width="1897" height="274" />
-        </clipPath>
-        <clipPath id={`${id}-tail-bottom`}>
-          <rect y="270" width="1897" height="559" />
-        </clipPath>
-        <clipPath id={`${id}-knot`}>
-          <ellipse cx="505" cy="245" rx="119" ry="62" />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${id}-night)`}>
-        <image
-          href={ribbonPlate}
-          x="0"
-          y="-53"
-          width="2345"
-          height="782"
-          preserveAspectRatio="none"
-          mask={`url(#${id}-old-tail)`}
-        />
-        <g className="album-ribbon-sway">
-          <g transform="translate(0 73) scale(.7426 .63)">
-            <image href={ribbon} width="1897" height="829" clipPath={`url(#${id}-tail-top)`} />
-          </g>
-          <g transform="translate(126.5 47.6) scale(.5566 .7237)">
-            <image href={ribbon} width="1897" height="829" clipPath={`url(#${id}-tail-bottom)`} />
-          </g>
-        </g>
-        <g clipPath={`url(#${id}-knot)`}>
-          <image
-            href={src}
-            transform={mirrored ? 'translate(2345 0) scale(-1 1)' : undefined}
-            width="2345"
-            height="670"
-          />
-        </g>
-        <g className="album-ambient">
-          <ellipse className="album-moon-halo" cx="1780" cy="278" rx="251" ry="232" />
-          <ellipse className="album-moon-water" cx="1780" cy="509" rx="174" ry="13" />
-        </g>
-      </g>
     </g>
   );
 }
@@ -351,8 +246,6 @@ export function AlbumCoverEffects({
         <CollectionWaveform />
       </>
     );
-  if (kind === 'moon-left' || kind === 'moon-right')
-    return <MoonScene src={src} id={id} mirrored={kind === 'moon-left'} />;
   if (kind === 'idol-stage') return <IdolStage id={id} />;
   return <SunsetLens id={id} window={kind === 'sunset-window'} />;
 }

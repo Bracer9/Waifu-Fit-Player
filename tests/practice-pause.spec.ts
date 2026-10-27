@@ -46,7 +46,7 @@ test('restart replays the countdown at the range start, while seeking only chang
   });
   await expect(page.getByRole('heading', { name: chart.title, exact: true })).toBeVisible();
   await page.getByRole('button', { name: '曲目', exact: true }).click();
-  await page.getByLabel('所属专辑').selectOption('touhou');
+  await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
