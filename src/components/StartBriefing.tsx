@@ -9,9 +9,9 @@ import {
 } from 'react';
 import { ArrowRight, ArrowUpRight, Dumbbell, PersonStanding } from 'lucide-react';
 import type { ChartType, Song } from '../library';
-import type { Lane } from '../model';
+import { chartCredit, type Lane } from '../model';
 import { INTENSITY_LABELS, ratingValue } from '../chart-types';
-import { chartArtist, focusMoves, START_BRIEFING } from '../start-briefing';
+import { focusMoves, START_BRIEFING } from '../start-briefing';
 import { createCalorieIndex } from '../calories';
 import { playableChart, playDuration } from '../play-range';
 import { chartTimeAt, formatTime, segmentAt } from '../timing';
@@ -319,9 +319,11 @@ export function StartBriefing({
                 {chart.title}
               </h2>
               <ArrowUpRight aria-hidden="true" />
-              <div className="briefing-artist">
-                <small>ARTIST</small>
-                <span>{chartArtist(chart)}</span>
+              <div className="briefing-mapper">
+                <small>MAPPER</small>
+                <span title={chartCredit(chart, 'mapper') || undefined}>
+                  {chartCredit(chart, 'mapper') || '未标注'}
+                </span>
               </div>
             </div>
             <div className="briefing-mode-row">

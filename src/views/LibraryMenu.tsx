@@ -11,7 +11,7 @@ import { WeeklyNotes } from '../components/WeeklyNotes';
 import { formatTime } from '../timing';
 import { createCalorieIndex } from '../calories';
 import { playableChart, playDuration, videoPlayRange } from '../play-range';
-import type { PlayRange } from '../model';
+import { chartCredit, type PlayRange } from '../model';
 import { useCardHighlight } from '../useCardHighlight';
 import type { MenuSoundPlayer } from '../useMenuSounds';
 import { ratingValue, ratingSummary } from '../chart-types';
@@ -677,8 +677,18 @@ export function LibraryMenu(props: Props) {
           <div className="selection-details">
             <div className="selection-title">
               <span className="eyebrow">SELECTED TRACK</span>
-              <h2>{edition?.chart.title}</h2>
+              <h2 title={edition?.chart.title}>{edition?.chart.title}</h2>
             </div>
+            <dl className="selection-credits" aria-label="歌曲制作署名">
+              {(['music', 'video'] as const).map((role) => (
+                <div key={role}>
+                  <dt>{role.toUpperCase()}</dt>
+                  <dd title={chartCredit(edition?.chart, role) || undefined}>
+                    {chartCredit(edition?.chart, role) || '未标注'}
+                  </dd>
+                </div>
+              ))}
+            </dl>
             <div className="chart-type-choice" aria-label="游玩谱面类型">
               {(['fitness', 'dance'] as const).map((d) => (
                 <button

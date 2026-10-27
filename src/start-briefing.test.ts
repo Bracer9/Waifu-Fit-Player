@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { blankChart, type Note } from './model';
-import { chartArtist, focusMoves } from './start-briefing';
+import { blankChart, chartCredit, parseChart, serializeChart, type Note } from './model';
+import { focusMoves } from './start-briefing';
 
 describe('start briefing data', () => {
   it('counts tap, hold and sway by lane without assigning duration or effort weights', () => {
@@ -45,8 +45,29 @@ describe('start briefing data', () => {
     expect(focusMoves(chart).every((move) => move.share === 0 && !move.prominent)).toBe(true);
   });
   it('reads actual optional credits and marks absent credits without guessing', () => {
-    expect(chartArtist({ ...blankChart(), artist: '  Real artist  ' })).toBe('Real artist');
-    expect(chartArtist({ ...blankChart(), artist: '', author: 'Author' })).toBe('Author');
-    expect(chartArtist(blankChart('Artist-looking song title'))).toBe('未标注');
+    const legacy = Object.assign(blankChart(), { artist: '  Real artist  ', author: 'Ambiguous' });
+    expect(chartCredit(legacy, 'music')).toBe('Real artist');
+    expect(chartCredit(legacy, 'video')).toBe('');
+    expect(chartCredit(legacy, 'mapper')).toBe('');
+    expect(chartCredit(blankChart('Artist-looking song title'), 'music')).toBe('');
+    const chart = {
+      ...legacy,
+      credits: { music: '', video: '  Studio / 映像  ', mapper: 'Mapper' },
+    };
+    expect(chartCredit(chart, 'music')).toBe('');
+    expect(chartCredit(chart, 'video')).toBe('Studio / 映像');
+    expect(chartCredit(chart, 'mapper')).toBe('Mapper');
+    expect(parseChart(JSON.parse(serializeChart(chart))).credits).toEqual(chart.credits);
+  });
+  it('rejects malformed credits at the shared save/import boundary and accepts old charts', () => {
+    expect(() => parseChart(blankChart())).not.toThrow();
+    for (const credits of [
+      null,
+      'name',
+      { mapper: 123 },
+      { music: 'line\nbreak' },
+      { video: 'x'.repeat(241) },
+    ])
+      expect(() => parseChart({ ...blankChart(), credits })).toThrow('制作署名');
   });
 });

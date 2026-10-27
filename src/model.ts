@@ -92,6 +92,8 @@ export type TempoSegment = { id: string; anchorMs: number; bpm: number; meter: '
 export type SpecialEvent = { id: string; timeMs: number; endTimeMs?: number };
 /** Absolute video positions, independent of the chart's video/audio offset. */
 export type PlayRange = { startMs: number; endMs: number };
+/** Credits belong to this chart/video edition and travel with its local JSON. */
+export type ChartCredits = { music?: string; video?: string; mapper?: string };
 export type Chart = {
   schemaVersion: 1;
   songId?: string;
@@ -99,6 +101,7 @@ export type Chart = {
   intensity?: ExerciseIntensity;
   danceDifficulty?: number;
   title: string;
+  credits?: ChartCredits;
   videoOffsetMs?: number;
   playRange?: PlayRange;
   videoHint: { fileName: string; durationMs: number; assetId?: string };
@@ -107,6 +110,13 @@ export type Chart = {
   notes: Note[];
   specialEvents: SpecialEvent[];
 };
+export function chartCredit(chart: Chart | undefined, role: keyof ChartCredits): string {
+  const value = chart?.credits?.[role];
+  if (typeof value === 'string') return value.trim();
+  // Only the unambiguous legacy artist field can supply MUSIC. Never guess a mapper.
+  const legacy = (chart as (Chart & { artist?: unknown }) | undefined)?.artist;
+  return role === 'music' && typeof legacy === 'string' ? legacy.trim() : '';
+}
 export type Snap = 0 | 1 | 2 | 4;
 export const uid = () => crypto.randomUUID();
 export const arrow: Record<Direction, string> = {
@@ -280,6 +290,18 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
   if (input.schemaVersion !== 1)
     throw new ChartError(['不支持此谱面版本，当前仅支持 schemaVersion: 1。']);
   if (typeof input.title !== 'string' || !input.title.trim()) errors.push('作品名称不能为空。');
+  if (input.credits !== undefined) {
+    if (!record(input.credits)) errors.push('制作署名格式无效。');
+    else
+      for (const role of ['music', 'video', 'mapper'] as const) {
+        const value = input.credits[role];
+        if (
+          value !== undefined &&
+          (typeof value !== 'string' || value.length > 240 || /[\x00-\x1f]/.test(value))
+        )
+          errors.push(`制作署名 ${role} 需要不超过 240 个字符的单行文字。`);
+      }
+  }
   if (
     input.songId !== undefined &&
     (typeof input.songId !== 'string' || !/^[a-f0-9-]{36}$/.test(input.songId))

@@ -38,12 +38,3 @@ export function focusMoves(chart: Chart) {
   );
   return moves.map((move) => ({ ...move, prominent: prominent.has(move.id) }));
 }
-
-/** Read existing optional metadata without adding a new chart format or guessing credits. */
-export function chartArtist(metadata: Chart & { artist?: unknown; author?: unknown }): string {
-  return (
-    [metadata.artist, metadata.author]
-      .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      ?.trim() ?? '未标注'
-  );
-}

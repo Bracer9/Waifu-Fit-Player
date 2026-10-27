@@ -281,25 +281,26 @@
   color: var(--briefing-accent);
   stroke-width: 4;
 }
-.briefing-artist {
+.briefing-mapper {
   flex: 0 0 17%;
   min-width: 0;
   border-left: 1px solid #b3b3b0;
   padding-left: 20px;
 }
-.briefing-artist small,
+.briefing-mapper small,
 .briefing-metrics small {
   display: block;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.13em;
 }
-.briefing-artist > span {
-  display: block;
+.briefing-mapper > span {
   margin-top: 4px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
   font-size: 20px;
   font-weight: 700;
 }

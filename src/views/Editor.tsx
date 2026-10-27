@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import {
   noteColor,
+  chartCredit,
   noteSymbol,
   noteAction,
   isStepMove,
@@ -183,10 +184,14 @@ function TextField({
   label,
   value,
   onCommit,
+  allowEmpty = false,
+  maxLength,
 }: {
   label: string;
   value: string;
   onCommit: (s: string) => void;
+  allowEmpty?: boolean;
+  maxLength?: number;
 }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
@@ -196,9 +201,10 @@ function TextField({
       <input
         aria-label={label}
         value={draft}
+        maxLength={maxLength}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
-          if (draft.trim()) onCommit(draft.trim());
+          if (draft.trim() || allowEmpty) onCommit(draft.trim());
           else setDraft(value);
         }}
         onKeyDown={(e) => {
@@ -1998,6 +2004,28 @@ export function Editor({
                   value={chart.title}
                   onCommit={(title) => onChange({ ...chart, title })}
                 />
+                <details className="chart-credits-fields">
+                  <summary>制作署名</summary>
+                  {(
+                    [
+                      ['music', '音乐作者'],
+                      ['video', '视频作者'],
+                      ['mapper', '谱面作者'],
+                    ] as const
+                  ).map(([role, label]) => (
+                    <TextField
+                      key={role}
+                      label={label}
+                      value={chartCredit(chart, role)}
+                      allowEmpty
+                      maxLength={240}
+                      onCommit={(value) => {
+                        if (value !== chartCredit(chart, role))
+                          onChange({ ...chart, credits: { ...chart.credits, [role]: value } });
+                      }}
+                    />
+                  ))}
+                </details>
                 <PlayRangeFields
                   chart={chart}
                   media={media}

@@ -14,7 +14,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { findMapVideo, scanMaps } from '../scripts/maps-library';
 import { blankChart } from './model';
-import { mergeMapSongs, PACK_FORMAT, packPath, parseSongPack, type SongPack } from './song-pack';
+import {
+  mergeMapSongs,
+  PACK_FORMAT,
+  packPath,
+  parseSongPack,
+  playablePackChart,
+  type SongPack,
+} from './song-pack';
 import type { Song } from './library';
 import { createZip } from './zip';
 
@@ -113,6 +120,9 @@ describe('portable song folders', () => {
     const root = path.join(temporary, 'maps'),
       folder = path.join(root, '曲包');
     await fixture(folder);
+    const credits = { music: '音楽作者', video: 'Video Studio', mapper: 'Mapper / 製作者' };
+    const exportedChart = playablePackChart({ ...chart(), credits, danceDifficulty: 7 }, 'dance');
+    await writeFile(path.join(folder, 'dance.wfp.json'), JSON.stringify(exportedChart));
     const loaded = await scanMaps(root);
     expect(loaded.warnings).toEqual([]);
     expect(loaded.songs).toHaveLength(1);
@@ -126,6 +136,7 @@ describe('portable song folders', () => {
       videoHint: { durationMs: 20000, assetId: loaded.videos[0].id },
     });
     expect(song.released.dance?.chart.danceDifficulty).toBe(7);
+    expect(song.released.dance?.chart.credits).toEqual(credits);
     expect(song.released.dance?.cover).toContain(encodeURIComponent('曲包'));
     expect(song.released.fitness?.albumId).toBe('anime');
     const moved = path.join(temporary, 'elsewhere');
@@ -135,6 +146,7 @@ describe('portable song folders', () => {
     expect(again.songs[0].id).toBe(id);
     expect(again.videos[0].id).toBe(loaded.videos[0].id);
     expect(again.videos[0].url).toContain('/renamed/');
+    expect(again.songs[0].released.dance?.chart.credits).toEqual(credits);
   });
   it('supports an old loose JSON and missing optional metadata, matching the named video only', async () => {
     const folder = path.join(temporary, 'legacy');

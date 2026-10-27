@@ -14,7 +14,13 @@ import path from 'node:path';
 import { MapsWorkspace } from '../scripts/maps-workspace';
 import { scanMaps } from '../scripts/maps-library';
 import { blankChart } from './model';
-import { saveNamedDraft, updateWorkingDraft, selectNamedDraft, type Song } from './library';
+import {
+  saveNamedDraft,
+  updateWorkingDraft,
+  selectNamedDraft,
+  publishSong,
+  type Song,
+} from './library';
 
 let root: string;
 let workspace: MapsWorkspace;
@@ -57,6 +63,28 @@ const song = (): Song => ({
 });
 
 describe('maps is the project store', () => {
+  it('preserves edition credits in disk drafts, named versions and releases independently', async () => {
+    await attach();
+    let s = song();
+    s.drafts.dance!.chart.notes = [
+      { id: 'credit-note', lane: 'squat', direction: 'down', kind: 'tap', timeMs: 1000 },
+    ];
+    const original = { music: '音楽 / Artist', video: 'Video Studio', mapper: 'Dance Mapper' };
+    s.drafts.dance!.chart.credits = original;
+    s = saveNamedDraft(publishSong(s, 'dance'), 'dance', '初版');
+    s.drafts.fitness = structuredClone(s.drafts.dance!);
+    s.drafts.fitness.chart.chartType = 'fitness';
+    s.drafts.fitness.chart.credits!.mapper = 'Fitness Mapper';
+    s = publishSong(s, 'fitness');
+    s.drafts.dance!.chart.credits = { ...original, mapper: '' };
+    await workspace.saveSong(s);
+    const loaded = (await new MapsWorkspace(root).readProject('愛包')).song;
+    expect(loaded.released.dance!.chart.credits).toEqual(original);
+    expect(loaded.released.fitness!.chart.credits!.mapper).toBe('Fitness Mapper');
+    expect(loaded.drafts.dance!.chart.credits!.mapper).toBe('');
+    expect(loaded.namedDrafts![0].chart.credits).toEqual(original);
+    expect((await scanMaps(root)).songs[0]).toEqual(loaded);
+  });
   it('saves CLAP through the filesystem validator and reopens it from maps', async () => {
     await attach();
     const s = song();

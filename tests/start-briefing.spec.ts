@@ -4,6 +4,7 @@ import { blankChart, type Note } from '../src/model';
 import { createCalorieIndex } from '../src/calories';
 import { START_BRIEFING } from '../src/start-briefing';
 import { insertAlbum, importDemo, holdStart } from './helpers/project';
+import { exportChart } from './helpers/editor';
 
 const notes = (counts: number[]): Note[] =>
   counts.flatMap((count, lane) =>
@@ -20,7 +21,7 @@ async function fixture(page: Page, neighbors = false) {
   await page.goto('/');
   const dance = {
     ...blankChart('爽快夺回 Sunlight'),
-    artist: 'うたたP',
+    credits: { music: 'うたたP', video: 'Video Studio / 映像制作', mapper: 'Dance Mapper' },
     danceDifficulty: 7,
     playRange: { startMs: 3000, endMs: 18000 },
     videoOffsetMs: 120,
@@ -34,13 +35,13 @@ async function fixture(page: Page, neighbors = false) {
     .toBe(false);
   await page.getByRole('button', { name: '曲目', exact: true }).click();
   await page.getByRole('button', { name: '用当前视频画面', exact: true }).click();
-  const cover = await page.locator('.draft-cover img').getAttribute('src');
   await page.getByLabel('所属专辑').selectOption('anime');
   await page.getByRole('button', { name: '发布到曲库', exact: true }).click();
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const fitness = {
     ...dance,
+    credits: { ...dance.credits, mapper: 'Fitness Mapper' },
     title: '爽快夺回 Sunlight / Fitness',
     chartType: 'fitness' as const,
     intensity: 'medium' as const,
@@ -69,13 +70,74 @@ async function fixture(page: Page, neighbors = false) {
   await page.locator('.collection-album').first().click();
   await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
-  return { dance, fitness, cover };
+  return { dance, fitness, cover: song.released.dance!.cover };
 }
 
 const chargeValue = (page: Page) =>
   page
     .locator('.start-charge')
     .evaluate((root) => Number(getComputedStyle(root).getPropertyValue('--start-charge')));
+
+test('song type labels have equal widths and the open exercise envelope covers neighbouring cards', async ({
+  page,
+}) => {
+  await fixture(page, true);
+  for (const viewport of [
+    { width: 1920, height: 1080 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const widths = await page
+      .locator('.chart-type-choice button')
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+    expect(widths[0]).toBeCloseTo(widths[1], 1);
+    const labels = await page
+      .locator('.record-card[aria-current="true"] .chart-type-tag')
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+    expect(labels[0]).toBeCloseTo(labels[1], 1);
+    await page.getByRole('button', { name: 'Fit Log 运动记录', exact: true }).hover();
+    await expect(page.locator('.fit-log')).toHaveAttribute('data-open');
+    await expect(page.locator('.fit-log-panel')).toHaveCSS('opacity', '1');
+    await page
+      .locator('.fit-log-corner-surface')
+      .evaluate((node) => Promise.all(node.getAnimations().map((a) => a.finished)));
+    await page.screenshot({ path: `artifacts/song-types-fit-log-${viewport.width}.png` });
+    await page.mouse.move(1200, 180);
+    await expect(page.locator('.fit-log')).not.toHaveAttribute('data-open');
+  }
+});
+
+test('credits can be edited, cleared and saved to local drafts and exported JSON', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await importDemo(page);
+  await page.getByRole('button', { name: '曲目', exact: true }).click();
+  await page.getByText('制作署名', { exact: true }).click();
+  const credits = {
+    music: '音楽作者 / Composer',
+    video: '映像制作 / Video Studio',
+    mapper: 'Local Mapper',
+  };
+  for (const [role, label] of [
+    ['music', '音乐作者'],
+    ['video', '视频作者'],
+    ['mapper', '谱面作者'],
+  ] as const) {
+    await page.getByLabel(label, { exact: true }).fill(credits[role]);
+    await page.getByLabel(label, { exact: true }).press('Tab');
+  }
+  await expect
+    .poll(async () => (await readSongs(page))[0]?.drafts.dance?.chart.credits)
+    .toEqual(credits);
+  expect((await exportChart(page)).credits).toEqual(credits);
+  await page.getByLabel('谱面作者', { exact: true }).fill('');
+  await page.getByLabel('谱面作者', { exact: true }).press('Tab');
+  await expect
+    .poll(async () => (await readSongs(page))[0]?.drafts.dance?.chart.credits?.mapper)
+    .toBe('');
+  await page.screenshot({ path: 'artifacts/credits-editor.png' });
+});
 
 test('poster reveals the original textured panel, restores the carousel and survives interrupted input', async ({
   page,
@@ -300,6 +362,11 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
   page,
 }) => {
   const { dance, fitness, cover } = await fixture(page);
+  await expect(page.locator('.selection-credits')).toContainText('MUSIC');
+  await expect(page.locator('.selection-credits')).toContainText(dance.credits.music);
+  await expect(page.locator('.selection-credits')).toContainText(dance.credits.video);
+  await expect(page.locator('.selection-credits')).not.toContainText('MAPPER');
+  await page.screenshot({ path: 'artifacts/credits-song-selection.png' });
   await page.locator('.record-select').click();
   const briefing = page.locator('.start-briefing');
   await expect(briefing).toHaveAttribute('data-motion', 'ready');
@@ -309,7 +376,8 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
   );
   await expect(briefing.getByRole('heading')).toHaveText(dance.title);
   await expect(briefing.locator('.briefing-cover img')).toHaveAttribute('src', cover!);
-  await expect(briefing.locator('.briefing-artist')).toContainText('うたたP');
+  await expect(briefing.locator('.briefing-mapper')).toHaveText('MAPPERDance Mapper');
+  await expect(briefing.locator('.briefing-song-heading')).not.toContainText('ARTIST');
   await expect(briefing.locator('.briefing-rating')).toHaveText('LV. 7');
   for (const [selector, property] of [
     ['.start-charge-content em', 'color'],
@@ -371,6 +439,7 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
     'rgb(233, 232, 229)',
   );
   await expect(briefing.getByRole('heading')).toHaveText(fitness.title);
+  await expect(briefing.locator('.briefing-mapper')).toHaveText('MAPPERFitness Mapper');
   await expect(briefing.locator('.briefing-rating')).toHaveText('INT. MEDIUM');
   for (const [selector, property] of [
     ['.start-charge-content em', 'color'],
@@ -406,6 +475,12 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
   await expect(
     page.locator('.chart-type-choice').getByRole('button', { name: 'FITNESS', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const creditsBox = (await page.locator('.selection-credits').boundingBox())!;
+  const modesBox = (await page.locator('.chart-type-choice').boundingBox())!;
+  expect(creditsBox.x + creditsBox.width).toBeLessThan(modesBox.x);
+  expect(creditsBox.y + creditsBox.height).toBeLessThan(900);
+  await page.screenshot({ path: 'artifacts/credits-song-selection-tall.png' });
 });
 
 test('charge eases out without changing the hold duration; mouse and keyboard share cancellable charge and completion sounds', async ({

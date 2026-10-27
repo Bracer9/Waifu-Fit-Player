@@ -1,6 +1,16 @@
 /* Expand the original blue corner, retaining its existing music transform. */
 .menu-app > .ambient-shape.cyan:has(> .fit-log-corner-surface) {
   background: none;
+  /* Keep the closing envelope above cards until its existing fold has finished. */
+  transition:
+    transform 80ms linear,
+    z-index 0s var(--menu-corner-expand);
+}
+.menu-app:has(> .fit-log[data-open]) > .ambient-shape.cyan {
+  z-index: 11;
+  transition:
+    transform 80ms linear,
+    z-index 0s;
 }
 .fit-log-corner-surface,
 .fit-log-corner-details {
