@@ -56,6 +56,27 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id));
 });
 
+it('does not repeat native seeks for unchanged or clamped slider positions', () => {
+  const media = new MediaController();
+  const video = new Video();
+  video.paused = true;
+  let actual = 2;
+  const write = vi.fn((target: number) => {
+    actual = target;
+  });
+  Object.defineProperty(video, 'currentTime', { get: () => actual, set: write });
+  media.attach(video as unknown as HTMLVideoElement);
+  media.seek(0);
+  for (let i = 0; i < 10; i++) media.seek(0);
+  media.seek(-100);
+  expect(write).toHaveBeenCalledTimes(1);
+  expect(media.getTime()).toBe(0);
+  media.seek(1250);
+  expect(write).toHaveBeenCalledTimes(2);
+  expect(actual).toBe(1.25);
+  media.attach(null);
+});
+
 it('游戏音量可在加载视频前设置，播放器改音量后下次仍沿用', () => {
   const values = new Map<string, string>();
   vi.stubGlobal('localStorage', {
@@ -172,6 +193,79 @@ describe('工作台区间循环', () => {
   });
 });
 describe('曲终通知', () => {
+  it('ignores an early ended event even if the video reports ended, without completing the session', () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.duration = 101.9;
+    media.attach(video as unknown as HTMLVideoElement);
+    const ended = vi.fn();
+    media.subscribeEnded(ended);
+    video.currentTime = 0.8;
+    video.paused = video.ended = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).not.toHaveBeenCalled();
+    expect(video.currentTime).toBe(0.8);
+    video.currentTime = video.duration;
+    video.dispatchEvent(new Event('ended'));
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).toHaveBeenCalledOnce();
+    media.attach(null);
+  });
+  it('does not accept an ended event during a seek, without metadata, or before the published endpoint', () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.paused = true;
+    media.attach(video as unknown as HTMLVideoElement);
+    media.setPlaybackRange({ startMs: 5000, endMs: 15000 });
+    const ended = vi.fn();
+    media.subscribeEnded(ended);
+    video.ended = true;
+    video.currentTime = 8;
+    video.dispatchEvent(new Event('ended'));
+    video.currentTime = 15;
+    video.seeking = true;
+    video.dispatchEvent(new Event('ended'));
+    video.seeking = false;
+    video.readyState = 0;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).not.toHaveBeenCalled();
+    video.readyState = 4;
+    video.ended = false;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).not.toHaveBeenCalled();
+    video.ended = true;
+    video.dispatchEvent(new Event('ended'));
+    expect(ended).toHaveBeenCalledOnce();
+    media.attach(null);
+  });
+  it('restarts and reloads the same video element without accepting stale end notifications', async () => {
+    const media = new MediaController(),
+      video = new Video();
+    video.paused = true;
+    media.attach(video as unknown as HTMLVideoElement);
+    const ended = vi.fn();
+    media.subscribeEnded(ended);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // Restart seeks; selecting another source can also reuse this element.
+      if (attempt === 2) {
+        video.duration = 101.9;
+        video.currentTime = 0;
+        video.dispatchEvent(new Event('loadedmetadata'));
+      }
+      media.seek(0);
+      video.dispatchEvent(new Event('ended'));
+      expect(ended).toHaveBeenCalledTimes(attempt);
+      await media.toggle();
+      video.currentTime = 0.8;
+      video.dispatchEvent(new Event('ended'));
+      expect(ended).toHaveBeenCalledTimes(attempt);
+      video.currentTime = video.duration;
+      video.paused = video.ended = true;
+      video.dispatchEvent(new Event('ended'));
+      expect(ended).toHaveBeenCalledTimes(attempt + 1);
+    }
+    media.attach(null);
+  });
   it('range completion fires once after stopping; restart re-arms it and paused seeks do not finish', async () => {
     const media = new MediaController(),
       video = new Video();

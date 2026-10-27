@@ -167,13 +167,24 @@ export class MediaController {
     if (finished) this.completePlayback();
   };
   private onEnded = () => {
-    if (!this.element) return;
+    const video = this.element;
+    if (!video || video.readyState < 1 || video.seeking || video.error || !video.ended) return;
+    const endMs = this.playbackRange?.endMs ?? video.duration * 1000;
+    // A queued/stale ended event is not proof that this playback reached its end.
+    // Allow only millisecond rounding; never seek forward to manufacture completion.
+    if (
+      !Number.isFinite(endMs) ||
+      endMs <= 0 ||
+      !Number.isFinite(video.currentTime) ||
+      video.currentTime * 1000 < endMs - 1
+    )
+      return;
     if (this.playbackRange || !this.loopRange) {
       this.completePlayback();
       return;
     }
     this.seek(this.loopRange.startMs);
-    void this.element.play().catch(this.readStatus);
+    void video.play().catch(this.readStatus);
   };
   private readStatus = (event?: Event) => {
     const v = this.element;
@@ -257,7 +268,10 @@ export class MediaController {
       const target = this.element.paused ? timeMs : this.positionInLoop(timeMs);
       const min = this.playbackRange?.startMs ?? 0;
       const max = this.playbackRange?.endMs ?? this.status.durationMs;
-      this.element.currentTime = Math.max(min, Math.min(max, target)) / 1000;
+      const next = Math.max(min, Math.min(max, target));
+      // Repeated slider values (especially clamped zero) must not restart a seek.
+      if (Math.abs(this.element.currentTime * 1000 - next) >= 1)
+        this.element.currentTime = next / 1000;
       this.readTime();
     }
   };

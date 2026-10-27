@@ -1,4 +1,5 @@
 import { Play, Pause, SkipBack, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { MediaController, useMediaStatus, useTime } from '../media';
 import { formatTime } from '../timing';
 import type { PlayRange } from '../model';
@@ -22,7 +23,17 @@ export function Transport({
   const start = playRange?.startMs ?? 0;
   const end = playRange?.endMs ?? status.durationMs;
   const duration = Math.max(0, end - start);
-  const position = Math.max(start, Math.min(end, time));
+  const [scrubTime, setScrubTime] = useState<number | null>(null);
+  const scrubbing = useRef(false);
+  const cancelScrub = () => {
+    scrubbing.current = false;
+    setScrubTime(null);
+  };
+  useEffect(() => {
+    scrubbing.current = false;
+    setScrubTime(null);
+  }, [start, end, disabled, status.ready]);
+  const position = Math.max(start, Math.min(end, scrubTime ?? time));
   return (
     <div className="transport">
       <button
@@ -67,7 +78,24 @@ export function Transport({
             '--progress': `${duration ? ((position - start) / duration) * 100 : 0}%`,
           } as React.CSSProperties
         }
-        onChange={(e) => media.seek(Number(e.target.value))}
+        onPointerDown={(e) => {
+          scrubbing.current = true;
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onChange={(e) => {
+          const target = Number(e.currentTarget.value);
+          if (scrubbing.current) setScrubTime(target);
+          else media.seek(target); // Keyboard changes remain immediate.
+        }}
+        onPointerUp={(e) => {
+          if (!scrubbing.current) return;
+          const target = Number(e.currentTarget.value);
+          cancelScrub();
+          media.seek(target);
+        }}
+        onPointerCancel={cancelScrub}
+        onLostPointerCapture={cancelScrub}
+        onBlur={cancelScrub}
       />
       <span className="time-readout total">{formatTime(duration)}</span>
       <button
