@@ -278,6 +278,7 @@ export function NoteGlyph({
   pairedPunch = false,
   pairedReach = false,
   legHold = false,
+  legRaise = false,
   spinDirection,
 }: {
   lane: Lane;
@@ -292,6 +293,7 @@ export function NoteGlyph({
   pairedPunch?: boolean;
   pairedReach?: boolean;
   legHold?: boolean;
+  legRaise?: boolean;
   spinDirection?: SpinDirection;
 }) {
   const { shape, angle, path, mirror } = noteGlyphShape(
@@ -300,7 +302,7 @@ export function NoteGlyph({
     distance,
     armAction,
     hand,
-    legHold,
+    legHold || legRaise,
     spinDirection,
   );
   return (
@@ -311,9 +313,11 @@ export function NoteGlyph({
           ? '↔'
           : armAction === 'forward'
             ? `FWD ${hand === 'both' ? 'BOTH' : hand === 'right' ? 'R' : 'L'}`
-            : legHold
-              ? 'LEG HOLD'
-              : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
+            : legRaise
+              ? 'LEG RAISE'
+              : legHold
+                ? 'LEG HOLD'
+                : `${follow ? 'FOLLOW ' : ''}${noteSymbol(lane, direction, distance, armAction)}`
       }
       width={size}
       height={size}

@@ -44,7 +44,7 @@ const fixture = () => ({
 });
 
 describe('ARMS direction, hand and gesture remain independent', () => {
-  it('CLAP supports purple two-hand TAP and HOLD with stable conversion and persistence', () => {
+  it('CLAP supports purple two-hand TAP, HOLD and SWAY with stable conversion and persistence', () => {
     const clap = changeArmAction(changeNoteForm(reach, 'tap', reach.direction, 3000), 'clap');
     expect(clap).toEqual({
       id: reach.id,
@@ -72,6 +72,15 @@ describe('ARMS direction, hand and gesture remain independent', () => {
     expect(held).toEqual({ ...clap, kind: 'hold', modifier: 'none', endTimeMs: 4000 });
     expect(extendTap(chart, clap.id, 4000, 20000).notes[0]).toEqual(held);
     expect(changeNoteForm(held, 'tap', 'forward', 5000)).toEqual(clap);
+    const swaying = changeNoteForm(held, 'sway', 'forward', 5000);
+    expect(swaying).toEqual({ ...held, modifier: 'sway' });
+    expect(changeArmAction(swaying, 'clap')).toEqual(swaying);
+    expect(changeArmAction(changeArmAction(swaying, 'forward-both'), 'clap')).toEqual(swaying);
+    expect(parseChart(JSON.parse(serializeChart({ ...chart, notes: [swaying] }))).notes[0]).toEqual(
+      swaying,
+    );
+    expect(changeNoteForm(swaying, 'hold', 'forward', 5000)).toEqual(held);
+    expect(changeNoteForm(swaying, 'tap', 'forward', 5000)).toEqual(clap);
     expect(parseChart(JSON.parse(serializeChart({ ...chart, notes: [held] }))).notes[0]).toEqual(
       held,
     );
@@ -84,14 +93,14 @@ describe('ARMS direction, hand and gesture remain independent', () => {
     const single = changeArmGesture(spread.chart, spread.ids[0], 'clap');
     expect(single.ids).toHaveLength(1);
     expect(single.chart.notes.filter((n) => n.armAction === 'clap')).toEqual([
-      { ...clap, kind: 'hold', modifier: 'none', endTimeMs: 3000 },
+      { ...clap, kind: 'hold', modifier: 'sway', endTimeMs: 3000 },
     ]);
     for (const note of [
       { ...clap, hand: 'left' },
       { ...clap, hand: undefined },
       { ...clap, direction: 'up' },
       { ...clap, lane: 'step' },
-      { ...clap, kind: 'hold', modifier: 'sway', endTimeMs: 3000 },
+      { ...clap, kind: 'hold', modifier: 'invalid', endTimeMs: 3000 },
     ])
       expect(() => parseChart({ ...chart, notes: [note] })).toThrow();
   });

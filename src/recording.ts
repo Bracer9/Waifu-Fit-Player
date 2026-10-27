@@ -57,6 +57,7 @@ export function useRecording(options: Options) {
     armAction?: ArmAction;
     hand?: ArmHand;
     foot?: StepFoot;
+    stepAction?: 'raise';
     spinDirection?: SpinDirection;
   } | null>(null);
   useEffect(() => {
@@ -153,6 +154,8 @@ export function useRecording(options: Options) {
         }
       }
       if (o.lane === 'step' && dir === 'down') dir = 'free';
+      const raise = o.lane === 'step' && dir === 'up';
+      if (raise) dir = o.foot === 'right' ? 'right' : 'left';
       if (!dir) return;
       e.preventDefault();
       e.stopPropagation();
@@ -183,10 +186,13 @@ export function useRecording(options: Options) {
         timeMs,
         pressedAt: performance.now(),
         videoOffsetMs: o.chart.videoOffsetMs ?? 0,
-        modifier: armAction === 'clap' ? 'none' : e.ctrlKey || dir === 'free' ? 'sway' : 'none',
+        modifier: raise ? 'none' : e.ctrlKey || dir === 'free' ? 'sway' : 'none',
+        ...(raise ? { stepAction: 'raise' as const } : {}),
         ...(follow ? { follow: true } : {}),
         ...(follow && o.connectPrevious === false ? { connectPrevious: false } : {}),
-        ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow ? { distance: 2 } : {}),
+        ...(o.lane === 'step' && dir !== 'free' && e.shiftKey && !follow && !raise
+          ? { distance: 2 }
+          : {}),
         ...(armAction ? { armAction } : {}),
         ...(armAction === 'reach' && o.hand !== 'any' ? { hand: o.hand } : {}),
         ...(forwardHand ? { hand: forwardHand } : {}),
@@ -212,7 +218,10 @@ export function useRecording(options: Options) {
       )
         return;
       const short = performance.now() - p.pressedAt < HOLD_THRESHOLD_MS;
-      if ((short || (p.follow && p.modifier !== 'sway')) && p.direction !== 'free') {
+      if (
+        (short || p.stepAction === 'raise' || (p.follow && p.modifier !== 'sway')) &&
+        p.direction !== 'free'
+      ) {
         o.onNote({
           id: uid(),
           lane: p.lane,
@@ -225,6 +234,7 @@ export function useRecording(options: Options) {
           ...(p.armAction ? { armAction: p.armAction } : {}),
           ...(p.hand ? { hand: p.hand } : {}),
           ...(p.foot ? { foot: p.foot } : {}),
+          ...(p.stepAction ? { stepAction: p.stepAction } : {}),
         });
         return;
       }

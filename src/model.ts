@@ -60,9 +60,10 @@ export const LANES = [
 export type Lane = (typeof LANES)[number]['id'];
 export type Direction = (typeof ARM_DIRECTIONS)[number] | 'free' | 'forward';
 export type StepDistance = 1 | 2;
-export type NoteType = 'tap' | 'hold' | 'sway' | 'follow' | 'follow-sway';
+export type NoteType = 'tap' | 'leg-raise' | 'hold' | 'sway' | 'follow' | 'follow-sway';
 export const STEP_TYPES = [
   { value: 'tap', label: 'TAP' },
+  { value: 'leg-raise', label: 'LEG RAISE' },
   { value: 'follow', label: 'FOLLOW' },
   { value: 'follow-sway', label: 'FOLLOW SWAY' },
   { value: 'hold', label: 'LEG HOLD' },
@@ -82,6 +83,8 @@ export type Note = {
   armAction?: ArmAction;
   hand?: ArmHand;
   foot?: StepFoot;
+  /** Single leg lift; ordinary STEP taps retain their horizontal arrows. */
+  stepAction?: 'raise';
   /** Omitted in older charts: clockwise, matching the original SPIN icon. */
   spinDirection?: SpinDirection;
 } & ({ kind: 'tap' } | { kind: 'hold'; endTimeMs: number; modifier: 'none' | 'sway' });
@@ -173,6 +176,8 @@ export const noteColor = (
           : 'var(--pink)'
       : LANES.find((item) => item.id === lane)!.color;
 export const isFollowStep = (note: Note) => note.lane === 'step' && note.follow === true;
+export const isLegRaise = (note: Note) =>
+  note.lane === 'step' && note.kind === 'tap' && note.stepAction === 'raise';
 export const isLegHold = (note: Note) =>
   note.lane === 'step' &&
   note.kind === 'hold' &&
@@ -180,27 +185,31 @@ export const isLegHold = (note: Note) =>
   !isFollowStep(note) &&
   (note.direction === 'left' || note.direction === 'right');
 export const isStepMove = (note: Note) =>
-  note.lane === 'step' && note.direction !== 'free' && !isFollowStep(note);
+  note.lane === 'step' && note.direction !== 'free' && !isFollowStep(note) && !isLegRaise(note);
 export const noteType = (note: Note): NoteType =>
-  isFollowStep(note)
-    ? note.kind === 'hold'
-      ? 'follow-sway'
-      : 'follow'
-    : note.kind === 'hold' && note.modifier === 'sway'
-      ? 'sway'
-      : note.kind;
+  isLegRaise(note)
+    ? 'leg-raise'
+    : isFollowStep(note)
+      ? note.kind === 'hold'
+        ? 'follow-sway'
+        : 'follow'
+      : note.kind === 'hold' && note.modifier === 'sway'
+        ? 'sway'
+        : note.kind;
 export function noteTypeLabel(
   type: NoteType,
   lane: Lane | 'special',
   direction: Direction,
 ): string {
   if (type === 'follow') return 'FOLLOW';
+  if (type === 'leg-raise') return 'LEG RAISE';
   if (type === 'follow-sway') return 'FOLLOW SWAY';
   if (type === 'tap') return 'TAP';
   if (type === 'sway') return lane === 'step' && direction === 'free' ? 'SPIN' : 'SWAY';
   return lane === 'step' ? 'LEG HOLD' : 'HOLD';
 }
 export function noteAction(note: Note): string {
+  if (isLegRaise(note)) return 'LEG RAISE';
   if (note.lane === 'punch' && note.armAction === 'clap') return 'CLAP';
   if (isFollowStep(note))
     return note.kind === 'hold' ? 'FOLLOW SWAY' : `FOLLOW ${noteSymbol(note.lane, note.direction)}`;
@@ -376,14 +385,11 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
           (note.armAction === 'forward' &&
             (note.direction !== 'forward' ||
               !['left', 'right', 'both'].includes(String(note.hand)))) ||
-          (note.armAction === 'clap' &&
-            (note.direction !== 'forward' ||
-              note.hand !== 'both' ||
-              (note.kind !== 'tap' && !(note.kind === 'hold' && note.modifier === 'none')))) ||
+          (note.armAction === 'clap' && (note.direction !== 'forward' || note.hand !== 'both')) ||
           (!['forward', 'clap'].includes(String(note.armAction)) && note.direction === 'forward'))
       )
         errors.push(
-          `${label}：ARMS 拳套使用左右方向；前伸手掌指定用手；CLAP 支持双手 TAP／HOLD，使用 forward 方向。`,
+          `${label}：ARMS 拳套使用左右方向；前伸手掌指定用手；CLAP 支持双手 TAP／HOLD／SWAY，使用 forward 方向。`,
         );
       if (note.direction === 'forward' && !['forward', 'clap'].includes(String(note.armAction)))
         errors.push(`${label}：forward 方向必须使用前伸手掌或拍手动作。`);
@@ -408,6 +414,16 @@ export function parseChart(source: unknown, durationMs?: number): Chart {
         errors.push(
           `${label}：用脚／腿颜色仅适用于 STEP 或 SIDE CRUNCH；left／right 均可，both 仅适用于 STEP。`,
         );
+      if (
+        note.stepAction !== undefined &&
+        (note.stepAction !== 'raise' ||
+          note.lane !== 'step' ||
+          note.kind !== 'tap' ||
+          !['left', 'right'].includes(String(note.direction)) ||
+          note.follow !== undefined ||
+          note.distance !== undefined)
+      )
+        errors.push(`${label}：LEG RAISE 仅适用于 STEP 左右 TAP，不设置跨度或 FOLLOW。`);
       if (note.direction === 'free' && (note.kind !== 'hold' || note.modifier !== 'sway'))
         errors.push(`${label}：SPIN 必须是有时长的转圈动作。`);
       if (

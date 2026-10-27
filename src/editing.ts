@@ -2,6 +2,7 @@ import {
   LANES,
   isStepMove,
   isFollowStep,
+  isLegRaise,
   isPunchAction,
   ARM_HANDS,
   type ArmHand,
@@ -63,11 +64,11 @@ export function extendTap(chart: Chart, id: string, endTimeMs: number, duration:
     end <= note.timeMs
   )
     return chart;
+  const sustained = { ...note, kind: 'hold' as const, modifier: 'none' as const, endTimeMs: end };
+  delete sustained.stepAction;
   return {
     ...chart,
-    notes: chart.notes.map((n) =>
-      n.id === id ? { ...note, kind: 'hold', modifier: 'none', endTimeMs: end } : n,
-    ),
+    notes: chart.notes.map((n) => (n.id === id ? sustained : n)),
   };
 }
 export function flipNotes(chart: Chart, selected: string[]): Chart {
@@ -148,7 +149,7 @@ export function changeArmAction(note: Note, value: string): Note {
       lane: 'punch',
       timeMs: note.timeMs,
       ...(note.kind === 'hold'
-        ? { kind: 'hold', modifier: 'none', endTimeMs: note.endTimeMs }
+        ? { kind: 'hold', modifier: note.modifier, endTimeMs: note.endTimeMs }
         : { kind: 'tap' }),
       direction: 'forward',
       armAction: 'clap',
@@ -219,22 +220,23 @@ export function changeNoteForm(
     ...(follow && note.connectPrevious === false ? { connectPrevious: false } : {}),
     ...(note.lane === 'punch' ? { armAction: note.armAction, hand: note.hand } : {}),
     ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
-    ...(note.lane === 'step' && direction !== 'free' && !follow && note.distance
+    ...(note.lane === 'step' &&
+    direction !== 'free' &&
+    !follow &&
+    type !== 'leg-raise' &&
+    note.distance
       ? { distance: note.distance }
       : {}),
   };
+  if (type === 'leg-raise' && note.lane === 'step' && direction !== 'free')
+    return { ...base, kind: 'tap', stepAction: 'raise' };
   if (type === 'follow' && note.lane === 'step' && (direction === 'left' || direction === 'right'))
     return { ...base, kind: 'tap', follow: true };
   if (type === 'tap' && direction !== 'free') return { ...base, kind: 'tap' };
   return {
     ...base,
     kind: 'hold',
-    modifier:
-      note.armAction === 'clap'
-        ? 'none'
-        : type === 'sway' || type === 'follow-sway' || direction === 'free'
-          ? 'sway'
-          : 'none',
+    modifier: type === 'sway' || type === 'follow-sway' || direction === 'free' ? 'sway' : 'none',
     endTimeMs: note.kind === 'hold' ? note.endTimeMs : endTimeMs,
     ...(follow ? { follow: true } : {}),
   };
@@ -252,7 +254,7 @@ export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to:
       const next = index + delta;
       return (
         !(LANES[next]?.directions as readonly Direction[] | undefined)?.includes(n.direction) ||
-        ((n.distance === 2 || isFollowStep(n)) && LANES[next]?.id !== 'step')
+        ((n.distance === 2 || isFollowStep(n) || isLegRaise(n)) && LANES[next]?.id !== 'step')
       );
     })
   )

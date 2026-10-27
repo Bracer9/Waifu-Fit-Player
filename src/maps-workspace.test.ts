@@ -81,6 +81,17 @@ describe('maps is the project store', () => {
         timeMs: 2000,
         endTimeMs: 3000,
       },
+      {
+        id: 'clap-sway',
+        lane: 'punch',
+        direction: 'forward',
+        armAction: 'clap',
+        hand: 'both',
+        kind: 'hold',
+        modifier: 'sway',
+        timeMs: 3500,
+        endTimeMs: 4000,
+      },
     ];
     await workspace.saveSong(s);
     expect(

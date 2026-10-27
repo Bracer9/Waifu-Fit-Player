@@ -7,6 +7,7 @@ import {
   noteAction,
   isFollowStep,
   isLegHold,
+  isLegRaise,
   specialMoveLabel,
 } from '../model';
 import { MediaController, useRenderTime } from '../media';
@@ -262,9 +263,10 @@ export function Player({
                         data-direction={note.direction}
                         data-note-id={note.id}
                         data-action={noteAction(note)}
-                        aria-label={`${lane.english} ${isFollowStep(note) ? noteAction(note) : noteSymbol(note.lane, note.direction, note.distance, note.armAction)}`}
+                        aria-label={`${lane.english} ${isFollowStep(note) || isLegRaise(note) ? noteAction(note) : noteSymbol(note.lane, note.direction, note.distance, note.armAction)}`}
                       >
                         <NoteGlyph
+                          legRaise={isLegRaise(note)}
                           joined={!showGuide && joinedTaps.has(note.id)}
                           follow={isFollowStep(note)}
                           lane={note.lane}

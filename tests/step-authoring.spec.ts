@@ -1,4 +1,63 @@
 import { test, expect, stepChoice, seek, exportChart, emptyEditor, draw } from './helpers/editor';
+import { lastDraft } from './helpers/project';
+
+test('LEG RAISE draws and records single lifts, saves to disk and reloads with the HOLD icon', async ({
+  page,
+}) => {
+  await emptyEditor(page);
+  await page.getByLabel('吸附', { exact: true }).selectOption('0');
+  await page.getByRole('button', { name: '3 踏步', exact: true }).click();
+  await stepChoice(page, 'draw', 'left-leg-raise');
+  await expect(page.getByLabel('绘制踏步跨度')).toHaveCount(0);
+  await draw(page, 1000, 'step', 1800);
+  await stepChoice(page, 'draw', 'right-leg-raise');
+  await draw(page, 3000, 'step');
+  const selected = page.getByLabel('选中事件类型');
+  for (const type of ['hold', 'follow', 'follow-sway', 'free-sway', 'tap', 'leg-raise']) {
+    await selected.selectOption(type);
+    expect((await exportChart(page)).notes[1].stepAction).toBe(
+      type === 'leg-raise' ? 'raise' : undefined,
+    );
+  }
+  const glyphs = page.locator('.timeline-event .note-glyph[data-symbol="LEG RAISE"]');
+  await expect(glyphs).toHaveCount(2);
+  for (const glyph of await glyphs.all())
+    await expect(glyph.locator('g')).toHaveAttribute('transform', 'rotate(0 20 20)');
+  await page.getByRole('button', { name: '启用按键录谱', exact: true }).click();
+  await seek(page, 6);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await page.keyboard.down('ArrowUp');
+  await page.waitForTimeout(400);
+  await page.keyboard.up('ArrowUp');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const chart = await exportChart(page);
+  expect(chart.notes).toHaveLength(3);
+  for (const note of chart.notes) {
+    expect(note).toMatchObject({ kind: 'tap', stepAction: 'raise' });
+    expect(note).not.toHaveProperty('endTimeMs');
+    expect(note).not.toHaveProperty('distance');
+  }
+  await page.getByRole('button', { name: '保存草稿', exact: true }).click();
+  await expect.poll(async () => (await lastDraft(page))?.notes).toEqual(chart.notes);
+  await page.reload();
+  await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
+  await page.locator('.create-mode').click();
+  expect((await exportChart(page)).notes).toEqual(chart.notes);
+  await page.screenshot({ path: 'artifacts/leg-raise-editor.png' });
+  await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
+  for (const [index, time, color] of [
+    [0, 0.7, 'rgb(53, 201, 219)'],
+    [1, 2.7, 'rgb(246, 78, 147)'],
+  ] as const) {
+    await seek(page, time);
+    const tap = page.locator(`.player-note[data-note-id="${chart.notes[index].id}"]`);
+    await expect(tap).toHaveAttribute('data-action', 'LEG RAISE');
+    await expect(tap.locator('.note-glyph')).toHaveAttribute('data-symbol', 'LEG RAISE');
+    await expect(tap.locator('.note-glyph > g')).toHaveAttribute('transform', 'rotate(0 20 20)');
+    await expect(tap).toHaveCSS('color', color);
+    await page.screenshot({ path: `artifacts/leg-raise-${index}-player.png` });
+  }
+});
 
 test('SPIN direction survives drawing, editing, recording and reload and matches both game heads', async ({
   page,
@@ -31,13 +90,11 @@ test('SPIN direction survives drawing, editing, recording and reload and matches
     'clockwise',
     'counterclockwise',
   ]);
-  await page
-    .getByLabel('导入谱面文件')
-    .setInputFiles({
-      name: 'spin-directions.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(chart)),
-    });
+  await page.getByLabel('导入谱面文件').setInputFiles({
+    name: 'spin-directions.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(chart)),
+  });
   expect((await exportChart(page)).notes).toEqual(chart.notes);
   await page.getByTestId('editor-note').first().click();
   await page.screenshot({ path: 'artifacts/spin-direction-editor.png' });
@@ -216,8 +273,6 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   ).toHaveCSS('background-color', 'rgb(246, 78, 147)');
   await page.getByRole('button', { name: '试玩谱面', exact: true }).click();
   const lanes = page.locator('.play-lane');
-  if (await page.getByRole('button', { name: '关闭提示', exact: true }).isVisible())
-    await page.getByRole('button', { name: '关闭提示', exact: true }).click();
   expect(
     await lanes.evaluateAll((elements) => elements.map((el) => el.getAttribute('data-lane'))),
   ).toEqual(['squat', 'punch', 'step', 'calf_raise', 'side_crunch']);
@@ -245,7 +300,7 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   );
   await expect(
     page.getByTestId('lane-step').locator('.hold-head .note-glyph').first(),
-  ).toHaveAttribute('data-symbol', 'R');
+  ).toHaveAttribute('data-symbol', 'LEG HOLD');
   await expect(page.getByTestId('lane-step').locator('.hold-head').first()).toHaveCSS(
     'color',
     pink,
@@ -279,17 +334,15 @@ test('STEP 鼠标做谱、反向与跨轨、保存重开、五轨配色和消失
   await expect(impact).toHaveCount(0);
   await seek(page, 2.5);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'holding');
-  await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveAttribute(
-    'data-symbol',
-    'R',
-  );
+  await expect(
+    page.locator(`[data-note-id="${chart.notes[1].id}"] .hold-head .note-glyph`),
+  ).toHaveAttribute('data-symbol', 'LEG HOLD');
   await expect(page.getByTestId('target-step')).toHaveCSS('color', pink);
   await seek(page, 4.5);
   await expect(page.getByTestId('target-step')).toHaveAttribute('data-state', 'sway');
-  await expect(page.getByTestId('target-step').locator('.note-glyph')).toHaveAttribute(
-    'data-symbol',
-    'L',
-  );
+  await expect(
+    page.locator(`[data-note-id="${chart.notes[2].id}"] .hold-head .note-glyph`),
+  ).toHaveAttribute('data-symbol', 'L');
   await expect(page.getByTestId('target-step')).toHaveCSS('color', 'rgb(53, 201, 219)');
   await seek(page, 5.08);
   await expect(impact).toHaveClass(/release/);
@@ -313,6 +366,7 @@ test('STEP 单菜单动作互换、左右 HOLD 转 SWAY、跨度和撤销重做'
   const selected = page.getByLabel('选中事件类型');
   await expect(drawing.locator('option')).toHaveText([
     'TAP',
+    'LEG RAISE',
     'FOLLOW',
     'FOLLOW SWAY',
     'LEG HOLD',
@@ -405,6 +459,7 @@ test('FOLLOW SWAY 紧接 FOLLOW，支持绘制、转换、录谱和持续并步�
   await stepChoice(page, 'draw', 'left-follow-sway');
   await expect(page.getByLabel('绘制类型').locator('option')).toHaveText([
     'TAP',
+    'LEG RAISE',
     'FOLLOW',
     'FOLLOW SWAY',
     'LEG HOLD',
@@ -677,6 +732,7 @@ test('STEP 独立自由 SWAY、Shift 两格、Ctrl+Shift 摇摆，组合键与�
   await stop();
   const chart = await exportChart(page);
   expect(chart.notes).toMatchObject([
+    { lane: 'step', direction: 'left', kind: 'tap', stepAction: 'raise' },
     { lane: 'step', direction: 'left', kind: 'tap' },
     { lane: 'step', direction: 'free', kind: 'hold', modifier: 'sway' },
     { lane: 'step', direction: 'right', kind: 'tap', distance: 2 },
@@ -686,8 +742,8 @@ test('STEP 独立自由 SWAY、Shift 两格、Ctrl+Shift 摇摆，组合键与�
     { lane: 'step', direction: 'right', kind: 'hold', modifier: 'none', distance: 2 },
     { lane: 'punch', direction: 'up_left', kind: 'tap' },
   ]);
-  for (const i of [0, 1, 3, 5, 7]) expect(chart.notes[i].distance).toBeUndefined();
-  for (const i of [3, 4, 6]) {
+  for (const i of [0, 1, 2, 4, 6, 8]) expect(chart.notes[i].distance).toBeUndefined();
+  for (const i of [4, 5, 7]) {
     const note = chart.notes[i];
     expect(note.kind === 'hold' && note.endTimeMs - note.timeMs).toBeGreaterThan(250);
   }

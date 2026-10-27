@@ -1,6 +1,8 @@
 import { test, expect, emptyEditor, draw, exportChart, seek } from './helpers/editor';
 
-test('CLAP TAP and HOLD draw, record, save and show matching ribbon heads', async ({ page }) => {
+test('CLAP TAP, HOLD and SWAY draw, record, save and show matching ribbon heads', async ({
+  page,
+}) => {
   await emptyEditor(page);
   await page.getByLabel('吸附', { exact: true }).selectOption('0');
   await page.getByRole('button', { name: '2 手臂', exact: true }).click();
@@ -13,11 +15,11 @@ test('CLAP TAP and HOLD draw, record, save and show matching ribbon heads', asyn
     .boundingBox())!;
   expect(clapBox.y + clapBox.height).toBeLessThanOrEqual(palmBox.y);
   expect(Math.abs(clapBox.x - palmBox.x)).toBeLessThan(2);
-  await expect(page.getByLabel('绘制类型').locator('option')).toHaveText(['TAP', 'HOLD']);
+  await expect(page.getByLabel('绘制类型').locator('option')).toHaveText(['TAP', 'HOLD', 'SWAY']);
   await page.getByRole('button', { name: '1 蹲起', exact: true }).click();
-  await page.getByLabel('绘制类型').selectOption('hold');
+  await page.getByLabel('绘制类型').selectOption('sway');
   await page.getByRole('button', { name: '2 手臂', exact: true }).click();
-  await expect(page.getByLabel('绘制类型')).toHaveValue('hold');
+  await expect(page.getByLabel('绘制类型')).toHaveValue('sway');
   await page.getByLabel('绘制类型').selectOption('tap');
   await page
     .getByRole('group', { name: '绘制手臂动作', exact: true })
@@ -33,6 +35,11 @@ test('CLAP TAP and HOLD draw, record, save and show matching ribbon heads', asyn
   await expect(page.getByLabel('结束 / ms')).toBeVisible();
   await page.getByRole('button', { name: '选中手臂动作 CLAP', exact: true }).click();
   await expect(page.getByLabel('结束 / ms')).toBeVisible();
+  await page.getByLabel('选中事件类型').selectOption('sway');
+  await expect(page.getByLabel('选中事件类型')).toHaveValue('sway');
+  await page.getByRole('button', { name: '选中手臂动作 FWD BOTH', exact: true }).click();
+  await page.getByRole('button', { name: '选中手臂动作 CLAP', exact: true }).click();
+  await expect(page.getByLabel('选中事件类型')).toHaveValue('sway');
   await page.getByLabel('选中事件类型').selectOption('tap');
   await expect(page.getByLabel('结束 / ms')).toHaveCount(0);
   await page.getByRole('button', { name: '撤销', exact: true }).click();
@@ -53,8 +60,11 @@ test('CLAP TAP and HOLD draw, record, save and show matching ribbon heads', asyn
   await page.keyboard.up('p');
   await page.keyboard.up('Control');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.getByRole('button', { name: '录谱已启用', exact: true }).click();
+  await page.getByLabel('绘制类型').selectOption('sway');
+  await draw(page, 9000, 'punch', 11000);
   const chart = await exportChart(page);
-  expect(chart.notes).toHaveLength(4);
+  expect(chart.notes).toHaveLength(5);
   for (const note of chart.notes) {
     expect(note).toMatchObject({
       lane: 'punch',
@@ -63,9 +73,10 @@ test('CLAP TAP and HOLD draw, record, save and show matching ribbon heads', asyn
       hand: 'both',
     });
   }
-  expect(chart.notes.map((note) => note.kind)).toEqual(['tap', 'hold', 'tap', 'hold']);
+  expect(chart.notes.map((note) => note.kind)).toEqual(['tap', 'hold', 'tap', 'hold', 'hold']);
   expect(chart.notes[1]).toMatchObject({ endTimeMs: 4500, modifier: 'none' });
-  expect(chart.notes[3]).toMatchObject({ modifier: 'none' });
+  expect(chart.notes[3]).toMatchObject({ modifier: 'sway' });
+  expect(chart.notes[4]).toMatchObject({ timeMs: 9000, endTimeMs: 11000, modifier: 'sway' });
   await page.getByLabel('导入谱面文件').setInputFiles({
     name: 'clap.json',
     mimeType: 'application/json',
@@ -112,4 +123,10 @@ test('CLAP TAP and HOLD draw, record, save and show matching ribbon heads', asyn
   await expect(held.locator('.ribbon-head-shape .clap-hands')).toHaveCount(1);
   await expect(page.getByTestId('target-punch')).toHaveAttribute('data-state', 'holding');
   await page.screenshot({ path: 'artifacts/clap-hold-game.png' });
+  await seek(page, 9.1);
+  const sway = page.locator(`.player-hold[data-note-id="${chart.notes[4].id}"]`);
+  await expect(sway.locator('.hold-head .glyph--clap')).toBeVisible();
+  await expect(sway.locator('.ribbon-head-shape .clap-hands')).toHaveCount(1);
+  await expect(page.getByTestId('target-punch')).toHaveAttribute('data-state', 'sway');
+  await page.screenshot({ path: 'artifacts/clap-sway-game.png' });
 });

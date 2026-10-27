@@ -87,6 +87,7 @@ test('STEP separates type, direction and foot color in editing, recording and ga
   await page.getByRole('button', { name: '3 踏步', exact: true }).click();
   await expect(page.getByLabel('绘制类型').locator('option')).toHaveText([
     'TAP',
+    'LEG RAISE',
     'FOLLOW',
     'FOLLOW SWAY',
     'LEG HOLD',

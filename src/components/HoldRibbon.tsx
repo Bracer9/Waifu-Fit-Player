@@ -1,6 +1,6 @@
 import { useId, useMemo } from 'react';
 import { ribbonOutline } from '../ribbonGeometry';
-import { isFollowStep, isLegHold, noteColor } from '../model';
+import { isFollowStep, isLegHold, isLegRaise, noteColor } from '../model';
 import {
   GlyphLabel,
   ClapGlyph,
@@ -74,6 +74,7 @@ export function HoldRibbon({
         releaseNote.distance,
         releaseNote.armAction,
         releaseNote.hand,
+        isLegRaise(releaseNote),
       )
     : undefined;
   // Keep this cue attached to the original midpoint, like the ribbon's wave phase.

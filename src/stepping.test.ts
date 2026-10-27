@@ -8,6 +8,7 @@ import {
   stepFoot,
   noteType,
   noteAction,
+  isLegRaise,
   type Chart,
   type Note,
 } from './model';
@@ -23,6 +24,73 @@ import {
 import { checkStepPositions } from './stepping';
 import { demoChart } from './demo';
 import { noteGlyphShape } from './components/Glyph';
+
+describe('LEG RAISE', () => {
+  const raised: Note = {
+    id: 'raise',
+    lane: 'step',
+    direction: 'right',
+    foot: 'left',
+    kind: 'tap',
+    timeMs: 1000,
+    stepAction: 'raise',
+  };
+  it('persists a single tap, keeps leg color and shares the LEG HOLD arrow', () => {
+    const chart = { ...blankChart(), notes: [raised] };
+    const loaded = parseChart(JSON.parse(serializeChart(chart)));
+    expect(loaded.notes).toEqual([raised]);
+    expect(isLegRaise(loaded.notes[0])).toBe(true);
+    expect(noteType(raised)).toBe('leg-raise');
+    expect(noteAction(raised)).toBe('LEG RAISE');
+    expect(noteColor(raised.lane, raised.direction, undefined, undefined, raised.foot)).toBe(
+      'var(--cyan)',
+    );
+    expect(noteGlyphShape('step', 'right', 1, undefined, undefined, true).angle).toBe(0);
+    expect(setStepDistance(chart, ['raise'], 2)).toEqual(chart);
+    expect(shiftNoteLanes(chart, ['raise'], 'step', 'side_crunch')).toEqual(chart);
+    expect(pasteEvents(chart, [raised], [], 3000, 10000).chart.notes[1]).toMatchObject({
+      stepAction: 'raise',
+      kind: 'tap',
+    });
+  });
+  it('clears incompatible fields when converting and extends into an ordinary LEG HOLD', () => {
+    for (const type of ['tap', 'hold', 'sway', 'follow', 'follow-sway'] as const) {
+      const next = changeNoteForm(raised, type, 'right', 2000);
+      expect(next.stepAction).toBeUndefined();
+      expect(() => parseChart({ ...blankChart(), notes: [next] })).not.toThrow();
+    }
+    const fromFollow = changeNoteForm(
+      { ...raised, stepAction: undefined, follow: true, connectPrevious: false },
+      'leg-raise',
+      'left',
+      2000,
+    );
+    expect(fromFollow).toMatchObject({ kind: 'tap', stepAction: 'raise', foot: 'left' });
+    expect(fromFollow.follow).toBeUndefined();
+    expect(fromFollow.connectPrevious).toBeUndefined();
+    const extended = extendTap({ ...blankChart(), notes: [raised] }, 'raise', 2000, 10000);
+    expect(extended.notes[0]).toEqual({
+      ...raised,
+      stepAction: undefined,
+      kind: 'hold',
+      modifier: 'none',
+      endTimeMs: 2000,
+    });
+    expect(() => parseChart(extended)).not.toThrow();
+  });
+  it('rejects raise markers on holds, other lanes, FOLLOW and distance variants', () => {
+    for (const patch of [
+      { lane: 'side_crunch' },
+      { follow: true },
+      { distance: 2 },
+      { kind: 'hold', modifier: 'none', endTimeMs: 2000 },
+      { stepAction: 'other' },
+    ])
+      expect(() => parseChart({ ...blankChart(), notes: [{ ...raised, ...patch }] })).toThrow(
+        /LEG RAISE/,
+      );
+  });
+});
 
 const tap = (id: string, direction: Note['direction'], timeMs: number, distance?: 1 | 2): Note => ({
   id,
