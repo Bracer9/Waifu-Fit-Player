@@ -54,6 +54,15 @@ export function planFitnessPhrases(
       break;
     }
   }
+  const sustainedContrast = (bar: number) => {
+    const before = energies.slice(bar - 2, bar),
+      after = energies.slice(bar, bar + 2);
+    if (before.length !== 2 || after.length !== 2) return 1;
+    return Math.max(
+      (Math.min(...after) + 1e-6) / (Math.max(...before) + 1e-6),
+      (Math.min(...before) + 1e-6) / (Math.max(...after) + 1e-6),
+    );
+  };
   const boundaries: PhraseBoundary[] = [{ beat: start * 4, strength: 1, reason: 'opening' }];
   while (start + 1 < bars) {
     const expected = Math.min(bars, start + 8);
@@ -61,18 +70,13 @@ export function planFitnessPhrases(
     for (let i = start + 3; i <= Math.min(bars - 2, expected + 2); i++)
       if (
         scores[i] >= 0.72 &&
+        // A fill or a short drop is not evidence for a new seven/nine-bar phrase.
+        ((i - start) % 4 === 0 ? sustainedContrast(i) >= 1.5 : sustainedContrast(i) >= 4) &&
         scores[i] >= (scores[i - 1] ?? 0) &&
         scores[i] > (scores[i + 1] ?? 0)
       )
         candidates.push(i);
-    let next = candidates[0] ?? expected;
-    // Small local fluctuations must not shift every nominal phrase by a bar.
-    if (!candidates.length && expected < bars) {
-      let best = expected;
-      for (let i = Math.max(start + 3, expected - 1); i <= Math.min(bars - 2, expected + 1); i++)
-        if (scores[i] > scores[best]) best = i;
-      if (scores[best] > 0.55 && scores[best] - scores[expected] > 0.16) next = best;
-    }
+    const next = candidates[0] ?? expected;
     if (next <= start) break;
     boundaries.push({
       beat: next * 4,
@@ -84,4 +88,40 @@ export function planFitnessPhrases(
   if (boundaries.at(-1)!.beat < bars * 4)
     boundaries.push({ beat: bars * 4, strength: 0, reason: 'end' });
   return boundaries;
+}
+
+export type FitnessBeatDynamics = { energy: number; mode: 'rest' | 'light' | 'active' };
+/** Relative dynamics on the supplied grid. Breaks remain separate from phrase boundaries. */
+export function planFitnessDynamics(
+  onsets: Float32Array,
+  levels: Float32Array,
+  anchorMs: number,
+  beatMs: number,
+  endBeat: number,
+  rate: number,
+): FitnessBeatDynamics[] {
+  const beats = Array.from({ length: Math.ceil(endBeat) }, (_, i) => ({
+    level: meanLevel(levels, anchorMs + i * beatMs, anchorMs + (i + 1) * beatMs, rate),
+    attack: meanLevel(onsets, anchorMs + i * beatMs, anchorMs + (i + 1) * beatMs, rate),
+  }));
+  const reference = (values: number[]) =>
+    values.sort((a, b) => a - b)[Math.floor(values.length * 0.75)] ?? 0;
+  const levelRef = Math.max(1e-8, reference(beats.map((b) => b.level)));
+  const attackRef = Math.max(1e-8, reference(beats.map((b) => b.attack)));
+  const energy = beats.map((b) =>
+    Math.min(1, (0.65 * b.level) / levelRef + (0.35 * b.attack) / attackRef),
+  );
+  return beats.map((b, i) => {
+    const local = beats.slice(Math.max(0, i - 4), Math.min(beats.length, i + 5));
+    const localLevel = Math.max(...local.map((v) => v.level));
+    const localAttack = Math.max(...local.map((v) => v.attack));
+    const deepQuiet = b.level < levelRef * 0.08;
+    const drop = b.level < localLevel * 0.25 && b.attack < Math.max(1e-8, localAttack) * 0.3;
+    const barEnergy = energy.slice(Math.floor(i / 4) * 4, Math.floor(i / 4) * 4 + 4);
+    const average = barEnergy.reduce((sum, v) => sum + v, 0) / barEnergy.length;
+    return {
+      energy: average,
+      mode: deepQuiet || drop ? 'rest' : average < 0.5 ? 'light' : 'active',
+    };
+  });
 }

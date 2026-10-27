@@ -126,7 +126,7 @@ export function FitnessGenerateButton({
         className="button small ghost"
         disabled={disabled || !source || progress !== null || saving}
         onClick={start}
-        title="本地分析音乐并按参考积木生成四轨 FITNESS 草稿"
+        title="先在节拍段填好 BPM 和 Offset；按已填网格生成，不自动检测"
       >
         <WandSparkles size={15} />
         一键 FITNESS
@@ -148,7 +148,7 @@ export function FitnessGenerateButton({
             <h2 id="fitness-generation-title">
               {result ? 'FITNESS 生成完成' : '生成 FITNESS 谱面'}
             </h2>
-            <p>本地音乐分析 · 三首参考谱积木 · 四轨编排</p>
+            <p>使用已填写的 BPM / Offset · 不自动检测 · 四轨积木编排</p>
             {progress !== null && (
               <>
                 <p role="status">
@@ -180,7 +180,7 @@ export function FitnessGenerateButton({
                     <dd>{result.report.noteCount}</dd>
                   </div>
                   <div>
-                    <dt>段落</dt>
+                    <dt>动作组</dt>
                     <dd>{result.report.sections.length}</dd>
                   </div>
                 </dl>
@@ -205,6 +205,21 @@ export function FitnessGenerateButton({
                       </li>
                     ))}
                   </ol>
+                  {result.report.rests.length > 0 && (
+                    <>
+                      <p>留白（不安排动作）</p>
+                      <ol>
+                        {result.report.rests.map((rest, i) => (
+                          <li key={i}>
+                            {formatTime(rest.startMs, true)}–{formatTime(rest.endMs, true)} ·{' '}
+                            {rest.reason === 'quiet'
+                              ? '安静／短暂停顿'
+                              : '保留完整动作组的收尾空间'}
+                          </li>
+                        ))}
+                      </ol>
+                    </>
+                  )}
                 </details>
                 <p className="fitness-caveat">{result.report.warnings.join(' ')}</p>
               </>

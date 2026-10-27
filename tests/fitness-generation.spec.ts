@@ -20,6 +20,14 @@ test('one click generates and saves Fitness while preserving Dance, with a repor
   await page.getByRole('button', { name: '新建', exact: true }).click();
   await (await chooser).setFiles('tests/fixtures/fitness-148.mp4');
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await page
+    .locator('.inspector-tabs')
+    .getByRole('button', { name: '节拍段', exact: true })
+    .click();
+  await page.getByLabel('BPM', { exact: true }).fill('134.25');
+  await page.getByLabel('BPM', { exact: true }).press('Enter');
+  await page.getByLabel('本段 Offset / ms', { exact: true }).fill('1357');
+  await page.getByLabel('本段 Offset / ms', { exact: true }).press('Enter');
   const dance = await exportChart(page);
   const before = await (await page.request.get('/__wfp/maps')).json();
   const original = before.songs.find((s: { id: string }) => s.id === dance.songId);
@@ -30,6 +38,8 @@ test('one click generates and saves Fitness while preserving Dance, with a repor
   await report.getByRole('button', { name: '关闭', exact: true }).click();
   const generated = await exportChart(page);
   expect(generated.chartType).toBe('fitness');
+  expect(generated.tempoSegments).toEqual(dance.tempoSegments);
+  expect(generated.tempoSegments[0]).toMatchObject({ bpm: 134.25, anchorMs: 1357 });
   expect(generated.notes.length).toBeGreaterThan(20);
   expect(generated.specialEvents).toEqual([]);
   expect(generated.notes.some((n) => n.lane === 'step')).toBe(false);

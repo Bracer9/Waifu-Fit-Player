@@ -3,7 +3,7 @@ import { blankChart, parseChart } from '../model';
 import { generateFitness } from './generate';
 import { phraseFingerprint, musicSimilarity, findMusicRepeats } from './music';
 import warehouse from './bricks.json';
-import { planFitnessPhrases } from './structure';
+import { planFitnessPhrases, planFitnessDynamics } from './structure';
 
 function audio(seconds = 96) {
   const onsets = new Float32Array(seconds * 200),
@@ -82,6 +82,23 @@ it('limits Side Crunch bouts, spacing and total exposure, including over a long 
     ((r.report.endMs - r.report.audioStartMs) / beatMs) * 0.08,
   );
 });
+it('keeps squat transitions feasible at the supplied BPM, including repeats and joins', () => {
+  for (const bpm of [120, 134.25, 175.05, 180, 180.01, 240]) {
+    const base = blankChart();
+    base.videoHint.durationMs = 180000;
+    base.tempoSegments = [{ id: 'manual', bpm, anchorMs: 3861, meter: '4/4' }];
+    const a = audio(180);
+    const result = generateFitness(base, a.onsets, a.levels);
+    expect(result.chart.tempoSegments).toEqual(base.tempoSegments);
+    const squats = result.chart.notes.filter((n) => n.lane === 'squat');
+    expect(squats.length).toBeGreaterThan(0);
+    for (let i = 1; i < squats.length; i++)
+      expect(
+        squats[i].timeMs - squats[i - 1].timeMs,
+        `${bpm} BPM squat transition`,
+      ).toBeGreaterThanOrEqual(500);
+  }
+});
 it('places a sharp music change at its beginning rather than one window later', () => {
   const a = audio(96);
   for (let i = 0; i < a.levels.length; i++) a.levels[i] *= i < 18 * 200 ? 1 : 8;
@@ -96,18 +113,104 @@ it('waits for a sustained intro entry without anticipating it by a bar', () => {
   const boundaries = planFitnessPhrases(a.onsets, a.levels, 100, 500, 184, 200);
   expect(boundaries[0].beat).toBe(8);
 });
-it('rejects silence and clear tempo changes without returning an unsafe partial chart', () => {
+it('keeps eight-bar phrases through isolated one-bar fills without accumulating seven/nine-bar drift', () => {
+  const a = audio(128);
+  for (const bar of [7, 23, 39]) for (let i = bar * 400; i < (bar + 1) * 400; i++) a.levels[i] *= 8;
+  const boundaries = planFitnessPhrases(a.onsets, a.levels, 0, 500, 256, 200);
+  expect(boundaries.map((b) => b.beat)).toEqual([0, 32, 64, 96, 128, 160, 192, 224, 256]);
+});
+it('leaves a quiet break and a one-beat tame empty, including holds crossing their boundaries', () => {
+  const base = blankChart();
+  base.videoHint.durationMs = 128000;
+  const a = audio(128);
+  const rests = [
+    [31500, 32000],
+    [64000, 72000],
+  ];
+  for (const [start, end] of rests) {
+    a.levels.fill(0, start / 5, end / 5);
+    a.onsets.fill(0, start / 5, end / 5);
+  }
+  const result = generateFitness(base, a.onsets, a.levels);
+  for (const [start, end] of rests)
+    expect(
+      result.chart.notes.filter(
+        (n) => n.timeMs < end && (n.kind === 'hold' ? n.endTimeMs > start : n.timeMs >= start),
+      ),
+    ).toEqual([]);
+});
+it('uses lighter single-lane movement in a quiet passage rather than filling lane quotas', () => {
+  const base = blankChart();
+  base.videoHint.durationMs = 128000;
+  const a = audio(128);
+  for (let i = 64000 / 5; i < 80000 / 5; i++) {
+    a.levels[i] *= 0.3;
+    a.onsets[i] *= 0.3;
+  }
+  const result = generateFitness(base, a.onsets, a.levels);
+  const quiet = result.chart.notes.filter((n) => n.timeMs >= 64000 && n.timeMs < 80000);
+  expect(quiet.length).toBeGreaterThan(0);
+  expect(quiet.every((n) => n.lane === 'punch')).toBe(true);
+  const loud = result.chart.notes.filter((n) => n.timeMs >= 96000 && n.timeMs < 112000);
+  expect(quiet.length).toBeLessThan(loud.length);
+});
+it('bases rests and light passages on relative dynamics, without changing them when volume is scaled', () => {
+  const a = audio(96);
+  a.levels.fill(0, 8000, 8400);
+  a.onsets.fill(0, 8000, 8400);
+  const original = planFitnessDynamics(a.onsets, a.levels, 0, 500, 180, 200);
+  const scaled = planFitnessDynamics(
+    Float32Array.from(a.onsets, (v) => v * 0.1),
+    Float32Array.from(a.levels, (v) => v * 0.1),
+    0,
+    500,
+    180,
+    200,
+  );
+  expect(scaled.map((b) => b.mode)).toEqual(original.map((b) => b.mode));
+  expect(original.filter((b) => b.mode === 'rest').length).toBe(4);
+});
+it('uses the supplied BPM and Offset even when the audio has no reliable beat or conflicting rhythms', () => {
   const base = blankChart();
   base.videoHint.durationMs = 96000;
+  base.videoOffsetMs = 350;
+  base.tempoSegments = [{ id: 'manual-grid', bpm: 134.25, anchorMs: 1357, meter: '4/4' }];
   const a = audio();
-  expect(() => generateFitness(base, new Float32Array(19200), a.levels)).toThrow(/BPM/);
+  const result = generateFitness(base, new Float32Array(19200), a.levels);
+  expect(result.report.bpm).toBe(134.25);
+  expect(result.report.anchorMs).toBe(1357);
+  expect(result.report.audioStartMs).toBe(1007);
+  expect(result.chart.tempoSegments).toEqual(base.tempoSegments);
+  expect(result.chart.videoOffsetMs).toBe(350);
+  expect(result.chart.notes.length).toBeGreaterThan(20);
   a.onsets.fill(0, 9600);
   for (let t = 48.1; t < 96; t += 60 / 90) {
     const i = Math.round(t * 200);
     for (let j = 0; j < 6 && i + j < a.onsets.length; j++)
       a.onsets[i + j] += [0, 0.4, 1, 0.6, 0.2, 0][j];
   }
-  expect(() => generateFitness(base, a.onsets, a.levels)).toThrow(/变速|歧义/);
+  expect(generateFitness(base, a.onsets, a.levels).chart.tempoSegments).toEqual(base.tempoSegments);
+});
+it('rejects missing or invalid settings and silent audio without substituting detected values', () => {
+  const base = blankChart();
+  base.videoHint.durationMs = 96000;
+  const a = audio();
+  expect(() => generateFitness(base, a.onsets, new Float32Array(19200))).toThrow(/有效音频/);
+  base.tempoSegments[0].bpm = NaN;
+  expect(() => generateFitness(base, a.onsets, a.levels)).toThrow(/填写有效/);
+  base.tempoSegments = [];
+  expect(() => generateFitness(base, a.onsets, a.levels)).toThrow(/节拍段/);
+});
+it('keeps the original bar grid when the play range starts after the supplied Offset', () => {
+  const base = blankChart();
+  base.videoHint.durationMs = 96000;
+  base.tempoSegments = [{ id: 'manual', bpm: 120, anchorMs: 100, meter: '4/4' }];
+  base.playRange = { startMs: 3500, endMs: 90000 };
+  const a = audio();
+  const result = generateFitness(base, a.onsets, a.levels);
+  expect(result.report.audioStartMs).toBe(4100);
+  expect(result.chart.tempoSegments).toEqual(base.tempoSegments);
+  expect(Math.min(...result.chart.notes.map((n) => n.timeMs))).toBeGreaterThanOrEqual(4100);
 });
 it('compares beat-relative music patterns independently of absolute volume', () => {
   const a = audio();

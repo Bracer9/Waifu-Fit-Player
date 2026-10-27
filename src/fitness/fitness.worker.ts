@@ -3,7 +3,6 @@ import { createBpmSource } from '../bpm-source';
 import { BpmEnvelope } from '../bpm';
 import { generateFitness, type FitnessMessage } from './generate';
 import type { Chart } from '../model';
-import { MusicSpectrum } from './spectrum';
 
 const send = (message: FitnessMessage) => self.postMessage(message);
 self.onmessage = async ({ data }: MessageEvent<{ source: string; chart: Chart }>) => {
@@ -16,13 +15,6 @@ self.onmessage = async ({ data }: MessageEvent<{ source: string; chart: Chart }>
     if (!Number.isFinite(duration) || duration > 1200)
       throw new Error('初版支持 20 分钟以内的音轨。');
     const envelope = new BpmEnvelope(duration);
-    const spectral = new MusicSpectrum();
-    const beatStart = (data.chart.playRange?.startMs ?? 0) / 1000;
-    const beatEnd = Math.min(
-      duration,
-      beatStart + 60,
-      (data.chart.playRange?.endMs ?? Infinity) / 1000,
-    );
     let previous = -1;
     for await (const sample of new AudioSampleSink(track).samples(0, duration)) {
       try {
@@ -32,17 +24,6 @@ self.onmessage = async ({ data }: MessageEvent<{ source: string; chart: Chart }>
           return channel;
         });
         envelope.push(channels, sample.sampleRate, sample.timestamp);
-        const from = Math.max(0, Math.ceil((beatStart - sample.timestamp) * sample.sampleRate));
-        const to = Math.min(
-          sample.numberOfFrames,
-          Math.ceil((beatEnd - sample.timestamp) * sample.sampleRate),
-        );
-        if (to > from)
-          spectral.push(
-            channels.map((c) => c.subarray(from, to)),
-            sample.sampleRate,
-            Math.max(0, sample.timestamp + from / sample.sampleRate - beatStart),
-          );
         const progress = Math.min(
           65,
           Math.round(((sample.timestamp + sample.duration) / duration) * 65),
@@ -62,7 +43,6 @@ self.onmessage = async ({ data }: MessageEvent<{ source: string; chart: Chart }>
         envelope.levels(),
         undefined,
         (progress, phase) => send({ progress, phase }),
-        spectral.data(),
       ),
     });
   } catch (error) {
