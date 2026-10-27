@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeTempo, BpmEnvelope, estimateBpm } from './bpm';
+import { gunzipSync } from 'node:zlib';
+import renai from '../tests/fixtures/renai-bpm-onsets.json';
 
 function drums(bpm: number, { stereo = false, intro = 0 } = {}) {
   const rate = 8000,
@@ -89,6 +91,16 @@ function changingBeats(first: number, second: number) {
 }
 
 describe('tempo consistency within the analyzed interval', () => {
+  it('keeps the full 134 BPM estimate for Renai Saiban despite weak 67/89/177 window aliases', () => {
+    const bytes = gunzipSync(Buffer.from(renai.data, 'base64'));
+    const onsets = Float32Array.from(
+      { length: renai.samples },
+      (_, i) => bytes.readUInt16LE(i * 2) / renai.scale,
+    );
+    const result = analyzeTempo(onsets, renai.sampleRate);
+    expect(result.kind).toBe('stable');
+    if (result.kind === 'stable') expect(result.result.bpm).toBeCloseTo(134, 0);
+  });
   it.each([
     [120, 90],
     [90, 150],
@@ -100,6 +112,7 @@ describe('tempo consistency within the analyzed interval', () => {
     if (analysis.kind === 'varying') {
       expect(analysis.bpms).toContain(first);
       expect(analysis.bpms).toContain(second);
+      expect(analysis.candidates.length).toBeGreaterThanOrEqual(2);
     }
   });
 

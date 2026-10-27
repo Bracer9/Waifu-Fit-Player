@@ -78,6 +78,13 @@ self.onmessage = async ({ data }: MessageEvent<BpmRequest>) => {
             timeMs: Math.round(start * 1000) + analysis.result.timeMs,
           },
         });
+      else if (analysis.kind === 'ambiguous-origin' && analysis.candidatesMs.length > 1)
+        send({
+          candidates: {
+            kind: 'first-beat',
+            values: analysis.candidatesMs.map((ms) => Math.round(start * 1000) + ms),
+          },
+        });
       else if (analysis.kind === 'ambiguous-origin')
         send({
           error:
@@ -91,9 +98,7 @@ self.onmessage = async ({ data }: MessageEvent<BpmRequest>) => {
     const analysis = analyzeTempo(onsets);
     if (analysis.kind === 'stable') send({ result: analysis.result });
     else if (analysis.kind === 'varying')
-      send({
-        error: `检测片段的节奏不一致（约 ${analysis.bpms.join(' / ')} BPM），可能存在变速或节奏歧义。请分节拍段后检测，原 BPM 未修改。`,
-      });
+      send({ candidates: { kind: 'bpm', values: analysis.candidates } });
     else send({ error: '未检测到稳定 BPM，请手动填写或尝试其他节拍段。' });
   } catch {
     send({ error: '读取视频音频失败，请确认视频可以正常播放后重试。' });

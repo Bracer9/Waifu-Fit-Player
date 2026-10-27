@@ -12,6 +12,8 @@ import {
 } from 'react';
 import { EXERCISE_INTENSITIES, INTENSITY_LABELS, type ExerciseIntensity } from '../chart-types';
 import {
+  ArrowLeft,
+  ArrowRight,
   ArrowLeftRight,
   Circle,
   Copy,
@@ -429,6 +431,15 @@ export function Editor({
   const event = selectedNote || selectedSpecial;
   const activeSegment =
     chart.tempoSegments.find((s) => s.id === segmentId) || chart.tempoSegments[0];
+  const offsetCorrections = ([-2, 2] as const).map((beats) => {
+    const anchorMs = Math.round(activeSegment.anchorMs + (beats * 60000) / activeSegment.bpm);
+    const crossesSegment = chart.tempoSegments.some(
+      (s) =>
+        s.id !== activeSegment.id &&
+        (s.anchorMs < activeSegment.anchorMs ? anchorMs <= s.anchorMs : anchorMs >= s.anchorMs),
+    );
+    return { beats, anchorMs, disabled: anchorMs < 0 || anchorMs > duration || crossesSegment };
+  });
   const firstBeatSearch = firstBeatWindow(chart, activeSegment, duration);
   const snapAt = (t: number) => snapTime(t, chart.tempoSegments, snap, duration);
   const copy = () => {
@@ -1967,6 +1978,23 @@ export function Editor({
                     }
                     notify={notify}
                   />
+                </div>
+                <div className="inspector-actions offset-corrections" aria-label="第一拍两拍纠正">
+                  {offsetCorrections.map(({ beats, anchorMs, disabled }) => (
+                    <button
+                      key={beats}
+                      disabled={disabled}
+                      title={
+                        disabled
+                          ? '移动后会超出视频范围或跨过相邻节拍段'
+                          : `按当前 BPM 将第一拍${beats < 0 ? '提前' : '延后'}两拍，仅改变网格`
+                      }
+                      onClick={() => changeSegment({ anchorMs })}
+                    >
+                      {beats < 0 ? <ArrowLeft size={13} /> : <ArrowRight size={13} />}
+                      {beats < 0 ? '提前两拍' : '延后两拍'}
+                    </button>
+                  ))}
                 </div>
                 <button
                   className="text-action"

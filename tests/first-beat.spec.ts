@@ -104,3 +104,37 @@ test('changing the target segment cancels first-beat detection without applying 
     release();
   }
 });
+
+test('manual two-beat correction shifts only the current grid anchor, supports undo and respects boundaries', async ({
+  page,
+}) => {
+  await scratch(page);
+  await page.getByLabel('BPM', { exact: true }).fill('95');
+  await page.getByLabel('BPM', { exact: true }).press('Tab');
+  const before = await exported(page);
+  const earlier = page.getByRole('button', { name: '提前两拍', exact: true });
+  const later = page.getByRole('button', { name: '延后两拍', exact: true });
+  await earlier.click();
+  let after = await exported(page);
+  expect(after.tempoSegments[0].anchorMs).toBe(Math.round(5000 - 120000 / 95));
+  expect(after.notes).toEqual(before.notes);
+  expect(after.videoOffsetMs).toBe(before.videoOffsetMs);
+  expect(after.tempoSegments[1]).toEqual(before.tempoSegments[1]);
+  await page.getByRole('button', { name: /撤销/ }).click();
+  expect((await exported(page)).tempoSegments).toEqual(before.tempoSegments);
+  await later.click();
+  after = await exported(page);
+  expect(after.tempoSegments[0].anchorMs).toBe(Math.round(5000 + 120000 / 95));
+  expect(after.notes).toEqual(before.notes);
+  await page.getByLabel('本段 Offset / ms', { exact: true }).fill('0');
+  await page.getByLabel('本段 Offset / ms', { exact: true }).press('Tab');
+  await expect(earlier).toBeDisabled();
+  await expect(later).toBeEnabled();
+  await page.getByLabel('本段 Offset / ms', { exact: true }).fill('1000');
+  await page.getByLabel('本段 Offset / ms', { exact: true }).press('Tab');
+  await page.getByLabel('当前编辑段').selectOption('later');
+  await page.getByLabel('本段 Offset / ms', { exact: true }).fill('1400');
+  await page.getByLabel('本段 Offset / ms', { exact: true }).press('Tab');
+  await expect(earlier).toBeDisabled();
+  await page.screenshot({ path: 'artifacts/offset-two-beat-correction.png' });
+});

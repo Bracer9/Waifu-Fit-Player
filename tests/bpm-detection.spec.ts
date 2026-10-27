@@ -1,6 +1,65 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Chart } from '../src/model';
+import { importDemo } from './helpers/project';
+
+test('ambiguous detections keep existing values until a candidate is selected and clear on target changes', async ({
+  page,
+}) => {
+  await page.route('**/bpm.worker*', (route) =>
+    route.fulfill({
+      contentType: 'application/javascript',
+      body: `self.onmessage = ({ data }) => self.postMessage({ candidates: data.firstBeatBpm === undefined ? { kind: 'bpm', values: [134.1, 67, 89.3] } : { kind: 'first-beat', values: [125, 1800] } });`,
+    }),
+  );
+  await page.goto('/');
+  await importDemo(page);
+  const chart = await exported(page);
+  chart.tempoSegments[0].bpm = 100;
+  chart.tempoSegments[0].anchorMs = 5000;
+  chart.tempoSegments.push({ id: 'next', anchorMs: 20000, bpm: 110, meter: '4/4' });
+  await page
+    .getByLabel('导入谱面文件')
+    .setInputFiles({
+      name: 'candidates.wfp.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(chart)),
+    });
+  await page.getByRole('button', { name: '节拍段', exact: true }).click();
+  const bpm = page.getByLabel('BPM', { exact: true });
+  const offset = page.getByLabel('本段 Offset / ms', { exact: true });
+  const detect = page.getByRole('button', { name: '自动检测 BPM', exact: true });
+  const choices = page.getByRole('group', { name: 'BPM 检测候选', exact: true });
+  await detect.click();
+  await expect(choices).toBeVisible();
+  await expect(bpm).toHaveValue('100');
+  await expect(choices.getByRole('button', { name: /^采用/ })).toHaveCount(3);
+  await page.screenshot({ path: 'artifacts/bpm-candidates-light.png' });
+  await choices.getByRole('button', { name: '采用 134.1 BPM', exact: true }).click();
+  await expect(bpm).toHaveValue('134.1');
+  expect((await exported(page)).notes).toEqual(chart.notes);
+  await page.getByRole('button', { name: /撤销/ }).click();
+  await expect(bpm).toHaveValue('100');
+  await detect.click();
+  await choices.getByRole('button', { name: '收起检测候选', exact: true }).click();
+  await expect(bpm).toHaveValue('100');
+  await page.getByRole('button', { name: '自动检测第一拍', exact: true }).click();
+  const origins = page.getByRole('group', { name: '第一拍检测候选', exact: true });
+  await expect(origins).toBeVisible();
+  await expect(offset).toHaveValue('5000');
+  await page.getByRole('button', { name: '切换日夜主题', exact: true }).click();
+  await page.screenshot({ path: 'artifacts/first-beat-candidates-dark.png' });
+  await origins.getByRole('button', { name: '采用 1.800 s', exact: true }).click();
+  await expect(offset).toHaveValue('1800');
+  const after = await exported(page);
+  expect(after.notes).toEqual(chart.notes);
+  expect(after.tempoSegments[1]).toEqual(chart.tempoSegments[1]);
+  await detect.click();
+  await expect(choices).toBeVisible();
+  await page.getByLabel('当前编辑段').selectOption('next');
+  await expect(page.locator('.bpm-candidates')).toHaveCount(0);
+  await expect(bpm).toHaveValue('110');
+});
 
 async function selectVideo(page: Page, name: string, file: string) {
   const previous = await page.locator('video').getAttribute('src');

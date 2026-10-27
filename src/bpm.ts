@@ -3,7 +3,10 @@ import type { FirstBeatResult } from './first-beat';
 export const ENVELOPE_RATE = 200;
 export type BpmResult = { bpm: number; confidence: number };
 export type TempoAnalysis =
-  { kind: 'stable'; result: BpmResult } | { kind: 'varying'; bpms: number[] } | { kind: 'unclear' };
+  | { kind: 'stable'; result: BpmResult }
+  | { kind: 'varying'; bpms: number[]; candidates: number[] }
+  | { kind: 'unclear' };
+export type DetectionCandidates = { kind: 'bpm' | 'first-beat'; values: number[] };
 export type BpmRequest = {
   source: string;
   start: number;
@@ -12,7 +15,11 @@ export type BpmRequest = {
   beatsPerBar?: 3 | 4;
 };
 export type BpmResponse =
-  { progress: number } | { result: BpmResult } | { firstBeat: FirstBeatResult } | { error: string };
+  | { progress: number }
+  | { result: BpmResult }
+  | { firstBeat: FirstBeatResult }
+  | { candidates: DetectionCandidates }
+  | { error: string };
 
 /** Keep only three short energy envelopes, rather than a whole decoded soundtrack. */
 export class BpmEnvelope {
@@ -237,6 +244,25 @@ export function analyzeTempo(onsets: Float32Array, rate = ENVELOPE_RATE): TempoA
     );
     if (local) windows.push(local);
   }
+  const sameTempo = (a: number, b: number) => Math.abs(Math.log(a / b)) < 0.025;
+  if (result) {
+    const aligned = windows.filter((w) => sameTempo(w.bpm, result.bpm));
+    const conflicts = windows.filter((w) => !sameTempo(w.bpm, result.bpm));
+    // Weak windows can lock to alternating beats or triplet groupings. Accept
+    // the complete interval only with independent local support; strong or
+    // unrelated conflicts still go through the tempo-change check below.
+    if (
+      aligned.length >= 2 &&
+      conflicts.every(
+        (w) =>
+          w.confidence < 0.45 &&
+          [0.5, 2, 2 / 3, 3 / 2, 3 / 4, 4 / 3].some((ratio) =>
+            sameTempo(w.bpm, result.bpm * ratio),
+          ),
+      )
+    )
+      return { kind: 'stable', result };
+  }
   const groups: { bpm: number; members: BpmResult[] }[] = [];
   for (const result of windows) {
     // Local accents commonly switch half/double-time readings without the song
@@ -264,6 +290,12 @@ export function analyzeTempo(onsets: Float32Array, rate = ENVELOPE_RATE): TempoA
   if (supported.length > 1)
     return {
       kind: 'varying',
+      // Preserve the uncollapsed full/local alternatives for a manual choice,
+      // including half-time values that the consistency grouping normalizes.
+      candidates: [...(result ? [result] : []), ...windows].reduce<number[]>((values, next) => {
+        if (!values.some((value) => sameTempo(value, next.bpm))) values.push(next.bpm);
+        return values;
+      }, []),
       bpms: supported.map((g) =>
         Math.round(g.members.reduce((sum, r) => sum + r.bpm, 0) / g.members.length),
       ),
