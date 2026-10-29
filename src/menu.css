@@ -1725,8 +1725,18 @@
   font-size: clamp(21px, calc(var(--menu-vw, 1vw) * 2), 31px);
   font-weight: 900;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+.selection-title h2 > span {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .selection-title h2 {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
 }
 .chart-type-choice {
   display: grid;

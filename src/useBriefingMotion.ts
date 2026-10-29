@@ -294,7 +294,10 @@ export function useBriefingMotion(
       }
       [...poster, ...sourceMotion, ...exits].forEach((animation) => animation.cancel());
       if (scroller) {
-        scroller.scrollTo({ left: scrollOffset, behavior: 'instant' });
+        const current = scroller.querySelector<HTMLElement>('.record-card[aria-current="true"]');
+        if (current && current !== selected)
+          current.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+        else scroller.scrollTo({ left: scrollOffset, behavior: 'instant' });
         scroller.style.scrollSnapType = originalSnap;
       }
       delete menu.dataset.briefing;

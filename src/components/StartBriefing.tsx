@@ -1,13 +1,14 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
   type RefObject,
 } from 'react';
-import { ArrowRight, ArrowUpRight, Dumbbell, PersonStanding } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Dumbbell, PersonStanding } from 'lucide-react';
 import type { ChartType, Song } from '../library';
 import { chartCredit, type Lane } from '../model';
 import { INTENSITY_LABELS, ratingValue } from '../chart-types';
@@ -37,9 +38,12 @@ export function StartBriefing({
   chartType,
   available,
   albumName,
+  trackIndex,
+  trackCount,
   source,
   requireEnterRelease,
   onChartType,
+  onTrack,
   onClose,
   onStart,
   onSound,
@@ -48,9 +52,12 @@ export function StartBriefing({
   chartType: ChartType;
   available: ChartType[];
   albumName: string;
+  trackIndex: number;
+  trackCount: number;
   source: RefObject<HTMLElement | null>;
   requireEnterRelease: boolean;
   onChartType: (type: ChartType) => void;
+  onTrack: (delta: number) => void;
   onClose: () => void;
   onStart: () => void;
   onSound: MenuSoundPlayer;
@@ -74,10 +81,30 @@ export function StartBriefing({
   const completion = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progress = useRef(0);
   const owner = useRef<'keyboard' | 'pointer' | null>(null);
-  const phase = useRef<'idle' | 'holding' | 'complete'>('idle');
+  const phase = useRef<'idle' | 'holding' | 'switching' | 'complete'>('idle');
   const [state, setState] = useState(phase.current);
-  const callbacks = useRef({ onClose, onStart, onSound, onChartType, available, chartType });
-  callbacks.current = { onClose, onStart, onSound, onChartType, available, chartType };
+  const trackMotion = useRef({ animations: [] as Animation[], generation: 0, direction: 1 });
+  const shownSong = useRef(song.id);
+  const callbacks = useRef({
+    onClose,
+    onStart,
+    onSound,
+    onChartType,
+    onTrack,
+    trackCount,
+    available,
+    chartType,
+  });
+  callbacks.current = {
+    onClose,
+    onStart,
+    onSound,
+    onChartType,
+    onTrack,
+    trackCount,
+    available,
+    chartType,
+  };
   const ringId = useId();
   const titleId = useId();
 
@@ -86,6 +113,9 @@ export function StartBriefing({
     chargeControl.current?.style.setProperty('--start-charge', String(value));
   };
   const clear = () => {
+    trackMotion.current.generation++;
+    trackMotion.current.animations.forEach((animation) => animation.cancel());
+    trackMotion.current.animations = [];
     stopCharge.current?.();
     stopCharge.current = null;
     cancelAnimationFrame(frame.current);
@@ -174,7 +204,7 @@ export function StartBriefing({
   const selectType = (type: ChartType) => {
     if (
       !motion.isReady() ||
-      phase.current === 'complete' ||
+      (phase.current !== 'idle' && phase.current !== 'holding') ||
       !callbacks.current.available.includes(type)
     )
       return;
@@ -183,11 +213,96 @@ export function StartBriefing({
     setState('idle');
     paint(0);
     if (type !== callbacks.current.chartType) callbacks.current.onChartType(type);
+    chargeControl.current?.focus({ preventScroll: true });
+  };
+  const animateChannelChange = (incoming: boolean) => {
+    const board = root.current!.querySelector<HTMLElement>('.briefing-board')!;
+    const interference = board.querySelector<HTMLElement>('.briefing-channel-noise')!;
+    const direction = trackMotion.current.direction;
+    const animation = board.animate(
+      incoming
+        ? [
+            { translate: `${direction * 7}px 0`, opacity: 0.55 },
+            { translate: `${-direction * 4}px 0`, opacity: 0.85 },
+            { translate: `${direction * 2}px 0`, opacity: 1 },
+            { translate: '0 0', opacity: 1 },
+          ]
+        : [
+            { translate: '0 0', opacity: 1 },
+            { translate: `${-direction * 5}px 0`, opacity: 0.9 },
+            { translate: `${direction * 8}px 0`, opacity: 0.65 },
+            { translate: `${-direction * 3}px 0`, opacity: 0.55 },
+          ],
+      { duration: incoming ? 170 : 110, fill: 'both', easing: 'steps(3, end)' },
+    );
+    animation.id = incoming ? 'briefing-channel-in' : 'briefing-channel-out';
+    const noise = interference.animate(
+      incoming
+        ? [{ opacity: 0.75 }, { opacity: 0.35 }, { opacity: 0.15 }, { opacity: 0 }]
+        : [{ opacity: 0 }, { opacity: 0.3 }, { opacity: 0.65 }, { opacity: 0.75 }],
+      { duration: incoming ? 170 : 110, fill: 'both', easing: 'steps(3, end)' },
+    );
+    noise.id = 'briefing-channel-interference';
+    trackMotion.current.animations = [animation, noise];
+  };
+  const changeTrack = (delta: number) => {
+    if (!motion.isReady() || phase.current !== 'idle' || callbacks.current.trackCount < 2) return;
+    clear();
+    paint(0);
+    phase.current = 'switching';
+    setState('switching');
+    trackMotion.current.direction = delta;
+    const generation = trackMotion.current.generation;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) callbacks.current.onTrack(delta);
+    else {
+      animateChannelChange(false);
+      void Promise.all(trackMotion.current.animations.map((animation) => animation.finished))
+        .then(() => {
+          if (generation === trackMotion.current.generation) callbacks.current.onTrack(delta);
+        })
+        .catch(() => {});
+    }
+    chargeControl.current?.focus({ preventScroll: true });
   };
 
+  useLayoutEffect(() => {
+    if (shownSong.current === song.id) return;
+    shownSong.current = song.id;
+    if (phase.current !== 'switching') return;
+    const generation = trackMotion.current.generation;
+    trackMotion.current.animations.forEach((animation) => animation.cancel());
+    const finish = () => {
+      if (generation !== trackMotion.current.generation) return;
+      trackMotion.current.animations.forEach((animation) => animation.cancel());
+      trackMotion.current.animations = [];
+      phase.current = 'idle';
+      setState('idle');
+    };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      finish();
+      return;
+    }
+    animateChannelChange(true);
+    void Promise.all(trackMotion.current.animations.map((animation) => animation.finished))
+      .then(finish)
+      .catch(() => {});
+  }, [song.id]);
+
   useEffect(() => {
+    chargeControl.current?.focus({ preventScroll: true });
     const down = (event: KeyboardEvent) => {
-      if (!['Enter', 'Escape', 'Backspace', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      if (
+        ![
+          'Enter',
+          'Escape',
+          'Backspace',
+          'ArrowLeft',
+          'ArrowRight',
+          'ArrowUp',
+          'ArrowDown',
+        ].includes(event.key)
+      )
+        return;
       event.preventDefault();
       event.stopImmediatePropagation();
       if (event.repeat) return;
@@ -199,9 +314,12 @@ export function StartBriefing({
         }
         if (!enterReleased.current) return;
         enterReleased.current = false;
-        if (event.target instanceof Element && event.target.closest('.briefing-cancel')) cancel();
+        const button = event.target instanceof Element ? event.target.closest('button') : null;
+        if (button && button !== chargeControl.current && !event.shiftKey) button.click();
         else begin('keyboard', event.shiftKey);
-      } else selectType(event.key === 'ArrowLeft' ? 'fitness' : 'dance');
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        changeTrack(event.key === 'ArrowLeft' ? -1 : 1);
+      } else selectType(event.key === 'ArrowUp' ? 'fitness' : 'dance');
     };
     const up = (event: KeyboardEvent) => {
       if (event.key !== 'Enter') return;
@@ -287,13 +405,38 @@ export function StartBriefing({
             />
           </svg>
         </div>
-        <div className="briefing-topline" aria-hidden="true">
-          <span>
+        <div className="briefing-topline">
+          <span aria-hidden="true">
             WAIFU FIT PLAYER <i />
           </span>
-          <span>YOUR MUSIC. YOUR MOVEMENT.</span>
+          <button className="briefing-back" type="button" onClick={cancel} aria-label="返回选曲">
+            <ArrowLeft aria-hidden="true" />
+            <span>BACK</span>
+            <kbd>ESC</kbd>
+          </button>
         </div>
+        <nav className="briefing-track-nav" aria-label="切换曲目">
+          <button
+            type="button"
+            aria-label="上一首"
+            disabled={trackCount < 2 || state !== 'idle'}
+            onClick={() => changeTrack(-1)}
+          >
+            <ArrowLeft aria-hidden="true" />
+            <span>PREV</span>
+          </button>
+          <button
+            type="button"
+            aria-label="下一首"
+            disabled={trackCount < 2 || state !== 'idle'}
+            onClick={() => changeTrack(1)}
+          >
+            <ArrowRight aria-hidden="true" />
+            <span>NEXT</span>
+          </button>
+        </nav>
         <div className="briefing-board">
+          <span className="briefing-channel-noise" aria-hidden="true" />
           <div className="briefing-cover">
             <CoverArt src={edition.cover} eager />
             <span className="briefing-cover-ink" aria-hidden="true" />
@@ -309,7 +452,12 @@ export function StartBriefing({
           </div>
           <div className="briefing-info">
             <div className="briefing-trackline">
-              <span>TRACK</span>
+              <span>
+                TRACK{' '}
+                <small>
+                  {String(trackIndex + 1).padStart(2, '0')} / {String(trackCount).padStart(2, '0')}
+                </small>
+              </span>
               <i />
               <span>{albumName}</span>
               <b>///</b>
@@ -338,8 +486,11 @@ export function StartBriefing({
                       key={type}
                       type="button"
                       aria-label={type.toUpperCase()}
+                      title={type === 'fitness' ? '↑ FITNESS' : '↓ DANCE'}
                       aria-pressed={type === chartType}
-                      disabled={!available.includes(type) || state === 'complete'}
+                      disabled={
+                        !available.includes(type) || state === 'complete' || state === 'switching'
+                      }
                       onClick={() => selectType(type)}
                     >
                       <Icon aria-hidden="true" />
@@ -503,7 +654,7 @@ export function StartBriefing({
         </span>
         <button className="briefing-cancel" type="button" onClick={cancel} aria-label="取消">
           <kbd>ESC</kbd>
-          <span>/ BACK TO CANCEL</span>
+          <span>/ BACK TO SELECT</span>
           <i />
         </button>
       </section>

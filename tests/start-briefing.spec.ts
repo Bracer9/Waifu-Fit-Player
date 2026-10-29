@@ -425,7 +425,7 @@ test('reference layout uses real cover, credits, range statistics and synchroniz
     'rgb(36, 35, 41)',
   );
   await page.screenshot({ path: 'artifacts/start-briefing-dance-1080p.png' });
-  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowUp');
   await expect(briefing.getByRole('button', { name: 'FITNESS', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -825,7 +825,7 @@ test('pointer capture, blur, mode changes and cancel clear charge; mouse hold al
   await expect.poll(() => chargeValue(page)).toBe(0);
   await page.keyboard.down('Enter');
   await expect.poll(() => chargeValue(page)).toBeGreaterThan(0.2);
-  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowUp');
   await page.keyboard.up('Enter');
   expect(await chargeValue(page)).toBe(0);
   await expect(briefing.getByRole('button', { name: 'FITNESS', exact: true })).toHaveAttribute(
@@ -849,4 +849,136 @@ test('pointer capture, blur, mode changes and cancel clear charge; mouse hold al
   await expect(page.getByRole('dialog', { name: '开始倒计时', exact: true })).toBeVisible();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(page.locator('.game-entrance')).toHaveCount(0);
+});
+
+test('briefing switches songs with arrows or mouse, locks switching during charge and returns to the current song', async ({
+  page,
+}) => {
+  await fixture(page, true);
+  const songs = (await readSongs(page)).sort(
+    (a, b) => b.released.dance!.updatedAt - a.released.dance!.updatedAt,
+  );
+  songs.forEach((song, index) => {
+    for (const [type, edition] of Object.entries(song.released))
+      edition.chart.title = `Track ${index + 1} / ${type.toUpperCase()}`;
+  });
+  const longTitle = 'ピチカートドロップス / Selected Track Long Title — Original Music Video';
+  songs[0].released.dance!.chart.title = longTitle;
+  delete songs[1].released.dance;
+  delete songs[2].released.fitness;
+  await putSongs(page, songs);
+  await page.reload();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
+  await page.locator('.collection-album').first().click();
+  await insertAlbum(page);
+  await expect(page.locator('.menu-curtain')).toHaveCount(0);
+  // Select the first card before opening its details so the title can be checked.
+  await page.locator('.record-card').first().hover();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowLeft');
+  const songTitle = page.locator('.selection-title h2');
+  await expect(songTitle).toHaveText(longTitle);
+  await expect
+    .poll(() => songTitle.locator('span').evaluate((node) => node.getAnimations().length))
+    .toBe(1);
+  const distance = await songTitle.evaluate(
+    (node) => node.querySelector('span')!.scrollWidth - node.clientWidth,
+  );
+  expect(distance).toBeGreaterThan(20);
+  await songTitle.locator('span').evaluate((node) => {
+    const animation = node.getAnimations()[0];
+    animation.pause();
+    animation.currentTime = Number(animation.effect!.getTiming().duration) / 2;
+  });
+  expect(
+    await songTitle
+      .locator('span')
+      .evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).m41),
+  ).toBeCloseTo(-distance, 0);
+  await expect(songTitle).not.toHaveCSS('text-overflow', 'ellipsis');
+  await page.screenshot({ path: 'artifacts/selected-title-scroll-end.png' });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect
+    .poll(() => songTitle.locator('span').evaluate((node) => node.getAnimations().length))
+    .toBe(0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.locator('.record-select').first().click();
+  const briefing = page.locator('.start-briefing');
+  await expect(briefing).toHaveAttribute('data-motion', 'ready');
+  await expect(briefing.getByRole('heading')).toHaveText(longTitle);
+  await page.screenshot({ path: 'artifacts/briefing-track-navigation-1080p.png' });
+  await briefing.getByRole('button', { name: '下一首', exact: true }).evaluate((button) => {
+    (button as HTMLButtonElement).click();
+    document
+      .getAnimations()
+      .filter((animation) => animation.id.startsWith('briefing-channel-'))
+      .forEach((animation) => {
+        animation.pause();
+        animation.currentTime = 75;
+      });
+  });
+  await expect(briefing).toHaveAttribute('data-state', 'switching');
+  await expect(briefing.locator('.briefing-channel-noise')).toHaveCSS('opacity', '0.65');
+  await expect(briefing.locator('.start-charge')).toHaveCSS('translate', 'none');
+  await expect(briefing.locator('.start-charge')).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: 'artifacts/briefing-channel-switch.png' });
+  await page.evaluate(() => {
+    document
+      .getAnimations()
+      .filter((animation) => animation.id.startsWith('briefing-channel-'))
+      .forEach((animation) => animation.play());
+  });
+  await expect(briefing.getByRole('heading')).toHaveText('Track 2 / FITNESS');
+  await page.keyboard.press('ArrowRight');
+  await expect(briefing).toHaveAttribute('data-state', 'idle');
+  await expect(briefing.getByRole('heading')).toHaveText('Track 2 / FITNESS');
+  await expect(briefing.locator('.briefing-board')).toHaveCSS('translate', 'none');
+  await expect(briefing).toHaveAttribute('data-chart-type', 'fitness');
+  await page.keyboard.down('Enter');
+  await expect.poll(() => chargeValue(page)).toBeGreaterThan(0.15);
+  await page.keyboard.press('ArrowRight');
+  await expect(briefing.getByRole('heading')).toHaveText('Track 2 / FITNESS');
+  await expect(briefing.getByRole('button', { name: '下一首', exact: true })).toBeDisabled();
+  await page.keyboard.up('Enter');
+  await expect.poll(() => chargeValue(page)).toBe(0);
+  await page.keyboard.press('ArrowRight');
+  await expect(briefing.getByRole('heading')).toHaveText('Track 3 / DANCE');
+  await expect(briefing).toHaveAttribute('data-state', 'idle');
+  expect(await chargeValue(page)).toBe(0);
+  await expect(page.locator('.ready-countdown')).toHaveCount(0);
+  await page.keyboard.press('ArrowRight');
+  await expect(briefing.getByRole('heading')).toHaveText(longTitle);
+  await expect(briefing).toHaveAttribute('data-state', 'idle');
+  await page.keyboard.press('ArrowLeft');
+  await expect(briefing.getByRole('heading')).toHaveText('Track 3 / DANCE');
+  await expect(briefing).toHaveAttribute('data-state', 'idle');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const back = briefing.getByRole('button', { name: '返回选曲', exact: true });
+  for (const button of await briefing.locator('.briefing-back, .briefing-track-nav button').all()) {
+    const box = (await button.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(1440);
+  }
+  await page.screenshot({ path: 'artifacts/briefing-track-navigation-1440p.png' });
+  await back.click();
+  await expect(briefing).toHaveCount(0);
+  await expect(page.locator('.record-card[aria-current="true"]')).toHaveAttribute(
+    'data-id',
+    songs[2].id,
+  );
+  await expect(page.locator('.record-card[aria-current="true"] .record-select')).toBeFocused();
+  const centerDistance = await page
+    .locator('.record-card[aria-current="true"]')
+    .evaluate((card: HTMLElement) => {
+      const shelf = card.parentElement!;
+      return Math.abs(
+        card.offsetLeft + card.offsetWidth / 2 - shelf.scrollLeft - shelf.clientWidth / 2,
+      );
+    });
+  expect(centerDistance).toBeLessThan(5);
+  await expect
+    .poll(() =>
+      page.locator('.selection-title h2 span').evaluate((node) => node.getAnimations().length),
+    )
+    .toBe(0);
 });

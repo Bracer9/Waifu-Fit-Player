@@ -4,6 +4,7 @@ import { editionsIn, type Album, type ChartType, type Song } from '../library';
 import { CoverArt } from '../components/CoverArt';
 import { CoverTrace } from '../components/CoverTrace';
 import { StartBriefing } from '../components/StartBriefing';
+import { ScrollingTitle } from '../components/ScrollingTitle';
 import { MenuControls } from '../components/MenuControls';
 import { AlbumBackdrop } from '../components/AlbumBackdrop';
 import { AlbumCover } from '../components/AlbumCover';
@@ -113,6 +114,15 @@ export function LibraryMenu(props: Props) {
     confirmationOpen.current = false;
     setConfirmStart(null);
   };
+  const previousConfirmation = useRef(false);
+  useEffect(() => {
+    if (previousConfirmation.current && !confirmStart) {
+      const card = scroller.current?.querySelector<HTMLElement>('[aria-current="true"]');
+      activate(card ?? null);
+      card?.querySelector<HTMLElement>('.record-select')?.focus({ preventScroll: true });
+    }
+    previousConfirmation.current = !!confirmStart;
+  }, [confirmStart, activate]);
   const album = albums.find((a) => a.id === albumId) ?? albums[0];
   const { inserting, begin: beginInsert } = useAlbumInsertion({
     menu,
@@ -678,7 +688,11 @@ export function LibraryMenu(props: Props) {
           <div className="selection-details">
             <div className="selection-title">
               <span className="eyebrow">SELECTED TRACK</span>
-              <h2 title={edition?.chart.title}>{edition?.chart.title}</h2>
+              <ScrollingTitle
+                key={`${selected.id}:${selectedChartType}`}
+                title={edition?.chart.title ?? ''}
+                paused={!!confirmStart}
+              />
             </div>
             <dl className="selection-credits" aria-label="歌曲制作署名">
               {(['music', 'video'] as const).map((role) => (
@@ -717,11 +731,33 @@ export function LibraryMenu(props: Props) {
           chartType={confirmStart.chartType}
           available={editionsIn(confirmStart.song, albumId)}
           albumName={album.name}
+          trackIndex={Math.max(
+            0,
+            inAlbum.findIndex((song) => song.id === confirmStart.song.id),
+          )}
+          trackCount={inAlbum.length}
           source={menu}
           requireEnterRelease={confirmStart.requireEnterRelease}
           onChartType={(type) => {
             onChartType(type);
             setConfirmStart({ ...confirmStart, chartType: type });
+          }}
+          onTrack={(delta) => {
+            const index = Math.max(
+              0,
+              inAlbum.findIndex((song) => song.id === confirmStart.song.id),
+            );
+            const song = inAlbum[(index + delta + inAlbum.length) % inAlbum.length];
+            if (!song || song.id === confirmStart.song.id) return;
+            const choices = editionsIn(song, albumId);
+            const type = choices.includes(confirmStart.chartType)
+              ? confirmStart.chartType
+              : choices.at(-1);
+            if (!type) return;
+            onSong(song.id);
+            onChartType(type);
+            props.onSound('settings');
+            setConfirmStart({ ...confirmStart, song, chartType: type });
           }}
           onClose={closeConfirmation}
           onStart={() => {

@@ -20,7 +20,7 @@
 .start-briefing[data-motion='opening'] {
   pointer-events: none;
 }
-.start-briefing[data-motion='opening'] .briefing-cancel {
+.start-briefing[data-motion='opening'] :is(.briefing-cancel, .briefing-back) {
   pointer-events: auto;
 }
 .start-briefing:is([data-motion='opening'], [data-motion='closing']) .start-charge {
@@ -100,6 +100,107 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.42em;
+  z-index: 4;
+}
+.briefing-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-width: 230px;
+  height: 56px;
+  padding: 0 22px;
+  translate: 0 -12px;
+  border: 3px solid var(--ink);
+  background: var(--briefing-pink);
+  color: var(--briefing-paper);
+  box-shadow: 4px 4px 0 var(--ink);
+  font:
+    800 25px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.12em;
+  transition:
+    translate 120ms ease,
+    box-shadow 120ms ease;
+}
+.briefing-back svg {
+  width: 31px;
+  height: 31px;
+  stroke-width: 3;
+}
+.briefing-back kbd {
+  padding: 2px 5px;
+  border: 1px solid currentColor;
+  font:
+    700 15px 'Barlow Condensed',
+    sans-serif;
+}
+.briefing-back:is(:hover, :focus-visible) {
+  background: var(--briefing-paper);
+  color: var(--ink);
+  translate: -2px -14px;
+  box-shadow: 6px 6px 0 var(--briefing-pink);
+}
+.briefing-track-nav {
+  position: absolute;
+  inset: 38px -92px auto;
+  height: min(calc(var(--menu-vh, 1vh) * 58), 650px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 4;
+  pointer-events: none;
+}
+.briefing-track-nav button {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 76px;
+  padding: 14px 6px;
+  border: 3px solid var(--ink);
+  background: var(--briefing-paper);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--briefing-cyan);
+  font:
+    800 16px 'Barlow Condensed',
+    sans-serif;
+  letter-spacing: 0.1em;
+  pointer-events: auto;
+  transition:
+    translate 120ms ease,
+    background 120ms ease;
+}
+.briefing-track-nav button:last-child {
+  box-shadow: 4px 4px 0 var(--briefing-pink);
+}
+.briefing-track-nav svg {
+  width: 38px;
+  height: 38px;
+  stroke-width: 3;
+}
+.briefing-track-nav button:enabled:is(:hover, :focus-visible) {
+  background: var(--briefing-cyan);
+  translate: 0 -3px;
+}
+.briefing-track-nav button:enabled:last-child:is(:hover, :focus-visible) {
+  background: var(--briefing-pink);
+}
+.briefing-track-nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.start-briefing[data-motion='opening'] .briefing-track-nav {
+  visibility: hidden;
+}
+.briefing-trackline > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.briefing-trackline small {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 .briefing-topline > span {
   display: flex;
@@ -112,18 +213,13 @@
   width: 35%;
   clip-path: polygon(0 0, 94% 0, 100% 100%, 0 100%);
 }
-.briefing-topline > span:last-child {
-  background: var(--briefing-pink);
-  transform: rotate(-2deg) translateY(2px);
-  clip-path: polygon(0 0, 97% 0, 100% 100%, 6% 100%);
-  padding-left: 48px;
-}
 .briefing-topline i {
   width: 90px;
   height: 1px;
   background: var(--briefing-paper);
 }
 .briefing-board {
+  position: relative;
   display: grid;
   grid-template-columns: 43% minmax(0, 1fr);
   gap: clamp(24px, calc(var(--menu-vw, 1vw) * 2), 40px);
@@ -133,6 +229,26 @@
   background: var(--briefing-paper);
   box-shadow: 12px 12px 0 var(--ink);
   transform: rotate(-0.35deg);
+}
+.briefing-channel-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 24%,
+      var(--briefing-cyan) 24% 25%,
+      transparent 25% 46%,
+      var(--ink) 46% 49%,
+      var(--briefing-paper) 49% 50%,
+      transparent 50% 73%,
+      var(--briefing-pink) 73% 74%,
+      transparent 74%
+    ),
+    repeating-linear-gradient(to bottom, transparent 0 3px, #23212655 3px 4px, #fff9ee55 4px 5px);
 }
 .briefing-cover {
   position: relative;
