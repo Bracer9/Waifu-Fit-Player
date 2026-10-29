@@ -30,10 +30,39 @@ import { beginAfterShowTail } from '../after-show';
 import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
 import { usePlayerRenderPreparation } from '../usePlayerRenderPreparation';
+import { PlayerNoteWindow } from '../player-note-window';
 const BASE_PREVIEW_MS = 3600;
 // Movement changes the wrapper, not the glyph's SVG tree.
 const NoteGlyph = memo(NoteGlyphSource);
 const LaneGlyph = memo(LaneGlyphSource);
+const LaneLabel = memo(function LaneLabel({
+  lane,
+  index,
+  showGuide,
+}: {
+  lane: (typeof LANES)[number];
+  index: number;
+  showGuide: boolean;
+}) {
+  return (
+    <div className="lane-label">
+      <LaneGlyph lane={lane.id} />
+      <div>
+        <small hidden={!showGuide}>0{index + 1}</small>
+        <strong>{lane.english}</strong>
+      </div>
+    </div>
+  );
+});
+const HighwayDecoration = memo(function HighwayDecoration({ showGuide }: { showGuide: boolean }) {
+  return (
+    <>
+      <div className="highway-line" />
+      <div className="highway-grid" />
+      {!showGuide && <div className="judgement-ring" aria-hidden="true" />}
+    </>
+  );
+});
 export function Player({
   chart,
   media,
@@ -106,7 +135,16 @@ export function Player({
     [chart.notes],
   );
   const laneNotes = useMemo(
-    () => new Map(LANES.map((lane) => [lane.id, displayNotes.filter((n) => n.lane === lane.id)])),
+    () =>
+      new Map(
+        LANES.map((lane) => [
+          lane.id,
+          new PlayerNoteWindow(
+            displayNotes.filter((n) => n.lane === lane.id),
+            IMPACT_MS,
+          ),
+        ]),
+      ),
     [displayNotes],
   );
   const { joinedTails, joinedTaps } = useMemo(() => {
@@ -163,21 +201,11 @@ export function Player({
       </div>
       <div className="lanes-stack">
         {LANES.map((lane, i) => {
-          const notes = laneNotes.get(lane.id)!;
-          const visible = notes.filter(
-            (n) =>
-              n.timeMs <= time + previewMs + 300 &&
-              (n.kind === 'hold' ? n.endTimeMs : n.timeMs + IMPACT_MS) >= time,
-          );
-          const holdings = visible.filter(
-            (n) => n.kind === 'hold' && n.timeMs <= time && n.endTimeMs > time,
-          );
-          const holding = holdings.at(-1);
-          const nextHeadDistance = Math.min(
-            ...visible
-              .filter((note) => note.timeMs > time)
-              .map((note) => ((note.timeMs - time) / previewMs) * 0.88 * metrics.width),
-          );
+          const { visible, holding, hit, release, nextTime } = laneNotes
+            .get(lane.id)!
+            .read(time, previewMs);
+          const nextHeadDistance =
+            nextTime === Infinity ? Infinity : ((nextTime - time) / previewMs) * 0.88 * metrics.width;
           // Give the incoming action visual priority before its marker touches the old cue.
           const cueOpacity = Math.min(
             1,
@@ -187,12 +215,6 @@ export function Player({
             lane.id === 'side_crunch'
               ? Math.max(0, 1 - nextHeadDistance / ((metrics.width * 0.88 * 650) / previewMs))
               : 0;
-          const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
-          const release = notes
-            .filter(
-              (n) => n.kind === 'hold' && time >= n.endTimeMs && time - n.endTimeMs < IMPACT_MS,
-            )
-            .at(-1);
           const releaseTime = release?.kind === 'hold' ? release.endTimeMs : -Infinity;
           const impact = hit && hit.timeMs >= releaseTime ? hit : release;
           const impactTime = impact === hit ? hit?.timeMs : releaseTime;
@@ -214,17 +236,9 @@ export function Player({
               data-lane={lane.id}
               data-testid={`lane-${lane.id}`}
             >
-              <div className="lane-label">
-                <LaneGlyph lane={lane.id} />
-                <div>
-                  <small hidden={!showGuide}>0{i + 1}</small>
-                  <strong>{lane.english}</strong>
-                </div>
-              </div>
+              <LaneLabel lane={lane} index={i} showGuide={showGuide} />
               <div className="note-highway">
-                <div className="highway-line" />
-                <div className="highway-grid" />
-                {!showGuide && <div className="judgement-ring" aria-hidden="true" />}
+                <HighwayDecoration showGuide={showGuide} />
                 {lane.id === 'step' &&
                   followLinks
                     .filter(
