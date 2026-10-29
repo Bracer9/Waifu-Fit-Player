@@ -1493,6 +1493,36 @@
   transform: rotate(180deg);
   transform-origin: center;
 }
+/* Measure album trails in the real rectangular viewport: stretching a square
+   viewBox with non-scaling strokes distorts the dash spacing at corners. */
+.collection-album > .cover-trace {
+  z-index: 3;
+}
+.collection-album > .cover-trace[data-pixel-units] rect {
+  stroke-dasharray: 4 16;
+  animation-name: album-cyan-orbit;
+}
+.collection-album > .cover-trace[data-pixel-units] rect + rect {
+  transform: none;
+  stroke-dashoffset: -10;
+  animation-name: album-pink-orbit;
+}
+@keyframes album-pink-orbit {
+  from {
+    stroke-dashoffset: -10;
+  }
+  to {
+    stroke-dashoffset: -30;
+  }
+}
+@keyframes album-cyan-orbit {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -20;
+  }
+}
 [data-highlighted] .cover-trace {
   opacity: 1;
   visibility: visible;

@@ -219,7 +219,7 @@ export function AlbumCover({
         )}
         {kind && (
           <svg
-            className={`album-cover-detail ${kind}`}
+            className={`album-cover-detail ${kind}${kind.endsWith('-oil') ? ` ${kind.slice(0, -4)}` : ''}`}
             viewBox={albumEffectViewBox(kind)}
             preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"

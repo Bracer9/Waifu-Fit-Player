@@ -210,15 +210,60 @@
    corona, veiling glare and differently sized ghosts soft, without drawn borders. */
 .album-cover-detail.sunset,
 .album-cover-detail.sunset-window {
+  --sunset-cycle: 5200ms;
   mix-blend-mode: screen;
+}
+/* Restore the sunset's own gentle light, independently of lens reflections. */
+.album-sunset-emission > ellipse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: album-sunset-light var(--sunset-cycle) ease-in-out infinite paused;
+}
+.album-sunset-aura {
+  fill: #ff9859;
+  filter: blur(32px);
+  --light-low: 0.04;
+  --light-high: 0.18;
+}
+.album-sunset-glow {
+  fill: #ffb76b;
+  filter: blur(24px);
+  --light-low: 0.08;
+  --light-high: 0.32;
+}
+.album-sunset-ray {
+  fill: #ffc187;
+  filter: blur(7px);
+  --light-low: 0.04;
+  --light-high: 0.25;
+}
+.album-sunset-water {
+  fill: #ffad65;
+  filter: blur(10px);
+  --light-low: 0.05;
+  --light-high: 0.26;
+}
+.collection-art[data-cover-motion] .album-sunset-emission > ellipse {
+  animation-play-state: running;
+}
+@keyframes album-sunset-light {
+  0%,
+  100% {
+    opacity: var(--light-low);
+    transform: scale(1);
+  }
+  32% {
+    opacity: var(--light-high);
+    transform: scale(1.12);
+  }
 }
 .album-lens-source,
 .album-lens-ghost {
   opacity: calc(var(--flare-peak) * 0.7);
-  animation: album-lens-arrival 3.6s ease-in-out infinite paused;
+  animation: album-lens-arrival var(--sunset-cycle) ease-in-out infinite paused;
 }
 .album-lens-source {
-  --flare-peak: 0.84;
+  --flare-peak: 1;
 }
 .album-lens-ghost {
   --flare-peak: 1;
@@ -226,7 +271,6 @@
 }
 .album-lens-ghost.far {
   --flare-peak: 0.84;
-  animation-delay: 90ms;
 }
 .collection-art[data-cover-motion] .album-lens-source,
 .collection-art[data-cover-motion] .album-lens-ghost {
@@ -234,38 +278,24 @@
 }
 @keyframes album-lens-arrival {
   0%,
-  4%,
-  48%,
   100% {
     opacity: calc(var(--flare-peak) * 0.7);
     transform: scale(0.997);
   }
-  18%,
-  26% {
+  32% {
     opacity: var(--flare-peak);
     transform: scale(1.004);
-  }
-  76% {
-    opacity: calc(var(--flare-peak) * 0.85);
-    transform: scale(1);
   }
 }
 @keyframes album-lens-refraction {
   0%,
-  6%,
-  48%,
   100% {
     opacity: calc(var(--flare-peak) * 0.7);
     transform: translate(3px, -1px);
   }
-  18%,
-  26% {
+  32% {
     opacity: var(--flare-peak);
     transform: translate(-3px, 1px);
-  }
-  76% {
-    opacity: calc(var(--flare-peak) * 0.85);
-    transform: translate(0, 0);
   }
 }
 .album-vinyl-spin {

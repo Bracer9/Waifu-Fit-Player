@@ -556,7 +556,7 @@ export function LibraryMenu(props: Props) {
                   </span>
                   <ArrowRight />
                 </span>
-                <CoverTrace />
+                <CoverTrace pixelUnits />
               </button>
             ))}
           </div>

@@ -42,12 +42,36 @@ test('replacement anime artwork retains the lens flare after a disk save and rel
     );
     await expect(anime.locator('.album-cover-scene')).toHaveCSS('transform', 'none');
     await expect(anime.locator('.album-lens-source')).toHaveCSS('animation-play-state', 'running');
+    await expect(anime.locator('.album-sunset-emission > ellipse')).toHaveCount(4);
+    await expect(anime.locator('.album-sunset-glow')).toHaveCSS('animation-play-state', 'running');
     const image = anime.locator('.album-cover-scene > img');
     await expect
       .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
       .toBe(2048);
     const src = await image.getAttribute('src');
     expect(src === cover).toBe(true);
+    const timings = await anime
+      .locator('.album-sunset-glow, .album-lens-source, .album-lens-ghost')
+      .evaluateAll((lights) =>
+        lights.map((light) => ({
+          duration: getComputedStyle(light).animationDuration,
+          start: light.getAnimations()[0].startTime,
+        })),
+      );
+    expect(timings.every((timing) => timing.duration === '5.2s')).toBe(true);
+    expect(new Set(timings.map((timing) => timing.start)).size).toBe(1);
+    await anime
+      .locator('.album-sunset-emission > ellipse, .album-lens-source, .album-lens-ghost')
+      .evaluateAll((lights) => {
+        for (const light of lights) {
+          const animation = light.getAnimations()[0];
+          animation.pause();
+          animation.currentTime = 1664;
+        }
+      });
+    await expect(anime.locator('.album-sunset-glow')).toHaveCSS('opacity', '0.32');
+    await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '1');
+    await expect(anime.locator('.album-lens-ghost.near')).toHaveCSS('opacity', '1');
     await anime
       .locator('.collection-art')
       .screenshot({ path: `artifacts/anime-replacement-${visit}.png` });
@@ -98,6 +122,7 @@ async function openAuthoredCovers(page: Page) {
     { id: 'vocaloid', name: '虚拟歌姬', file: 'vocaloid_album2.png' },
   ].map(({ file, ...album }) => ({
     ...album,
+    ...(album.id === 'anime' ? { coverEffect: 'anime-lens' as const } : {}),
     cover: `data:image/png;base64,${readFileSync(`src/assets/albums-illustrations/${file}`).toString('base64')}`,
   }));
   await page.evaluate(async (covers) => {
@@ -125,9 +150,7 @@ async function openAuthoredCovers(page: Page) {
   await page.mouse.move(10, 10);
 }
 
-test('anime and pop insertion copies keep the clear idle picture and return cleanly', async ({
-  page,
-}) => {
+test('album insertion copies keep the clear idle picture and return cleanly', async ({ page }) => {
   await openAuthoredCovers(page);
   await page.evaluate(() => {
     const animate = Element.prototype.animate;
@@ -140,8 +163,10 @@ test('anime and pop insertion copies keep the clear idle picture and return clea
       return animation;
     };
   });
-  for (const id of ['anime', 'pop']) {
+  for (const id of ['all', 'vocaloid', 'anime', 'pop']) {
     const card = page.locator(`.collection-album[data-id="${id}"]`);
+    const record = id === 'all' || id === 'vocaloid';
+    const disc = record ? await card.locator('.album-vinyl-disc').getAttribute('href') : null;
     await card.click();
     await expect(page.locator('.album-deck')).toHaveAttribute('data-ready');
     await expect(card).toHaveAttribute('aria-current', 'true');
@@ -150,7 +175,11 @@ test('anime and pop insertion copies keep the clear idle picture and return clea
     await expect(flight).toBeVisible();
     await expect(flight.locator('.collection-art')).not.toHaveAttribute('data-cover-motion');
     await expect(flight.locator('.album-cover-scene')).toHaveCSS('transform', 'none');
-    await expect(flight.locator('.album-cover-detail')).toHaveCSS('opacity', '0');
+    await expect(flight.locator('.album-cover-detail')).toHaveCSS('opacity', record ? '1' : '0');
+    if (record) {
+      await expect(flight.locator('.album-vinyl-disc')).toHaveAttribute('href', disc!);
+      await expect(flight.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
+    }
     if (id === 'pop')
       await expect(flight.locator('.album-cover-defocus')).toHaveCSS('display', 'none');
     await flight
@@ -208,7 +237,7 @@ test('anime sunset lens flare stays anchored to the right-hand sun without focus
     animation.pause();
     animation.currentTime = 0;
   });
-  await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '0.588');
+  await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '0.7');
   await expect(anime.locator('.album-sun-lens polygon, .album-sun-lens [stroke]')).toHaveCount(0);
   await expect(anime.locator('.album-cover-detail')).toHaveCSS('mix-blend-mode', 'screen');
   await anime.locator('.collection-art').screenshot({ path: 'artifacts/anime-lens-rest.png' });
@@ -216,10 +245,10 @@ test('anime sunset lens flare stays anchored to the right-hand sun without focus
     for (const light of lights) {
       const animation = light.getAnimations()[0];
       animation.pause();
-      animation.currentTime = 900;
+      animation.currentTime = 1664;
     }
   });
-  await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '0.84');
+  await expect(anime.locator('.album-lens-source')).toHaveCSS('opacity', '1');
   await anime.locator('.collection-art').screenshot({ path: 'artifacts/anime-lens-sunlight.png' });
   await page.screenshot({ path: 'artifacts/album-cover-anime-1080p.png' });
 
@@ -288,6 +317,8 @@ test('album-specific scenes keep their static layers, animate only the selection
   await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
   await expect(vinyl.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'paused');
   const idleFace = await vinyl.locator('.album-vinyl-disc').getAttribute('href');
+  expect(idleFace).toContain('vocaloid-disc-oil');
+  expect(await all.locator('.album-vinyl-disc').getAttribute('href')).toContain('all-disc-oil');
   await expect(all.locator('.album-vinyl-spin')).toHaveCSS('animation-play-state', 'running');
   await expect
     .poll(() =>
@@ -316,6 +347,22 @@ test('album-specific scenes keep their static layers, animate only the selection
   await expect(vinyl).toHaveAttribute('aria-current', 'true');
   await expect(vinyl.locator('.album-vinyl-disc')).toHaveAttribute('href', idleFace!);
   await expect(vinyl.locator('.album-cover-detail')).toHaveCSS('opacity', '1');
+  await expect(vinyl.locator('.album-cover-detail clipPath circle')).toHaveAttribute('r', '440');
+  for (const time of [0, 3500, 7000, 10500]) {
+    await vinyl.locator('.album-vinyl-spin').evaluate((node, time) => {
+      const animation = node.getAnimations()[0];
+      animation.pause();
+      animation.currentTime = time;
+    }, time);
+    const scaleRatio = await vinyl.locator('.album-vinyl-disc').evaluate((node) => {
+      const m = (node as SVGGraphicsElement).getCTM()!;
+      return Math.hypot(m.a, m.b) / Math.hypot(m.c, m.d);
+    });
+    expect(scaleRatio).toBeCloseTo(1, 6);
+  }
+  await vinyl
+    .locator('.collection-art')
+    .screenshot({ path: 'artifacts/vocaloid-oil-round-disc.png' });
 
   await page.keyboard.press('ArrowUp');
   await expect(pop).toHaveAttribute('aria-current', 'true');

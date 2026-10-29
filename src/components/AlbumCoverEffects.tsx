@@ -2,13 +2,19 @@ import type { AlbumCoverDetail } from '../album-cover-detail';
 import vinylDisc from '../assets/album-effects/vocaloid-disc.png';
 import vinylForeground from '../assets/album-effects/vocaloid-foreground-mask.png';
 import allDisc from '../assets/album-effects/all-disc.png';
+import vinylDiscOil from '../assets/album-effects/vocaloid-disc-oil.png';
+import allDiscOil from '../assets/album-effects/all-disc-oil.png';
 
 const prepared = new Map<AlbumCoverDetail, Promise<void>>();
 export function prepareAlbumEffect(kind: AlbumCoverDetail) {
   let task = prepared.get(kind);
   if (!task) {
     const sources =
-      kind === 'vinyl' ? [vinylDisc, vinylForeground] : kind === 'all-record' ? [allDisc] : [];
+      kind === 'vinyl' || kind === 'vinyl-oil'
+        ? [kind === 'vinyl-oil' ? vinylDiscOil : vinylDisc, vinylForeground]
+        : kind === 'all-record' || kind === 'all-record-oil'
+          ? [kind === 'all-record-oil' ? allDiscOil : allDisc]
+          : [];
     task = Promise.all(
       sources.map(async (source) => {
         const image = new Image();
@@ -27,9 +33,9 @@ export function prepareAlbumEffect(kind: AlbumCoverDetail) {
 }
 
 export const persistentAlbumEffect = (kind: AlbumCoverDetail) =>
-  kind === 'vinyl' || kind === 'all-record';
+  kind.startsWith('vinyl') || kind.startsWith('all-record');
 export const albumEffectViewBox = (kind: AlbumCoverDetail) =>
-  kind === 'vinyl'
+  kind.startsWith('vinyl')
     ? '0 0 2200 715'
     : kind === 'sunset-window'
       ? '0 0 2048 578'
@@ -41,19 +47,20 @@ function RecordFace({
   src,
   id,
   collection = false,
+  oil = false,
 }: {
   src?: string;
   id: string;
   collection?: boolean;
+  oil?: boolean;
 }) {
   const cx = collection ? 1500 : 1100,
     cy = collection ? 428 : 178;
-  const ry = collection ? 440 : 330;
   return (
     <>
       <defs>
         <clipPath id={`${id}-disc`}>
-          <ellipse cx={cx} cy={cy} rx="440" ry={ry} />
+          <circle cx={cx} cy={cy} r="440" />
         </clipPath>
         {collection ? (
           <mask
@@ -87,18 +94,16 @@ function RecordFace({
         )}
       </defs>
       <g clipPath={`url(#${id}-disc)`}>
-        <ellipse cx={cx} cy={cy} rx="440" ry={ry} fill="#232730" />
-        <g transform={`translate(${cx} ${cy}) scale(1 ${ry / 440}) translate(${-cx} ${-cy})`}>
-          <g className="album-vinyl-spin" style={{ transformOrigin: `${cx}px ${cy}px` }}>
-            <image
-              className="album-vinyl-disc"
-              href={collection ? allDisc : vinylDisc}
-              x={cx - 440}
-              y={cy - 440}
-              width="880"
-              height="880"
-            />
-          </g>
+        <circle cx={cx} cy={cy} r="440" fill="#232730" />
+        <g className="album-vinyl-spin" style={{ transformOrigin: `${cx}px ${cy}px` }}>
+          <image
+            className="album-vinyl-disc"
+            href={collection ? (oil ? allDiscOil : allDisc) : oil ? vinylDiscOil : vinylDisc}
+            x={cx - 440}
+            y={cy - 440}
+            width="880"
+            height="880"
+          />
         </g>
         <image
           className="album-vinyl-foreground"
@@ -192,19 +197,26 @@ function SunsetLens({ id, window }: { id: string; window: boolean }) {
           <stop offset="0" stopColor="#ffbc83" stopOpacity="0" />
           <stop offset=".56" stopColor="#ffbc83" stopOpacity="0" />
           <stop offset=".67" stopColor="#ff936e" stopOpacity=".04" />
-          <stop offset=".75" stopColor="#ffc28c" stopOpacity=".28" />
+          <stop offset=".75" stopColor="#ffc28c" stopOpacity=".38" />
           <stop offset=".82" stopColor="#fff2c7" stopOpacity=".1" />
           <stop offset=".94" stopColor="#fff2c7" stopOpacity="0" />
         </radialGradient>
         <radialGradient id={`${id}-lens-ghost`}>
-          <stop offset="0" stopColor="#cce9b7" stopOpacity=".13" />
-          <stop offset=".48" stopColor="#f4e1a2" stopOpacity=".18" />
-          <stop offset=".74" stopColor="#ffcba3" stopOpacity=".26" />
-          <stop offset=".9" stopColor="#ffd9ac" stopOpacity=".08" />
+          <stop offset="0" stopColor="#cce9b7" stopOpacity=".18" />
+          <stop offset=".48" stopColor="#f4e1a2" stopOpacity=".25" />
+          <stop offset=".74" stopColor="#ffcba3" stopOpacity=".36" />
+          <stop offset=".9" stopColor="#ffd9ac" stopOpacity=".11" />
           <stop offset="1" stopColor="#ffd9ac" stopOpacity="0" />
         </radialGradient>
       </defs>
       <g className="album-sun-lens" transform={`translate(${x} ${y})`}>
+        {/* The sun's own emission is separate from the camera's lens flare. */}
+        <g className="album-sunset-emission" transform={window ? undefined : 'scale(.7)'}>
+          <ellipse className="album-sunset-aura" rx="205" ry="100" />
+          <ellipse className="album-sunset-glow" rx="106" ry="70" />
+          <ellipse className="album-sunset-ray" cy="18" rx="220" ry="7" />
+          <ellipse className="album-sunset-water" cy="65" rx="87" ry="17" />
+        </g>
         <g className="album-lens-source">
           <ellipse cx="170" cy="-95" rx="700" ry="440" fill={`url(#${id}-lens-veil)`} />
           <ellipse rx="255" ry="165" fill={`url(#${id}-sunlight)`} />
@@ -238,11 +250,11 @@ export function AlbumCoverEffects({
   src?: string;
   id: string;
 }) {
-  if (kind === 'vinyl') return <RecordFace src={src} id={id} />;
-  if (kind === 'all-record')
+  if (kind.startsWith('vinyl')) return <RecordFace src={src} id={id} oil={kind === 'vinyl-oil'} />;
+  if (kind.startsWith('all-record'))
     return (
       <>
-        <RecordFace src={src} id={id} collection />
+        <RecordFace src={src} id={id} collection oil={kind === 'all-record-oil'} />
         <CollectionWaveform />
       </>
     );
