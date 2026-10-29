@@ -317,9 +317,12 @@ body:has(.practice-app) {
   /* Keep note stacking local to this flat face of the perspective wall.
      Do not paint-contain it: glows must retain their existing overscan. */
   isolation: isolate;
-  /* The third wall row owns the track height. Avoid a nested flex percentage
-     basis falling back to content height during subgrid layout/repainting. */
+  /* Fill the third wall row independently of the notes' intrinsic sizes.
+     Chrome on macOS can briefly lay out an in-flow item of this subgrid at
+     min-content height during playback, even with height: 100%. */
   grid-row: 3;
+  position: absolute;
+  inset: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   --ribbon-width: 21.6px;
@@ -332,7 +335,6 @@ body:has(.practice-app) {
   height: auto;
   flex: 1;
   min-height: 0;
-  position: relative;
   padding: 7px 0 0 12px;
 }
 .practice .lanes-stack {

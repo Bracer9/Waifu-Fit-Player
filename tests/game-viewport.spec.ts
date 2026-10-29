@@ -65,9 +65,10 @@ test('gameplay preserves desktop composition, media identity and pause input acr
     await page.setViewportSize({ width: 1920, height: Math.round(fitted.height) });
     const reference = await geometry(page);
     await page.setViewportSize({ width, height });
+    // Wait for the resize hook to apply its scale before measuring the root too.
+    const actual = await geometry(page);
     const stage = (await page.locator('#root').boundingBox())!;
     const scale = stage.width / 1920;
-    const actual = await geometry(page);
     for (const selector of selectors)
       for (const [index, rect] of actual[selector].entries()) {
         for (const key of ['x', 'y', 'width', 'height'] as const) {
@@ -83,6 +84,7 @@ test('gameplay preserves desktop composition, media identity and pause input acr
     expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(height);
   }
   await page.setViewportSize({ width: 1470, height: 956 });
+  await geometry(page);
   const slider = (await page
     .getByRole('slider', { name: 'Playback position', exact: true })
     .boundingBox())!;
