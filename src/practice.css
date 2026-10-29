@@ -314,6 +314,9 @@ body:has(.practice-app) {
   color: var(--album-ink);
 }
 .practice .player-lanes {
+  /* Keep note stacking local to this flat face of the perspective wall.
+     Do not paint-contain it: glows must retain their existing overscan. */
+  isolation: isolate;
   --ribbon-width: 21.6px;
   --note-size: 78px;
   --target-size: 74.4px;
@@ -536,11 +539,6 @@ body:has(.practice-app) {
 .ribbon-release-shape path {
   stroke: var(--lane);
   stroke-width: 6px;
-}
-.practice .player-hold.active .ribbon-bloom {
-  /* The wide vector halo uses 1/30 of the former blurred layer's alpha.
-     Keep its original pulse curve on that scale, including while held. */
-  opacity: calc(0.015 + var(--sustain-pulse) * 0.008333333);
 }
 .practice .hold-head {
   width: var(--hold-head-size);

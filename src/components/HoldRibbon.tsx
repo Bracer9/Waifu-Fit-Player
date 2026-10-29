@@ -33,6 +33,7 @@ export function HoldRibbon({
   joinedTail,
   releaseNote,
   sway,
+  sustainPulse,
 }: {
   durationMs: number;
   fullWidth: number;
@@ -44,6 +45,7 @@ export function HoldRibbon({
   joinedTail: boolean;
   releaseNote?: Extract<DisplayNote, { kind: 'tap' }>;
   sway: boolean;
+  sustainPulse?: number;
 }) {
   const outline = useId();
   const cueClip = useId();
@@ -151,7 +153,19 @@ export function HoldRibbon({
             {/* Approximate the soft halo with translucent vector contours.
                 Live blur on a moving/clipped SVG path can stall Chrome's GPU
                 during first-use filter setup, even after image decoding. */}
-            <path className="ribbon-bloom" d={path} />
+            <path
+              className="ribbon-bloom"
+              d={path}
+              // Match the existing pulse exactly, without invalidating inherited
+              // custom properties across every glyph/path in the entire lane.
+              style={
+                sustainPulse === undefined
+                  ? undefined
+                  : {
+                      opacity: 0.015 + sustainPulse * 0.008333333,
+                    }
+              }
+            />
             {GLOW_LAYERS.map(([strokeWidth, opacity]) => (
               <path
                 key={strokeWidth}

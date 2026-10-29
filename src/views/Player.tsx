@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   type Chart,
   LANES,
@@ -13,8 +13,8 @@ import {
 import { MediaController, useRenderTime } from '../media';
 import { chartTimeAt, DEFAULT_NOTE_SPEED, noteX, specialAt } from '../timing';
 import {
-  NoteGlyph,
-  LaneGlyph,
+  NoteGlyph as NoteGlyphSource,
+  LaneGlyph as LaneGlyphSource,
   PalmPrint,
   ShoePrint,
   SquatDownCue,
@@ -31,6 +31,9 @@ import { createBeatMap, sustainPulseAt } from '../combo';
 import { armDisplayNotes, type DisplayNote } from '../armDisplay';
 import { usePlayerRenderPreparation } from '../usePlayerRenderPreparation';
 const BASE_PREVIEW_MS = 3600;
+// Movement changes the wrapper, not the glyph's SVG tree.
+const NoteGlyph = memo(NoteGlyphSource);
+const LaneGlyph = memo(LaneGlyphSource);
 export function Player({
   chart,
   media,
@@ -102,6 +105,10 @@ export function Player({
     () => armDisplayNotes(chart.notes).sort((a, b) => a.timeMs - b.timeMs),
     [chart.notes],
   );
+  const laneNotes = useMemo(
+    () => new Map(LANES.map((lane) => [lane.id, displayNotes.filter((n) => n.lane === lane.id)])),
+    [displayNotes],
+  );
   const { joinedTails, joinedTaps } = useMemo(() => {
     const starts = new Map<string, DisplayNote>();
     for (const note of displayNotes) {
@@ -156,9 +163,9 @@ export function Player({
       </div>
       <div className="lanes-stack">
         {LANES.map((lane, i) => {
-          const visible = displayNotes.filter(
+          const notes = laneNotes.get(lane.id)!;
+          const visible = notes.filter(
             (n) =>
-              n.lane === lane.id &&
               n.timeMs <= time + previewMs + 300 &&
               (n.kind === 'hold' ? n.endTimeMs : n.timeMs + IMPACT_MS) >= time,
           );
@@ -181,13 +188,9 @@ export function Player({
               ? Math.max(0, 1 - nextHeadDistance / ((metrics.width * 0.88 * 650) / previewMs))
               : 0;
           const hit = visible.filter((n) => time >= n.timeMs && time - n.timeMs < IMPACT_MS).at(-1);
-          const release = displayNotes
+          const release = notes
             .filter(
-              (n) =>
-                n.lane === lane.id &&
-                n.kind === 'hold' &&
-                time >= n.endTimeMs &&
-                time - n.endTimeMs < IMPACT_MS,
+              (n) => n.kind === 'hold' && time >= n.endTimeMs && time - n.endTimeMs < IMPACT_MS,
             )
             .at(-1);
           const releaseTime = release?.kind === 'hold' ? release.endTimeMs : -Infinity;
@@ -205,9 +208,6 @@ export function Player({
                   '--lane': lane.color,
                   '--lane-index': i,
                   '--track-surface': `color-mix(in srgb, ${lane.color} 18%, #191a22)`,
-                  '--flash': flash,
-                  '--impact-pulse': flash ** 2,
-                  '--sustain-pulse': sustainPulse,
                 } as React.CSSProperties
               }
               key={lane.id}
@@ -322,6 +322,7 @@ export function Player({
                           joinedTail={joinedTail}
                           releaseNote={releaseNote}
                           sway={note.modifier === 'sway'}
+                          sustainPulse={time >= note.timeMs ? sustainPulse : undefined}
                         />
                       )}
                       <span className="hold-caption">
@@ -379,7 +380,12 @@ export function Player({
                       ? `${lane.english} ${noteSymbol(holding.lane, holding.direction, holding.distance, holding.armAction)} ${noteAction(holding)}`
                       : `${lane.english} target`
                   }
-                  style={holding ? noteStyle(holding) : undefined}
+                  style={
+                    {
+                      ...(holding ? noteStyle(holding) : {}),
+                      '--impact-pulse': flash ** 2,
+                    } as React.CSSProperties
+                  }
                 >
                   {showGuide && holding ? (
                     <span
