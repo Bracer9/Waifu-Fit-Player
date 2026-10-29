@@ -1,4 +1,11 @@
-import { ARM_DIRECTIONS, ARM_HANDS, arrow, noteColor, type ArmHand } from '../model';
+import {
+  ARM_DIRECTIONS,
+  ARM_HANDS,
+  arrow,
+  noteColor,
+  type ArmHand,
+  type Direction,
+} from '../model';
 import { NoteGlyph } from './Glyph';
 
 export function ArmActionPicker({
@@ -6,11 +13,13 @@ export function ArmActionPicker({
   hand,
   onChange,
   label,
+  directions,
 }: {
   value: string;
   hand: ArmHand;
   onChange: (value: string) => void;
   label: string;
+  directions?: Direction[];
 }) {
   return (
     <div className="arms-action-picker" role="group" aria-label={label}>
@@ -20,6 +29,7 @@ export function ArmActionPicker({
             key={direction}
             aria-label={`${label} ${arrow[direction]}`}
             aria-pressed={value === direction}
+            disabled={directions !== undefined && !directions.includes(direction)}
             title={arrow[direction]}
             style={
               {

@@ -80,7 +80,9 @@ import {
   resnapEvents,
   shiftNoteLanes,
   setStepDistance,
-  changeNoteForm,
+  changeSelectedForms,
+  changeSelectedDirections,
+  commonNoteDirections,
   nextArmHand,
   setArmHand,
   nextStepFoot,
@@ -406,7 +408,19 @@ export function Editor({
     )
       element.scrollLeft = Math.max(0, time * px - 120);
   }, [time, follow, status.playing, px]);
-  const selectedNote = chart.notes.find((n) => selected.includes(n.id));
+  const selectedNotes = chart.notes.filter((n) => selected.includes(n.id));
+  const selectedNote = selectedNotes[0];
+  const directionOptions = commonNoteDirections(selectedNotes);
+  const directionValue = selectedNotes.every((n) => n.direction === selectedNote?.direction)
+    ? selectedNote?.direction
+    : 'mixed';
+  const armDirectionValue = selectedNotes.every(
+    (n) => n.lane !== 'punch' || armActionValue(n) === armActionValue(selectedNote!),
+  )
+    ? selectedNote
+      ? armActionValue(selectedNote)
+      : ''
+    : 'mixed';
   const selectedSpread = selectedNote && spreadIds.has(selectedNote.id);
   const selectedStep = chart.notes.find((n) => selected.includes(n.id) && isStepMove(n));
   const selectedFoot = chart.notes.find(
@@ -427,8 +441,33 @@ export function Editor({
       (n.direction !== 'forward' || n.hand !== 'both') &&
       !spreadIds.has(n.id),
   );
-  const selectedSpecial = chart.specialEvents.find((n) => selected.includes(n.id));
+  const selectedSpecials = chart.specialEvents.filter((n) => selected.includes(n.id));
+  const selectedSpecial = selectedSpecials[0];
   const event = selectedNote || selectedSpecial;
+  const stepSelection =
+    selectedNotes.length > 0 &&
+    !selectedSpecials.length &&
+    selectedNotes.every((n) => n.lane === 'step');
+  const selectedForms = new Set([
+    ...selectedNotes.map((n) =>
+      stepSelection
+        ? n.direction === 'free'
+          ? 'free-sway'
+          : noteType(n)
+        : n.kind === 'hold'
+          ? n.modifier === 'sway'
+            ? 'sway'
+            : 'hold'
+          : 'tap',
+    ),
+    ...selectedSpecials.map((e) => (e.endTimeMs !== undefined ? 'hold' : 'tap')),
+  ]);
+  const selectionForm = selectedForms.size > 1 ? 'mixed' : [...selectedForms][0];
+  const selectedSpins = selectedNotes.filter((n) => n.lane === 'step' && n.direction === 'free');
+  const spinDirectionValue =
+    new Set(selectedSpins.map((n) => n.spinDirection ?? 'clockwise')).size > 1
+      ? 'mixed'
+      : (selectedSpins[0]?.spinDirection ?? 'clockwise');
   const activeSegment =
     chart.tempoSegments.find((s) => s.id === segmentId) || chart.tempoSegments[0];
   const offsetCorrections = ([-2, 2] as const).map((beats) => {
@@ -592,37 +631,14 @@ export function Editor({
         ),
       });
   };
-  const changeKind = (type: NoteType, direction = selectedNote?.direction) => {
-    if (!event) return;
-    const end =
-      'endTimeMs' in event && event.endTimeMs !== undefined
-        ? event.endTimeMs
-        : nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
-    if ((type === 'hold' || type === 'sway' || type === 'follow-sway') && end <= event.timeMs) {
-      notify('视频末尾没有足够空间创建长条。');
-      return;
+  const changeDirection = (direction: Direction) => {
+    try {
+      const next = changeSelectedDirections(chart, selected, direction);
+      onChange(next.chart);
+      setSelected(next.ids);
+    } catch (error) {
+      notify((error as Error).message);
     }
-    if (selectedNote && direction) {
-      if (selectedSpread) {
-        const ids = armEventIds(chart.notes, selectedNote.id);
-        onChange({
-          ...chart,
-          notes: chart.notes.map((n) =>
-            ids.includes(n.id) ? changeNoteForm(n, type, n.direction, end) : n,
-          ),
-        });
-        return;
-      }
-      const note = changeNoteForm(selectedNote, type, direction, end);
-      onChange({ ...chart, notes: chart.notes.map((n) => (n.id === note.id ? note : n)) });
-    } else if (type === 'hold') patchEvent({ endTimeMs: end });
-    else if (type === 'tap')
-      onChange({
-        ...chart,
-        specialEvents: chart.specialEvents.map((n) =>
-          n.id === event.id ? { id: n.id, timeMs: n.timeMs } : n,
-        ),
-      });
   };
   const changeSegment = (changes: Partial<typeof activeSegment>) => {
     if (
@@ -1631,7 +1647,7 @@ export function Editor({
                     {selectedSpread && selected.length === 2
                       ? '双臂向两侧展开'
                       : selected.length > 1
-                        ? `已选 ${selected.length} 个 · 属性修改首项`
+                        ? `已选 ${selected.length} 个 · 类型／方向批量 · 其他首项`
                         : selectedNote
                           ? LANES.find((l) => l.id === selectedNote.lane)!.name
                           : 'SPECIAL'}
@@ -1647,35 +1663,31 @@ export function Editor({
                     onCommit={(n) => patchEvent({ timeMs: Math.round(n) })}
                   />
                   <label className="field">
-                    <span>类型</span>
+                    <span>类型{selected.length > 1 ? ' · 批量' : ''}</span>
                     <select
                       aria-label="选中事件类型"
-                      value={
-                        selectedNote?.lane === 'step'
-                          ? selectedNote.direction === 'free'
-                            ? 'free-sway'
-                            : noteType(selectedNote)
-                          : selectedNote?.kind === 'hold' && selectedNote.modifier === 'sway'
-                            ? 'sway'
-                            : 'endTimeMs' in event && event.endTimeMs !== undefined
-                              ? 'hold'
-                              : 'tap'
-                      }
+                      value={selectionForm}
                       onChange={(e) => {
-                        if (selectedNote?.lane === 'step') {
-                          const free = e.target.value === 'free-sway';
-                          changeKind(
-                            free ? 'sway' : (e.target.value as NoteType),
-                            free
-                              ? 'free'
-                              : selectedNote.direction === 'free'
-                                ? 'left'
-                                : selectedNote.direction,
+                        try {
+                          onChange(
+                            changeSelectedForms(
+                              chart,
+                              selected,
+                              e.target.value as NoteType | 'free-sway',
+                              duration,
+                            ),
                           );
-                        } else changeKind(e.target.value as NoteType);
+                        } catch (error) {
+                          notify((error as Error).message);
+                        }
                       }}
                     >
-                      {selectedNote?.lane === 'step' ? (
+                      {selectionForm === 'mixed' && (
+                        <option value="mixed" disabled>
+                          多种类型
+                        </option>
+                      )}
+                      {stepSelection ? (
                         STEP_TYPES.map((variant) => (
                           <option key={variant.value} value={variant.value}>
                             {variant.label}
@@ -1685,21 +1697,35 @@ export function Editor({
                         <>
                           <option value="tap">{selectedNote ? 'TAP' : 'SPECIAL'}</option>
                           <option value="hold">{selectedNote ? 'HOLD' : 'SPECIAL HOLD'}</option>
-                          {selectedNote && <option value="sway">SWAY</option>}
+                          {selectedNote && !selectedSpecials.length && (
+                            <option value="sway">SWAY</option>
+                          )}
                         </>
                       )}
                     </select>
                   </label>
                   {selectedNote?.lane === 'step' && selectedNote.direction === 'free' && (
                     <label className="field">
-                      <span>SPIN 旋转方向</span>
+                      <span>SPIN 旋转方向{selectedSpins.length > 1 ? ' · 批量' : ''}</span>
                       <select
                         aria-label="选中 SPIN 旋转方向"
-                        value={selectedNote.spinDirection ?? 'clockwise'}
+                        value={spinDirectionValue}
                         onChange={(e) =>
-                          patchEvent({ spinDirection: e.target.value as SpinDirection })
+                          onChange({
+                            ...chart,
+                            notes: chart.notes.map((n) =>
+                              selectedSpins.some((spin) => spin.id === n.id)
+                                ? { ...n, spinDirection: e.target.value as SpinDirection }
+                                : n,
+                            ),
+                          })
                         }
                       >
+                        {spinDirectionValue === 'mixed' && (
+                          <option value="mixed" disabled>
+                            多种方向
+                          </option>
+                        )}
                         <option value="clockwise">↻ 顺时针</option>
                         <option value="counterclockwise">↺ 逆时针</option>
                       </select>
@@ -1727,16 +1753,25 @@ export function Editor({
                       onCommit={(n) => patchEvent({ endTimeMs: Math.round(n) })}
                     />
                   )}
+                  {selectedNotes.length > 1 && !directionOptions.length && (
+                    <p className="inspector-tip">
+                      所选轨道没有共同的箭头方向，请按轨道分别选择后修改。
+                    </p>
+                  )}
                   {(selectedNote?.lane === 'step' || selectedNote?.lane === 'side_crunch') && (
                     <div className="arm-inspector">
-                      <span>{selectedNote.lane === 'side_crunch' ? '动作方向' : '移动方向'}</span>
+                      <span>
+                        {selectedNote.lane === 'side_crunch' ? '动作方向' : '移动方向'}
+                        {selected.length > 1 ? ' · 批量' : ''}
+                      </span>
                       <div className="direction-picks">
                         {(['left', 'right'] as const).map((direction) => (
                           <button
                             key={direction}
                             aria-label={`选中${selectedNote.lane === 'side_crunch' ? '侧收腹' : '踏步'}方向 ${direction === 'left' ? '←' : '→'}`}
-                            aria-pressed={selectedNote.direction === direction}
-                            className={selectedNote.direction === direction ? 'active' : ''}
+                            aria-pressed={directionValue === direction}
+                            className={directionValue === direction ? 'active' : ''}
+                            disabled={!directionOptions.includes(direction)}
                             style={
                               {
                                 '--lane': noteColor(
@@ -1748,7 +1783,7 @@ export function Editor({
                                 ),
                               } as React.CSSProperties
                             }
-                            onClick={() => changeKind(noteType(selectedNote), direction)}
+                            onClick={() => changeDirection(direction)}
                           >
                             <NoteGlyph lane={selectedNote.lane} direction={direction} size={20} />
                           </button>
@@ -1778,12 +1813,19 @@ export function Editor({
                   )}
                   {selectedNote?.lane === 'punch' && (
                     <div className="arm-inspector">
-                      <span>手臂动作</span>
+                      <span>手臂动作{selected.length > 1 ? ' · 方向批量／动作首项' : ''}</span>
                       <ArmActionPicker
                         label="选中手臂动作"
-                        value={selectedSpread ? 'spread' : armActionValue(selectedNote)}
+                        value={
+                          selectedSpread && selected.length === 2 ? 'spread' : armDirectionValue
+                        }
                         hand={selectedSpread ? 'both' : armHand(selectedNote)}
+                        directions={directionOptions}
                         onChange={(value) => {
+                          if (directionOptions.includes(value as Direction)) {
+                            changeDirection(value as Direction);
+                            return;
+                          }
                           const next = changeArmGesture(chart, selectedNote.id, value);
                           onChange(next.chart);
                           setSelected(next.ids);
@@ -1823,22 +1865,19 @@ export function Editor({
                     selectedNote.lane !== 'side_crunch' &&
                     selectedNote.lane !== 'punch' && (
                       <label className="field">
-                        <span>动作方向</span>
+                        <span>动作方向{selected.length > 1 ? ' · 批量' : ''}</span>
                         <select
                           aria-label="选中音符方向"
-                          value={selectedNote.direction}
-                          onChange={(e) =>
-                            onChange({
-                              ...chart,
-                              notes: chart.notes.map((n) =>
-                                n.id === selectedNote.id
-                                  ? { ...n, direction: e.target.value as Direction }
-                                  : n,
-                              ),
-                            })
-                          }
+                          value={directionValue}
+                          disabled={!directionOptions.length}
+                          onChange={(e) => changeDirection(e.target.value as Direction)}
                         >
-                          {LANES.find((l) => l.id === selectedNote.lane)!.directions.map((d) => (
+                          {directionValue === 'mixed' && (
+                            <option value="mixed" disabled>
+                              多种方向
+                            </option>
+                          )}
+                          {directionOptions.map((d) => (
                             <option key={d} value={d}>
                               {noteSymbol(selectedNote.lane, d)}{' '}
                               {d === 'left'

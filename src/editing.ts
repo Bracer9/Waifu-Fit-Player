@@ -5,6 +5,7 @@ import {
   isLegRaise,
   isPunchAction,
   ARM_HANDS,
+  armHand,
   type ArmHand,
   type StepFoot,
   stepFoot,
@@ -19,7 +20,7 @@ import {
   sortChart,
   uid,
 } from './model';
-import { clamp, snapTime } from './timing';
+import { clamp, nextGrid, snapTime } from './timing';
 import { armEventIds } from './armDisplay';
 export type History = { past: Chart[]; present: Chart; future: Chart[] };
 export type HistoryAction =
@@ -240,6 +241,110 @@ export function changeNoteForm(
     endTimeMs: note.kind === 'hold' ? note.endTimeMs : endTimeMs,
     ...(follow ? { follow: true } : {}),
   };
+}
+/** Apply one form to the selection atomically, preserving each event's own timing and direction. */
+export function changeSelectedForms(
+  chart: Chart,
+  selected: string[],
+  type: NoteType | 'free-sway',
+  duration: number,
+): Chart {
+  const ids = new Set(selected.flatMap((id) => armEventIds(chart.notes, id)));
+  const notes = chart.notes.filter((n) => ids.has(n.id));
+  const specials = chart.specialEvents.filter((n) => ids.has(n.id));
+  if (!notes.length && !specials.length) return chart;
+  if (
+    ['leg-raise', 'follow', 'follow-sway', 'free-sway'].includes(type) &&
+    (specials.length || notes.some((n) => n.lane !== 'step'))
+  )
+    throw new Error('该类型仅支持 STEP，请只选择踏步音符。');
+  if (specials.length && type !== 'tap' && type !== 'hold')
+    throw new Error('包含 SPECIAL 时只能批量切换 TAP／HOLD。');
+  const endFor = (event: { timeMs: number; endTimeMs?: number }) => {
+    const end = event.endTimeMs ?? nextGrid(event.timeMs, chart.tempoSegments, 1, duration);
+    if (end <= event.timeMs || end > duration)
+      throw new Error('所选事件在视频末尾没有足够空间创建长条，整批未修改。');
+    return end;
+  };
+  return {
+    ...chart,
+    notes: chart.notes.map((note) => {
+      if (!ids.has(note.id)) return note;
+      const direction =
+        note.lane === 'step'
+          ? type === 'free-sway'
+            ? 'free'
+            : note.direction === 'free'
+              ? 'left'
+              : note.direction
+          : note.direction;
+      const form = type === 'free-sway' ? 'sway' : type;
+      const needsEnd = ['hold', 'sway', 'follow-sway'].includes(form);
+      return changeNoteForm(note, form, direction, needsEnd ? endFor(note) : note.timeMs);
+    }),
+    specialEvents: chart.specialEvents.map((event) =>
+      !ids.has(event.id)
+        ? event
+        : type === 'hold'
+          ? { ...event, endTimeMs: endFor(event) }
+          : { id: event.id, timeMs: event.timeMs },
+    ),
+  };
+}
+/** Free/forward are action presets, not ordinary direction choices. */
+export function commonNoteDirections(notes: Note[]): Direction[] {
+  if (!notes.length) return [];
+  return (LANES.find((lane) => lane.id === notes[0].lane)!.directions as readonly Direction[])
+    .filter((direction) => direction !== 'free' && direction !== 'forward')
+    .filter((direction) =>
+      notes.every((note) =>
+        (LANES.find((lane) => lane.id === note.lane)!.directions as readonly Direction[]).includes(
+          direction,
+        ),
+      ),
+    );
+}
+/** Change every selected direction in one edit, retaining timing and hand/foot colours. */
+export function changeSelectedDirections(
+  chart: Chart,
+  selected: string[],
+  direction: Direction,
+): { chart: Chart; ids: string[] } {
+  const notes = chart.notes.filter((note) => selected.includes(note.id));
+  if (!notes.length) return { chart, ids: selected };
+  if (!commonNoteDirections(notes).includes(direction))
+    throw new Error('所选音符没有共同支持的这个方向，整批未修改。');
+  const ids = new Set(selected);
+  let next = {
+    ...chart,
+    notes: chart.notes.map((note) => {
+      if (!ids.has(note.id) || note.lane === 'punch') return note;
+      const updated = {
+        ...note,
+        direction,
+        ...(note.lane === 'step' || note.lane === 'side_crunch' ? { foot: stepFoot(note) } : {}),
+      };
+      if (note.lane === 'step') delete updated.spinDirection;
+      return updated;
+    }),
+  };
+  const handled = new Set<string>();
+  for (const note of notes) {
+    if (note.lane !== 'punch' || handled.has(note.id)) continue;
+    const group = armEventIds(chart.notes, note.id);
+    group.forEach((id) => {
+      handled.add(id);
+      ids.delete(id);
+    });
+    const changed = changeArmGesture(next, note.id, direction);
+    const hand = group.length === 2 ? 'both' : armHand(note);
+    next = {
+      ...changed.chart,
+      notes: changed.chart.notes.map((n) => (changed.ids.includes(n.id) ? { ...n, hand } : n)),
+    };
+    changed.ids.forEach((id) => ids.add(id));
+  }
+  return { chart: next, ids: [...ids] };
 }
 /** Preserve row spacing and only move to lanes that accept every selected note's direction. */
 export function shiftNoteLanes(chart: Chart, selected: string[], from: Lane, to: Lane): Chart {
