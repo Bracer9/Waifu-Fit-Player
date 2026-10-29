@@ -12,7 +12,7 @@ test('retired album stays absent after loading saved metadata and the four remai
   await page.goto('/');
   await putAlbums(page, [{ id: 'touhou', name: 'Retired album', cover: '' }]);
   await page.reload();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(page.locator('.collection-album')).toHaveCount(4);
   await expect(page.locator('.collection-album[data-id="touhou"]')).toHaveCount(0);
@@ -274,7 +274,7 @@ test('多首歌曲滚动选择居中，返回保留专辑和曲目', async ({ pa
     base,
   );
   await page.reload();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await page.locator('.collection-album').filter({ hasText: '动漫' }).click();
   await insertAlbum(page);
   await expect(page.locator('.record-card')).toHaveCount(5);

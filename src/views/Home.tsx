@@ -102,7 +102,7 @@ export function Home({
             <span className="record-number">01 / PLAY</span>
             <Disc3 className="mode-symbol" strokeWidth={1.5} />
             <span className="mode-label">
-              <strong>音游模式</strong>
+              <strong>舞蹈模式</strong>
               <small>LET'S MOVE</small>
               <ArrowUpRight />
             </span>

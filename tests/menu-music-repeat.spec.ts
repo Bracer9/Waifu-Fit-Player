@@ -70,7 +70,7 @@ test('真实 MP3 连续进出单曲试听，恢复 BGM 无错误或下载', asyn
     path: 'artifacts/menu-music-real-track-later.png',
     animations: 'disabled',
   });
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   const requestsBeforePreview = bgmRequests.length;
   for (let i = 0; i < 6; i++) {
     await page.locator('.collection-album').first().click();

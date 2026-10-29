@@ -10,7 +10,7 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto('/');
     await expect(page.locator('.liquid-menu-curtain[data-intro]')).toHaveCount(0);
-    await page.getByRole('button', { name: /音游模式/ }).click();
+    await page.getByRole('button', { name: /舞蹈模式/ }).click();
     await expect(page.locator('.music-menu.albums')).toBeVisible();
     await expect(page.locator('.menu-curtain')).toHaveCount(0);
     await page.locator('.collection-album[data-id="pop"]').click();

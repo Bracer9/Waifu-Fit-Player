@@ -84,7 +84,7 @@ test('菜单齿轮归位一致，前进返回动画与菜单操作音效', async
       return animation;
     };
   });
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveAttribute('data-direction', 'forward');
   await expect(page.locator('.menu-curtain')).toHaveAttribute('data-phase', 'cover');
   await expect(page.locator('.liquid-menu-curtain')).toBeVisible();
@@ -275,7 +275,7 @@ test('菜单齿轮归位一致，前进返回动画与菜单操作音效', async
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.screenshot({ path: 'artifacts/menu-gear-albums-1080p.png' });
   await page.locator('.collection-album').first().click();

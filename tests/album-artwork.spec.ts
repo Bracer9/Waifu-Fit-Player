@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 async function albums(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
 }
 

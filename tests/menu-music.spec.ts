@@ -249,7 +249,7 @@ test('悬停音乐菜单、真实频谱、循环偏好与选曲试听互不叠�
   await page.evaluate(() => {
     (window as Probes).menuAudio[0].currentTime = 2;
   });
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.getByRole('region', { name: '选择专辑' })).toBeVisible();
   await expect.poll(async () => (await sound(page)).time).toBeGreaterThan(2);
   const reads = (await sound(page)).reads;

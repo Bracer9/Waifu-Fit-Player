@@ -218,7 +218,7 @@ test('专辑顶端和单曲按上通往齿轮，单曲左右只选曲，鼠标�
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.mouse.move(10, 10);
   const gear = page.getByRole('button', { name: '全局设置', exact: true });

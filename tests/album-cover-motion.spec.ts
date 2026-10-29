@@ -29,7 +29,7 @@ test('replacement anime artwork retains the lens flare after a disk save and rel
     const cover = visit === 0 ? replacement : '/replacement-anime.jpg';
     await putAlbums(page, [{ id: 'anime', name: '动漫', cover, coverEffect: 'anime-lens' }]);
     await page.reload();
-    await page.getByRole('button', { name: /音游模式/ }).click();
+    await page.getByRole('button', { name: /舞蹈模式/ }).click();
     await expect(page.locator('.menu-curtain')).toHaveCount(0);
     await page.mouse.move(10, 10);
     await page.keyboard.press('ArrowDown');
@@ -70,7 +70,7 @@ test('replacement anime artwork retains the lens flare after a disk save and rel
   await page.screenshot({ path: 'artifacts/anime-cover-effect-option.png' });
   await dialog.getByRole('button', { name: '关闭专辑设置', exact: true }).click();
   await page.reload();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await expect(page.locator('.collection-album[data-id="anime"] .album-cover-detail')).toHaveCount(
     0,
@@ -120,7 +120,7 @@ async function openAuthoredCovers(page: Page) {
     });
   }, covers);
   await page.reload();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.mouse.move(10, 10);
 }

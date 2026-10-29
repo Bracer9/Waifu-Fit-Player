@@ -151,7 +151,7 @@ async function publish(page: Page, title: string, coverFile: string) {
 }
 
 async function songs(page: Page) {
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   await page.locator('.collection-album').first().click();
   await insertAlbum(page);

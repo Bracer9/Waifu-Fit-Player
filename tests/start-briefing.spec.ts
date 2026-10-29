@@ -66,7 +66,7 @@ async function fixture(page: Page, neighbors = false) {
     }
   await putSongs(page, seeded);
   await page.reload();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await page.locator('.collection-album').first().click();
   await insertAlbum(page);
   await expect(page.locator('.menu-curtain')).toHaveCount(0);

@@ -4,7 +4,7 @@ test('专辑首尾居中，滚轮与键盘对焦，点击邻近专辑后返回�
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect(page.locator('.menu-curtain')).toHaveCount(0);
   const shelf = page.locator('.album-shelf');
   const current = page.locator('.collection-album[aria-current="true"]');

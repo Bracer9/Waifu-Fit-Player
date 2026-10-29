@@ -75,7 +75,7 @@ test('专辑与单曲试听往返有完整的平滑淡出淡入，快速返回�
   await page.getByRole('button', { name: '确认发布', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '主菜单', exact: true }).click();
-  await page.getByRole('button', { name: /音游模式/ }).click();
+  await page.getByRole('button', { name: /舞蹈模式/ }).click();
   await expect.poll(async () => (await levels())[0].volume).toBe(0.7);
   await clear();
   await page.locator('.collection-album').first().click();
