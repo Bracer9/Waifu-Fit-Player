@@ -263,6 +263,7 @@ export function SongManager({
   onWithdraw,
   onDelete,
   onExport,
+  onExportSelected,
 }: {
   songs: Song[];
   onClose: () => void;
@@ -270,8 +271,13 @@ export function SongManager({
   onWithdraw: (song: Song, chartType: ChartType) => void;
   onDelete: (song: Song) => void;
   onExport: (song: Song) => void;
+  onExportSelected: (songs: Song[]) => void;
 }) {
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const [exportIds, setExportIds] = useState<Set<string>>(() => new Set());
+  const exportable = songs.filter((song) => CHART_TYPES.some((type) => song.released[type]));
+  const chosen = exportable.filter((song) => exportIds.has(song.id));
+  const allChosen = exportable.length > 0 && chosen.length === exportable.length;
   return (
     <ModalBackdrop onClose={onClose}>
       <section
@@ -285,12 +291,51 @@ export function SongManager({
         </button>
         <h2 id="song-manager-title">本地作品</h2>
         <p>草稿留在创作模式；已发布的谱面可导出为含视频、曲绘的分享曲包。</p>
+        <div className="song-export-toolbar">
+          <label>
+            <input
+              type="checkbox"
+              aria-label="全选可导出曲目"
+              checked={allChosen}
+              disabled={!exportable.length}
+              ref={(input) => {
+                if (input) input.indeterminate = chosen.length > 0 && !allChosen;
+              }}
+              onChange={() => setExportIds(new Set(allChosen ? [] : exportable.map((s) => s.id)))}
+            />
+            全选已发布曲目
+          </label>
+          <span>已选 {chosen.length} 首 · 合并为一个 ZIP</span>
+          <button
+            className="button primary"
+            disabled={!chosen.length}
+            onClick={() => onExportSelected(chosen)}
+          >
+            导出所选{chosen.length ? `（${chosen.length}）` : ''}
+          </button>
+        </div>
         <div className="managed-songs">
           {[...songs]
             .sort((a, b) => latestEdition(b).updatedAt - latestEdition(a).updatedAt)
             .map((song) => (
               <article className="managed-song" key={song.id}>
                 <div className="managed-song-title">
+                  <input
+                    className="song-export-check"
+                    type="checkbox"
+                    aria-label={`选择导出 ${latestEdition(song).chart.title}`}
+                    disabled={!CHART_TYPES.some((type) => song.released[type])}
+                    checked={exportIds.has(song.id) && exportable.some((s) => s.id === song.id)}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setExportIds((old) => {
+                        const next = new Set(old);
+                        if (checked) next.add(song.id);
+                        else next.delete(song.id);
+                        return next;
+                      });
+                    }}
+                  />
                   <CoverArt src={latestEdition(song).cover} />
                   <strong>{latestEdition(song).chart.title}</strong>
                   <button

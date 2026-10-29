@@ -97,7 +97,7 @@ import { EditorPreviewResize } from './components/EditorPreviewResize';
 import { FitnessGenerateButton } from './components/FitnessGenerateButton';
 import type { FitnessResult } from './fitness/generate';
 import { menuPortalRoot } from './menu-viewport';
-import { exportSongPack } from './export-song-pack';
+import { exportSongPackLocally } from './export-song-pack';
 import { storeMapVideo } from './maps-workspace';
 import { readyCountdownStyle, type ReadyCountdownPhase } from './ready-countdown';
 import {
@@ -1117,20 +1117,14 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
       notify('作品已从 WAIFU 删除，原始文件保留。');
     });
   };
-  const exportPack = (song: Song) => {
+  const exportPack = (selection: Song | Song[]) => {
     media.pause();
     setManageSongs(false);
     void runTask('正在准备曲包视频与图片…', async () => {
-      const result = await exportSongPack(song, library.albums, (progress) =>
-        setBusy(`正在打包曲目… ${Math.round(progress * 100)}%`),
+      const file = await exportSongPackLocally(selection, (progress) =>
+        setBusy(`正在本地生成曲包… ${Math.round(progress * 100)}%`),
       );
-      const url = URL.createObjectURL(result.blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = result.fileName;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      notify('曲包已导出。解压到另一台设备的 maps 目录，启动或刷新游戏即可识别。');
+      notify(`曲包已完整保存：${file}`);
     });
   };
   const updatePublication = async (values: {
@@ -2040,6 +2034,7 @@ function AppContent({ menuHighlight }: { menuHighlight: ReturnType<typeof useMen
           onWithdraw={withdraw}
           onDelete={deleteSong}
           onExport={exportPack}
+          onExportSelected={exportPack}
         />
       )}
       {manageAlbums && (

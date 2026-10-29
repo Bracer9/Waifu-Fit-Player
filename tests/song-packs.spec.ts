@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import { copyFile, mkdir, readFile, rm, writeFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -129,26 +130,18 @@ test('published editions export to a ZIP that scans unchanged on another install
   await page.getByRole('button', { name: '本地作品', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Downloaded Song');
   await page.screenshot({ path: 'artifacts/song-pack-qa/manager.png' });
-  const download = page.waitForEvent('download');
+  const completed = page.waitForResponse(
+    async (response) =>
+      response.url().includes('/__wfp/export-packs/') &&
+      response.request().method() === 'GET' &&
+      (await response.json()).state === 'done',
+  );
   await page.getByRole('button', { name: '导出曲包', exact: true }).click();
-  const zip = await download;
-  await zip.saveAs(path.resolve('artifacts/song-pack-qa/exported.wfp.zip'));
-  expect(zip.suggestedFilename()).toBe('Downloaded Song.wfp.zip');
-  const bytes = await readFile((await zip.path())!);
+  const job = await (await completed).json();
+  expect(path.basename(job.path)).toMatch(/^Downloaded Song-.*\.wfp\.zip$/);
   const destination = path.resolve('artifacts/song-pack-qa/second-install');
-  let offset = 0;
-  while (bytes.readUInt32LE(offset) === 0x04034b50) {
-    const length = bytes.readUInt32LE(offset + 18),
-      nameSize = bytes.readUInt16LE(offset + 26);
-    const extra = bytes.readUInt16LE(offset + 28);
-    const name = bytes.subarray(offset + 30, offset + 30 + nameSize).toString();
-    const target = path.resolve(destination, name);
-    expect(target.startsWith(destination + path.sep)).toBe(true);
-    const begin = offset + 30 + nameSize + extra;
-    await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, bytes.subarray(begin, begin + length));
-    offset = begin + length;
-  }
+  await mkdir(destination, { recursive: true });
+  execFileSync('tar', ['-xf', job.path, '-C', destination]);
   const restored = await scanMaps(destination);
   expect(restored.warnings).toEqual([]);
   expect(restored.songs).toHaveLength(1);
