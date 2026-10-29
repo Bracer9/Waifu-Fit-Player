@@ -71,11 +71,41 @@ test('dense notes retain their geometry through backward seeks, playback and sim
     await page.screenshot({ path: `artifacts/dense-retina-${seconds}.png` });
   }
   await seek(1);
-  await video.evaluate((v: HTMLVideoElement) => v.play());
-  await expect
-    .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 12000 })
-    .toBeGreaterThan(5);
-  await video.evaluate((v: HTMLVideoElement) => v.pause());
+  // Watch the actual wall/track sizes through dense, empty, sustain and release
+  // frames. A single collapsed frame is visible as the large black gap on Mac.
+  const layout = await page.evaluate(async () => {
+    const video = document.querySelector('video')!;
+    const elements = [
+      ...document.querySelectorAll<HTMLElement>(
+        '.practice .stage-left, .practice .practice-heading, .practice .player-lanes, .practice .lanes-stack, .practice .play-lane',
+      ),
+    ];
+    const sizes = () =>
+      elements.flatMap((element) => [element.clientWidth, element.clientHeight, element.offsetTop]);
+    const reference = sizes();
+    let samples = 0,
+      maxDrift = 0;
+    const deadline = performance.now() + 20000;
+    await video.play();
+    await new Promise<void>((resolve) => {
+      const sample = () => {
+        const current = sizes();
+        maxDrift = Math.max(
+          maxDrift,
+          ...current.map((value, index) => Math.abs(value - reference[index])),
+        );
+        samples++;
+        if (video.currentTime >= 17 || performance.now() >= deadline) resolve();
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+    video.pause();
+    return { samples, maxDrift, time: video.currentTime };
+  });
+  expect(layout.time).toBeGreaterThanOrEqual(17);
+  expect(layout.samples).toBeGreaterThan(60);
+  expect(layout.maxDrift).toBe(0);
   expect(await video.evaluate((v: HTMLVideoElement) => v.error?.message ?? '')).toBe('');
   expect(errors).toEqual([]);
 });

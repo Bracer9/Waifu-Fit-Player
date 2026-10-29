@@ -317,6 +317,11 @@ body:has(.practice-app) {
   /* Keep note stacking local to this flat face of the perspective wall.
      Do not paint-contain it: glows must retain their existing overscan. */
   isolation: isolate;
+  /* The third wall row owns the track height. Avoid a nested flex percentage
+     basis falling back to content height during subgrid layout/repainting. */
+  grid-row: 3;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
   --ribbon-width: 21.6px;
   --note-size: 78px;
   --target-size: 74.4px;
@@ -332,6 +337,8 @@ body:has(.practice-app) {
 }
 .practice .lanes-stack {
   position: relative;
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   gap: 6px;
   min-height: 0;
 }
