@@ -57,4 +57,11 @@ describe('menu composition fitting', () => {
       }
     }
   });
+
+  it('keeps 4K input and layout in the existing 1440p coordinate space', () => {
+    const view = fitMenuViewport(3840, 2160);
+    expect(view).toEqual({ width: 2560, height: 1440, scale: 1.5, x: 0, y: 0, scaled: true });
+    expect(pointInMenu({ x: 3000, y: 1500 }, view)).toEqual({ x: 2000, y: 1000 });
+    expect(fitMenuViewport(3840, 2160, false).scale).toBe(1);
+  });
 });

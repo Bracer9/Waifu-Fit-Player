@@ -1,4 +1,5 @@
 export const MENU_DESIGN = { width: 1920, height: 1080 } as const;
+const MENU_LARGE_DESIGN = { width: 2560, height: 1440 } as const;
 
 export type MenuViewport = {
   width: number;
@@ -9,20 +10,26 @@ export type MenuViewport = {
   scaled: boolean;
 };
 
-/** Fit desktop UI uniformly; use the extra height of laptop screens instead of letterboxing. */
+/** Fit small screens down; above 1440p, preserve the existing 1440p composition. */
 export function fitMenuViewport(width: number, height: number, enabled = true): MenuViewport {
   width = Math.max(1, width);
   height = Math.max(1, height);
-  const scale = enabled ? Math.min(1, width / MENU_DESIGN.width, height / MENU_DESIGN.height) : 1;
-  const scaled = scale < 1;
+  const largeScale = Math.min(width / MENU_LARGE_DESIGN.width, height / MENU_LARGE_DESIGN.height);
+  const scale = enabled
+    ? largeScale > 1
+      ? largeScale
+      : Math.min(1, width / MENU_DESIGN.width, height / MENU_DESIGN.height)
+    : 1;
+  const scaled = scale !== 1;
   const laptopAspect =
     width / height >= 1.45 && width / height < MENU_DESIGN.width / MENU_DESIGN.height;
-  const logicalHeight = scaled && laptopAspect ? height / scale : MENU_DESIGN.height;
+  const logicalWidth = scale > 1 ? width / scale : MENU_DESIGN.width;
+  const logicalHeight = scale > 1 || (scaled && laptopAspect) ? height / scale : MENU_DESIGN.height;
   return {
-    width: scaled ? MENU_DESIGN.width : width,
+    width: scaled ? logicalWidth : width,
     height: scaled ? logicalHeight : height,
     scale,
-    x: scaled ? (width - MENU_DESIGN.width * scale) / 2 : 0,
+    x: scaled ? (width - logicalWidth * scale) / 2 : 0,
     y: scaled ? (height - logicalHeight * scale) / 2 : 0,
     scaled,
   };
@@ -46,10 +53,11 @@ export function syncMenuViewport(active: boolean) {
       innerWidth / innerHeight < MENU_DESIGN.width / MENU_DESIGN.height,
   );
   if (viewport.scaled) {
-    document.documentElement.dataset.menuFit = '';
-    root.style.setProperty('--menu-vw', `${MENU_DESIGN.width / 100}px`);
+    document.documentElement.dataset.menuFit = viewport.scale > 1 ? 'up' : '';
+    root.style.setProperty('--menu-vw', `${viewport.width / 100}px`);
     root.style.setProperty('--menu-vh', `${viewport.height / 100}px`);
     root.style.setProperty('--menu-stage-height', `${viewport.height}px`);
+    root.style.setProperty('--menu-stage-width', `${viewport.width}px`);
     root.style.setProperty('--menu-scale', String(viewport.scale));
     root.style.setProperty('--menu-offset-x', `${viewport.x}px`);
     root.style.setProperty('--menu-offset-y', `${viewport.y}px`);
@@ -59,6 +67,7 @@ export function syncMenuViewport(active: boolean) {
       '--menu-vw',
       '--menu-vh',
       '--menu-stage-height',
+      '--menu-stage-width',
       '--menu-scale',
       '--menu-offset-x',
       '--menu-offset-y',

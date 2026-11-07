@@ -7,7 +7,7 @@ html[data-menu-fit] #root {
   position: fixed;
   left: var(--menu-offset-x);
   top: var(--menu-offset-y);
-  width: 1920px;
+  width: var(--menu-stage-width);
   height: var(--menu-stage-height);
   transform: scale(var(--menu-scale));
   transform-origin: 0 0;
@@ -26,6 +26,6 @@ html[data-menu-tall]
   transform: translateX(calc(var(--menu-vw, 1vw) * 2.65 + 16px));
 }
 /* Use the same open-panel clearance as the 1080p reference on fitted stages. */
-html[data-menu-fit] .title-menu:has(.music-console[data-open]) .mode-records {
+html[data-menu-fit=''] .title-menu:has(.music-console[data-open]) .mode-records {
   translate: 0 -40px;
 }

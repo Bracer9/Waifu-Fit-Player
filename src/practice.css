@@ -1326,7 +1326,7 @@ body:has(.practice-app) {
 }
 
 @media (min-width: 1800px) and (min-height: 1250px) {
-  html:not([data-menu-fit]) .practice .player-lanes {
+  html:not([data-menu-fit='']) .practice .player-lanes {
     --ribbon-width: 28.8px;
     --note-size: 102px;
     --target-size: 96px;
@@ -1334,22 +1334,22 @@ body:has(.practice-app) {
     --lane-label-width: clamp(180px, calc(var(--menu-vw, 1vw) * 8.5), 240px);
     padding: 8px 0 0 16px;
   }
-  html:not([data-menu-fit]) .practice .lanes-stack {
+  html:not([data-menu-fit='']) .practice .lanes-stack {
     gap: 8px;
   }
-  html:not([data-menu-fit]) .practice .lane-label > svg {
+  html:not([data-menu-fit='']) .practice .lane-label > svg {
     width: 68px;
     height: 72px;
   }
-  html:not([data-menu-fit]) .practice .lane-label strong {
+  html:not([data-menu-fit='']) .practice .lane-label strong {
     font-size: 30px;
   }
-  html:not([data-menu-fit]) .practice .player-hold,
-  html:not([data-menu-fit]) .practice .player-hold.sway,
-  html:not([data-menu-fit]) .practice .play-lane[data-lane='step'] .player-hold.sway {
+  html:not([data-menu-fit='']) .practice .player-hold,
+  html:not([data-menu-fit='']) .practice .player-hold.sway,
+  html:not([data-menu-fit='']) .practice .play-lane[data-lane='step'] .player-hold.sway {
     height: calc(var(--note-size) * 1.08);
   }
-  html:not([data-menu-fit]) .practice .transport {
+  html:not([data-menu-fit='']) .practice .transport {
     min-height: 72px;
   }
 }
